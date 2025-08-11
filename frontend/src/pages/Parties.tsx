@@ -480,7 +480,7 @@ export function Parties() {
                       <span style={{
                         padding: '4px 8px',
                         borderRadius: '4px',
-                        fontSize: '12px',
+                        fontSize: '14px',
                         backgroundColor: party.gst_registration_status === 'GST registered' ? '#dcfce7' : '#fef3c7',
                         color: party.gst_registration_status === 'GST registered' ? '#166534' : '#92400e'
                       }}>
@@ -488,7 +488,7 @@ export function Parties() {
                       </span>
                     </td>
                     <td style={{ padding: '8px' }}>
-                      <div style={{ fontSize: '12px' }}>
+                      <div style={{ fontSize: '14px' }}>
                         <div>{party.billing_city}, {party.billing_state}</div>
                         <div>{party.billing_pincode}</div>
                       </div>
@@ -497,7 +497,7 @@ export function Parties() {
                       <span style={{
                         padding: '4px 8px',
                         borderRadius: '4px',
-                        fontSize: '12px',
+                        fontSize: '14px',
                         backgroundColor: party.is_active ? '#dcfce7' : '#fecaca',
                         color: party.is_active ? '#166534' : '#dc2626'
                       }}>
@@ -509,14 +509,14 @@ export function Parties() {
                         <Button
                           variant="secondary"
                           onClick={() => openEditModal(party)}
-                          style={{ fontSize: '11px', padding: '3px 6px' }}
+                          style={{ fontSize: '14px', padding: '4px 8px' }}
                         >
                           Edit
                         </Button>
                         <Button
                           variant="secondary"
                           onClick={() => handleToggleParty(party)}
-                          style={{ fontSize: '11px', padding: '3px 6px' }}
+                          style={{ fontSize: '14px', padding: '4px 8px' }}
                         >
                           {party.is_active ? 'Deactivate' : 'Activate'}
                         </Button>
@@ -545,7 +545,7 @@ export function Parties() {
                     variant="secondary"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    style={{ fontSize: '12px', padding: '4px 8px' }}
+                    style={{ fontSize: '14px', padding: '4px 8px' }}
                   >
                     Previous
                   </Button>
@@ -555,7 +555,7 @@ export function Parties() {
                       key={page}
                       variant={currentPage === page ? 'primary' : 'secondary'}
                       onClick={() => handlePageChange(page)}
-                      style={{ fontSize: '12px', padding: '4px 8px', minWidth: '32px' }}
+                      style={{ fontSize: '14px', padding: '4px 8px', minWidth: '32px' }}
                     >
                       {page}
                     </Button>
@@ -565,7 +565,7 @@ export function Parties() {
                     variant="secondary"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    style={{ fontSize: '12px', padding: '4px 8px' }}
+                    style={{ fontSize: '14px', padding: '4px 8px' }}
                   >
                     Next
                   </Button>

@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async login(u, p) {
       const res = await apiLogin(u, p)
       const t = res.access_token
-      const exp = parseJwtExp(t) ?? (Date.now() + 30 * 60 * 1000)
+      const exp = parseJwtExp(t) ?? (Date.now() + 30 * 60 * 1000) // 30 minutes
       setToken(t)
       setExpiresAt(exp)
       localStorage.setItem('auth_token', t)

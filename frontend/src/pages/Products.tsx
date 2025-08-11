@@ -468,7 +468,7 @@ export function Products() {
                   <span style={{ 
                     padding: '4px 8px', 
                     borderRadius: '4px', 
-                    fontSize: '12px',
+                    fontSize: '14px',
                     backgroundColor: product.is_active ? '#d4edda' : '#f8d7da',
                     color: product.is_active ? '#155724' : '#721c24'
                   }}>
@@ -480,7 +480,7 @@ export function Products() {
                     <Button 
                       variant="secondary" 
                       onClick={() => openEditModal(product)}
-                      style={{ fontSize: '12px', padding: '4px 8px' }}
+                      style={{ fontSize: '14px', padding: '4px 8px' }}
                     >
                       Edit
                     </Button>
@@ -490,14 +490,14 @@ export function Products() {
                         setSelectedProduct(product)
                         setShowStockModal(true)
                       }}
-                      style={{ fontSize: '12px', padding: '4px 8px' }}
+                      style={{ fontSize: '14px', padding: '4px 8px' }}
                     >
                       Stock
                     </Button>
                     <Button 
                       variant="secondary" 
                       onClick={() => handleToggleProduct(product.id)}
-                      style={{ fontSize: '12px', padding: '4px 8px' }}
+                      style={{ fontSize: '14px', padding: '4px 8px' }}
                     >
                       {product.is_active ? 'Disable' : 'Enable'}
                     </Button>

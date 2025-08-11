@@ -179,6 +179,7 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 16px;
+  font-size: 14px;
 }
 
 th {
@@ -186,12 +187,14 @@ th {
   padding: 12px 8px;
   text-align: left;
   font-weight: 600;
+  font-size: 14px;
   border-bottom: 2px solid var(--border);
 }
 
 td {
   padding: 12px 8px;
   border-bottom: 1px solid var(--border);
+  font-size: 14px;
 }
 
 tr:hover {

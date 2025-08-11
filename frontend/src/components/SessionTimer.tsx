@@ -35,7 +35,7 @@ export function SessionTimer({ expiryTime, onExpire, className = '' }: SessionTi
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60)
     const remainingSeconds = seconds % 60
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+    return `${minutes}m ${remainingSeconds}s`
   }
 
   const getColorClass = (seconds: number): string => {

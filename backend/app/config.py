@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     database_url: str = "sqlite+pysqlite:///./ipsc.db"
     secret_key: str = "dev-secret"
-    access_token_expire_minutes: int = 60 * 8
+    access_token_expire_minutes: int = 30
     smtp_host: str = "localhost"
     smtp_port: int = 1025
     smtp_user: str | None = None
