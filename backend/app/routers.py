@@ -628,6 +628,7 @@ class PartyUpdate(BaseModel):
 def list_parties(
     type: str | None = None,
     search: str | None = None,
+    include_inactive: bool = False,
     _: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
@@ -650,7 +651,11 @@ def list_parties(
         )
         query = query.filter(search_filter)
     
-    return query.filter(Party.is_active == True).order_by(Party.name).all()
+    # Include inactive parties if requested
+    if not include_inactive:
+        query = query.filter(Party.is_active == True)
+    
+    return query.order_by(Party.name).all()
 
 
 @api.get('/parties/customers', response_model=list[PartyOut])

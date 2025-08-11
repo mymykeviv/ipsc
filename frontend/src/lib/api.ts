@@ -122,10 +122,11 @@ export type Party = {
   notes: string | null
   is_active: boolean
 }
-export async function apiListParties(type?: string, search?: string): Promise<Party[]> {
+export async function apiListParties(type?: string, search?: string, includeInactive: boolean = false): Promise<Party[]> {
   const params = new URLSearchParams()
   if (type) params.append('type', type)
   if (search) params.append('search', search)
+  if (includeInactive) params.append('include_inactive', 'true')
   
   const url = `/api/parties${params.toString() ? '?' + params.toString() : ''}`
   const r = await fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })

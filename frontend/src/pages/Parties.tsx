@@ -67,8 +67,8 @@ export function Parties() {
     try {
       setLoading(true)
       const [customersData, vendorsData] = await Promise.all([
-        apiListCustomers(searchTerm),
-        apiListVendors(searchTerm)
+        apiListParties('customer', searchTerm, true), // Include inactive
+        apiListParties('vendor', searchTerm, true)    // Include inactive
       ])
       setCustomers(customersData)
       setVendors(vendorsData)

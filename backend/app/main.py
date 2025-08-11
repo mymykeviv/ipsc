@@ -4,7 +4,7 @@ from .seed import run_seed
 from .routers import api
 
 # Version tracking
-VERSION = "1.2.3"
+VERSION = "1.2.4"
 BUILD_DATE = "2024-01-15"
 
 def create_app() -> FastAPI:
