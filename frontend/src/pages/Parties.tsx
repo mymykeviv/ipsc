@@ -404,70 +404,79 @@ export function Parties() {
             No {activeTab} found
           </div>
         ) : (
-          <div style={{ overflowX: 'auto', width: '100%' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1200px' }}>
+          <div style={{ 
+            width: '100%',
+            maxWidth: '100%',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius)'
+          }}>
+            <table style={{ 
+              width: '100%', 
+              borderCollapse: 'collapse',
+              tableLayout: 'auto'
+            }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   <th 
-                    style={{ padding: '12px', textAlign: 'left', cursor: 'pointer' }}
+                    style={{ padding: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
                     onClick={() => handleSort('name')}
                   >
                     Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
                   <th 
-                    style={{ padding: '12px', textAlign: 'left', cursor: 'pointer' }}
+                    style={{ padding: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
                     onClick={() => handleSort('contact_person')}
                   >
-                    Contact Person {sortField === 'contact_person' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    Contact {sortField === 'contact_person' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
                   <th 
-                    style={{ padding: '12px', textAlign: 'left', cursor: 'pointer' }}
+                    style={{ padding: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
                     onClick={() => handleSort('contact_number')}
                   >
-                    Contact Number {sortField === 'contact_number' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    Phone {sortField === 'contact_number' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
                   <th 
-                    style={{ padding: '12px', textAlign: 'left', cursor: 'pointer' }}
+                    style={{ padding: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
                     onClick={() => handleSort('email')}
                   >
                     Email {sortField === 'email' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
                   <th 
-                    style={{ padding: '12px', textAlign: 'left', cursor: 'pointer' }}
+                    style={{ padding: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
                     onClick={() => handleSort('gstin')}
                   >
                     GSTIN {sortField === 'gstin' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
                   <th 
-                    style={{ padding: '12px', textAlign: 'left', cursor: 'pointer' }}
+                    style={{ padding: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
                     onClick={() => handleSort('gst_registration_status')}
                   >
-                    GST Status {sortField === 'gst_registration_status' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    GST {sortField === 'gst_registration_status' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
                   <th 
-                    style={{ padding: '12px', textAlign: 'left', cursor: 'pointer' }}
+                    style={{ padding: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
                     onClick={() => handleSort('billing_city')}
                   >
-                    Billing Address {sortField === 'billing_city' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    Address {sortField === 'billing_city' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
                   <th 
-                    style={{ padding: '12px', textAlign: 'left', cursor: 'pointer' }}
+                    style={{ padding: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
                     onClick={() => handleSort('is_active')}
                   >
                     Status {sortField === 'is_active' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Actions</th>
+                  <th style={{ padding: '8px', textAlign: 'left', fontSize: '14px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedParties.map((party) => (
                   <tr key={party.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '12px' }}>{party.name}</td>
-                    <td style={{ padding: '12px' }}>{party.contact_person || '-'}</td>
-                    <td style={{ padding: '12px' }}>{party.contact_number || '-'}</td>
-                    <td style={{ padding: '12px' }}>{party.email || '-'}</td>
-                    <td style={{ padding: '12px' }}>{party.gstin || '-'}</td>
-                    <td style={{ padding: '12px' }}>
+                    <td style={{ padding: '8px', fontSize: '14px' }}>{party.name}</td>
+                    <td style={{ padding: '8px', fontSize: '14px' }}>{party.contact_person || '-'}</td>
+                    <td style={{ padding: '8px', fontSize: '14px' }}>{party.contact_number || '-'}</td>
+                    <td style={{ padding: '8px', fontSize: '14px' }}>{party.email || '-'}</td>
+                    <td style={{ padding: '8px', fontSize: '14px' }}>{party.gstin || '-'}</td>
+                    <td style={{ padding: '8px' }}>
                       <span style={{
                         padding: '4px 8px',
                         borderRadius: '4px',
@@ -478,15 +487,13 @@ export function Parties() {
                         {party.gst_registration_status}
                       </span>
                     </td>
-                    <td style={{ padding: '12px' }}>
-                      <div>
-                        <div>{party.billing_address_line1}</div>
-                        {party.billing_address_line2 && <div>{party.billing_address_line2}</div>}
+                    <td style={{ padding: '8px' }}>
+                      <div style={{ fontSize: '12px' }}>
                         <div>{party.billing_city}, {party.billing_state}</div>
-                        <div>{party.billing_country} {party.billing_pincode}</div>
+                        <div>{party.billing_pincode}</div>
                       </div>
                     </td>
-                    <td style={{ padding: '12px' }}>
+                    <td style={{ padding: '8px' }}>
                       <span style={{
                         padding: '4px 8px',
                         borderRadius: '4px',
@@ -497,19 +504,19 @@ export function Parties() {
                         {party.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td style={{ padding: '12px' }}>
+                    <td style={{ padding: '8px' }}>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <Button
                           variant="secondary"
                           onClick={() => openEditModal(party)}
-                          style={{ fontSize: '12px', padding: '4px 8px' }}
+                          style={{ fontSize: '11px', padding: '3px 6px' }}
                         >
                           Edit
                         </Button>
                         <Button
                           variant="secondary"
                           onClick={() => handleToggleParty(party)}
-                          style={{ fontSize: '12px', padding: '4px 8px' }}
+                          style={{ fontSize: '11px', padding: '3px 6px' }}
                         >
                           {party.is_active ? 'Deactivate' : 'Activate'}
                         </Button>
