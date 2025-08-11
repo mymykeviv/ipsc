@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+import re
 
 from .auth import authenticate_user, create_access_token, get_current_user, require_role
 from .db import get_db
@@ -32,9 +33,10 @@ class ProductOut(BaseModel):
     id: int
     name: str
     description: str | None
+    item_type: str
     sales_price: float
     purchase_price: float | None
-    stock: float
+    stock: int
     sku: str | None
     unit: str
     supplier: str | None
@@ -56,11 +58,12 @@ def list_products(_: User = Depends(get_current_user), db: Session = Depends(get
 class ProductCreate(BaseModel):
     name: str
     description: str | None = None
+    item_type: str = "tradable"
     sales_price: float
     purchase_price: float | None = None
-    stock: float = 0
+    stock: int = 0
     sku: str | None = None
-    unit: str
+    unit: str = "Pcs"
     supplier: str | None = None
     category: str | None = None
     notes: str | None = None
@@ -71,9 +74,10 @@ class ProductCreate(BaseModel):
 class ProductUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
+    item_type: str | None = None
     sales_price: float | None = None
     purchase_price: float | None = None
-    stock: float | None = None
+    stock: int | None = None
     sku: str | None = None
     unit: str | None = None
     supplier: str | None = None
@@ -87,6 +91,42 @@ class ProductUpdate(BaseModel):
 @api.post("/products", response_model=ProductOut, status_code=status.HTTP_201_CREATED)
 def create_product(payload: ProductCreate, _: User = Depends(require_role("Admin")), db: Session = Depends(get_db)):
     try:
+        # Validation
+        if not payload.name or len(payload.name.strip()) == 0:
+            raise HTTPException(status_code=400, detail="Name is required")
+        if len(payload.name) > 100:
+            raise HTTPException(status_code=400, detail="Name must be 100 characters or less")
+        if not re.match(r'^[a-zA-Z0-9\s]+$', payload.name):
+            raise HTTPException(status_code=400, detail="Name must be alphanumeric with spaces only")
+        
+        if payload.description and len(payload.description) > 200:
+            raise HTTPException(status_code=400, detail="Description must be 200 characters or less")
+        
+        if payload.sales_price < 0 or payload.sales_price > 999999.99:
+            raise HTTPException(status_code=400, detail="Sales price must be between 0 and 999999.99")
+        
+        if payload.purchase_price is not None:
+            if payload.purchase_price < 0 or payload.purchase_price > 999999.99:
+                raise HTTPException(status_code=400, detail="Purchase price must be between 0 and 999999.99")
+        
+        if payload.stock < 0 or payload.stock > 999999:
+            raise HTTPException(status_code=400, detail="Stock must be between 0 and 999999")
+        
+        if payload.sku and len(payload.sku) > 50:
+            raise HTTPException(status_code=400, detail="SKU must be 50 characters or less")
+        if payload.sku and not re.match(r'^[a-zA-Z0-9\s]+$', payload.sku):
+            raise HTTPException(status_code=400, detail="SKU must be alphanumeric with spaces only")
+        
+        if payload.supplier and len(payload.supplier) > 100:
+            raise HTTPException(status_code=400, detail="Supplier must be 100 characters or less")
+        
+        if payload.category and len(payload.category) > 100:
+            raise HTTPException(status_code=400, detail="Category must be 100 characters or less")
+        
+        # Item type validation
+        if payload.item_type not in ["tradable", "consumable", "manufactured"]:
+            raise HTTPException(status_code=400, detail="Item type must be tradable, consumable, or manufactured")
+        
         # Check if SKU already exists (only if SKU is provided)
         if payload.sku:
             exists = db.query(Product).filter(Product.sku == payload.sku).first()
@@ -366,7 +406,9 @@ class StockRow(BaseModel):
     product_id: int
     sku: str
     name: str
-    onhand: float
+    onhand: int
+    item_type: str
+    unit: str
 
 
 @api.get('/stock/summary', response_model=list[StockRow])
@@ -377,8 +419,8 @@ def stock_summary(_: User = Depends(get_current_user), db: Session = Depends(get
         qty_in = db.query(StockLedgerEntry).filter(StockLedgerEntry.product_id == p.id, StockLedgerEntry.entry_type == 'in').with_entities(func.coalesce(func.sum(StockLedgerEntry.qty), 0)).scalar()
         qty_out = db.query(StockLedgerEntry).filter(StockLedgerEntry.product_id == p.id, StockLedgerEntry.entry_type == 'out').with_entities(func.coalesce(func.sum(StockLedgerEntry.qty), 0)).scalar()
         qty_adj = db.query(StockLedgerEntry).filter(StockLedgerEntry.product_id == p.id, StockLedgerEntry.entry_type == 'adjust').with_entities(func.coalesce(func.sum(StockLedgerEntry.qty), 0)).scalar()
-        onhand = float((qty_in or 0) - (qty_out or 0) + (qty_adj or 0))
-        rows.append(StockRow(product_id=p.id, sku=p.sku, name=p.name, onhand=onhand))
+        onhand = int((qty_in or 0) - (qty_out or 0) + (qty_adj or 0))
+        rows.append(StockRow(product_id=p.id, sku=p.sku or '', name=p.name, onhand=onhand, item_type=p.item_type, unit=p.unit))
     return rows
 
 
@@ -444,19 +486,69 @@ def list_payments(invoice_id: int, _: User = Depends(get_current_user), db: Sess
     return {"payments": [{"id": p.id, "amount": float(p.amount), "method": p.method, "head": p.head} for p in pays], "total_paid": total_paid, "outstanding": outstanding}
 
 
-class AdjustIn(BaseModel):
+class StockAdjustmentIn(BaseModel):
     product_id: int
-    delta: float
+    quantity: int
+    adjustment_type: str  # "add" or "reduce"
+    date_of_adjustment: str  # ISO date string
+    reference_bill_number: str | None = None
+    supplier: str | None = None
+    category: str | None = None
+    notes: str | None = None
 
 
 @api.post('/stock/adjust', status_code=201)
-def stock_adjust(payload: AdjustIn, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    prod = db.query(Product).filter(Product.id == payload.product_id).first()
-    if not prod:
-        raise HTTPException(status_code=404, detail='Product not found')
-    db.add(StockLedgerEntry(product_id=prod.id, qty=payload.delta, entry_type='adjust', ref_type='adjust', ref_id=0))
-    db.commit()
-    return {"ok": True}
+def stock_adjust(payload: StockAdjustmentIn, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    try:
+        # Validation
+        if payload.quantity < 0 or payload.quantity > 999999:
+            raise HTTPException(status_code=400, detail="Quantity must be between 0 and 999999")
+        
+        if payload.adjustment_type not in ["add", "reduce"]:
+            raise HTTPException(status_code=400, detail="Adjustment type must be 'add' or 'reduce'")
+        
+        if payload.reference_bill_number and len(payload.reference_bill_number) > 10:
+            raise HTTPException(status_code=400, detail="Reference bill number must be 10 characters or less")
+        
+        if payload.supplier and len(payload.supplier) > 50:
+            raise HTTPException(status_code=400, detail="Supplier must be 50 characters or less")
+        
+        if payload.category and len(payload.category) > 50:
+            raise HTTPException(status_code=400, detail="Category must be 50 characters or less")
+        
+        if payload.notes and len(payload.notes) > 200:
+            raise HTTPException(status_code=400, detail="Notes must be 200 characters or less")
+        
+        prod = db.query(Product).filter(Product.id == payload.product_id).first()
+        if not prod:
+            raise HTTPException(status_code=404, detail='Product not found')
+        
+        # Calculate the delta based on adjustment type
+        delta = payload.quantity if payload.adjustment_type == "add" else -payload.quantity
+        
+        # Check if reducing stock would result in negative stock
+        if payload.adjustment_type == "reduce" and (prod.stock - payload.quantity) < 0:
+            raise HTTPException(status_code=400, detail="Cannot reduce stock below 0")
+        
+        # Update product stock
+        prod.stock += delta
+        
+        # Add stock ledger entry
+        db.add(StockLedgerEntry(
+            product_id=prod.id, 
+            qty=delta, 
+            entry_type='adjust', 
+            ref_type=payload.adjustment_type, 
+            ref_id=0
+        ))
+        
+        db.commit()
+        return {"ok": True, "new_stock": prod.stock}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to adjust stock")
 
 
 class PartyOut(BaseModel):

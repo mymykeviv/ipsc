@@ -7,6 +7,7 @@ interface Product {
   id: number
   name: string
   description: string | null
+  item_type: string
   sales_price: number
   purchase_price: number | null
   stock: number
@@ -23,6 +24,7 @@ interface Product {
 interface ProductFormData {
   name: string
   description: string
+  item_type: string
   sales_price: string
   purchase_price: string
   stock: string
@@ -61,11 +63,12 @@ export function Products() {
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     description: '',
+    item_type: 'tradable',
     sales_price: '',
     purchase_price: '',
     stock: '',
     sku: '',
-    unit: '',
+    unit: 'Pcs',
     supplier: '',
     category: '',
     notes: '',
@@ -138,16 +141,17 @@ export function Products() {
     setFormData({
       name: '',
       description: '',
+      item_type: 'tradable',
       sales_price: '',
       purchase_price: '',
       stock: '',
       sku: '',
-      unit: '',
+      unit: 'Pcs',
       supplier: '',
       category: '',
       notes: '',
       hsn: '',
-      gst_rate: ''
+      gst_rate: '18'
     })
   }
 
@@ -162,34 +166,73 @@ export function Products() {
         setError('Product name is required')
         return
       }
-      if (!formData.sales_price || parseFloat(formData.sales_price) <= 0) {
-        setError('Sales price must be greater than 0')
+      if (!formData.name.match(/^[a-zA-Z0-9\s]+$/)) {
+        setError('Name must be alphanumeric with spaces only')
         return
       }
-      if (!formData.unit) {
-        setError('Unit is required')
-        return
-      }
-      
-      // Field length validations
       if (formData.name.length > 100) {
         setError('Name must be 100 characters or less')
         return
       }
+      
       if (formData.description.length > 200) {
         setError('Description must be 200 characters or less')
         return
       }
-      if (formData.sku.length > 50) {
+      
+      if (formData.sku && formData.sku.length > 50) {
         setError('SKU must be 50 characters or less')
         return
       }
+      if (formData.sku && !formData.sku.match(/^[a-zA-Z0-9\s]+$/)) {
+        setError('SKU must be alphanumeric with spaces only')
+        return
+      }
+      
+      if (formData.supplier && formData.supplier.length > 100) {
+        setError('Supplier must be 100 characters or less')
+        return
+      }
+      
+      if (formData.category && formData.category.length > 100) {
+        setError('Category must be 100 characters or less')
+        return
+      }
+      
       if (formData.notes.length > 200) {
         setError('Notes must be 200 characters or less')
         return
       }
+      
       if (formData.hsn.length > 10) {
         setError('HSN must be 10 characters or less')
+        return
+      }
+      
+      // Price validations
+      const salesPrice = parseFloat(formData.sales_price)
+      if (!formData.sales_price || salesPrice < 0 || salesPrice > 999999.99) {
+        setError('Sales price must be between 0 and 999999.99')
+        return
+      }
+      
+      if (formData.purchase_price) {
+        const purchasePrice = parseFloat(formData.purchase_price)
+        if (purchasePrice < 0 || purchasePrice > 999999.99) {
+          setError('Purchase price must be between 0 and 999999.99')
+          return
+        }
+      }
+      
+      // Stock validation
+      const stock = parseInt(formData.stock)
+      if (stock < 0 || stock > 999999) {
+        setError('Stock must be between 0 and 999999 (integer only)')
+        return
+      }
+      
+      if (!formData.unit) {
+        setError('Unit is required')
         return
       }
       
@@ -199,7 +242,7 @@ export function Products() {
         ...formData,
         sales_price: parseFloat(formData.sales_price),
         purchase_price: formData.purchase_price ? parseFloat(formData.purchase_price) : null,
-        stock: parseFloat(formData.stock) || 0,
+        stock: parseInt(formData.stock) || 0,
         gst_rate: parseFloat(formData.gst_rate)
       }
       
@@ -331,6 +374,7 @@ export function Products() {
     setFormData({
       name: product.name,
       description: product.description || '',
+      item_type: product.item_type,
       sales_price: product.sales_price.toString(),
       purchase_price: product.purchase_price?.toString() || '',
       stock: product.stock.toString(),
@@ -563,6 +607,19 @@ export function Products() {
                     onChange={(e) => setFormData({...formData, sku: e.target.value})}
                     style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
                   />
+                </div>
+                <div>
+                  <label>Item Type *</label>
+                  <select
+                    value={formData.item_type}
+                    onChange={(e) => setFormData({...formData, item_type: e.target.value})}
+                    required
+                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                  >
+                    <option value="tradable">Tradable Items</option>
+                    <option value="consumable">Consumable Items</option>
+                    <option value="manufactured">Manufactured Goods</option>
+                  </select>
                 </div>
                 <div>
                   <label>Sales Price *</label>

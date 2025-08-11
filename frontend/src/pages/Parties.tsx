@@ -110,30 +110,74 @@ export function Parties() {
     })
   }
 
+  const validateForm = (): { isValid: boolean; errors: string[] } => {
+    const errors: string[] = []
+    
+    // Name validation
+    if (!formData.name.trim()) {
+      errors.push('Name is required')
+    } else if (formData.name.length > 100) {
+      errors.push('Name must be 100 characters or less')
+    } else if (!/^[a-zA-Z0-9\s]+$/.test(formData.name)) {
+      errors.push('Name must be alphanumeric with spaces only')
+    }
+    
+    // Contact Person validation
+    if (formData.contact_person && formData.contact_person.length > 100) {
+      errors.push('Contact Person must be 100 characters or less')
+    }
+    
+    // Contact Number validation
+    if (formData.contact_number && formData.contact_number.length > 50) {
+      errors.push('Contact Number must be 50 characters or less')
+    }
+    
+    // Email validation
+    if (formData.email) {
+      if (formData.email.length > 100) {
+        errors.push('Email must be 100 characters or less')
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        errors.push('Email must be a valid email address')
+      }
+    }
+    
+    // GSTIN validation
+    if (formData.gstin) {
+      if (formData.gstin.length !== 16) {
+        errors.push('GST Registration Number must be exactly 16 characters')
+      } else if (!/^[A-Z0-9]+$/.test(formData.gstin)) {
+        errors.push('GST Registration Number must be alphanumeric without spaces')
+      }
+    }
+    
+    // Billing Address validation
+    if (!formData.billing_address_line1.trim()) {
+      errors.push('Billing Address is required')
+    } else if (formData.billing_address_line1.length > 200) {
+      errors.push('Billing Address must be 200 characters or less')
+    }
+    
+    // Shipping Address validation
+    if (formData.shipping_address_line1 && formData.shipping_address_line1.length > 200) {
+      errors.push('Shipping Address must be 200 characters or less')
+    }
+    
+    return { isValid: errors.length === 0, errors }
+  }
+
   const handleAddParty = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    
+    const validation = validateForm()
+    if (!validation.isValid) {
+      setError(validation.errors.join(', '))
+      return
+    }
+    
     setLoading(true)
 
     try {
-      // Validation
-      if (!formData.name.trim()) {
-        setError('Party name is required')
-        return
-      }
-      if (!formData.billing_address_line1.trim()) {
-        setError('Billing address is required')
-        return
-      }
-      if (!formData.billing_city.trim()) {
-        setError('Billing city is required')
-        return
-      }
-      if (!formData.billing_state.trim()) {
-        setError('Billing state is required')
-        return
-      }
-
       const payload = {
         ...formData,
         type: activeTab === 'customers' ? 'customer' : 'vendor' as const,
@@ -169,6 +213,13 @@ export function Parties() {
     if (!editingParty) return
 
     setError(null)
+    
+    const validation = validateForm()
+    if (!validation.isValid) {
+      setError(validation.errors.join(', '))
+      return
+    }
+    
     setLoading(true)
 
     try {
@@ -289,8 +340,8 @@ export function Parties() {
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+    <div style={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <h1>Customer & Vendor Profiles</h1>
         <Button onClick={() => { resetForm(); setShowAddModal(true) }}>
           Add {activeTab === 'customers' ? 'Customer' : 'Vendor'}
@@ -353,8 +404,8 @@ export function Parties() {
             No {activeTab} found
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div style={{ overflowX: 'auto', width: '100%' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1200px' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   <th 
@@ -536,12 +587,30 @@ export function Parties() {
             backgroundColor: 'white',
             borderRadius: 'var(--radius)',
             padding: '32px',
-            maxWidth: '800px',
-            width: '90%',
+            width: '80%',
+            maxWidth: '1200px',
+            height: '80%',
             maxHeight: '90vh',
-            overflowY: 'auto'
+            overflowY: 'auto',
+            position: 'relative'
           }}>
-            <h2>Add {activeTab === 'customers' ? 'Customer' : 'Vendor'}</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2>Add {activeTab === 'customers' ? 'Customer' : 'Vendor'}</h2>
+              <button
+                onClick={() => setShowAddModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: 'var(--muted)',
+                  padding: '4px 8px',
+                  borderRadius: '4px'
+                }}
+              >
+                ×
+              </button>
+            </div>
             <form onSubmit={handleAddParty} style={{ display: 'grid', gap: '16px' }}>
               {/* Basic Information */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
@@ -607,6 +676,7 @@ export function Parties() {
                   >
                     <option value="GST not registered">GST not registered</option>
                     <option value="GST registered">GST registered</option>
+                    <option value="Composite Scheme">Composite Scheme</option>
                   </select>
                 </div>
               </div>
@@ -748,12 +818,30 @@ export function Parties() {
             backgroundColor: 'white',
             borderRadius: 'var(--radius)',
             padding: '32px',
-            maxWidth: '800px',
-            width: '90%',
+            width: '80%',
+            maxWidth: '1200px',
+            height: '80%',
             maxHeight: '90vh',
-            overflowY: 'auto'
+            overflowY: 'auto',
+            position: 'relative'
           }}>
-            <h2>Edit {editingParty.type === 'customer' ? 'Customer' : 'Vendor'}</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2>Edit {editingParty.type === 'customer' ? 'Customer' : 'Vendor'}</h2>
+              <button
+                onClick={() => { setShowEditModal(false); setEditingParty(null) }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: 'var(--muted)',
+                  padding: '4px 8px',
+                  borderRadius: '4px'
+                }}
+              >
+                ×
+              </button>
+            </div>
             <form onSubmit={handleUpdateParty} style={{ display: 'grid', gap: '16px' }}>
               {/* Same form fields as Add Modal */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
@@ -819,6 +907,7 @@ export function Parties() {
                   >
                     <option value="GST not registered">GST not registered</option>
                     <option value="GST registered">GST registered</option>
+                    <option value="Composite Scheme">Composite Scheme</option>
                   </select>
                 </div>
               </div>

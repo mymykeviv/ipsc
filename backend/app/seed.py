@@ -38,6 +38,7 @@ def run_seed():
                     Product(
                         name="Mild Steel Bracket", 
                         description="High quality mild steel bracket for construction",
+                        item_type="tradable",
                         sku="MSB-001", 
                         hsn="7308", 
                         unit="NOS", 
@@ -51,6 +52,7 @@ def run_seed():
                     Product(
                         name="Hex Bolt M10", 
                         description="Standard hex bolt M10 size",
+                        item_type="tradable",
                         sku="HXB-M10", 
                         hsn="7318", 
                         unit="NOS", 
@@ -60,6 +62,20 @@ def run_seed():
                         stock=1000,
                         supplier="Fastener World",
                         category="Fasteners"
+                    ),
+                    Product(
+                        name="Cutting Oil", 
+                        description="Industrial cutting oil for machining operations",
+                        item_type="consumable",
+                        sku="CO-001", 
+                        hsn="2710", 
+                        unit="Litre", 
+                        gst_rate=18.0, 
+                        sales_price=0.00,  # No selling price for consumables
+                        purchase_price=150.00,
+                        stock=50,
+                        supplier="Lubricant Suppliers",
+                        category="Consumables"
                     ),
                 ]
             )

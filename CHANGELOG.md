@@ -5,6 +5,27 @@ All notable changes to CASHFLOW will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2024-01-15
+### Added
+- **Enhanced Stock Adjustment with Reduce Option**
+  - Support for reducing stock (consumption tracking)
+  - Item type classification (tradable, consumable, manufactured)
+  - Comprehensive form validations for all fields
+  - Close buttons on all modal popups
+  - Modal sizing to 80% of screen width/height
+
+### Changed
+- Updated Product model with item type classification
+- Enhanced validation rules for all forms
+- Improved modal UI with better accessibility
+- Updated stock adjustment to support both add and reduce operations
+- Added "Composite Scheme" option to GST registration status
+
+### Fixed
+- Layout issues in Customer and Vendor Profiles table
+- Horizontal scrolling for wide tables
+- Add button accessibility in modals
+
 ## [1.1.1] - 2024-01-15
 ### Added
 - **Sorting and Pagination for Customer and Vendor Profiles**

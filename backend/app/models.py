@@ -58,15 +58,16 @@ class Party(Base):
 class Product(Base):
     __tablename__ = "products"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(200), nullable=False)
-    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)  # max length 100
+    description: Mapped[str | None] = mapped_column(String(200), nullable=True)  # max length 200
+    item_type: Mapped[str] = mapped_column(String(20), nullable=False, default="tradable")  # tradable, consumable, manufactured
     sales_price: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     purchase_price: Mapped[Numeric | None] = mapped_column(Numeric(12, 2), nullable=True)
-    stock: Mapped[float] = mapped_column(Float, nullable=False, default=0)
-    sku: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True)
-    unit: Mapped[str] = mapped_column(String(20), nullable=False)  # Kg, Pcs, Bucket, Litre, etc.
-    supplier: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    category: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    stock: Mapped[int] = mapped_column(Integer, nullable=False, default=0)  # integer only
+    sku: Mapped[str | None] = mapped_column(String(50), unique=True, nullable=True)  # max length 50
+    unit: Mapped[str] = mapped_column(String(20), nullable=False, default="Pcs")  # Kg, Pcs, Bucket, Litre, etc.
+    supplier: Mapped[str | None] = mapped_column(String(100), nullable=True)  # max length 100
+    category: Mapped[str | None] = mapped_column(String(100), nullable=True)  # max length 100
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
     hsn: Mapped[str | None] = mapped_column(String(10), nullable=True)
     gst_rate: Mapped[float] = mapped_column(Float, nullable=False)

@@ -13,6 +13,7 @@ export type Product = {
   id: number
   name: string
   description: string | null
+  item_type: string
   sales_price: number
   purchase_price: number | null
   stock: number
@@ -223,20 +224,53 @@ export async function apiCreateInvoice(payload: InvoiceCreate): Promise<Invoice>
   return r.json()
 }
 
-export type StockRow = { product_id: number; sku: string; name: string; onhand: number }
+export type StockRow = { 
+  product_id: number; 
+  sku: string; 
+  name: string; 
+  onhand: number;
+  item_type?: string;
+  unit?: string;
+}
 export async function apiGetStockSummary(): Promise<StockRow[]> {
   const r = await fetch('/api/stock/summary', { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
   if (!r.ok) throw new Error('failed')
   return r.json()
 }
 
-export async function apiAdjustStock(product_id: number, delta: number): Promise<void> {
+export async function apiAdjustStock(
+  product_id: number, 
+  quantity: number, 
+  adjustmentType: 'add' | 'reduce',
+  dateOfAdjustment: string,
+  referenceBillNumber?: string,
+  supplier?: string,
+  category?: string,
+  notes?: string
+): Promise<{ ok: boolean; new_stock: number }> {
   const r = await fetch('/api/stock/adjust', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
-    body: JSON.stringify({ product_id, delta })
+    body: JSON.stringify({ 
+      product_id, 
+      quantity: quantity,
+      adjustment_type: adjustmentType,
+      date_of_adjustment: dateOfAdjustment,
+      reference_bill_number: referenceBillNumber,
+      supplier: supplier,
+      category: category,
+      notes: notes
+    })
   })
-  if (!r.ok) throw new Error('failed')
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  return r.json()
 }
 
 export type PurchaseCreate = { vendor_id: number; items: { product_id: number; qty: number; rate: number }[] }
