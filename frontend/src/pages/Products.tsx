@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
-import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAddStockToProduct } from '../lib/api'
+import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAdjustStock } from '../lib/api'
 
 interface Product {
   id: number
@@ -39,10 +39,11 @@ interface ProductFormData {
 
 interface StockFormData {
   quantity: string
-  purchase_price: string
-  sales_price: string
+  adjustmentType: 'add' | 'reduce'
   date_of_receipt: string
   reference_bill_number: string
+  supplier: string
+  category: string
   notes: string
 }
 
@@ -78,10 +79,11 @@ export function Products() {
 
   const [stockFormData, setStockFormData] = useState<StockFormData>({
     quantity: '',
-    purchase_price: '',
-    sales_price: '',
+    adjustmentType: 'add',
     date_of_receipt: new Date().toISOString().split('T')[0],
     reference_bill_number: '',
+    supplier: '',
+    category: '',
     notes: ''
   })
 
@@ -313,27 +315,36 @@ export function Products() {
     if (!selectedProduct) return
     
     try {
-      await apiAddStockToProduct(selectedProduct.id, {
-        quantity: parseFloat(stockFormData.quantity),
-        purchase_price: parseFloat(stockFormData.purchase_price),
-        sales_price: parseFloat(stockFormData.sales_price),
-        date_of_receipt: stockFormData.date_of_receipt,
-        reference_bill_number: stockFormData.reference_bill_number || undefined,
-        notes: stockFormData.notes || undefined
-      })
+      const quantity = parseInt(stockFormData.quantity)
+      if (isNaN(quantity) || quantity < 0 || quantity > 999999) {
+        setError('Please enter a valid quantity between 0 and 999999')
+        return
+      }
+
+      await apiAdjustStock(
+        selectedProduct.id,
+        quantity,
+        stockFormData.adjustmentType,
+        stockFormData.date_of_receipt,
+        stockFormData.reference_bill_number || undefined,
+        stockFormData.supplier || undefined,
+        stockFormData.category || undefined,
+        stockFormData.notes || undefined
+      )
       
       setShowStockModal(false)
       setStockFormData({
         quantity: '',
-        purchase_price: '',
-        sales_price: '',
+        adjustmentType: 'add',
         date_of_receipt: new Date().toISOString().split('T')[0],
         reference_bill_number: '',
+        supplier: '',
+        category: '',
         notes: ''
       })
       loadProducts()
-    } catch (error) {
-      console.error('Failed to add stock:', error)
+    } catch (error: any) {
+      setError(error.message || 'Failed to adjust stock')
     }
   }
 
@@ -946,38 +957,46 @@ export function Products() {
                   />
                 </div>
                 <div>
-                  <label>Quantity to Add *</label>
+                  <label>Adjustment Type *</label>
+                  <select
+                    value={stockFormData.adjustmentType}
+                    onChange={(e) => setStockFormData({...stockFormData, adjustmentType: e.target.value as 'add' | 'reduce'})}
+                    required
+                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                  >
+                    <option value="add">Add Stock</option>
+                    <option value="reduce">Reduce Stock</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Quantity *</label>
                   <input
                     type="number"
                     value={stockFormData.quantity}
                     onChange={(e) => setStockFormData({...stockFormData, quantity: e.target.value})}
                     required
                     min="0"
-                    step="0.01"
+                    max="999999"
                     style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
                   />
                 </div>
                 <div>
-                  <label>Purchase Price *</label>
+                  <label>Supplier</label>
                   <input
-                    type="number"
-                    value={stockFormData.purchase_price}
-                    onChange={(e) => setStockFormData({...stockFormData, purchase_price: e.target.value})}
-                    required
-                    min="0"
-                    step="0.01"
+                    type="text"
+                    value={stockFormData.supplier}
+                    onChange={(e) => setStockFormData({...stockFormData, supplier: e.target.value})}
+                    maxLength={50}
                     style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
                   />
                 </div>
                 <div>
-                  <label>Sales Price *</label>
+                  <label>Category</label>
                   <input
-                    type="number"
-                    value={stockFormData.sales_price}
-                    onChange={(e) => setStockFormData({...stockFormData, sales_price: e.target.value})}
-                    required
-                    min="0"
-                    step="0.01"
+                    type="text"
+                    value={stockFormData.category}
+                    onChange={(e) => setStockFormData({...stockFormData, category: e.target.value})}
+                    maxLength={50}
                     style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
                   />
                 </div>
@@ -1015,7 +1034,7 @@ export function Products() {
                   Cancel
                 </Button>
                 <Button type="submit" variant="primary">
-                  Add Stock
+                  Apply Adjustment
                 </Button>
               </div>
             </form>
