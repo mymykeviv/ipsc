@@ -36,6 +36,10 @@ export function Parties() {
   const [editingParty, setEditingParty] = useState<Party | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [sortField, setSortField] = useState<string>('name')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
   const [formData, setFormData] = useState<PartyFormData>({
     type: 'customer',
     name: '',
@@ -78,6 +82,7 @@ export function Parties() {
 
   useEffect(() => {
     loadParties()
+    setCurrentPage(1) // Reset to first page when search changes
   }, [searchTerm])
 
   const resetForm = () => {
@@ -253,6 +258,36 @@ export function Parties() {
 
   const currentParties = activeTab === 'customers' ? customers : vendors
 
+  // Sorting function
+  const sortedParties = [...currentParties].sort((a, b) => {
+    const aValue = a[sortField as keyof Party]
+    const bValue = b[sortField as keyof Party]
+    
+    if (aValue === null || aValue === undefined) return 1
+    if (bValue === null || bValue === undefined) return -1
+    
+    const comparison = String(aValue).localeCompare(String(bValue))
+    return sortDirection === 'asc' ? comparison : -comparison
+  })
+
+  // Pagination
+  const totalPages = Math.ceil(sortedParties.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedParties = sortedParties.slice(startIndex, startIndex + itemsPerPage)
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
@@ -322,19 +357,59 @@ export function Parties() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Name</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Contact Person</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Contact Number</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Email</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>GSTIN</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>GST Status</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Billing Address</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Status</th>
+                  <th 
+                    style={{ padding: '12px', textAlign: 'left', cursor: 'pointer' }}
+                    onClick={() => handleSort('name')}
+                  >
+                    Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th 
+                    style={{ padding: '12px', textAlign: 'left', cursor: 'pointer' }}
+                    onClick={() => handleSort('contact_person')}
+                  >
+                    Contact Person {sortField === 'contact_person' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th 
+                    style={{ padding: '12px', textAlign: 'left', cursor: 'pointer' }}
+                    onClick={() => handleSort('contact_number')}
+                  >
+                    Contact Number {sortField === 'contact_number' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th 
+                    style={{ padding: '12px', textAlign: 'left', cursor: 'pointer' }}
+                    onClick={() => handleSort('email')}
+                  >
+                    Email {sortField === 'email' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th 
+                    style={{ padding: '12px', textAlign: 'left', cursor: 'pointer' }}
+                    onClick={() => handleSort('gstin')}
+                  >
+                    GSTIN {sortField === 'gstin' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th 
+                    style={{ padding: '12px', textAlign: 'left', cursor: 'pointer' }}
+                    onClick={() => handleSort('gst_registration_status')}
+                  >
+                    GST Status {sortField === 'gst_registration_status' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th 
+                    style={{ padding: '12px', textAlign: 'left', cursor: 'pointer' }}
+                    onClick={() => handleSort('billing_city')}
+                  >
+                    Billing Address {sortField === 'billing_city' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th 
+                    style={{ padding: '12px', textAlign: 'left', cursor: 'pointer' }}
+                    onClick={() => handleSort('is_active')}
+                  >
+                    Status {sortField === 'is_active' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
                   <th style={{ padding: '12px', textAlign: 'left' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {currentParties.map((party) => (
+                {paginatedParties.map((party) => (
                   <tr key={party.id} style={{ borderBottom: '1px solid var(--border)' }}>
                     <td style={{ padding: '12px' }}>{party.name}</td>
                     <td style={{ padding: '12px' }}>{party.contact_person || '-'}</td>
@@ -393,6 +468,52 @@ export function Parties() {
                 ))}
               </tbody>
             </table>
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                marginTop: '20px',
+                padding: '16px 0',
+                borderTop: '1px solid var(--border)'
+              }}>
+                <div style={{ color: 'var(--muted)' }}>
+                  Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, sortedParties.length)} of {sortedParties.length} {activeTab}
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button
+                    variant="secondary"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    style={{ fontSize: '12px', padding: '4px 8px' }}
+                  >
+                    Previous
+                  </Button>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? 'primary' : 'secondary'}
+                      onClick={() => handlePageChange(page)}
+                      style={{ fontSize: '12px', padding: '4px 8px', minWidth: '32px' }}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                  
+                  <Button
+                    variant="secondary"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    style={{ fontSize: '12px', padding: '4px 8px' }}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Card>
