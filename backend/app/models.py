@@ -89,14 +89,23 @@ class Invoice(Base):
     __tablename__ = "invoices"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     customer_id: Mapped[int] = mapped_column(ForeignKey("parties.id"), nullable=False)
-    invoice_no: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    invoice_no: Mapped[str] = mapped_column(String(15), unique=True, nullable=False)  # max length 15
     date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    due_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    terms: Mapped[str] = mapped_column(String(20), nullable=False, default="Due on Receipt")
     place_of_supply: Mapped[str] = mapped_column(String(100), nullable=False)
+    bill_to_address: Mapped[str] = mapped_column(String(200), nullable=False)
+    ship_to_address: Mapped[str] = mapped_column(String(200), nullable=False)
     taxable_value: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    total_discount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
     cgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     sgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     igst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     grand_total: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    notes: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="Draft")  # Draft, Sent, Paid, Overdue
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
 class Payment(Base):
@@ -115,12 +124,17 @@ class InvoiceItem(Base):
     invoice_id: Mapped[int] = mapped_column(ForeignKey("invoices.id"), nullable=False)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
     description: Mapped[str] = mapped_column(String(200), nullable=False)
+    hsn_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
     qty: Mapped[float] = mapped_column(Float, nullable=False)
     rate: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    discount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    discount_type: Mapped[str] = mapped_column(String(20), nullable=False, default="Percentage")  # Percentage, Fixed
     taxable_value: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    gst_rate: Mapped[float] = mapped_column(Float, nullable=False)
     cgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     sgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     igst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
 
 
 class Purchase(Base):

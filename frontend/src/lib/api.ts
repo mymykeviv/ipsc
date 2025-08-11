@@ -213,16 +213,156 @@ export async function apiToggleParty(id: number): Promise<Party> {
   return r.json()
 }
 
-export type InvoiceCreate = { customer_id: number; items: { product_id: number; qty: number; rate: number }[] }
-export type Invoice = { id: number; invoice_no: string; grand_total: number }
+export type InvoiceCreate = { 
+  customer_id: number
+  invoice_no?: string
+  date: string
+  terms: string
+  bill_to_address: string
+  ship_to_address: string
+  items: { 
+    product_id: number
+    qty: number
+    rate: number
+    discount: number
+    discount_type: string
+  }[]
+  notes?: string
+}
+
+export type Invoice = { 
+  id: number
+  invoice_no: string
+  customer_name: string
+  date: string
+  due_date: string
+  grand_total: number
+  status: string
+}
+
 export async function apiCreateInvoice(payload: InvoiceCreate): Promise<Invoice> {
   const r = await fetch('/api/invoices', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
     body: JSON.stringify(payload)
   })
-  if (!r.ok) throw new Error('failed')
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
   return r.json()
+}
+
+export async function apiGetInvoices(search?: string, status?: string): Promise<Invoice[]> {
+  const params = new URLSearchParams()
+  if (search) params.append('search', search)
+  if (status) params.append('status', status)
+  
+  const url = `/api/invoices${params.toString() ? '?' + params.toString() : ''}`
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiGetInvoice(id: number): Promise<Invoice> {
+  const r = await fetch(`/api/invoices/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiUpdateInvoice(id: number, payload: InvoiceCreate): Promise<Invoice> {
+  const r = await fetch(`/api/invoices/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
+    body: JSON.stringify(payload)
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiDeleteInvoice(id: number): Promise<void> {
+  const r = await fetch(`/api/invoices/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+}
+
+export async function apiUpdateInvoiceStatus(id: number, status: string): Promise<Invoice> {
+  const r = await fetch(`/api/invoices/${id}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
+    body: JSON.stringify({ status })
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiEmailInvoice(id: number, email: string): Promise<void> {
+  const r = await fetch(`/api/invoices/${id}/email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
+    body: JSON.stringify({ to: email })
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
 }
 
 export type StockRow = { 

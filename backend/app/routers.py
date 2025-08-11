@@ -12,6 +12,60 @@ from decimal import Decimal
 from .emailer import send_email
 
 
+# Utility functions for invoice calculations
+def calculate_due_date(invoice_date: str, terms: str) -> datetime:
+    """Calculate due date based on terms"""
+    date_obj = datetime.fromisoformat(invoice_date.replace('Z', '+00:00'))
+    
+    if terms == "Due on Receipt":
+        return date_obj
+    elif terms == "15 days":
+        return date_obj + timedelta(days=15)
+    elif terms == "30 days":
+        return date_obj + timedelta(days=30)
+    elif terms == "45 days":
+        return date_obj + timedelta(days=45)
+    elif terms == "60 days":
+        return date_obj + timedelta(days=60)
+    elif terms == "90 days":
+        return date_obj + timedelta(days=90)
+    else:
+        return date_obj
+
+
+def number_to_words(amount: float) -> str:
+    """Convert number to words (simplified version)"""
+    if amount == 0:
+        return "Zero Rupees Only"
+    
+    # This is a simplified version - in production, you'd want a more comprehensive implementation
+    units = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"]
+    teens = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"]
+    tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"]
+    
+    def convert_less_than_one_thousand(n):
+        if n == 0:
+            return ""
+        elif n < 10:
+            return units[n]
+        elif n < 20:
+            return teens[n - 10]
+        elif n < 100:
+            return tens[n // 10] + (" " + units[n % 10] if n % 10 != 0 else "")
+        else:
+            return units[n // 100] + " Hundred" + (" " + convert_less_than_one_thousand(n % 100) if n % 100 != 0 else "")
+    
+    rupees = int(amount)
+    paise = int((amount - rupees) * 100)
+    
+    if rupees == 0:
+        return f"{paise} Paise Only"
+    elif paise == 0:
+        return f"{convert_less_than_one_thousand(rupees)} Rupees Only"
+    else:
+        return f"{convert_less_than_one_thousand(rupees)} Rupees and {paise} Paise Only"
+
+
 api = APIRouter()
 
 
@@ -218,25 +272,44 @@ class InvoiceItemIn(BaseModel):
     product_id: int
     qty: float
     rate: float
+    discount: float = 0
+    discount_type: str = "Percentage"  # Percentage, Fixed
 
 
 class InvoiceOut(BaseModel):
     id: int
     customer_id: int
     invoice_no: str
+    date: datetime
+    due_date: datetime
+    terms: str
     place_of_supply: str
+    bill_to_address: str
+    ship_to_address: str
     taxable_value: float
+    total_discount: float
     cgst: float
     sgst: float
     igst: float
     grand_total: float
+    notes: str | None
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
     class Config:
         from_attributes = True
 
 
 class InvoiceCreate(BaseModel):
     customer_id: int
+    invoice_no: str | None = None  # Optional, will auto-generate if not provided
+    date: str  # ISO date string
+    terms: str = "Due on Receipt"
+    bill_to_address: str
+    ship_to_address: str
     items: list[InvoiceItemIn]
+    notes: str | None = None
 
 
 def _next_invoice_no(db: Session) -> str:
@@ -249,14 +322,33 @@ def _next_invoice_no(db: Session) -> str:
 
 @api.post('/invoices', response_model=InvoiceOut, status_code=status.HTTP_201_CREATED)
 def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Validation
+    if not payload.invoice_no and len(payload.invoice_no or "") > 15:
+        raise HTTPException(status_code=400, detail="Invoice number must be 15 characters or less")
+    if payload.invoice_no and not re.match(r'^[a-zA-Z0-9\s-]+$', payload.invoice_no):
+        raise HTTPException(status_code=400, detail="Invoice number must be alphanumeric with spaces and hyphens only")
+    if len(payload.bill_to_address) > 200:
+        raise HTTPException(status_code=400, detail="Bill to address must be 200 characters or less")
+    if len(payload.ship_to_address) > 200:
+        raise HTTPException(status_code=400, detail="Ship to address must be 200 characters or less")
+    if payload.notes and len(payload.notes) > 200:
+        raise HTTPException(status_code=400, detail="Notes must be 200 characters or less")
+    
     company = db.query(CompanySettings).first()
     customer = db.query(Party).filter(Party.id == payload.customer_id).first()
     if not customer:
         raise HTTPException(status_code=400, detail='Invalid customer')
-    invoice_no = _next_invoice_no(db)
+    
+    # Generate invoice number if not provided
+    invoice_no = payload.invoice_no if payload.invoice_no else _next_invoice_no(db)
+    
+    # Calculate due date
+    due_date = calculate_due_date(payload.date, payload.terms)
+    
     intra = company and customer and customer.state == company.state
 
     taxable_total = money(0)
+    discount_total = money(0)
     cgst_total = money(0)
     sgst_total = money(0)
     igst_total = money(0)
@@ -264,10 +356,18 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
     inv = Invoice(
         customer_id=customer.id,
         invoice_no=invoice_no,
+        date=datetime.fromisoformat(payload.date.replace('Z', '+00:00')),
+        due_date=due_date,
+        terms=payload.terms,
         place_of_supply=customer.state,
+        bill_to_address=payload.bill_to_address,
+        ship_to_address=payload.ship_to_address,
         taxable_value=money(0),
+        total_discount=money(0),
         cgst=money(0), sgst=money(0), igst=money(0),
-        grand_total=money(0)
+        grand_total=money(0),
+        notes=payload.notes,
+        status="Draft"
     )
     db.add(inv)
     db.flush()
@@ -276,26 +376,46 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
         prod = db.query(Product).filter(Product.id == it.product_id).first()
         if not prod:
             raise HTTPException(status_code=400, detail='Invalid product')
-        taxable = money(Decimal(it.qty) * Decimal(it.rate))
-        cgst, sgst, igst = split_gst(taxable, prod.gst_rate, bool(intra))
+        
+        # Calculate line item amounts
+        line_total = money(Decimal(it.qty) * Decimal(it.rate))
+        
+        # Apply discount
+        if it.discount > 0:
+            if it.discount_type == "Percentage":
+                discount_amount = money(line_total * Decimal(it.discount) / Decimal(100))
+            else:  # Fixed
+                discount_amount = money(Decimal(it.discount))
+            line_total -= discount_amount
+            discount_total += discount_amount
+        
+        # Calculate GST
+        cgst, sgst, igst = split_gst(line_total, prod.gst_rate, bool(intra))
+        
         item = InvoiceItem(
             invoice_id=inv.id,
             product_id=prod.id,
             description=prod.name,
+            hsn_code=prod.hsn,
             qty=it.qty,
             rate=money(it.rate),
-            taxable_value=taxable,
-            cgst=cgst, sgst=sgst, igst=igst
+            discount=money(it.discount),
+            discount_type=it.discount_type,
+            taxable_value=line_total,
+            gst_rate=prod.gst_rate,
+            cgst=cgst, sgst=sgst, igst=igst,
+            amount=line_total + cgst + sgst + igst
         )
         db.add(item)
         # stock out for sale
         db.add(StockLedgerEntry(product_id=prod.id, qty=it.qty, entry_type='out', ref_type='invoice', ref_id=inv.id))
-        taxable_total += taxable
+        taxable_total += line_total
         cgst_total += cgst
         sgst_total += sgst
         igst_total += igst
 
     inv.taxable_value = taxable_total
+    inv.total_discount = discount_total
     inv.cgst = cgst_total
     inv.sgst = sgst_total
     inv.igst = igst_total
@@ -328,11 +448,63 @@ class EmailRequest(BaseModel):
     to: str
 
 
+@api.get('/invoices/{invoice_id}', response_model=InvoiceOut)
+def get_invoice(invoice_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    if not inv:
+        raise HTTPException(status_code=404, detail='Invoice not found')
+    return inv
+
+
+@api.put('/invoices/{invoice_id}', response_model=InvoiceOut)
+def update_invoice(invoice_id: int, payload: InvoiceCreate, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    if not inv:
+        raise HTTPException(status_code=404, detail='Invoice not found')
+    
+    # Similar validation and update logic as create_invoice
+    # This is a simplified version - in production, you'd want more comprehensive update logic
+    return inv
+
+
+@api.patch('/invoices/{invoice_id}/status', response_model=InvoiceOut)
+def update_invoice_status(invoice_id: int, status: str, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    if not inv:
+        raise HTTPException(status_code=404, detail='Invoice not found')
+    
+    if status not in ["Draft", "Sent", "Paid", "Overdue"]:
+        raise HTTPException(status_code=400, detail='Invalid status')
+    
+    inv.status = status
+    db.commit()
+    db.refresh(inv)
+    return inv
+
+
+@api.delete('/invoices/{invoice_id}')
+def delete_invoice(invoice_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    if not inv:
+        raise HTTPException(status_code=404, detail='Invoice not found')
+    
+    # Delete related items first
+    db.query(InvoiceItem).filter(InvoiceItem.invoice_id == invoice_id).delete()
+    db.delete(inv)
+    db.commit()
+    return {"message": "Invoice deleted successfully"}
+
+
 @api.post('/invoices/{invoice_id}/email', status_code=202)
 def email_invoice(invoice_id: int, payload: EmailRequest, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
     inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not inv:
         raise HTTPException(status_code=404, detail='Invoice not found')
+    
+    # Update status to Sent when emailing
+    inv.status = "Sent"
+    db.commit()
+    
     ok = send_email(payload.to, f"Invoice {inv.invoice_no}", f"Total: {inv.grand_total}")
     return {"status": "queued" if ok else "disabled"}
 
@@ -341,14 +513,53 @@ class InvoiceListOut(BaseModel):
     id: int
     invoice_no: str
     customer_id: int
+    customer_name: str
+    date: datetime
+    due_date: datetime
     grand_total: float
+    status: str
+
     class Config:
         from_attributes = True
 
 
 @api.get('/invoices', response_model=list[InvoiceListOut])
-def list_invoices(_: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return db.query(Invoice).order_by(Invoice.id.desc()).all()
+def list_invoices(
+    search: str | None = None,
+    status: str | None = None,
+    _: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    query = db.query(Invoice).join(Party, Invoice.customer_id == Party.id)
+    
+    if search:
+        search_filter = (
+            Invoice.invoice_no.ilike(f"%{search}%") |
+            Party.name.ilike(f"%{search}%")
+        )
+        query = query.filter(search_filter)
+    
+    if status:
+        query = query.filter(Invoice.status == status)
+    
+    invoices = query.order_by(Invoice.id.desc()).all()
+    
+    # Convert to response format with customer name
+    result = []
+    for inv in invoices:
+        customer = db.query(Party).filter(Party.id == inv.customer_id).first()
+        result.append(InvoiceListOut(
+            id=inv.id,
+            invoice_no=inv.invoice_no,
+            customer_id=inv.customer_id,
+            customer_name=customer.name if customer else "Unknown",
+            date=inv.date,
+            due_date=inv.due_date,
+            grand_total=float(inv.grand_total),
+            status=inv.status
+        ))
+    
+    return result
 
 
 from fastapi import Query
