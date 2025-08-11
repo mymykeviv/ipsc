@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "build_date": "2025-08-11 18:28:34",
+  "git_commit": "eed31e3",
+  "deployment_date": "2025-08-11T12:58:35Z",
+  "services": {
+    "backend": "FastAPI v1.0.0",
+    "frontend": "React v1.0.0",
+    "database": "PostgreSQL 16",
+    "mailhog": "MailHog v1.0.1"
+  }
+}
