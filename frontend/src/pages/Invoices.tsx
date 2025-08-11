@@ -39,6 +39,9 @@ export function Invoices() {
   const [products, setProducts] = useState<Product[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [showModal, setShowModal] = useState(false)
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
+  const [emailAddress, setEmailAddress] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
@@ -62,18 +65,19 @@ export function Invoices() {
   useEffect(() => {
     if (!token) return
     loadData()
-  }, [token])
+  }, [token, searchTerm, statusFilter])
 
   const loadData = async () => {
     try {
       setLoading(true)
-      const [customersData, productsData] = await Promise.all([
+      const [customersData, productsData, invoicesData] = await Promise.all([
         apiListParties('customer', '', true), // Include inactive
-        apiGetProducts()
+        apiGetProducts(),
+        apiGetInvoices(searchTerm, statusFilter)
       ])
       setCustomers(customersData)
       setProducts(productsData)
-      // TODO: Load invoices list
+      setInvoices(invoicesData)
     } catch (err) {
       console.error('Failed to load data:', err)
       setError('Failed to load data')
@@ -348,15 +352,46 @@ export function Invoices() {
                         {invoice.status}
                       </span>
                     </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '4px' }}>
-                        <Button variant="secondary" size="small">Edit</Button>
-                        <Button variant="secondary" size="small">Print</Button>
-                        <Button variant="secondary" size="small">Email</Button>
-                        <Button variant="secondary" size="small">Payment</Button>
-                        <Button variant="secondary" size="small">Delete</Button>
-                      </div>
-                    </td>
+                                         <td>
+                       <div style={{ display: 'flex', gap: '4px' }}>
+                         <Button variant="secondary" size="small">Edit</Button>
+                         <Button 
+                           variant="secondary" 
+                           size="small"
+                           onClick={() => window.open(`/api/invoices/${invoice.id}/pdf`, '_blank')}
+                         >
+                           Print
+                         </Button>
+                         <Button 
+                           variant="secondary" 
+                           size="small"
+                           onClick={() => {
+                             setSelectedInvoice(invoice)
+                             setEmailAddress('')
+                             setShowEmailModal(true)
+                           }}
+                         >
+                           Email
+                         </Button>
+                         <Button variant="secondary" size="small">Payment</Button>
+                         <Button 
+                           variant="secondary" 
+                           size="small"
+                           onClick={async () => {
+                             if (window.confirm(`Are you sure you want to delete invoice ${invoice.invoice_no}?`)) {
+                               try {
+                                 await apiDeleteInvoice(invoice.id)
+                                 loadData() // Refresh the list
+                               } catch (err: any) {
+                                 setError(err.message || 'Failed to delete invoice')
+                               }
+                             }
+                           }}
+                         >
+                           Delete
+                         </Button>
+                       </div>
+                     </td>
                   </tr>
                 ))
               )}
@@ -687,10 +722,80 @@ export function Invoices() {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
+                     </div>
+         </div>
+       )}
+
+       {/* Email Modal */}
+       {showEmailModal && selectedInvoice && (
+         <div style={{
+           position: 'fixed',
+           top: 0,
+           left: 0,
+           right: 0,
+           bottom: 0,
+           backgroundColor: 'rgba(0, 0, 0, 0.5)',
+           display: 'flex',
+           alignItems: 'center',
+           justifyContent: 'center',
+           zIndex: 1000
+         }}>
+           <div style={{
+             backgroundColor: 'white',
+             borderRadius: 'var(--radius)',
+             padding: '24px',
+             width: '400px',
+             maxWidth: '90vw'
+           }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+               <h3>Send Invoice via Email</h3>
+               <Button onClick={() => setShowEmailModal(false)} variant="secondary">×</Button>
+             </div>
+
+             <div style={{ marginBottom: '16px' }}>
+               <label>Invoice: {selectedInvoice.invoice_no}</label>
+             </div>
+
+             <div style={{ marginBottom: '16px' }}>
+               <label>Email Address *</label>
+               <input
+                 type="email"
+                 value={emailAddress}
+                 onChange={(e) => setEmailAddress(e.target.value)}
+                 required
+                 placeholder="Enter recipient email address"
+                 style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+               />
+             </div>
+
+             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+               <Button type="button" onClick={() => setShowEmailModal(false)} variant="secondary">
+                 Cancel
+               </Button>
+               <Button 
+                 type="button" 
+                 variant="primary" 
+                 disabled={!emailAddress || loading}
+                 onClick={async () => {
+                   try {
+                     setLoading(true)
+                     await apiEmailInvoice(selectedInvoice.id, emailAddress)
+                     setShowEmailModal(false)
+                     setError('')
+                   } catch (err: any) {
+                     setError(err.message || 'Failed to send email')
+                   } finally {
+                     setLoading(false)
+                   }
+                 }}
+               >
+                 {loading ? 'Sending...' : 'Send Email'}
+               </Button>
+             </div>
+           </div>
+         </div>
+       )}
+     </div>
+   )
+ }
 

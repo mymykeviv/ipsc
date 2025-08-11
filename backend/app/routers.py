@@ -323,7 +323,7 @@ def _next_invoice_no(db: Session) -> str:
 @api.post('/invoices', response_model=InvoiceOut, status_code=status.HTTP_201_CREATED)
 def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
     # Validation
-    if not payload.invoice_no and len(payload.invoice_no or "") > 15:
+    if payload.invoice_no and len(payload.invoice_no) > 15:
         raise HTTPException(status_code=400, detail="Invoice number must be 15 characters or less")
     if payload.invoice_no and not re.match(r'^[a-zA-Z0-9\s-]+$', payload.invoice_no):
         raise HTTPException(status_code=400, detail="Invoice number must be alphanumeric with spaces and hyphens only")
