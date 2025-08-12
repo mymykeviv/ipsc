@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { apiCreateExpense, apiListParties, ExpenseCreate, Party } from '../lib/api'
+import { Button } from './Button'
 
 interface ExpenseFormProps {
   onSuccess: () => void
@@ -215,110 +216,64 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
               onChange={(e) => setFormData(prev => ({ ...prev, vendor_id: e.target.value ? parseInt(e.target.value) : undefined }))}
               style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
             >
-              borderRadius: '4px',
-              fontSize: '14px',
-              backgroundColor: 'white'
-            }}
-          >
-            <option value="">Select Vendor</option>
-            {vendors.map(vendor => (
-              <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
-            ))}
-          </select>
+              <option value="">Select Vendor</option>
+              {vendors.map(vendor => (
+                <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label>GST Rate (%)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={formData.gst_rate || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, gst_rate: parseFloat(e.target.value) || 0 }))}
+              placeholder="Enter GST rate"
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+            />
+          </div>
+
+          <div>
+            <label>Reference Number</label>
+            <input
+              type="text"
+              value={formData.reference_number}
+              onChange={(e) => setFormData(prev => ({ ...prev, reference_number: e.target.value }))}
+              placeholder="Enter bill/receipt number"
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+            />
+          </div>
         </div>
+      </div>
 
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-            GST Rate (%)
-          </label>
-          <input
-            type="number"
-            step="0.01"
-            value={formData.gst_rate || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, gst_rate: parseFloat(e.target.value) || 0 }))}
-            placeholder="0"
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
-          />
+      {/* Additional Information Section */}
+      <div style={{ marginBottom: '24px' }}>
+        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '8px' }}>
+          Additional Information
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+          <div>
+            <label>Notes</label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              placeholder="Enter additional notes (optional)"
+              rows={3}
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+            />
+          </div>
         </div>
       </div>
 
-      <div>
-        <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-          Reference Number
-        </label>
-        <input
-          type="text"
-          value={formData.reference_number}
-          onChange={(e) => setFormData(prev => ({ ...prev, reference_number: e.target.value }))}
-          placeholder="Bill/Receipt number"
-          style={{
-            width: '100%',
-            padding: '8px 12px',
-            border: '1px solid #ced4da',
-            borderRadius: '4px',
-            fontSize: '14px'
-          }}
-        />
-      </div>
-
-      <div>
-        <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-          Notes
-        </label>
-        <textarea
-          value={formData.notes}
-          onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-          placeholder="Additional notes"
-          rows={3}
-          style={{
-            width: '100%',
-            padding: '8px 12px',
-            border: '1px solid #ced4da',
-            borderRadius: '4px',
-            fontSize: '14px',
-            resize: 'vertical'
-          }}
-        />
-      </div>
-
-      <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '16px' }}>
-        <button
-          type="button"
-          onClick={onCancel}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#6c757d',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}
-        >
+      <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+        <Button type="button" variant="secondary" onClick={onCancel}>
           Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
-            opacity: loading ? 0.6 : 1
-          }}
-        >
+        </Button>
+        <Button type="submit" variant="primary" disabled={loading}>
           {loading ? 'Creating...' : 'Create Expense'}
-        </button>
+        </Button>
       </div>
     </form>
   )
