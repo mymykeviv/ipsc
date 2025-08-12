@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { apiListParties, apiGetProducts, apiCreateInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, Party, Product, Payment } from '../lib/api'
+import { apiListParties, apiGetProducts, apiCreateInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, apiGetInvoices, Party, Product, Payment, PaginationInfo } from '../lib/api'
 import { useAuth } from '../modules/AuthContext'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
@@ -90,6 +90,14 @@ export function Invoices() {
   const [customers, setCustomers] = useState<Party[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    limit: 10,
+    total_count: 0,
+    total_pages: 0,
+    has_next: false,
+    has_prev: false
+  })
   const [showModal, setShowModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -109,7 +117,6 @@ export function Invoices() {
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
   const [sortField, setSortField] = useState('date')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [selectedCustomer, setSelectedCustomer] = useState<Party | null>(null)
@@ -141,17 +148,21 @@ export function Invoices() {
     loadData()
   }, [token, searchTerm, statusFilter])
 
-  const loadData = async () => {
+  const loadData = async (page: number = 1) => {
     try {
       setLoading(true)
-      const [customersData, productsData, invoicesData] = await Promise.all([
+      setError('')
+      
+      const [customersData, productsData, invoicesResponse] = await Promise.all([
         apiListParties('customer', '', true), // Include inactive
         apiGetProducts(),
-        apiGetInvoices(searchTerm, statusFilter)
+        apiGetInvoices(searchTerm, statusFilter, page, pagination.limit)
       ])
+      
       setCustomers(customersData)
       setProducts(productsData)
-      setInvoices(invoicesData)
+      setInvoices(invoicesResponse.invoices)
+      setPagination(invoicesResponse.pagination)
     } catch (err) {
       console.error('Failed to load data:', err)
       setError('Failed to load data')
@@ -358,6 +369,15 @@ export function Invoices() {
       setSortField(field)
       setSortDirection('asc')
     }
+  }
+
+  const handlePageChange = (newPage: number) => {
+    loadData(newPage)
+  }
+
+  const handleLimitChange = (newLimit: number) => {
+    setPagination(prev => ({ ...prev, limit: newLimit, page: 1 }))
+    loadData(1)
   }
 
   const openEditModal = async (invoice: Invoice) => {
@@ -631,6 +651,82 @@ export function Invoices() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {pagination.total_pages > 1 && (
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginTop: '20px',
+            padding: '16px',
+            backgroundColor: '#f9f9f9',
+            borderRadius: 'var(--radius)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span>Show:</span>
+              <select
+                value={pagination.limit}
+                onChange={(e) => handleLimitChange(Number(e.target.value))}
+                style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+              <span>entries</span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>
+                Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total_count)} of{' '}
+                {pagination.total_count} entries
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => handlePageChange(1)}
+                disabled={!pagination.has_prev}
+              >
+                First
+              </Button>
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={!pagination.has_prev}
+              >
+                Previous
+              </Button>
+              
+              <span style={{ padding: '0 8px' }}>
+                Page {pagination.page} of {pagination.total_pages}
+              </span>
+              
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={!pagination.has_next}
+              >
+                Next
+              </Button>
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => handlePageChange(pagination.total_pages)}
+                disabled={!pagination.has_next}
+              >
+                Last
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Add/Edit Invoice Modal */}

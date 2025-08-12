@@ -814,13 +814,21 @@ class InvoiceListOut(BaseModel):
         from_attributes = True
 
 
-@api.get('/invoices', response_model=list[InvoiceListOut])
+@api.get('/invoices', response_model=dict)
 def list_invoices(
     search: str | None = None,
     status: str | None = None,
+    page: int = 1,
+    limit: int = 10,
     _: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
+    # Validation
+    if page < 1:
+        page = 1
+    if limit < 1 or limit > 100:
+        limit = 10
+    
     query = db.query(Invoice).join(Party, Invoice.customer_id == Party.id)
     
     if search:
@@ -833,7 +841,12 @@ def list_invoices(
     if status:
         query = query.filter(Invoice.status == status)
     
-    invoices = query.order_by(Invoice.id.desc()).all()
+    # Get total count for pagination
+    total_count = query.count()
+    
+    # Apply pagination
+    offset = (page - 1) * limit
+    invoices = query.order_by(Invoice.id.desc()).offset(offset).limit(limit).all()
     
     # Convert to response format with customer name
     result = []
@@ -850,7 +863,22 @@ def list_invoices(
             status=inv.status
         ))
     
-    return result
+    # Calculate pagination info
+    total_pages = (total_count + limit - 1) // limit
+    has_next = page < total_pages
+    has_prev = page > 1
+    
+    return {
+        "invoices": result,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total_count": total_count,
+            "total_pages": total_pages,
+            "has_next": has_next,
+            "has_prev": has_prev
+        }
+    }
 
 
 from fastapi import Query

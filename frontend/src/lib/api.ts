@@ -301,12 +301,33 @@ export async function apiCreateInvoice(payload: InvoiceCreate): Promise<Invoice>
   return r.json()
 }
 
-export async function apiGetInvoices(search?: string, status?: string): Promise<Invoice[]> {
+export type PaginationInfo = {
+  page: number
+  limit: number
+  total_count: number
+  total_pages: number
+  has_next: boolean
+  has_prev: boolean
+}
+
+export type InvoiceListResponse = {
+  invoices: Invoice[]
+  pagination: PaginationInfo
+}
+
+export async function apiGetInvoices(
+  search?: string, 
+  status?: string, 
+  page: number = 1, 
+  limit: number = 10
+): Promise<InvoiceListResponse> {
   const params = new URLSearchParams()
   if (search) params.append('search', search)
   if (status) params.append('status', status)
+  params.append('page', page.toString())
+  params.append('limit', limit.toString())
   
-  const url = `/api/invoices${params.toString() ? '?' + params.toString() : ''}`
+  const url = `/api/invoices?${params.toString()}`
   const r = await fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
   
   if (!r.ok) {
