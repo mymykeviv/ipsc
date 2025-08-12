@@ -91,8 +91,10 @@ export function Invoices() {
   const [products, setProducts] = useState<Product[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [showModal, setShowModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
   const [emailAddress, setEmailAddress] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -297,12 +299,19 @@ export function Invoices() {
         notes: formData.notes || undefined
       }
 
-      await apiCreateInvoice(payload)
-      setShowModal(false)
+      if (editingInvoice) {
+        await apiUpdateInvoice(editingInvoice.id, payload)
+        setShowEditModal(false)
+      } else {
+        await apiCreateInvoice(payload)
+        setShowModal(false)
+      }
+      
       resetForm()
-      // TODO: Refresh invoices list
+      setEditingInvoice(null)
+      loadData() // Refresh invoices list
     } catch (err: any) {
-      setError(err.message || 'Failed to create invoice')
+      setError(err.message || 'Failed to save invoice')
     } finally {
       setLoading(false)
     }
@@ -339,6 +348,43 @@ export function Invoices() {
     } else {
       setSortField(field)
       setSortDirection('asc')
+    }
+  }
+
+  const openEditModal = async (invoice: Invoice) => {
+    try {
+      setLoading(true)
+      const invoiceDetails = await apiGetInvoice(invoice.id)
+      setEditingInvoice(invoiceDetails)
+      
+      // Populate form with invoice data
+      setFormData({
+        customer_id: invoiceDetails.customer_id,
+        invoice_no: invoiceDetails.invoice_no,
+        date: new Date(invoiceDetails.date).toISOString().split('T')[0],
+        terms: invoiceDetails.terms,
+        
+        // GST Compliance Fields
+        place_of_supply: invoiceDetails.place_of_supply,
+        place_of_supply_state_code: invoiceDetails.place_of_supply_state_code,
+        eway_bill_number: invoiceDetails.eway_bill_number || '',
+        reverse_charge: invoiceDetails.reverse_charge,
+        export_supply: invoiceDetails.export_supply,
+        
+        // Address Details
+        bill_to_address: invoiceDetails.bill_to_address,
+        ship_to_address: invoiceDetails.ship_to_address,
+        
+        // Items and Notes
+        items: [], // Will be populated from API
+        notes: invoiceDetails.notes || ''
+      })
+      
+      setShowEditModal(true)
+    } catch (err: any) {
+      setError(err.message || 'Failed to load invoice details')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -444,7 +490,13 @@ export function Invoices() {
                     </td>
                                          <td>
                        <div style={{ display: 'flex', gap: '4px' }}>
-                         <Button variant="secondary" size="small">Edit</Button>
+                         <Button 
+                           variant="secondary" 
+                           size="small"
+                           onClick={() => openEditModal(invoice)}
+                         >
+                           Edit
+                         </Button>
                          <Button 
                            variant="secondary" 
                            size="small"
@@ -877,6 +929,404 @@ export function Invoices() {
               </div>
             </form>
                      </div>
+         </div>
+       )}
+
+       {/* Edit Invoice Modal */}
+       {showEditModal && (
+         <div style={{
+           position: 'fixed',
+           top: 0,
+           left: 0,
+           right: 0,
+           bottom: 0,
+           backgroundColor: 'rgba(0, 0, 0, 0.5)',
+           display: 'flex',
+           alignItems: 'center',
+           justifyContent: 'center',
+           zIndex: 1000
+         }}>
+           <div style={{
+             backgroundColor: 'white',
+             borderRadius: 'var(--radius)',
+             padding: '24px',
+             width: '80%',
+             maxWidth: '1200px',
+             maxHeight: '80vh',
+             overflow: 'auto'
+           }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+               <h2>Edit Invoice: {editingInvoice?.invoice_no}</h2>
+               <Button onClick={() => {
+                 setShowEditModal(false)
+                 setEditingInvoice(null)
+                 resetForm()
+               }} variant="secondary">×</Button>
+             </div>
+
+             {error && (
+               <div style={{ 
+                 padding: '12px', 
+                 backgroundColor: '#fecaca', 
+                 color: '#dc2626', 
+                 borderRadius: 'var(--radius)', 
+                 marginBottom: '16px' 
+               }}>
+                 {error}
+               </div>
+             )}
+
+             <form onSubmit={handleSubmit}>
+               {/* Invoice Details */}
+               <div style={{ marginBottom: '24px' }}>
+                 <h3>Invoice Details</h3>
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                   <div>
+                     <label>Invoice Number</label>
+                     <input
+                       type="text"
+                       value={formData.invoice_no}
+                       onChange={(e) => setFormData({...formData, invoice_no: e.target.value})}
+                       placeholder="Auto-generated if empty"
+                       maxLength={16}
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                     />
+                   </div>
+                   <div>
+                     <label>Invoice Date</label>
+                     <input
+                       type="date"
+                       value={formData.date}
+                       onChange={(e) => setFormData({...formData, date: e.target.value})}
+                       required
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                     />
+                   </div>
+                   <div>
+                     <label>Terms</label>
+                     <select
+                       value={formData.terms}
+                       onChange={(e) => setFormData({...formData, terms: e.target.value})}
+                       required
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                     >
+                       <option value="Due on Receipt">Due on Receipt</option>
+                       <option value="15 days">15 days</option>
+                       <option value="30 days">30 days</option>
+                       <option value="45 days">45 days</option>
+                       <option value="60 days">60 days</option>
+                       <option value="90 days">90 days</option>
+                     </select>
+                   </div>
+                 </div>
+               </div>
+
+               {/* GST Compliance Details */}
+               <div style={{ marginBottom: '24px' }}>
+                 <h3>GST Compliance Details</h3>
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                   <div>
+                     <label>Place of Supply *</label>
+                     <select
+                       value={formData.place_of_supply}
+                       onChange={(e) => {
+                         const state = e.target.value
+                         const stateCode = INDIAN_STATES[state as keyof typeof INDIAN_STATES] || ''
+                         setFormData({
+                           ...formData, 
+                           place_of_supply: state,
+                           place_of_supply_state_code: stateCode
+                         })
+                       }}
+                       required
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                     >
+                       <option value="">Select State...</option>
+                       {Object.keys(INDIAN_STATES).map(state => (
+                         <option key={state} value={state}>
+                           {state} ({INDIAN_STATES[state as keyof typeof INDIAN_STATES]})
+                         </option>
+                       ))}
+                     </select>
+                   </div>
+                   <div>
+                     <label>E-way Bill Number</label>
+                     <input
+                       type="text"
+                       value={formData.eway_bill_number}
+                       onChange={(e) => setFormData({...formData, eway_bill_number: e.target.value})}
+                       placeholder="Optional - Enter e-way bill number"
+                       maxLength={50}
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                     />
+                   </div>
+                   <div>
+                     <label>
+                       <input
+                         type="checkbox"
+                         checked={formData.reverse_charge}
+                         onChange={(e) => setFormData({...formData, reverse_charge: e.target.checked})}
+                         style={{ marginRight: '8px' }}
+                       />
+                       Reverse Charge
+                     </label>
+                   </div>
+                   <div>
+                     <label>
+                       <input
+                         type="checkbox"
+                         checked={formData.export_supply}
+                         onChange={(e) => setFormData({...formData, export_supply: e.target.checked})}
+                         style={{ marginRight: '8px' }}
+                       />
+                       Export Supply
+                     </label>
+                   </div>
+                 </div>
+               </div>
+
+               {/* Customer Details */}
+               <div style={{ marginBottom: '24px' }}>
+                 <h3>Customer Details</h3>
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                   <div>
+                     <label>Customer Name *</label>
+                     <select
+                       value={formData.customer_id || ''}
+                       onChange={(e) => handleCustomerChange(Number(e.target.value))}
+                       required
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                     >
+                       <option value="">Select Customer...</option>
+                       {customers.map(customer => (
+                         <option key={customer.id} value={customer.id}>
+                           {customer.name}
+                         </option>
+                       ))}
+                     </select>
+                   </div>
+                   <div>
+                     <label>Bill To Address *</label>
+                     <textarea
+                       value={formData.bill_to_address}
+                       onChange={(e) => setFormData({...formData, bill_to_address: e.target.value})}
+                       required
+                       maxLength={200}
+                       rows={3}
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                     />
+                   </div>
+                   <div>
+                     <label>Ship To Address *</label>
+                     <textarea
+                       value={formData.ship_to_address}
+                       onChange={(e) => setFormData({...formData, ship_to_address: e.target.value})}
+                       required
+                       maxLength={200}
+                       rows={3}
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                     />
+                   </div>
+                 </div>
+               </div>
+
+               {/* Items/Products */}
+               <div style={{ marginBottom: '24px' }}>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                   <h3>Items/Products</h3>
+                   <Button type="button" onClick={addItem} variant="secondary">Add Item</Button>
+                 </div>
+                 
+                 <div style={{ overflowX: 'auto' }}>
+                   <table>
+                     <thead>
+                       <tr>
+                         <th>Product Name *</th>
+                         <th>Description</th>
+                         <th>HSN Code</th>
+                         <th>Quantity *</th>
+                         <th>Price *</th>
+                         <th>Discount</th>
+                         <th>Discount Type</th>
+                         <th>GST Rate</th>
+                         <th>GST Amount</th>
+                         <th>Amount</th>
+                         <th>Action</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {formData.items.map((item, index) => {
+                         const product = products.find(p => p.id === item.product_id)
+                         const lineTotal = calculateLineTotal(item)
+                         const gstAmount = lineTotal * ((product?.gst_rate || 0) / 100)
+                         const totalAmount = lineTotal + gstAmount
+                         
+                         return (
+                           <tr key={index}>
+                             <td>
+                               <select
+                                 value={item.product_id}
+                                 onChange={(e) => updateItem(index, 'product_id', Number(e.target.value))}
+                                 required
+                                 style={{ width: '100%', padding: '4px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                               >
+                                 <option value={0}>Select Product...</option>
+                                 {products.map(product => (
+                                   <option key={product.id} value={product.id}>
+                                     {product.name}
+                                   </option>
+                                 ))}
+                               </select>
+                             </td>
+                             <td>{product?.description || '-'}</td>
+                             <td>{product?.hsn || '-'}</td>
+                             <td>
+                               <input
+                                 type="number"
+                                 value={item.qty}
+                                 onChange={(e) => updateItem(index, 'qty', Number(e.target.value))}
+                                 min={1}
+                                 required
+                                 style={{ width: '60px', padding: '4px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                               />
+                             </td>
+                             <td>
+                               <input
+                                 type="number"
+                                 value={item.rate}
+                                 onChange={(e) => updateItem(index, 'rate', Number(e.target.value))}
+                                 min={0}
+                                 step={0.01}
+                                 required
+                                 style={{ width: '80px', padding: '4px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                               />
+                             </td>
+                             <td>
+                               <input
+                                 type="number"
+                                 value={item.discount}
+                                 onChange={(e) => updateItem(index, 'discount', Number(e.target.value))}
+                                 min={0}
+                                 step={0.01}
+                                 style={{ width: '60px', padding: '4px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                               />
+                             </td>
+                             <td>
+                               <select
+                                 value={item.discount_type}
+                                 onChange={(e) => updateItem(index, 'discount_type', e.target.value as 'Percentage' | 'Fixed')}
+                                 style={{ width: '80px', padding: '4px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                               >
+                                 <option value="Percentage">%</option>
+                                 <option value="Fixed">₹</option>
+                               </select>
+                             </td>
+                             <td>{product?.gst_rate || 0}%</td>
+                             <td>₹{gstAmount.toFixed(2)}</td>
+                             <td>₹{totalAmount.toFixed(2)}</td>
+                             <td>
+                               {formData.items.length > 1 && (
+                                 <Button 
+                                   type="button" 
+                                   onClick={() => removeItem(index)} 
+                                   variant="secondary"
+                                   size="small"
+                                 >
+                                   Remove
+                                 </Button>
+                               )}
+                             </td>
+                           </tr>
+                         )
+                       })}
+                     </tbody>
+                   </table>
+                 </div>
+               </div>
+
+               {/* Total Summary */}
+               <div style={{ marginBottom: '24px' }}>
+                 <h3>Total Summary</h3>
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                   <div>
+                     <label>Total Discount</label>
+                     <input
+                       type="text"
+                       value={totals.taxable > 0 ? `₹${(totals.taxable * 0.1).toFixed(2)}` : '₹0.00'}
+                       readOnly
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9' }}
+                     />
+                   </div>
+                   <div>
+                     <label>Total Taxable Amount</label>
+                     <input
+                       type="text"
+                       value={`₹${totals.taxable.toFixed(2)}`}
+                       readOnly
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9' }}
+                     />
+                   </div>
+                   <div>
+                     <label>Total GST Amount</label>
+                     <input
+                       type="text"
+                       value={`₹${totals.gst.toFixed(2)}`}
+                       readOnly
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9' }}
+                     />
+                   </div>
+                   <div>
+                     <label>Total Amount (incl. GST)</label>
+                     <input
+                       type="text"
+                       value={`₹${totals.total.toFixed(2)}`}
+                       readOnly
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9', fontWeight: 'bold' }}
+                     />
+                   </div>
+                   <div style={{ gridColumn: '1 / -1' }}>
+                     <label>Total in Words</label>
+                     <input
+                       type="text"
+                       value={`${totals.total.toFixed(2)} Rupees Only`}
+                       readOnly
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9' }}
+                     />
+                   </div>
+                 </div>
+               </div>
+
+               {/* Additional Details */}
+               <div style={{ marginBottom: '24px' }}>
+                 <h3>Additional Details</h3>
+                 <div>
+                   <label>Notes</label>
+                   <textarea
+                     value={formData.notes}
+                     onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                     maxLength={200}
+                     rows={3}
+                     placeholder="Optional notes..."
+                     style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                   />
+                 </div>
+               </div>
+
+               {/* Form Actions */}
+               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                 <Button type="button" onClick={() => {
+                   setShowEditModal(false)
+                   setEditingInvoice(null)
+                   resetForm()
+                 }} variant="secondary">
+                   Cancel
+                 </Button>
+                 <Button type="submit" variant="primary" disabled={loading}>
+                   {loading ? 'Updating...' : 'Update Invoice'}
+                 </Button>
+               </div>
+             </form>
+           </div>
          </div>
        )}
 

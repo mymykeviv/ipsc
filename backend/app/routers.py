@@ -538,8 +538,110 @@ def update_invoice(invoice_id: int, payload: InvoiceCreate, _: User = Depends(ge
     if not inv:
         raise HTTPException(status_code=404, detail='Invoice not found')
     
-    # Similar validation and update logic as create_invoice
-    # This is a simplified version - in production, you'd want more comprehensive update logic
+    # Validation (same as create_invoice)
+    if payload.invoice_no and len(payload.invoice_no) > 16:
+        raise HTTPException(status_code=400, detail="Invoice number must be 16 characters or less as per GST law")
+    if payload.invoice_no and not re.match(r'^[a-zA-Z0-9\s-]+$', payload.invoice_no):
+        raise HTTPException(status_code=400, detail="Invoice number must be alphanumeric with spaces and hyphens only")
+    if len(payload.bill_to_address) > 200:
+        raise HTTPException(status_code=400, detail="Bill to address must be 200 characters or less")
+    if len(payload.ship_to_address) > 200:
+        raise HTTPException(status_code=400, detail="Ship to address must be 200 characters or less")
+    if payload.notes and len(payload.notes) > 200:
+        raise HTTPException(status_code=400, detail="Notes must be 200 characters or less")
+    if payload.eway_bill_number and len(payload.eway_bill_number) > 50:
+        raise HTTPException(status_code=400, detail="E-way bill number must be 50 characters or less")
+    if payload.eway_bill_number and not re.match(r'^[0-9]+$', payload.eway_bill_number):
+        raise HTTPException(status_code=400, detail="E-way bill number must contain only numbers")
+    if not payload.place_of_supply:
+        raise HTTPException(status_code=400, detail="Place of supply is mandatory as per GST law")
+    if not payload.place_of_supply_state_code:
+        raise HTTPException(status_code=400, detail="Place of supply state code is mandatory as per GST law")
+    
+    # Check if invoice number is being changed and if it's unique
+    if payload.invoice_no and payload.invoice_no != inv.invoice_no:
+        existing = db.query(Invoice).filter(Invoice.invoice_no == payload.invoice_no).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Invoice number already exists")
+    
+    # Update invoice details
+    inv.invoice_no = payload.invoice_no or inv.invoice_no
+    inv.date = datetime.fromisoformat(payload.date.replace('Z', '+00:00'))
+    inv.due_date = calculate_due_date(payload.date, payload.terms)
+    inv.terms = payload.terms
+    inv.place_of_supply = payload.place_of_supply
+    inv.place_of_supply_state_code = payload.place_of_supply_state_code
+    inv.eway_bill_number = payload.eway_bill_number
+    inv.reverse_charge = payload.reverse_charge
+    inv.export_supply = payload.export_supply
+    inv.bill_to_address = payload.bill_to_address
+    inv.ship_to_address = payload.ship_to_address
+    inv.notes = payload.notes
+    
+    # Delete existing items and recreate them
+    db.query(InvoiceItem).filter(InvoiceItem.invoice_id == inv.id).delete()
+    
+    # Recalculate totals
+    taxable_total = money(0)
+    discount_total = money(0)
+    cgst_total = money(0)
+    sgst_total = money(0)
+    igst_total = money(0)
+    
+    company = db.query(CompanySettings).first()
+    customer = db.query(Party).filter(Party.id == inv.customer_id).first()
+    intra = company and customer and customer.state == inv.place_of_supply
+    
+    for it in payload.items:
+        prod = db.query(Product).filter(Product.id == it.product_id).first()
+        if not prod:
+            raise HTTPException(status_code=400, detail='Invalid product')
+        
+        # Calculate line item amounts
+        line_total = money(Decimal(it.qty) * Decimal(it.rate))
+        
+        # Apply discount
+        if it.discount > 0:
+            if it.discount_type == "Percentage":
+                discount_amount = money(line_total * Decimal(it.discount) / Decimal(100))
+            else:  # Fixed
+                discount_amount = money(Decimal(it.discount))
+            line_total -= discount_amount
+            discount_total += discount_amount
+        
+        # Calculate GST
+        cgst, sgst, igst = split_gst(line_total, prod.gst_rate, bool(intra))
+        
+        item = InvoiceItem(
+            invoice_id=inv.id,
+            product_id=prod.id,
+            description=prod.name,
+            hsn_code=prod.hsn,
+            qty=it.qty,
+            rate=money(it.rate),
+            discount=money(it.discount),
+            discount_type=it.discount_type,
+            taxable_value=line_total,
+            gst_rate=prod.gst_rate,
+            cgst=cgst, sgst=sgst, igst=igst,
+            amount=line_total + cgst + sgst + igst
+        )
+        db.add(item)
+        taxable_total += line_total
+        cgst_total += cgst
+        sgst_total += sgst
+        igst_total += igst
+    
+    # Update invoice totals
+    inv.taxable_value = taxable_total
+    inv.total_discount = discount_total
+    inv.cgst = cgst_total
+    inv.sgst = sgst_total
+    inv.igst = igst_total
+    inv.grand_total = money(taxable_total + cgst_total + sgst_total + igst_total)
+    
+    db.commit()
+    db.refresh(inv)
     return inv
 
 
