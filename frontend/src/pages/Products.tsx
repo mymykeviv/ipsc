@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react'
+import { useAuth } from '../modules/AuthContext'
+import { createApiErrorHandler } from '../lib/apiUtils'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { SearchBar } from '../components/SearchBar'
@@ -57,8 +59,12 @@ interface StockFormData {
 }
 
 export function Products() {
+  const { forceLogout } = useAuth()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  
+  // Create error handler that will automatically log out on 401 errors
+  const handleApiError = createApiErrorHandler(forceLogout)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showStockModal, setShowStockModal] = useState(false)
@@ -115,6 +121,8 @@ export function Products() {
       setProducts(data)
     } catch (error) {
       console.error('Failed to load products:', error)
+      const errorMessage = handleApiError(error)
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

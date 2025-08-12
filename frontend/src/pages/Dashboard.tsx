@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../modules/AuthContext'
 import { apiGetCashflowSummary, CashflowSummary } from '../lib/api'
+import { createApiErrorHandler } from '../lib/apiUtils'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { ExpenseForm } from '../components/ExpenseForm'
@@ -9,11 +10,14 @@ import { ComprehensiveInvoiceForm } from '../components/ComprehensiveInvoiceForm
 import { PurchaseForm } from '../components/PurchaseForm'
 
 export function Dashboard() {
-  const { token } = useAuth()
+  const { token, forceLogout } = useAuth()
   const navigate = useNavigate()
   const [cashflowData, setCashflowData] = useState<CashflowSummary | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // Create error handler that will automatically log out on 401 errors
+  const handleApiError = createApiErrorHandler(forceLogout)
   const [periodType, setPeriodType] = useState<'month' | 'quarter' | 'year' | 'custom'>('month')
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0].substring(0, 7) + '-01')
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0])
@@ -35,7 +39,8 @@ export function Dashboard() {
       const data = await apiGetCashflowSummary(startDate, endDate)
       setCashflowData(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load cashflow data')
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

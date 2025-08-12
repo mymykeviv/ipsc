@@ -7,6 +7,7 @@ type AuthContextType = {
   logout: () => void
   isAuthenticated: boolean
   expiresAt: number | null
+  forceLogout: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -108,6 +109,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_exp')
       window.location.href = '/login'
+    },
+    forceLogout() {
+      setToken(null)
+      setExpiresAt(null)
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('auth_exp')
+      // Force redirect to login without using window.location.href
+      window.location.replace('/login')
     },
     isAuthenticated: !!token,
     expiresAt
