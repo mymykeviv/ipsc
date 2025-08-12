@@ -127,7 +127,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '12px' }}>
+    <form onSubmit={handleSubmit}>
       {error && (
         <div style={{ 
           padding: '8px 12px', 
@@ -135,88 +135,67 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
           border: '1px solid #fcc', 
           borderRadius: '4px', 
           color: '#c33',
-          fontSize: '14px'
+          fontSize: '14px',
+          marginBottom: '16px'
         }}>
           {error}
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-            Vendor *
-          </label>
-          <select
-            value={formData.vendor_id || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, vendor_id: parseInt(e.target.value) || 0 }))}
-            required
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px',
-              backgroundColor: 'white'
-            }}
-          >
-            <option value="">Select Vendor</option>
-            {vendors.map(vendor => (
-              <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
-            ))}
-          </select>
-        </div>
+      {/* Purchase Information Section */}
+      <div style={{ marginBottom: '24px' }}>
+        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+          Purchase Information
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div>
+            <label>Vendor *</label>
+            <select
+              value={formData.vendor_id || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, vendor_id: parseInt(e.target.value) || 0 }))}
+              required
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+            >
+              <option value="">Select Vendor</option>
+              {vendors.map(vendor => (
+                <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
+              ))}
+            </select>
+          </div>
 
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-            Purchase Date *
-          </label>
-          <input
-            type="date"
-            value={formData.date}
-            onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-            required
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
-          />
+          <div>
+            <label>Purchase Date *</label>
+            <input
+              type="date"
+              value={formData.date}
+              onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+              required
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+            />
+          </div>
+
+          <div>
+            <label>Due Date</label>
+            <input
+              type="date"
+              value={formData.due_date}
+              onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+            />
+          </div>
+
+          <div>
+            <label>Terms</label>
+            <input
+              type="text"
+              value={formData.terms}
+              onChange={(e) => setFormData(prev => ({ ...prev, terms: e.target.value }))}
+              placeholder="Enter payment terms"
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+            />
+          </div>
         </div>
       </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-            Due Date
-          </label>
-          <input
-            type="date"
-            value={formData.due_date}
-            onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
-          />
-        </div>
-
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-            Terms
-          </label>
-          <input
-            type="text"
-            value={formData.terms}
-            onChange={(e) => setFormData(prev => ({ ...prev, terms: e.target.value }))}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #ced4da',
               borderRadius: '4px',
               fontSize: '14px'
             }}
