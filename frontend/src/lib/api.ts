@@ -256,6 +256,30 @@ export type Invoice = {
   eway_bill_number: string | null
   reverse_charge: boolean
   export_supply: boolean
+  
+  // Payment Fields
+  paid_amount: number
+  balance_amount: number
+}
+
+export type Payment = {
+  id: number
+  invoice_id: number
+  payment_date: string
+  payment_amount: number
+  payment_method: string
+  reference_number: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type PaymentCreate = {
+  payment_date: string
+  payment_amount: number
+  payment_method: string
+  reference_number?: string
+  notes?: string
 }
 
 export async function apiCreateInvoice(payload: InvoiceCreate): Promise<Invoice> {
@@ -441,5 +465,58 @@ export async function apiCreatePurchase(payload: PurchaseCreate): Promise<{ id: 
   })
   if (!r.ok) throw new Error('failed')
   return r.json()
+}
+
+// Payment Management API Functions
+export async function apiAddPayment(invoiceId: number, payload: PaymentCreate): Promise<Payment> {
+  const r = await fetch(`/api/invoices/${invoiceId}/payments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
+    body: JSON.stringify(payload)
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiGetInvoicePayments(invoiceId: number): Promise<Payment[]> {
+  const r = await fetch(`/api/invoices/${invoiceId}/payments`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiDeletePayment(paymentId: number): Promise<void> {
+  const r = await fetch(`/api/payments/${paymentId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
 }
 

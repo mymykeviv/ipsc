@@ -113,9 +113,13 @@ class Invoice(Base):
     igst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     grand_total: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     
+    # Payment Tracking
+    paid_amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    balance_amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    
     # Additional Fields
     notes: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="Draft")  # Draft, Sent, Paid, Overdue
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="Draft")  # Draft, Sent, Paid, Overdue, Partially Paid
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
@@ -147,6 +151,19 @@ class InvoiceItem(Base):
     sgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     igst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+
+
+class Payment(Base):
+    __tablename__ = "payments"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    invoice_id: Mapped[int] = mapped_column(ForeignKey("invoices.id"), nullable=False)
+    payment_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    payment_amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    payment_method: Mapped[str] = mapped_column(String(50), nullable=False)  # Cash, Bank Transfer, Cheque, UPI, etc.
+    reference_number: Mapped[str | None] = mapped_column(String(100), nullable=True)  # Cheque number, UPI reference, etc.
+    notes: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
 class Purchase(Base):

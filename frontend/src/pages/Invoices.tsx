@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { apiListParties, apiGetProducts, apiCreateInvoice, Party, Product } from '../lib/api'
+import { apiListParties, apiGetProducts, apiCreateInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, Party, Product, Payment } from '../lib/api'
 import { useAuth } from '../modules/AuthContext'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
@@ -92,10 +92,19 @@ export function Invoices() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [showModal, setShowModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
   const [emailAddress, setEmailAddress] = useState('')
+  const [paymentData, setPaymentData] = useState({
+    payment_date: new Date().toISOString().split('T')[0],
+    payment_amount: 0,
+    payment_method: 'Cash',
+    reference_number: '',
+    notes: ''
+  })
+  const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
@@ -388,6 +397,82 @@ export function Invoices() {
     }
   }
 
+  const openPaymentModal = async (invoice: Invoice) => {
+    try {
+      setLoading(true)
+      setSelectedInvoice(invoice)
+      
+      // Load existing payments
+      const invoicePayments = await apiGetInvoicePayments(invoice.id)
+      setPayments(invoicePayments)
+      
+      // Set payment amount to balance amount
+      setPaymentData({
+        payment_date: new Date().toISOString().split('T')[0],
+        payment_amount: invoice.balance_amount,
+        payment_method: 'Cash',
+        reference_number: '',
+        notes: ''
+      })
+      
+      setShowPaymentModal(true)
+    } catch (err: any) {
+      setError(err.message || 'Failed to load payment details')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!selectedInvoice) return
+    
+    try {
+      setLoading(true)
+      setError('')
+      
+      await apiAddPayment(selectedInvoice.id, paymentData)
+      
+      setShowPaymentModal(false)
+      setSelectedInvoice(null)
+      setPaymentData({
+        payment_date: new Date().toISOString().split('T')[0],
+        payment_amount: 0,
+        payment_method: 'Cash',
+        reference_number: '',
+        notes: ''
+      })
+      
+      loadData() // Refresh invoices list
+    } catch (err: any) {
+      setError(err.message || 'Failed to add payment')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeletePayment = async (paymentId: number) => {
+    if (!confirm('Are you sure you want to delete this payment?')) return
+    
+    try {
+      setLoading(true)
+      await apiDeletePayment(paymentId)
+      
+      // Refresh payments list
+      if (selectedInvoice) {
+        const invoicePayments = await apiGetInvoicePayments(selectedInvoice.id)
+        setPayments(invoicePayments)
+      }
+      
+      loadData() // Refresh invoices list
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete payment')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const totals = calculateTotals()
 
   if (loading && invoices.length === 0) {
@@ -515,7 +600,13 @@ export function Invoices() {
                          >
                            Email
                          </Button>
-                         <Button variant="secondary" size="small">Payment</Button>
+                         <Button 
+                           variant="secondary" 
+                           size="small"
+                           onClick={() => openPaymentModal(invoice)}
+                         >
+                           Payment
+                         </Button>
                          <Button 
                            variant="secondary" 
                            size="small"
@@ -1326,6 +1417,190 @@ export function Invoices() {
                  </Button>
                </div>
              </form>
+           </div>
+         </div>
+       )}
+
+       {/* Payment Modal */}
+       {showPaymentModal && selectedInvoice && (
+         <div style={{
+           position: 'fixed',
+           top: 0,
+           left: 0,
+           right: 0,
+           bottom: 0,
+           backgroundColor: 'rgba(0, 0, 0, 0.5)',
+           display: 'flex',
+           alignItems: 'center',
+           justifyContent: 'center',
+           zIndex: 1000
+         }}>
+           <div style={{
+             backgroundColor: 'white',
+             borderRadius: 'var(--radius)',
+             padding: '24px',
+             width: '80%',
+             maxWidth: '800px',
+             maxHeight: '80vh',
+             overflow: 'auto'
+           }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+               <h2>Payment Management: {selectedInvoice.invoice_no}</h2>
+               <Button onClick={() => {
+                 setShowPaymentModal(false)
+                 setSelectedInvoice(null)
+               }} variant="secondary">×</Button>
+             </div>
+
+             {error && (
+               <div style={{ 
+                 padding: '12px', 
+                 backgroundColor: '#fecaca', 
+                 color: '#dc2626', 
+                 borderRadius: 'var(--radius)', 
+                 marginBottom: '16px' 
+               }}>
+                 {error}
+               </div>
+             )}
+
+             {/* Invoice Summary */}
+             <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f9f9f9', borderRadius: 'var(--radius)' }}>
+               <h3>Invoice Summary</h3>
+               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                 <div>
+                   <strong>Total Amount:</strong> ₹{selectedInvoice.grand_total.toFixed(2)}
+                 </div>
+                 <div>
+                   <strong>Paid Amount:</strong> ₹{selectedInvoice.paid_amount.toFixed(2)}
+                 </div>
+                 <div>
+                   <strong>Balance Amount:</strong> ₹{selectedInvoice.balance_amount.toFixed(2)}
+                 </div>
+                 <div>
+                   <strong>Status:</strong> {selectedInvoice.status}
+                 </div>
+               </div>
+             </div>
+
+             {/* Add Payment Form */}
+             <div style={{ marginBottom: '24px' }}>
+               <h3>Add Payment</h3>
+               <form onSubmit={handlePaymentSubmit}>
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                   <div>
+                     <label>Payment Date *</label>
+                     <input
+                       type="date"
+                       value={paymentData.payment_date}
+                       onChange={(e) => setPaymentData({...paymentData, payment_date: e.target.value})}
+                       required
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                     />
+                   </div>
+                   <div>
+                     <label>Payment Amount *</label>
+                     <input
+                       type="number"
+                       value={paymentData.payment_amount}
+                       onChange={(e) => setPaymentData({...paymentData, payment_amount: Number(e.target.value)})}
+                       min={0.01}
+                       max={selectedInvoice.balance_amount}
+                       step={0.01}
+                       required
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                     />
+                   </div>
+                   <div>
+                     <label>Payment Method *</label>
+                     <select
+                       value={paymentData.payment_method}
+                       onChange={(e) => setPaymentData({...paymentData, payment_method: e.target.value})}
+                       required
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                     >
+                       <option value="Cash">Cash</option>
+                       <option value="Bank Transfer">Bank Transfer</option>
+                       <option value="Cheque">Cheque</option>
+                       <option value="UPI">UPI</option>
+                       <option value="Credit Card">Credit Card</option>
+                       <option value="Debit Card">Debit Card</option>
+                       <option value="Online Payment">Online Payment</option>
+                     </select>
+                   </div>
+                   <div>
+                     <label>Reference Number</label>
+                     <input
+                       type="text"
+                       value={paymentData.reference_number}
+                       onChange={(e) => setPaymentData({...paymentData, reference_number: e.target.value})}
+                       placeholder="Cheque number, UPI reference, etc."
+                       maxLength={100}
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                     />
+                   </div>
+                   <div style={{ gridColumn: '1 / -1' }}>
+                     <label>Notes</label>
+                     <textarea
+                       value={paymentData.notes}
+                       onChange={(e) => setPaymentData({...paymentData, notes: e.target.value})}
+                       placeholder="Optional payment notes..."
+                       maxLength={200}
+                       rows={3}
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                     />
+                   </div>
+                 </div>
+                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '16px' }}>
+                   <Button type="submit" variant="primary" disabled={loading}>
+                     {loading ? 'Adding...' : 'Add Payment'}
+                   </Button>
+                 </div>
+               </form>
+             </div>
+
+             {/* Payment History */}
+             <div>
+               <h3>Payment History</h3>
+               {payments.length > 0 ? (
+                 <div style={{ overflowX: 'auto' }}>
+                   <table>
+                     <thead>
+                       <tr>
+                         <th>Date</th>
+                         <th>Amount</th>
+                         <th>Method</th>
+                         <th>Reference</th>
+                         <th>Notes</th>
+                         <th>Action</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {payments.map(payment => (
+                         <tr key={payment.id}>
+                           <td>{new Date(payment.payment_date).toLocaleDateString()}</td>
+                           <td>₹{payment.payment_amount.toFixed(2)}</td>
+                           <td>{payment.payment_method}</td>
+                           <td>{payment.reference_number || '-'}</td>
+                           <td>{payment.notes || '-'}</td>
+                           <td>
+                             <Button 
+                               variant="secondary" 
+                               size="small"
+                               onClick={() => handleDeletePayment(payment.id)}
+                             >
+                               Delete
+                             </Button>
+                           </td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+               ) : (
+                 <p>No payments recorded yet.</p>
+               )}
+             </div>
            </div>
          </div>
        )}

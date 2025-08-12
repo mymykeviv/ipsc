@@ -317,6 +317,29 @@ class InvoiceItemIn(BaseModel):
     discount_type: str = "Percentage"  # Percentage, Fixed
 
 
+class PaymentIn(BaseModel):
+    payment_date: str  # ISO date string
+    payment_amount: float
+    payment_method: str
+    reference_number: str | None = None
+    notes: str | None = None
+
+
+class PaymentOut(BaseModel):
+    id: int
+    invoice_id: int
+    payment_date: datetime
+    payment_amount: float
+    payment_method: str
+    reference_number: str | None
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class InvoiceOut(BaseModel):
     id: int
     customer_id: int
@@ -442,6 +465,8 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
         total_discount=money(0),
         cgst=money(0), sgst=money(0), igst=money(0),
         grand_total=money(0),
+        paid_amount=money(0),
+        balance_amount=money(0),
         notes=payload.notes,
         status="Draft"
     )
@@ -496,6 +521,7 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
     inv.sgst = sgst_total
     inv.igst = igst_total
     inv.grand_total = money(taxable_total + cgst_total + sgst_total + igst_total)
+    inv.balance_amount = money(taxable_total + cgst_total + sgst_total + igst_total)
     db.commit()
     db.refresh(inv)
     return inv
@@ -671,6 +697,93 @@ def delete_invoice(invoice_id: int, _: User = Depends(get_current_user), db: Ses
     db.delete(inv)
     db.commit()
     return {"message": "Invoice deleted successfully"}
+
+
+# Payment Management Endpoints
+@api.post('/invoices/{invoice_id}/payments', response_model=PaymentOut)
+def add_payment(invoice_id: int, payload: PaymentIn, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    if not inv:
+        raise HTTPException(status_code=400, detail='Invoice not found')
+    
+    # Validation
+    if payload.payment_amount <= 0:
+        raise HTTPException(status_code=400, detail="Payment amount must be greater than 0")
+    
+    if payload.payment_amount > float(inv.balance_amount):
+        raise HTTPException(status_code=400, detail="Payment amount cannot exceed balance amount")
+    
+    if not payload.payment_method:
+        raise HTTPException(status_code=400, detail="Payment method is required")
+    
+    if len(payload.payment_method) > 50:
+        raise HTTPException(status_code=400, detail="Payment method must be 50 characters or less")
+    
+    if payload.reference_number and len(payload.reference_number) > 100:
+        raise HTTPException(status_code=400, detail="Reference number must be 100 characters or less")
+    
+    if payload.notes and len(payload.notes) > 200:
+        raise HTTPException(status_code=400, detail="Notes must be 200 characters or less")
+    
+    # Create payment record
+    payment = Payment(
+        invoice_id=invoice_id,
+        payment_date=datetime.fromisoformat(payload.payment_date.replace('Z', '+00:00')),
+        payment_amount=money(payload.payment_amount),
+        payment_method=payload.payment_method,
+        reference_number=payload.reference_number,
+        notes=payload.notes
+    )
+    db.add(payment)
+    
+    # Update invoice payment status
+    inv.paid_amount += money(payload.payment_amount)
+    inv.balance_amount = inv.grand_total - inv.paid_amount
+    
+    # Update invoice status based on payment
+    if inv.balance_amount == 0:
+        inv.status = "Paid"
+    elif inv.paid_amount > 0:
+        inv.status = "Partially Paid"
+    
+    db.commit()
+    db.refresh(payment)
+    return payment
+
+
+@api.get('/invoices/{invoice_id}/payments', response_model=list[PaymentOut])
+def get_invoice_payments(invoice_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    if not inv:
+        raise HTTPException(status_code=404, detail='Invoice not found')
+    
+    payments = db.query(Payment).filter(Payment.invoice_id == invoice_id).order_by(Payment.payment_date.desc()).all()
+    return payments
+
+
+@api.delete('/payments/{payment_id}')
+def delete_payment(payment_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    payment = db.query(Payment).filter(Payment.id == payment_id).first()
+    if not payment:
+        raise HTTPException(status_code=400, detail='Payment not found')
+    
+    # Update invoice payment status
+    inv = db.query(Invoice).filter(Invoice.id == payment.invoice_id).first()
+    if inv:
+        inv.paid_amount -= payment.payment_amount
+        inv.balance_amount = inv.grand_total - inv.paid_amount
+        
+        # Update invoice status based on payment
+        if inv.balance_amount == inv.grand_total:
+            inv.status = "Sent"
+        elif inv.balance_amount == 0:
+            inv.status = "Paid"
+        elif inv.paid_amount > 0:
+            inv.status = "Partially Paid"
+    
+    db.delete(payment)
+    db.commit()
+    return {"message": "Payment deleted successfully"}
 
 
 @api.post('/invoices/{invoice_id}/email', status_code=202)
