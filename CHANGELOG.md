@@ -5,6 +5,29 @@ All notable changes to CASHFLOW will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.8] - 2024-01-15
+
+### Added
+- **Comprehensive Invoice Form Implementation**
+  - **Unified Form Component**: Both Dashboard and Invoices screen now use the same comprehensive invoice form
+  - **Invoice Details Section**: Invoice number, date, due date, status, type, currency, terms
+  - **Supplier Details Section**: Supplier name, address, GSTIN, email with auto-population
+  - **GST Compliance Section**: Place of supply, e-way bill number, reverse charge, export supply
+  - **Customer Details Section**: Customer name, bill/ship addresses, GSTIN, email with auto-population
+  - **Invoice Items Section**: Product selection, quantity, rate, discount, GST rate, HSN code
+  - **Invoice Totals Section**: Subtotal, discount, GST, round-off, grand total, total in words
+  - **Other Details Section**: Invoice notes with character limits
+
+### Changed
+- **Form Consistency**: Standardized invoice form across all screens
+- **Enhanced Validation**: Comprehensive field validation and error handling
+- **Auto-population**: Customer and supplier details auto-populate from selected parties
+- **Calculations**: Real-time calculation of totals, GST, and amounts
+
+### Fixed
+- **Form Discrepancy**: Resolved differences between Dashboard and Invoices screen forms
+- **User Experience**: Consistent interface and functionality across all invoice creation points
+
 ## [1.6.7] - 2024-01-15
 
 ### Added
