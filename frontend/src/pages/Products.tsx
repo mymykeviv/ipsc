@@ -1008,15 +1008,38 @@ export function Products() {
                 </div>
                 <div>
                   <label>Adjustment Type *</label>
-                  <select
-                    value={stockFormData.adjustmentType}
-                    onChange={(e) => setStockFormData({...stockFormData, adjustmentType: e.target.value as 'add' | 'reduce'})}
-                    required
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  >
-                    <option value="add">Add Stock</option>
-                    <option value="reduce">Reduce Stock</option>
-                  </select>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setStockFormData({...stockFormData, adjustmentType: 'add'})}
+                      style={{
+                        padding: '8px 16px',
+                        border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius)',
+                        backgroundColor: stockFormData.adjustmentType === 'add' ? '#007bff' : 'white',
+                        color: stockFormData.adjustmentType === 'add' ? 'white' : '#333',
+                        cursor: 'pointer',
+                        flex: 1
+                      }}
+                    >
+                      Incoming Stock
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStockFormData({...stockFormData, adjustmentType: 'reduce'})}
+                      style={{
+                        padding: '8px 16px',
+                        border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius)',
+                        backgroundColor: stockFormData.adjustmentType === 'reduce' ? '#007bff' : 'white',
+                        color: stockFormData.adjustmentType === 'reduce' ? 'white' : '#333',
+                        cursor: 'pointer',
+                        flex: 1
+                      }}
+                    >
+                      Outgoing Stock
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label>Quantity *</label>
@@ -1030,28 +1053,41 @@ export function Products() {
                     style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
                   />
                 </div>
+                {stockFormData.adjustmentType === 'add' && (
+                  <div>
+                    <label>Supplier *</label>
+                    <select
+                      value={stockFormData.supplier}
+                      onChange={(e) => setStockFormData({...stockFormData, supplier: e.target.value})}
+                      required
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    >
+                      <option value="">Select Supplier...</option>
+                      <option value="Supplier 1">Supplier 1</option>
+                      <option value="Supplier 2">Supplier 2</option>
+                      <option value="Supplier 3">Supplier 3</option>
+                    </select>
+                  </div>
+                )}
+                {stockFormData.adjustmentType === 'add' && (
+                  <div>
+                    <label>Category *</label>
+                    <select
+                      value={stockFormData.category}
+                      onChange={(e) => setStockFormData({...stockFormData, category: e.target.value})}
+                      required
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    >
+                      <option value="">Select Category...</option>
+                      <option value="Electronics">Electronics</option>
+                      <option value="Clothing">Clothing</option>
+                      <option value="Books">Books</option>
+                      <option value="Home & Garden">Home & Garden</option>
+                    </select>
+                  </div>
+                )}
                 <div>
-                  <label>Supplier</label>
-                  <input
-                    type="text"
-                    value={stockFormData.supplier}
-                    onChange={(e) => setStockFormData({...stockFormData, supplier: e.target.value})}
-                    maxLength={50}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  />
-                </div>
-                <div>
-                  <label>Category</label>
-                  <input
-                    type="text"
-                    value={stockFormData.category}
-                    onChange={(e) => setStockFormData({...stockFormData, category: e.target.value})}
-                    maxLength={50}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  />
-                </div>
-                <div>
-                  <label>Date of Receipt *</label>
+                  <label>{stockFormData.adjustmentType === 'add' ? 'Date of Receipt' : 'Date of Issue'} *</label>
                   <input
                     type="date"
                     value={stockFormData.date_of_receipt}
@@ -1060,15 +1096,17 @@ export function Products() {
                     style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
                   />
                 </div>
-                <div>
-                  <label>Reference Bill Number</label>
-                  <input
-                    type="text"
-                    value={stockFormData.reference_bill_number}
-                    onChange={(e) => setStockFormData({...stockFormData, reference_bill_number: e.target.value})}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  />
-                </div>
+                {stockFormData.adjustmentType === 'add' && (
+                  <div>
+                    <label>Reference Bill Number</label>
+                    <input
+                      type="text"
+                      value={stockFormData.reference_bill_number}
+                      onChange={(e) => setStockFormData({...stockFormData, reference_bill_number: e.target.value})}
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                )}
                 <div>
                   <label>Notes</label>
                   <textarea
@@ -1083,7 +1121,15 @@ export function Products() {
                 <Button type="button" variant="secondary" onClick={() => setShowStockModal(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" variant="primary">
+                <Button 
+                  type="submit" 
+                  variant="primary"
+                  disabled={
+                    !stockFormData.quantity || 
+                    !stockFormData.date_of_receipt ||
+                    (stockFormData.adjustmentType === 'add' && (!stockFormData.supplier || !stockFormData.category))
+                  }
+                >
                   Apply Adjustment
                 </Button>
               </div>
