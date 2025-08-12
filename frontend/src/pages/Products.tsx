@@ -4,7 +4,7 @@ import { createApiErrorHandler } from '../lib/apiUtils'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { SearchBar } from '../components/SearchBar'
-import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAdjustStock } from '../lib/api'
+import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAdjustStock, apiListParties, Party } from '../lib/api'
 
 interface Product {
   id: number
@@ -61,6 +61,7 @@ interface StockFormData {
 export function Products() {
   const { forceLogout } = useAuth()
   const [products, setProducts] = useState<Product[]>([])
+  const [vendors, setVendors] = useState<Party[]>([])
   const [loading, setLoading] = useState(true)
   
   // Create error handler that will automatically log out on 401 errors
@@ -117,10 +118,14 @@ export function Products() {
 
   const loadProducts = async () => {
     try {
-      const data = await apiGetProducts()
-      setProducts(data)
+      const [productsData, vendorsData] = await Promise.all([
+        apiGetProducts(),
+        apiListParties('vendor')
+      ])
+      setProducts(productsData)
+      setVendors(vendorsData)
     } catch (error) {
-      console.error('Failed to load products:', error)
+      console.error('Failed to load data:', error)
       const errorMessage = handleApiError(error)
       setError(errorMessage)
     } finally {
@@ -1080,34 +1085,32 @@ export function Products() {
                 {stockFormData.adjustmentType === 'add' && (
                   <div>
                     <label>Supplier *</label>
-                    <select
+                    <input
+                      type="text"
                       value={stockFormData.supplier}
                       onChange={(e) => setStockFormData({...stockFormData, supplier: e.target.value})}
+                      placeholder="Search and select supplier..."
+                      list="supplier-list"
                       required
                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                    >
-                      <option value="">Select Supplier...</option>
-                      <option value="Supplier 1">Supplier 1</option>
-                      <option value="Supplier 2">Supplier 2</option>
-                      <option value="Supplier 3">Supplier 3</option>
-                    </select>
+                    />
+                    <datalist id="supplier-list">
+                      {vendors.map(vendor => (
+                        <option key={vendor.id} value={vendor.name} />
+                      ))}
+                    </datalist>
                   </div>
                 )}
                 {stockFormData.adjustmentType === 'add' && (
                   <div>
-                    <label>Category *</label>
-                    <select
+                    <label>Category</label>
+                    <input
+                      type="text"
                       value={stockFormData.category}
                       onChange={(e) => setStockFormData({...stockFormData, category: e.target.value})}
-                      required
+                      placeholder="Enter category (optional)"
                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                    >
-                      <option value="">Select Category...</option>
-                      <option value="Electronics">Electronics</option>
-                      <option value="Clothing">Clothing</option>
-                      <option value="Books">Books</option>
-                      <option value="Home & Garden">Home & Garden</option>
-                    </select>
+                    />
                   </div>
                 )}
                 <div>
@@ -1151,7 +1154,7 @@ export function Products() {
                   disabled={
                     !stockFormData.quantity || 
                     !stockFormData.date_of_receipt ||
-                    (stockFormData.adjustmentType === 'add' && (!stockFormData.supplier || !stockFormData.category))
+                    (stockFormData.adjustmentType === 'add' && !stockFormData.supplier)
                   }
                 >
                   Apply Adjustment
