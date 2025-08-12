@@ -456,6 +456,21 @@ export function Products() {
 
   return (
     <div className="content">
+      {/* Debug info */}
+      {showStockHistoryModal && (
+        <div style={{ 
+          position: 'fixed', 
+          top: '10px', 
+          right: '10px', 
+          backgroundColor: 'red', 
+          color: 'white', 
+          padding: '10px', 
+          zIndex: 10000,
+          fontSize: '12px'
+        }}>
+          Modal State: {showStockHistoryModal ? 'OPEN' : 'CLOSED'}
+        </div>
+      )}
       <Card>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h1>Products</h1>
