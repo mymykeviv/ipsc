@@ -65,6 +65,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_exp')
+      // Redirect to login if session expired
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     }
   }, [])
 
@@ -81,6 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setExpiresAt(null)
         localStorage.removeItem('auth_token')
         localStorage.removeItem('auth_exp')
+        // Redirect to login when session expires
+        window.location.href = '/login'
       }, delay)
     }
   }, [token, expiresAt])
@@ -101,8 +107,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setExpiresAt(null)
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_exp')
+      window.location.href = '/login'
     },
-    isAuthenticated: Boolean(token),
+    isAuthenticated: !!token,
     expiresAt
   }), [token, expiresAt])
 
@@ -110,8 +117,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
 }
 

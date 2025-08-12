@@ -8,8 +8,14 @@ export function Dashboard() {
   const [cashflowData, setCashflowData] = useState<CashflowSummary | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [periodType, setPeriodType] = useState<'month' | 'quarter' | 'year' | 'custom'>('month')
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0].substring(0, 7) + '-01')
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0])
+  
+  // Modal states
+  const [showExpenseModal, setShowExpenseModal] = useState(false)
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false)
 
   useEffect(() => {
     if (!token) return
@@ -41,6 +47,43 @@ export function Dashboard() {
     return amount >= 0 ? '#28a745' : '#dc3545'
   }
 
+  const getPeriodLabel = () => {
+    if (periodType === 'month') {
+      return `${new Date(startDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`
+    } else if (periodType === 'quarter') {
+      const quarter = Math.ceil((new Date(startDate).getMonth() + 1) / 3)
+      return `Q${quarter} ${new Date(startDate).getFullYear()}`
+    } else if (periodType === 'year') {
+      return `${new Date(startDate).getFullYear()}`
+    } else {
+      return `${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}`
+    }
+  }
+
+  const handlePeriodChange = (type: 'month' | 'quarter' | 'year' | 'custom') => {
+    setPeriodType(type)
+    const now = new Date()
+    
+    if (type === 'month') {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1)
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+      setStartDate(start.toISOString().split('T')[0])
+      setEndDate(end.toISOString().split('T')[0])
+    } else if (type === 'quarter') {
+      const quarter = Math.ceil((now.getMonth() + 1) / 3)
+      const startMonth = (quarter - 1) * 3
+      const start = new Date(now.getFullYear(), startMonth, 1)
+      const end = new Date(now.getFullYear(), startMonth + 3, 0)
+      setStartDate(start.toISOString().split('T')[0])
+      setEndDate(end.toISOString().split('T')[0])
+    } else if (type === 'year') {
+      const start = new Date(now.getFullYear(), 0, 1)
+      const end = new Date(now.getFullYear(), 11, 31)
+      setStartDate(start.toISOString().split('T')[0])
+      setEndDate(end.toISOString().split('T')[0])
+    }
+  }
+
   if (loading && !cashflowData) {
     return (
       <Card>
@@ -52,22 +95,110 @@ export function Dashboard() {
 
   return (
     <Card>
+      {/* Dashboard Title */}
+      <div style={{ 
+        marginBottom: '16px',
+        textAlign: 'center'
+      }}>
+        <h1 style={{ 
+          margin: '0',
+          fontSize: '28px',
+          fontWeight: '600',
+          color: '#2c3e50'
+        }}>
+          Dashboard - Cashflow Summary
+        </h1>
+      </div>
+
       {/* Quick Actions Section */}
       <div style={{ 
-        marginBottom: '24px',
+        marginBottom: '20px',
         padding: '16px',
         backgroundColor: '#f8f9fa',
         borderRadius: '8px',
         border: '1px solid #e9ecef'
       }}>
-        <h3 style={{ 
-          margin: '0 0 16px 0', 
-          fontSize: '18px',
-          color: '#495057',
-          fontWeight: '600'
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '16px'
         }}>
-          🚀 Quick Actions
-        </h3>
+          <h3 style={{ 
+            margin: '0', 
+            fontSize: '18px',
+            color: '#495057',
+            fontWeight: '600'
+          }}>
+            🚀 Quick Actions
+          </h3>
+          
+          {/* Period Selector */}
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <select
+              value={periodType}
+              onChange={(e) => handlePeriodChange(e.target.value as 'month' | 'quarter' | 'year' | 'custom')}
+              style={{
+                padding: '8px 12px',
+                border: '1px solid #ced4da',
+                borderRadius: '4px',
+                fontSize: '14px',
+                backgroundColor: 'white'
+              }}
+            >
+              <option value="month">This Month</option>
+              <option value="quarter">This Quarter</option>
+              <option value="year">This Year</option>
+              <option value="custom">Custom Range</option>
+            </select>
+            
+            {periodType === 'custom' && (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  style={{
+                    padding: '6px 8px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                />
+                <span>to</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  style={{
+                    padding: '6px 8px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
+            )}
+            
+            <button 
+              onClick={loadCashflowData}
+              disabled={loading}
+              style={{
+                padding: '8px 12px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                opacity: loading ? 0.6 : 1
+              }}
+            >
+              {loading ? 'Refreshing...' : '🔄 Refresh'}
+            </button>
+          </div>
+        </div>
+        
         <div style={{ 
           display: 'flex', 
           gap: '12px', 
@@ -75,7 +206,7 @@ export function Dashboard() {
           alignItems: 'center'
         }}>
           <button 
-            onClick={() => window.location.href = '/expenses'}
+            onClick={() => setShowExpenseModal(true)}
             className="btn btn-primary"
             style={{ 
               padding: '10px 16px', 
@@ -105,7 +236,7 @@ export function Dashboard() {
             💰 Add Expense
           </button>
           <button 
-            onClick={() => window.location.href = '/invoices'}
+            onClick={() => setShowInvoiceModal(true)}
             className="btn btn-secondary"
             style={{ 
               padding: '10px 16px', 
@@ -135,7 +266,7 @@ export function Dashboard() {
             📄 New Invoice
           </button>
           <button 
-            onClick={() => window.location.href = '/purchases'}
+            onClick={() => setShowPurchaseModal(true)}
             className="btn btn-secondary"
             style={{ 
               padding: '10px 16px', 
@@ -197,16 +328,18 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1>Dashboard - Cashflow Summary</h1>
-        <button 
-          onClick={loadCashflowData}
-          className="btn btn-primary"
-          style={{ padding: '10px 20px' }}
-          disabled={loading}
-        >
-          {loading ? 'Refreshing...' : 'Refresh'}
-        </button>
+      {/* Cashflow Period Label */}
+      <div style={{ 
+        marginBottom: '16px',
+        padding: '12px',
+        backgroundColor: '#e7f3ff',
+        borderRadius: '6px',
+        border: '1px solid #b3d9ff',
+        textAlign: 'center'
+      }}>
+        <div style={{ fontSize: '16px', fontWeight: '500', color: '#0056b3' }}>
+          Cashflow Period: {getPeriodLabel()}
+        </div>
       </div>
 
       {error && (
@@ -222,55 +355,8 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Date Range Selector */}
-      <div style={{ marginBottom: '20px', display: 'flex', gap: '12px', alignItems: 'center' }}>
-        <label>
-          <div>Start Date</div>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)',
-              fontSize: '14px'
-            }}
-          />
-        </label>
-        <label>
-          <div>End Date</div>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)',
-              fontSize: '14px'
-            }}
-          />
-        </label>
-      </div>
-
       {cashflowData && (
-        <div style={{ display: 'grid', gap: '20px' }}>
-          {/* Period Information */}
-          <div style={{ 
-            padding: '16px', 
-            backgroundColor: 'var(--background-secondary)', 
-            borderRadius: '8px',
-            textAlign: 'center'
-          }}>
-            <h3 style={{ margin: '0 0 8px 0', color: 'var(--text-secondary)' }}>
-              Cashflow Period
-            </h3>
-            <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
-              {new Date(cashflowData.period.start_date).toLocaleDateString()} - {new Date(cashflowData.period.end_date).toLocaleDateString()}
-            </div>
-          </div>
-
+        <div style={{ display: 'grid', gap: '16px' }}>
           {/* Net Cashflow Summary */}
           <div style={{ 
             padding: '24px', 
@@ -299,7 +385,7 @@ export function Dashboard() {
           </div>
 
           {/* Income and Expense Breakdown */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             {/* Income Section */}
             <div style={{ 
               padding: '20px', 
@@ -486,6 +572,190 @@ export function Dashboard() {
           </div>
           <div style={{ fontSize: '14px' }}>
             Try adjusting the date range or create some transactions
+          </div>
+        </div>
+      )}
+
+      {/* Quick Action Modals */}
+      {showExpenseModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            width: '90%',
+            maxWidth: '500px',
+            maxHeight: '80vh',
+            overflow: 'auto'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0 }}>Add New Expense</h3>
+              <button 
+                onClick={() => setShowExpenseModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <p>Redirecting to Expenses page...</p>
+              <button 
+                onClick={() => {
+                  setShowExpenseModal(false)
+                  window.location.href = '/expenses'
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  marginTop: '16px'
+                }}
+              >
+                Go to Expenses
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showInvoiceModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            width: '90%',
+            maxWidth: '500px',
+            maxHeight: '80vh',
+            overflow: 'auto'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0 }}>Create New Invoice</h3>
+              <button 
+                onClick={() => setShowInvoiceModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <p>Redirecting to Invoices page...</p>
+              <button 
+                onClick={() => {
+                  setShowInvoiceModal(false)
+                  window.location.href = '/invoices'
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  marginTop: '16px'
+                }}
+              >
+                Go to Invoices
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPurchaseModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            width: '90%',
+            maxWidth: '500px',
+            maxHeight: '80vh',
+            overflow: 'auto'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0 }}>Create New Purchase</h3>
+              <button 
+                onClick={() => setShowPurchaseModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <p>Redirecting to Purchases page...</p>
+              <button 
+                onClick={() => {
+                  setShowPurchaseModal(false)
+                  window.location.href = '/purchases'
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  marginTop: '16px'
+                }}
+              >
+                Go to Purchases
+              </button>
+            </div>
           </div>
         </div>
       )}

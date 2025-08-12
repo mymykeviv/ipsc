@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
+import { SearchBar } from '../components/SearchBar'
 import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAdjustStock } from '../lib/api'
 
 interface Product {
@@ -53,6 +54,7 @@ export function Products() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showStockModal, setShowStockModal] = useState(false)
+  const [showStockHistoryModal, setShowStockHistoryModal] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -436,18 +438,10 @@ export function Products() {
         </div>
 
         <div style={{ marginBottom: '20px' }}>
-          <input
-            type="text"
-            placeholder="Search products..."
+          <SearchBar
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ 
-              width: '300px', 
-              padding: '8px 12px', 
-              border: '1px solid var(--border)', 
-              borderRadius: 'var(--radius)',
-              fontSize: '14px'
-            }}
+            onChange={setSearchTerm}
+            placeholder="Search products by name, SKU, category, description, or supplier..."
           />
         </div>
 
@@ -504,6 +498,16 @@ export function Products() {
                       style={{ fontSize: '14px', padding: '4px 8px' }}
                     >
                       Stock
+                    </Button>
+                    <Button 
+                      variant="secondary"
+                      onClick={() => {
+                        setSelectedProduct(product)
+                        setShowStockHistoryModal(true)
+                      }}
+                      style={{ fontSize: '14px', padding: '4px 8px' }}
+                    >
+                      History
                     </Button>
                     <Button 
                       variant="secondary" 

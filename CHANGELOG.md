@@ -5,6 +5,57 @@ All notable changes to CASHFLOW will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.3] - 2024-01-15
+
+### Added
+- **Dashboard Improvements (Issue #10)**
+  - Quick action buttons now open modal popups for Add Expense, New Invoice, and New Purchase
+  - Period selector dropdown with options: This Month, This Quarter, This Year, Custom Range
+  - Cashflow period label integrated with period selector
+  - Refresh button moved to quick actions section
+  - Dashboard title positioned above quick actions
+  - Reduced white space for better content display
+  - Modal popups with redirect functionality to respective pages
+
+- **Standardized Search Bar Component**
+  - Created reusable SearchBar component with consistent styling
+  - Enhanced search functionality with better placeholder text
+  - Improved visual design with focus states and icons
+  - Consistent search bar size and UI across all application screens
+
+- **Session Management Enhancement**
+  - Fixed session expiration handling to properly redirect to login screen
+  - Automatic logout and redirect when session expires
+  - Improved user experience with proper session state management
+
+- **Product Page Enhancements**
+  - Added Stock History button for each product in the grid
+  - Integrated standardized SearchBar component
+  - Improved search functionality with comprehensive field coverage
+
+### Changed
+- **Dashboard Layout**
+  - Reorganized quick actions section with better spacing
+  - Improved period selector positioning and functionality
+  - Enhanced visual hierarchy and user experience
+  - Better responsive design for different screen sizes
+
+- **Search Functionality**
+  - Standardized search bar appearance across all pages
+  - Enhanced search capabilities with better field coverage
+  - Improved search placeholder text for better user guidance
+
+### Fixed
+- **Session Management**
+  - Fixed issue where users were not logged out when session expired
+  - Proper redirect to login screen on session expiration
+  - Improved session timer functionality
+
+- **UI Consistency**
+  - Standardized search bar styling across all pages
+  - Consistent button styling and spacing
+  - Improved modal positioning and sizing
+
 ## [1.6.2] - 2024-01-15
 
 ### Added
