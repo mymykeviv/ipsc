@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../modules/AuthContext'
 import { apiGetCashflowSummary, CashflowSummary } from '../lib/api'
 import { Card } from '../components/Card'
@@ -9,6 +10,7 @@ import { PurchaseForm } from '../components/PurchaseForm'
 
 export function Dashboard() {
   const { token } = useAuth()
+  const navigate = useNavigate()
   const [cashflowData, setCashflowData] = useState<CashflowSummary | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -317,7 +319,7 @@ export function Dashboard() {
             📦 New Purchase
           </button>
           <button 
-            onClick={() => window.location.href = '/products'}
+            onClick={() => navigate('/products')}
             className="btn btn-secondary"
             style={{ 
               padding: '8px 12px', 
