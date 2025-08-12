@@ -233,126 +233,58 @@ export function Dashboard() {
           flexWrap: 'wrap',
           alignItems: 'center'
         }}>
-          <button 
+          <Button 
             onClick={() => setShowExpenseModal(true)}
-            className="btn btn-primary"
+            variant="primary"
             style={{ 
               padding: '8px 12px', 
               fontSize: '13px',
-              borderRadius: '4px',
-              border: 'none',
-              backgroundColor: '#007bff',
-              color: 'white',
-              cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              transition: 'all 0.2s ease',
               display: 'flex',
               alignItems: 'center',
               gap: '4px'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#0056b3'
-              e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.15)'
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = '#007bff'
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'
             }}
           >
             💰 Add Expense
-          </button>
-          <button 
+          </Button>
+          <Button 
             onClick={() => setShowInvoiceModal(true)}
-            className="btn btn-secondary"
+            variant="primary"
             style={{ 
               padding: '8px 12px', 
               fontSize: '13px',
-              borderRadius: '4px',
-              border: 'none',
-              backgroundColor: '#6c757d',
-              color: 'white',
-              cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              transition: 'all 0.2s ease',
               display: 'flex',
               alignItems: 'center',
               gap: '4px'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#545b62'
-              e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.15)'
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = '#6c757d'
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'
             }}
           >
             📄 New Invoice
-          </button>
-          <button 
+          </Button>
+          <Button 
             onClick={() => setShowPurchaseModal(true)}
-            className="btn btn-secondary"
+            variant="primary"
             style={{ 
               padding: '8px 12px', 
               fontSize: '13px',
-              borderRadius: '4px',
-              border: 'none',
-              backgroundColor: '#6c757d',
-              color: 'white',
-              cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              transition: 'all 0.2s ease',
               display: 'flex',
               alignItems: 'center',
               gap: '4px'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#545b62'
-              e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.15)'
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = '#6c757d'
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'
             }}
           >
             📦 New Purchase
-          </button>
-          <button 
+          </Button>
+          <Button 
             onClick={() => navigate('/products')}
-            className="btn btn-secondary"
+            variant="primary"
             style={{ 
               padding: '8px 12px', 
               fontSize: '13px',
-              borderRadius: '4px',
-              border: 'none',
-              backgroundColor: '#6c757d',
-              color: 'white',
-              cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              transition: 'all 0.2s ease',
               display: 'flex',
               alignItems: 'center',
               gap: '4px'
             }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#545b62'
-              e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.15)'
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = '#6c757d'
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'
-            }}
           >
             🏷️ Manage Products
-          </button>
+          </Button>
         </div>
       </div>
 

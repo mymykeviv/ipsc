@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../modules/AuthContext'
 import { apiGetCashflowSummary, CashflowSummary } from '../lib/api'
 import { Card } from '../components/Card'
+import { Button } from '../components/Button'
 
 export function Cashflow() {
   const { token } = useAuth()
@@ -54,14 +55,14 @@ export function Cashflow() {
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h1>Cashflow Summary</h1>
-        <button 
+        <Button 
           onClick={loadCashflowData}
-          className="btn btn-primary"
+          variant="primary"
           style={{ padding: '10px 20px' }}
           disabled={loading}
         >
           {loading ? 'Refreshing...' : 'Refresh'}
-        </button>
+        </Button>
       </div>
 
       {error && (
@@ -337,27 +338,27 @@ export function Cashflow() {
           }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Quick Actions</h3>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button 
+              <Button 
                 onClick={() => window.location.href = '/expenses'}
-                className="btn btn-primary"
+                variant="primary"
                 style={{ padding: '10px 20px' }}
               >
                 Manage Expenses
-              </button>
-              <button 
+              </Button>
+              <Button 
                 onClick={() => window.location.href = '/invoices'}
-                className="btn btn-secondary"
+                variant="primary"
                 style={{ padding: '10px 20px' }}
               >
                 View Invoices
-              </button>
-              <button 
+              </Button>
+              <Button 
                 onClick={() => window.location.href = '/purchases'}
-                className="btn btn-secondary"
+                variant="primary"
                 style={{ padding: '10px 20px' }}
               >
                 View Purchases
-              </button>
+              </Button>
             </div>
           </div>
         </div>
