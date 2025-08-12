@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../modules/AuthContext'
 import { apiGetCashflowSummary, CashflowSummary } from '../lib/api'
 import { Card } from '../components/Card'
+import { ExpenseForm } from '../components/ExpenseForm'
+import { InvoiceForm } from '../components/InvoiceForm'
+import { PurchaseForm } from '../components/PurchaseForm'
 
 export function Dashboard() {
   const { token } = useAuth()
@@ -596,48 +599,37 @@ export function Dashboard() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            padding: '20px',
-            borderRadius: '6px',
-            width: '90%',
-            maxWidth: '400px',
-            maxHeight: '80vh',
+            padding: '24px',
+            borderRadius: '8px',
+            width: '95%',
+            maxWidth: '800px',
+            maxHeight: '90vh',
             overflow: 'auto'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px' }}>Add New Expense</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>Add New Expense</h3>
               <button 
                 onClick={() => setShowExpenseModal(false)}
                 style={{
                   background: 'none',
                   border: 'none',
-                  fontSize: '20px',
+                  fontSize: '24px',
                   cursor: 'pointer',
-                  color: '#666'
+                  color: '#666',
+                  padding: '4px 8px',
+                  borderRadius: '4px'
                 }}
               >
                 ×
               </button>
             </div>
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <p>Redirecting to Expenses page...</p>
-              <button 
-                onClick={() => {
-                  setShowExpenseModal(false)
-                  window.location.href = '/expenses'
-                }}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  marginTop: '12px'
-                }}
-              >
-                Go to Expenses
-              </button>
-            </div>
+            <ExpenseForm 
+              onSuccess={() => {
+                setShowExpenseModal(false)
+                loadCashflowData() // Refresh dashboard data
+              }}
+              onCancel={() => setShowExpenseModal(false)}
+            />
           </div>
         </div>
       )}
@@ -657,48 +649,37 @@ export function Dashboard() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            padding: '20px',
-            borderRadius: '6px',
-            width: '90%',
-            maxWidth: '400px',
-            maxHeight: '80vh',
+            padding: '24px',
+            borderRadius: '8px',
+            width: '95%',
+            maxWidth: '900px',
+            maxHeight: '90vh',
             overflow: 'auto'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px' }}>Create New Invoice</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>Create New Invoice</h3>
               <button 
                 onClick={() => setShowInvoiceModal(false)}
                 style={{
                   background: 'none',
                   border: 'none',
-                  fontSize: '20px',
+                  fontSize: '24px',
                   cursor: 'pointer',
-                  color: '#666'
+                  color: '#666',
+                  padding: '4px 8px',
+                  borderRadius: '4px'
                 }}
               >
                 ×
               </button>
             </div>
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <p>Redirecting to Invoices page...</p>
-              <button 
-                onClick={() => {
-                  setShowInvoiceModal(false)
-                  window.location.href = '/invoices'
-                }}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  marginTop: '12px'
-                }}
-              >
-                Go to Invoices
-              </button>
-            </div>
+            <InvoiceForm 
+              onSuccess={() => {
+                setShowInvoiceModal(false)
+                loadCashflowData() // Refresh dashboard data
+              }}
+              onCancel={() => setShowInvoiceModal(false)}
+            />
           </div>
         </div>
       )}
@@ -718,48 +699,37 @@ export function Dashboard() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            padding: '20px',
-            borderRadius: '6px',
-            width: '90%',
-            maxWidth: '400px',
-            maxHeight: '80vh',
+            padding: '24px',
+            borderRadius: '8px',
+            width: '95%',
+            maxWidth: '900px',
+            maxHeight: '90vh',
             overflow: 'auto'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px' }}>Create New Purchase</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>Create New Purchase</h3>
               <button 
                 onClick={() => setShowPurchaseModal(false)}
                 style={{
                   background: 'none',
                   border: 'none',
-                  fontSize: '20px',
+                  fontSize: '24px',
                   cursor: 'pointer',
-                  color: '#666'
+                  color: '#666',
+                  padding: '4px 8px',
+                  borderRadius: '4px'
                 }}
               >
                 ×
               </button>
             </div>
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <p>Redirecting to Purchases page...</p>
-              <button 
-                onClick={() => {
-                  setShowPurchaseModal(false)
-                  window.location.href = '/purchases'
-                }}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  marginTop: '12px'
-                }}
-              >
-                Go to Purchases
-              </button>
-            </div>
+            <PurchaseForm 
+              onSuccess={() => {
+                setShowPurchaseModal(false)
+                loadCashflowData() // Refresh dashboard data
+              }}
+              onCancel={() => setShowPurchaseModal(false)}
+            />
           </div>
         </div>
       )}

@@ -5,6 +5,30 @@ All notable changes to CASHFLOW will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.5] - 2024-01-15
+
+### Added
+- **Embedded Quick Action Forms**
+  - **ExpenseForm Component**: Complete expense creation form with all fields (date, amount, category, type, description, payment method, account head, vendor, GST rate, reference number, notes)
+  - **InvoiceForm Component**: Full invoice creation form with customer selection, items management, and GST compliance fields
+  - **PurchaseForm Component**: Comprehensive purchase order form with vendor selection, items management, and GST calculations
+  - **Form Integration**: All forms are now embedded directly in dashboard modals instead of redirecting to separate pages
+
+### Changed
+- **Dashboard Quick Actions Enhancement**
+  - Replaced redirect modals with actual functional forms
+  - Increased modal sizes to accommodate full forms (800px-900px width)
+  - Enhanced modal styling with better padding and typography
+  - Forms automatically refresh dashboard data upon successful submission
+  - Improved user experience with seamless form completion without page navigation
+
+### Fixed
+- **Quick Action Functionality**
+  - Fixed issue where quick action buttons were not opening actual forms
+  - Implemented proper form validation and error handling
+  - Added automatic data refresh after successful form submissions
+  - Ensured all form fields are properly connected to backend APIs
+
 ## [1.6.4] - 2024-01-15
 
 ### Changed
