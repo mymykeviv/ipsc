@@ -1179,8 +1179,18 @@ export function Products() {
           }}
           onClick={() => setShowStockHistoryModal(false)}
         >
-          <Card 
-            style={{ width: '80%', height: '80%', maxWidth: '1200px', maxHeight: '80vh', overflow: 'auto' }}
+          <div 
+            style={{ 
+              width: '80%', 
+              height: '80%', 
+              maxWidth: '1200px', 
+              maxHeight: '80vh', 
+              overflow: 'auto',
+              backgroundColor: 'white',
+              borderRadius: 'var(--radius)',
+              padding: '24px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -1254,7 +1264,7 @@ export function Products() {
             <div style={{ marginTop: '16px', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
               Stock history will be populated as adjustments are made
             </div>
-          </Card>
+          </div>
         </div>
       )}
     </div>
