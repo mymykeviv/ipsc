@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../modules/AuthContext'
 import { apiGetCashflowSummary, CashflowSummary } from '../lib/api'
 import { Card } from '../components/Card'
+import { Button } from '../components/Button'
 import { ExpenseForm } from '../components/ExpenseForm'
-import { InvoiceForm } from '../components/InvoiceForm'
+import { ComprehensiveInvoiceForm } from '../components/ComprehensiveInvoiceForm'
 import { PurchaseForm } from '../components/PurchaseForm'
 
 export function Dashboard() {
@@ -649,31 +650,18 @@ export function Dashboard() {
         }}>
           <div style={{
             backgroundColor: 'white',
+            borderRadius: 'var(--radius)',
             padding: '24px',
-            borderRadius: '8px',
-            width: '95%',
-            maxWidth: '900px',
+            width: '90%',
+            maxWidth: '1400px',
             maxHeight: '90vh',
             overflow: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>Create New Invoice</h3>
-              <button 
-                onClick={() => setShowInvoiceModal(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  color: '#666',
-                  padding: '4px 8px',
-                  borderRadius: '4px'
-                }}
-              >
-                ×
-              </button>
+              <h2>Create New Invoice</h2>
+              <Button onClick={() => setShowInvoiceModal(false)} variant="secondary">×</Button>
             </div>
-            <InvoiceForm 
+            <ComprehensiveInvoiceForm 
               onSuccess={() => {
                 setShowInvoiceModal(false)
                 loadCashflowData() // Refresh dashboard data
@@ -699,29 +687,16 @@ export function Dashboard() {
         }}>
           <div style={{
             backgroundColor: 'white',
+            borderRadius: 'var(--radius)',
             padding: '24px',
-            borderRadius: '8px',
-            width: '95%',
-            maxWidth: '900px',
+            width: '90%',
+            maxWidth: '1400px',
             maxHeight: '90vh',
             overflow: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>Create New Purchase</h3>
-              <button 
-                onClick={() => setShowPurchaseModal(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  color: '#666',
-                  padding: '4px 8px',
-                  borderRadius: '4px'
-                }}
-              >
-                ×
-              </button>
+              <h2>Create New Purchase</h2>
+              <Button onClick={() => setShowPurchaseModal(false)} variant="secondary">×</Button>
             </div>
             <PurchaseForm 
               onSuccess={() => {
