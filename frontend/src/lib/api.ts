@@ -217,9 +217,15 @@ export async function apiToggleParty(id: number): Promise<Party> {
 
 export type InvoiceCreate = { 
   customer_id: number
+  supplier_id: number
   invoice_no?: string
   date: string
+  due_date?: string
   terms: string
+  
+  // Invoice Details
+  invoice_type?: string
+  currency?: string
   
   // GST Compliance Fields
   place_of_supply: string
@@ -239,6 +245,8 @@ export type InvoiceCreate = {
     rate: number
     discount: number
     discount_type: string
+    description?: string
+    hsn_code?: string
   }[]
   notes?: string
 }
@@ -247,10 +255,15 @@ export type Invoice = {
   id: number
   invoice_no: string
   customer_name: string
+  supplier_name?: string
   date: string
   due_date: string
   grand_total: number
   status: string
+  
+  // Invoice Details
+  invoice_type: string
+  currency: string
   
   // GST Compliance Fields
   place_of_supply: string
@@ -258,6 +271,16 @@ export type Invoice = {
   eway_bill_number: string | null
   reverse_charge: boolean
   export_supply: boolean
+  
+  // Amount Details
+  taxable_value: number
+  total_discount: number
+  cgst: number
+  sgst: number
+  igst: number
+  utgst: number
+  cess: number
+  round_off: number
   
   // Payment Fields
   paid_amount: number

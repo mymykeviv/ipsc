@@ -5,6 +5,33 @@ All notable changes to CASHFLOW will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.6] - 2024-01-15
+
+### Added
+- **Enhanced Invoice Form Implementation**
+  - **Backend Model Updates**: Added new fields to Invoice and InvoiceItem models including supplier_id, invoice_type, currency, utgst, cess, round_off
+  - **Database Migration**: Created migration for enhanced invoice model with new columns and constraints
+  - **API Enhancements**: Updated invoice creation API to support new fields and enhanced validation
+  - **Invoice Number Generation**: Implemented FY-based invoice numbering system (FY2024/INV-0001 format)
+  - **Frontend Form Updates**: Enhanced InvoiceForm component with supplier selection, invoice type, currency, and improved terms handling
+
+### Changed
+- **Invoice Form Structure**
+  - Added supplier selection field (mandatory)
+  - Added invoice type dropdown (Invoice, Credit Note, Debit Note)
+  - Added currency selection (INR, USD, EUR, GBP)
+  - Enhanced terms selection with predefined options (15, 30, 45, 60, 90 days, Due on Receipt, Immediate)
+  - Updated place of supply default to "Uttar Pradesh"
+  - Added due date field with auto-calculation based on terms
+  - Improved form validation and error handling
+
+### Fixed
+- **Invoice Numbering System**
+  - Fixed invoice number generation to follow FY format
+  - Ensured proper sequence numbering within financial year
+  - Added validation for 16-character limit as per GST law
+  - Implemented proper alphanumeric validation
+
 ## [1.6.5] - 2024-01-15
 
 ### Added

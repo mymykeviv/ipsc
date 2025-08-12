@@ -89,15 +89,21 @@ class Invoice(Base):
     __tablename__ = "invoices"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     customer_id: Mapped[int] = mapped_column(ForeignKey("parties.id"), nullable=False)
+    supplier_id: Mapped[int] = mapped_column(ForeignKey("parties.id"), nullable=False)  # New field for supplier
     invoice_no: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)  # max length 16 as per GST law
     date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     due_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     terms: Mapped[str] = mapped_column(String(20), nullable=False, default="Due on Receipt")
     
+    # Invoice Details
+    invoice_type: Mapped[str] = mapped_column(String(20), nullable=False, default="Invoice")  # Invoice, Credit Note, Debit Note
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="INR")  # INR, USD, EUR, GBP, etc.
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="Draft")  # Draft, Sent, Paid, Overdue, Partially Paid
+    
     # GST Compliance Fields
     place_of_supply: Mapped[str] = mapped_column(String(100), nullable=False)
     place_of_supply_state_code: Mapped[str] = mapped_column(String(10), nullable=False)
-    eway_bill_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    eway_bill_number: Mapped[str | None] = mapped_column(String(15), nullable=True)  # max length 15
     reverse_charge: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     export_supply: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     
@@ -111,6 +117,9 @@ class Invoice(Base):
     cgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     sgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     igst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    utgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)  # New field for UTGST
+    cess: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)  # New field for CESS
+    round_off: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)  # New field for round off
     grand_total: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     
     # Payment Tracking
@@ -118,8 +127,7 @@ class Invoice(Base):
     balance_amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
     
     # Additional Fields
-    notes: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="Draft")  # Draft, Sent, Paid, Overdue, Partially Paid
+    notes: Mapped[str | None] = mapped_column(String(200), nullable=True)  # max length 200
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
@@ -132,8 +140,8 @@ class InvoiceItem(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     invoice_id: Mapped[int] = mapped_column(ForeignKey("invoices.id"), nullable=False)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
-    description: Mapped[str] = mapped_column(String(200), nullable=False)
-    hsn_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    description: Mapped[str] = mapped_column(String(200), nullable=False)  # max length 200
+    hsn_code: Mapped[str | None] = mapped_column(String(10), nullable=True)  # max length 10
     qty: Mapped[float] = mapped_column(Float, nullable=False)
     rate: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     discount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
@@ -143,6 +151,8 @@ class InvoiceItem(Base):
     cgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     sgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     igst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    utgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)  # New field for UTGST
+    cess: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)  # New field for CESS
     amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
 
 

@@ -338,6 +338,8 @@ class InvoiceItemIn(BaseModel):
     rate: float
     discount: float = 0
     discount_type: str = "Percentage"  # Percentage, Fixed
+    description: str | None = None
+    hsn_code: str | None = None
 
 
 class PaymentIn(BaseModel):
@@ -366,10 +368,16 @@ class PaymentOut(BaseModel):
 class InvoiceOut(BaseModel):
     id: int
     customer_id: int
+    supplier_id: int
     invoice_no: str
     date: datetime
     due_date: datetime
     terms: str
+    
+    # Invoice Details
+    invoice_type: str
+    currency: str
+    status: str
     
     # GST Compliance Fields
     place_of_supply: str
@@ -388,11 +396,13 @@ class InvoiceOut(BaseModel):
     cgst: float
     sgst: float
     igst: float
+    utgst: float
+    cess: float
+    round_off: float
     grand_total: float
     
     # Additional Fields
     notes: str | None
-    status: str
     created_at: datetime
     updated_at: datetime
 
@@ -402,9 +412,15 @@ class InvoiceOut(BaseModel):
 
 class InvoiceCreate(BaseModel):
     customer_id: int
+    supplier_id: int
     invoice_no: str | None = None  # Optional, will auto-generate if not provided
     date: str  # ISO date string
+    due_date: str | None = None  # Optional, will auto-calculate if not provided
     terms: str = "Due on Receipt"
+    
+    # Invoice Details
+    invoice_type: str = "Invoice"
+    currency: str = "INR"
     
     # GST Compliance Fields
     place_of_supply: str
@@ -423,30 +439,42 @@ class InvoiceCreate(BaseModel):
 
 
 def _next_invoice_no(db: Session) -> str:
-    settings = db.query(CompanySettings).first()
-    prefix = settings.invoice_series if settings else "INV-"
-    last = db.query(Invoice).order_by(Invoice.id.desc()).first()
-    seq = (last.id + 1) if last else 1
+    """Generate next invoice number with FY prefix and auto-generated sequence"""
+    from datetime import datetime
     
-    # Ensure the total length doesn't exceed 16 characters
-    # Calculate available space for sequence number
-    max_seq_length = 16 - len(prefix)
-    if max_seq_length < 1:
-        # If prefix is too long, truncate it
-        prefix = prefix[:15]
-        max_seq_length = 16 - len(prefix)
-    
-    # Format sequence number with appropriate padding
-    if max_seq_length >= 5:
-        seq_str = f"{seq:05d}"
-    elif max_seq_length >= 4:
-        seq_str = f"{seq:04d}"
-    elif max_seq_length >= 3:
-        seq_str = f"{seq:03d}"
-    elif max_seq_length >= 2:
-        seq_str = f"{seq:02d}"
+    # Get current financial year (April to March)
+    current_date = datetime.now()
+    if current_date.month >= 4:
+        fy_year = current_date.year
     else:
-        seq_str = str(seq)
+        fy_year = current_date.year - 1
+    
+    fy_prefix = f"FY{fy_year}"
+    
+    # Find the last invoice number for this financial year
+    last_invoice = db.query(Invoice).filter(
+        Invoice.invoice_no.like(f"{fy_prefix}/INV-%")
+    ).order_by(Invoice.invoice_no.desc()).first()
+    
+    if last_invoice:
+        # Extract sequence number from last invoice
+        try:
+            last_seq = int(last_invoice.invoice_no.split('-')[-1])
+            seq = last_seq + 1
+        except (ValueError, IndexError):
+            seq = 1
+    else:
+        seq = 1
+    
+    # Format as FY<year>/INV-<4 digit sequence>
+    invoice_no = f"{fy_prefix}/INV-{seq:04d}"
+    
+    # Ensure total length doesn't exceed 16 characters
+    if len(invoice_no) > 16:
+        # Truncate if necessary
+        invoice_no = invoice_no[:16]
+    
+    return invoice_no
     
     # Ensure final length doesn't exceed 16
     result = f"{prefix}{seq_str}"
@@ -480,14 +508,21 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
     
     company = db.query(CompanySettings).first()
     customer = db.query(Party).filter(Party.id == payload.customer_id).first()
+    supplier = db.query(Party).filter(Party.id == payload.supplier_id).first()
+    
     if not customer:
         raise HTTPException(status_code=400, detail='Invalid customer')
+    if not supplier:
+        raise HTTPException(status_code=400, detail='Invalid supplier')
     
     # Generate invoice number if not provided
     invoice_no = payload.invoice_no if payload.invoice_no else _next_invoice_no(db)
     
     # Calculate due date
-    due_date = calculate_due_date(payload.date, payload.terms)
+    if payload.due_date:
+        due_date = datetime.fromisoformat(payload.due_date.replace('Z', '+00:00'))
+    else:
+        due_date = calculate_due_date(payload.date, payload.terms)
     
     intra = company and payload.place_of_supply == company.state
 
@@ -496,13 +531,18 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
     cgst_total = money(0)
     sgst_total = money(0)
     igst_total = money(0)
+    utgst_total = money(0)
+    cess_total = money(0)
 
     inv = Invoice(
         customer_id=customer.id,
+        supplier_id=supplier.id,
         invoice_no=invoice_no,
         date=datetime.fromisoformat(payload.date.replace('Z', '+00:00')),
         due_date=due_date,
         terms=payload.terms,
+        invoice_type=payload.invoice_type,
+        currency=payload.currency,
         place_of_supply=payload.place_of_supply,
         place_of_supply_state_code=payload.place_of_supply_state_code,
         eway_bill_number=payload.eway_bill_number,
@@ -513,6 +553,7 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
         taxable_value=money(0),
         total_discount=money(0),
         cgst=money(0), sgst=money(0), igst=money(0),
+        utgst=money(0), cess=money(0), round_off=money(0),
         grand_total=money(0),
         paid_amount=money(0),
         balance_amount=money(0),
@@ -542,11 +583,15 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
         # Calculate GST
         cgst, sgst, igst = split_gst(line_total, prod.gst_rate, bool(intra))
         
+        # Use provided description and HSN code or fall back to product defaults
+        description = it.description if it.description else prod.name
+        hsn_code = it.hsn_code if it.hsn_code else prod.hsn
+        
         item = InvoiceItem(
             invoice_id=inv.id,
             product_id=prod.id,
-            description=prod.name,
-            hsn_code=prod.hsn,
+            description=description,
+            hsn_code=hsn_code,
             qty=it.qty,
             rate=money(it.rate),
             discount=money(it.discount),
@@ -554,6 +599,7 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
             taxable_value=line_total,
             gst_rate=prod.gst_rate,
             cgst=cgst, sgst=sgst, igst=igst,
+            utgst=money(0), cess=money(0),  # These can be calculated based on specific requirements
             amount=line_total + cgst + sgst + igst
         )
         db.add(item)
@@ -564,13 +610,20 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
         sgst_total += sgst
         igst_total += igst
 
+    # Calculate round off
+    subtotal = taxable_total + cgst_total + sgst_total + igst_total + utgst_total + cess_total
+    round_off = money(round(subtotal) - subtotal)
+    
     inv.taxable_value = taxable_total
     inv.total_discount = discount_total
     inv.cgst = cgst_total
     inv.sgst = sgst_total
     inv.igst = igst_total
-    inv.grand_total = money(taxable_total + cgst_total + sgst_total + igst_total)
-    inv.balance_amount = money(taxable_total + cgst_total + sgst_total + igst_total)
+    inv.utgst = utgst_total
+    inv.cess = cess_total
+    inv.round_off = round_off
+    inv.grand_total = money(subtotal + round_off)
+    inv.balance_amount = money(subtotal + round_off)
     db.commit()
     db.refresh(inv)
     return inv

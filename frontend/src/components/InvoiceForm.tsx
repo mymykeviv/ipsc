@@ -16,16 +16,21 @@ interface InvoiceItem {
 
 export function InvoiceForm({ onSuccess, onCancel }: InvoiceFormProps) {
   const [customers, setCustomers] = useState<Party[]>([])
+  const [suppliers, setSuppliers] = useState<Party[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
   const [formData, setFormData] = useState({
     customer_id: 0,
+    supplier_id: 0,
     date: new Date().toISOString().split('T')[0],
+    due_date: new Date().toISOString().split('T')[0],
     terms: 'Due on Receipt',
-    place_of_supply: 'Karnataka',
-    place_of_supply_state_code: '29',
+    invoice_type: 'Invoice',
+    currency: 'INR',
+    place_of_supply: 'Uttar Pradesh',
+    place_of_supply_state_code: '09',
     bill_to_address: '',
     ship_to_address: '',
     notes: '',
@@ -46,11 +51,13 @@ export function InvoiceForm({ onSuccess, onCancel }: InvoiceFormProps) {
 
   const loadData = async () => {
     try {
-      const [customersData, productsData] = await Promise.all([
+      const [customersData, suppliersData, productsData] = await Promise.all([
+        apiListParties(),
         apiListParties(),
         apiGetProducts()
       ])
       setCustomers(customersData.filter(p => p.type === 'customer'))
+      setSuppliers(suppliersData.filter(p => p.type === 'vendor'))
       setProducts(productsData)
     } catch (err) {
       console.error('Failed to load data:', err)
@@ -60,8 +67,8 @@ export function InvoiceForm({ onSuccess, onCancel }: InvoiceFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.customer_id || formData.items.length === 0) {
-      setError('Please select a customer and add at least one item')
+    if (!formData.customer_id || !formData.supplier_id || formData.items.length === 0) {
+      setError('Please select a customer, supplier and add at least one item')
       return
     }
 
@@ -71,8 +78,11 @@ export function InvoiceForm({ onSuccess, onCancel }: InvoiceFormProps) {
       await apiCreateInvoice({
         ...formData,
         customer_id: formData.customer_id,
+        supplier_id: formData.supplier_id,
         invoice_no: '', // Will be auto-generated
-        due_date: formData.date,
+        due_date: formData.due_date,
+        invoice_type: formData.invoice_type,
+        currency: formData.currency,
         eway_bill_number: '',
         reverse_charge: false,
         export_supply: false,
@@ -160,6 +170,32 @@ export function InvoiceForm({ onSuccess, onCancel }: InvoiceFormProps) {
 
         <div>
           <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
+            Supplier *
+          </label>
+          <select
+            value={formData.supplier_id || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, supplier_id: parseInt(e.target.value) || 0 }))}
+            required
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '14px',
+              backgroundColor: 'white'
+            }}
+          >
+            <option value="">Select Supplier</option>
+            {suppliers.map(supplier => (
+              <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <div>
+          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
             Date *
           </label>
           <input
@@ -175,6 +211,73 @@ export function InvoiceForm({ onSuccess, onCancel }: InvoiceFormProps) {
               fontSize: '14px'
             }}
           />
+        </div>
+
+        <div>
+          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
+            Due Date *
+          </label>
+          <input
+            type="date"
+            value={formData.due_date}
+            onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
+            required
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '14px'
+            }}
+          />
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <div>
+          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
+            Invoice Type *
+          </label>
+          <select
+            value={formData.invoice_type}
+            onChange={(e) => setFormData(prev => ({ ...prev, invoice_type: e.target.value }))}
+            required
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '14px',
+              backgroundColor: 'white'
+            }}
+          >
+            <option value="Invoice">Invoice</option>
+            <option value="Credit Note">Credit Note</option>
+            <option value="Debit Note">Debit Note</option>
+          </select>
+        </div>
+
+        <div>
+          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
+            Currency
+          </label>
+          <select
+            value={formData.currency}
+            onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '14px',
+              backgroundColor: 'white'
+            }}
+          >
+            <option value="INR">INR</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+          </select>
         </div>
       </div>
 
@@ -201,8 +304,7 @@ export function InvoiceForm({ onSuccess, onCancel }: InvoiceFormProps) {
           <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
             Terms
           </label>
-          <input
-            type="text"
+          <select
             value={formData.terms}
             onChange={(e) => setFormData(prev => ({ ...prev, terms: e.target.value }))}
             style={{
@@ -210,9 +312,18 @@ export function InvoiceForm({ onSuccess, onCancel }: InvoiceFormProps) {
               padding: '8px 12px',
               border: '1px solid #ced4da',
               borderRadius: '4px',
-              fontSize: '14px'
+              fontSize: '14px',
+              backgroundColor: 'white'
             }}
-          />
+          >
+            <option value="15 days">15 days</option>
+            <option value="30 days">30 days</option>
+            <option value="45 days">45 days</option>
+            <option value="60 days">60 days</option>
+            <option value="90 days">90 days</option>
+            <option value="Due on Receipt">Due on Receipt</option>
+            <option value="Immediate">Immediate</option>
+          </select>
         </div>
       </div>
 
