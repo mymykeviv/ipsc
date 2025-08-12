@@ -1,4 +1,5 @@
 import pytest
+import time
 from httpx import AsyncClient, ASGITransport
 
 
@@ -30,10 +31,12 @@ async def test_create_update_delete_product():
         headers = {"Authorization": f"Bearer {token}"}
 
         # create
+        sku = f"TWD{int(time.time())}"
         payload = {
             "name": "Test Widget",
             "description": "Test product for testing",
-            "sku": "TWD-001",
+            "item_type": "tradable",
+            "sku": sku,
             "hsn": "8409",
             "unit": "NOS",
             "gst_rate": 18.0,
@@ -46,7 +49,7 @@ async def test_create_update_delete_product():
         r = await ac.post("/api/products", json=payload, headers=headers)
         assert r.status_code == 201, r.text
         created = r.json()
-        assert created["sku"] == "TWD-001"
+        assert created["sku"] == sku
 
         pid = created["id"]
 

@@ -5,6 +5,149 @@ All notable changes to CASHFLOW will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2024-01-15
+
+### Added
+- **Enhanced Purchase Management System (Issue #6)**
+  - Complete purchase management with GST compliance
+  - Auto-generated purchase numbers (PUR-001, PUR-002, etc.)
+  - Purchase items with HSN codes, GST rates, and discount support
+  - Purchase status tracking (Draft, Received, Paid, Partially Paid)
+  - Purchase edit, delete, and list functionality
+  - GST calculations (CGST/SGST/IGST) based on place of supply
+  - Purchase payment tracking and outstanding calculations
+
+- **Sales and Purchase Payment Management (Issue #5)**
+  - Enhanced payment system with account heads (Cash, Bank, UPI, etc.)
+  - Purchase payment management with payment history
+  - Payment status tracking and partial payment support
+  - Account head-based transaction categorization
+  - Payment reference numbers and notes support
+  - Outstanding payment calculations for both invoices and purchases
+
+- **Cashflow View and Management (Issue #7)**
+  - Complete expense management system
+  - Expense categorization (Direct/COGS, Indirect/Operating)
+  - GST support for expenses with vendor tracking
+  - Cashflow summary with income vs expense analysis
+  - Date range filtering for cashflow reports
+  - Account head-based expense tracking
+
+- **Cross-Functional Requirements (Issue #8)**
+  - Enhanced security with proper payment validation
+  - Performance optimizations for large datasets
+  - Improved usability with comprehensive form validation
+  - Reliability improvements with proper error handling
+
+### Changed
+- Updated application version to 1.6.0
+- Enhanced database schema with new tables and fields
+- Improved API consistency across all payment endpoints
+- Updated frontend API client with new type definitions
+
+### Fixed
+- Payment model field naming consistency
+- Database migration support for new schema changes
+- API response format standardization
+
+## [1.5.3] - 2024-01-15
+### Fixed
+- **Invoice Creation Error**
+  - Fixed HTTP 500 error when creating invoices due to invoice number length exceeding 16 characters
+  - Updated `_next_invoice_no` function to ensure generated invoice numbers stay within GST law limits
+  - Changed default invoice series from "FY24-25/INV/" to "INV-" to prevent length issues
+  - Added intelligent truncation and padding logic for invoice number generation
+
+- **Customer & Vendor Profiles Enhancement**
+  - Added support for displaying inactive entries in Customer & Vendor Profiles
+  - Added "Show Inactive" filter checkbox to toggle visibility of inactive parties
+  - Updated backend API endpoints to support `include_inactive` parameter
+  - Updated frontend API functions to pass the `include_inactive` parameter
+  - All parties (active and inactive) are now visible with proper filtering options
+
+## [1.5.2] - 2024-01-15
+### Fixed
+- **Login Screen and Sidebar Branding Alignment**
+  - Fixed application name text centering on login screen
+  - Added `centered` prop to Logo component for proper alignment
+  - Fixed sidebar branding text wrapping issues
+  - "CASHFLOW" now displays on single line with `whitespace-nowrap`
+  - "Financial Management System" displays as single subtitle line
+  - Added missing CSS utility classes (whitespace-nowrap)
+
+## [1.5.1] - 2024-01-15
+### Fixed
+- **Login Screen UI Issue**
+  - Fixed application branding text display on login screen
+  - "CASHFLOW Financial Management System" now displays properly on two lines
+  - Added missing CSS utility classes (flex-col, leading-none, leading-tight)
+  - Improved text hierarchy and readability in login interface
+
+## [1.5.0] - 2024-01-15
+### Added
+- **Complete Audit Trail System**
+  - Comprehensive audit logging for all user actions (CREATE, UPDATE, DELETE, LOGIN, LOGOUT)
+  - Audit trail database table with proper indexing for performance
+  - Audit trail API endpoints with filtering and pagination
+  - CSV export functionality for audit trail data
+  - IP address and user agent tracking for security
+  - JSON storage of old and new values for detailed change tracking
+
+### Changed
+- Updated application version to 1.5.0
+- Enhanced error handling for database constraint violations
+- Improved stock summary calculation to use product.stock field directly
+- Fixed test expectations to match actual error messages
+
+### Fixed
+- **Critical Bug Fixes:**
+  - Database error in product creation (SKU constraint violation handling)
+  - Stock adjustment calculation errors and stock summary accuracy
+  - Test failures due to incorrect error message expectations
+  - Stock summary not reflecting actual product stock levels
+
+## [1.4.5] - 2024-01-15
+### Added
+- **UX/UI Improvements from GitHub Issue #4**
+  - Session timer now resets on user activity (mouse, keyboard, touch, scroll)
+  - Modal improvements with 80% screen sizing and close buttons
+  - Form validation improvements with disabled submit buttons for invalid forms
+
+### Changed
+- Updated application version to 1.4.5
+- Removed "Sales" from sidebar menu as requested
+- Increased sidebar menu font size for better readability
+- Fixed customer and vendor profile loading issues
+- Enhanced modal accessibility with proper close buttons
+
+### Fixed
+- Session timer continuously reducing instead of resetting on user actions
+- Customer and vendor profile screen showing "Failed to load parties" error
+- Modal sizing not following 80% screen width/height requirement
+- Missing close buttons on modal popups
+- Submit buttons not disabled when forms have validation errors
+
+## [1.4.4] - 2024-01-15
+### Added
+- **Enhanced Digital Invoicing System**
+  - Complete implementation of all requirements from GitHub Issue #3
+  - "Total in Words" calculation with proper Indian Rupee formatting
+  - Improved total summary display with accurate discount calculations
+  - Backend sorting support for all invoice table columns
+  - Fixed missing API imports for invoice operations (edit, delete, email)
+
+### Changed
+- Updated application version to 1.4.4
+- Enhanced invoice form with proper total calculations
+- Improved sorting functionality with backend integration
+- Fixed total discount calculation to show actual discount amounts
+
+### Fixed
+- Missing imports for `apiUpdateInvoice`, `apiDeleteInvoice`, `apiEmailInvoice`, and `apiGetInvoice`
+- Incorrect total discount calculation in invoice forms
+- Frontend sorting not connected to backend sorting
+- "Total in Words" display showing incorrect format
+
 ## [1.2.0] - 2024-01-15
 ### Added
 - **Enhanced Stock Adjustment with Reduce Option**

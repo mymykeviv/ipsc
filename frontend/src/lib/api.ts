@@ -135,9 +135,10 @@ export async function apiListParties(type?: string, search?: string, includeInac
   return r.json()
 }
 
-export async function apiListCustomers(search?: string): Promise<Party[]> {
+export async function apiListCustomers(search?: string, includeInactive: boolean = false): Promise<Party[]> {
   const params = new URLSearchParams()
   if (search) params.append('search', search)
+  if (includeInactive) params.append('include_inactive', 'true')
   
   const url = `/api/parties/customers${params.toString() ? '?' + params.toString() : ''}`
   const r = await fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
@@ -146,9 +147,10 @@ export async function apiListCustomers(search?: string): Promise<Party[]> {
   return r.json()
 }
 
-export async function apiListVendors(search?: string): Promise<Party[]> {
+export async function apiListVendors(search?: string, includeInactive: boolean = false): Promise<Party[]> {
   const params = new URLSearchParams()
   if (search) params.append('search', search)
+  if (includeInactive) params.append('include_inactive', 'true')
   
   const url = `/api/parties/vendors${params.toString() ? '?' + params.toString() : ''}`
   const r = await fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
@@ -278,8 +280,130 @@ export type PaymentCreate = {
   payment_date: string
   payment_amount: number
   payment_method: string
+  account_head: string
   reference_number?: string
   notes?: string
+}
+
+export type PurchaseCreate = {
+  vendor_id: number
+  date: string
+  due_date: string
+  terms: string
+  place_of_supply: string
+  place_of_supply_state_code: string
+  eway_bill_number?: string
+  reverse_charge: boolean
+  export_supply: boolean
+  bill_from_address: string
+  ship_from_address: string
+  total_discount: number
+  notes?: string
+  items: {
+    product_id: number
+    qty: number
+    rate: number
+    description?: string
+    hsn_code?: string
+    discount: number
+    discount_type: string
+    gst_rate: number
+  }[]
+}
+
+export type Purchase = {
+  id: number
+  purchase_no: string
+  vendor_id: number
+  vendor_name: string
+  date: string
+  due_date: string
+  terms: string
+  place_of_supply: string
+  place_of_supply_state_code: string
+  eway_bill_number: string | null
+  reverse_charge: boolean
+  export_supply: boolean
+  bill_from_address: string
+  ship_from_address: string
+  taxable_value: number
+  total_discount: number
+  cgst: number
+  sgst: number
+  igst: number
+  grand_total: number
+  paid_amount: number
+  balance_amount: number
+  notes: string | null
+  status: string
+  created_at: string
+  updated_at: string
+}
+
+export type PurchasePaymentCreate = {
+  payment_date: string
+  payment_amount: number
+  payment_method: string
+  account_head: string
+  reference_number?: string
+  notes?: string
+}
+
+export type ExpenseCreate = {
+  expense_date: string
+  expense_type: string
+  category: string
+  subcategory?: string
+  description: string
+  amount: number
+  payment_method: string
+  account_head: string
+  reference_number?: string
+  vendor_id?: number
+  gst_rate: number
+  notes?: string
+}
+
+export type Expense = {
+  id: number
+  expense_date: string
+  expense_type: string
+  category: string
+  subcategory: string | null
+  description: string
+  amount: number
+  payment_method: string
+  account_head: string
+  reference_number: string | null
+  vendor_id: number | null
+  vendor_name: string | null
+  gst_amount: number
+  gst_rate: number
+  total_amount: number
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type CashflowSummary = {
+  period: {
+    start_date: string
+    end_date: string
+  }
+  income: {
+    total_invoice_amount: number
+    total_payments_received: number
+  }
+  expenses: {
+    total_expenses: number
+    total_purchase_payments: number
+    total_outflow: number
+  }
+  cashflow: {
+    net_cashflow: number
+    cash_inflow: number
+    cash_outflow: number
+  }
 }
 
 export async function apiCreateInvoice(payload: InvoiceCreate): Promise<Invoice> {
@@ -288,6 +412,242 @@ export async function apiCreateInvoice(payload: InvoiceCreate): Promise<Invoice>
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
     body: JSON.stringify(payload)
   })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+// Purchase Management APIs
+export async function apiCreatePurchase(payload: PurchaseCreate): Promise<{id: number, purchase_no: string}> {
+  const r = await fetch('/api/purchases', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
+    body: JSON.stringify(payload)
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiListPurchases(search?: string, status?: string): Promise<Purchase[]> {
+  const params = new URLSearchParams()
+  if (search) params.append('search', search)
+  if (status) params.append('status', status)
+  
+  const url = `/api/purchases${params.toString() ? '?' + params.toString() : ''}`
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiGetPurchase(id: number): Promise<Purchase> {
+  const r = await fetch(`/api/purchases/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiDeletePurchase(id: number): Promise<{message: string}> {
+  const r = await fetch(`/api/purchases/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+// Purchase Payment APIs
+export async function apiAddPurchasePayment(purchaseId: number, payload: PurchasePaymentCreate): Promise<{id: number}> {
+  const r = await fetch(`/api/purchases/${purchaseId}/payments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
+    body: JSON.stringify(payload)
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiListPurchasePayments(purchaseId: number): Promise<{
+  payments: Array<{
+    id: number
+    payment_date: string
+    amount: number
+    method: string
+    account_head: string
+    reference_number: string | null
+    notes: string | null
+  }>
+  total_paid: number
+  outstanding: number
+}> {
+  const r = await fetch(`/api/purchases/${purchaseId}/payments`, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+// Expense Management APIs
+export async function apiCreateExpense(payload: ExpenseCreate): Promise<{id: number}> {
+  const r = await fetch('/api/expenses', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
+    body: JSON.stringify(payload)
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiListExpenses(search?: string, category?: string, expense_type?: string, start_date?: string, end_date?: string): Promise<Expense[]> {
+  const params = new URLSearchParams()
+  if (search) params.append('search', search)
+  if (category) params.append('category', category)
+  if (expense_type) params.append('expense_type', expense_type)
+  if (start_date) params.append('start_date', start_date)
+  if (end_date) params.append('end_date', end_date)
+  
+  const url = `/api/expenses${params.toString() ? '?' + params.toString() : ''}`
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiGetExpense(id: number): Promise<Expense> {
+  const r = await fetch(`/api/expenses/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiUpdateExpense(id: number, payload: ExpenseCreate): Promise<{message: string}> {
+  const r = await fetch(`/api/expenses/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
+    body: JSON.stringify(payload)
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiDeleteExpense(id: number): Promise<{message: string}> {
+  const r = await fetch(`/api/expenses/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+// Cashflow APIs
+export async function apiGetCashflowSummary(start_date?: string, end_date?: string): Promise<CashflowSummary> {
+  const params = new URLSearchParams()
+  if (start_date) params.append('start_date', start_date)
+  if (end_date) params.append('end_date', end_date)
+  
+  const url = `/api/cashflow/summary${params.toString() ? '?' + params.toString() : ''}`
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
   
   if (!r.ok) {
     try {
@@ -319,13 +679,17 @@ export async function apiGetInvoices(
   search?: string, 
   status?: string, 
   page: number = 1, 
-  limit: number = 10
+  limit: number = 10,
+  sort_field: string = 'date',
+  sort_direction: string = 'desc'
 ): Promise<InvoiceListResponse> {
   const params = new URLSearchParams()
   if (search) params.append('search', search)
   if (status) params.append('status', status)
   params.append('page', page.toString())
   params.append('limit', limit.toString())
+  params.append('sort_field', sort_field)
+  params.append('sort_direction', sort_direction)
   
   const url = `/api/invoices?${params.toString()}`
   const r = await fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
@@ -477,16 +841,7 @@ export async function apiAdjustStock(
   return r.json()
 }
 
-export type PurchaseCreate = { vendor_id: number; items: { product_id: number; qty: number; rate: number }[] }
-export async function apiCreatePurchase(payload: PurchaseCreate): Promise<{ id: number }> {
-  const r = await fetch('/api/purchases', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
-    body: JSON.stringify(payload)
-  })
-  if (!r.ok) throw new Error('failed')
-  return r.json()
-}
+
 
 // Payment Management API Functions
 export async function apiAddPayment(invoiceId: number, payload: PaymentCreate): Promise<Payment> {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { apiListParties, apiGetProducts, apiCreateInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, apiGetInvoices, Party, Product, Payment, PaginationInfo } from '../lib/api'
+import { apiListParties, apiGetProducts, apiCreateInvoice, apiUpdateInvoice, apiGetInvoice, apiDeleteInvoice, apiEmailInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, apiGetInvoices, Party, Product, Payment, PaginationInfo } from '../lib/api'
 import { useAuth } from '../modules/AuthContext'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
@@ -146,7 +146,7 @@ export function Invoices() {
   useEffect(() => {
     if (!token) return
     loadData()
-  }, [token, searchTerm, statusFilter])
+  }, [token, searchTerm, statusFilter, sortField, sortDirection])
 
   const loadData = async (page: number = 1) => {
     try {
@@ -156,7 +156,7 @@ export function Invoices() {
       const [customersData, productsData, invoicesResponse] = await Promise.all([
         apiListParties('customer', '', true), // Include inactive
         apiGetProducts(),
-        apiGetInvoices(searchTerm, statusFilter, page, pagination.limit)
+        apiGetInvoices(searchTerm, statusFilter, page, pagination.limit, sortField, sortDirection)
       ])
       
       setCustomers(customersData)
@@ -234,6 +234,21 @@ export function Invoices() {
     return subtotal - discount
   }
 
+  const numberToWords = (num: number): string => {
+    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine']
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety']
+    const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen']
+    
+    if (num === 0) return 'Zero'
+    if (num < 10) return ones[num]
+    if (num < 20) return teens[num - 10]
+    if (num < 100) return tens[Math.floor(num / 10)] + (num % 10 ? ' ' + ones[num % 10] : '')
+    if (num < 1000) return ones[Math.floor(num / 100)] + ' Hundred' + (num % 100 ? ' and ' + numberToWords(num % 100) : '')
+    if (num < 100000) return numberToWords(Math.floor(num / 1000)) + ' Thousand' + (num % 1000 ? ' ' + numberToWords(num % 1000) : '')
+    if (num < 10000000) return numberToWords(Math.floor(num / 100000)) + ' Lakh' + (num % 100000 ? ' ' + numberToWords(num % 100000) : '')
+    return numberToWords(Math.floor(num / 10000000)) + ' Crore' + (num % 10000000 ? ' ' + numberToWords(num % 10000000) : '')
+  }
+
   const calculateTotals = () => {
     const totals = formData.items.reduce((acc, item) => {
       const lineTotal = calculateLineTotal(item)
@@ -248,7 +263,21 @@ export function Invoices() {
       }
     }, { taxable: 0, gst: 0, total: 0 })
 
-    return totals
+    // Calculate total discount
+    const totalDiscount = formData.items.reduce((acc, item) => {
+      const subtotal = item.qty * item.rate
+      const discount = item.discount_type === 'Percentage' 
+        ? (subtotal * item.discount / 100) 
+        : item.discount
+      return acc + discount
+    }, 0)
+
+    return {
+      ...totals,
+      discount: totalDiscount,
+      totalInWords: numberToWords(Math.floor(totals.total)) + ' Rupees' + 
+        (totals.total % 1 > 0 ? ' and ' + Math.round((totals.total % 1) * 100) + ' Paise' : '')
+    }
   }
 
   const validateForm = (): string[] => {
@@ -1045,7 +1074,7 @@ export function Invoices() {
                     <label>Total Discount</label>
                     <input
                       type="text"
-                      value={totals.taxable > 0 ? `₹${(totals.taxable * 0.1).toFixed(2)}` : '₹0.00'}
+                      value={totals.discount > 0 ? `₹${totals.discount.toFixed(2)}` : '₹0.00'}
                       readOnly
                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9' }}
                     />
@@ -1081,9 +1110,9 @@ export function Invoices() {
                     <label>Total in Words</label>
                     <input
                       type="text"
-                      value={`${totals.total.toFixed(2)} Rupees Only`}
+                      value={totals.totalInWords}
                       readOnly
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9' }}
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9', fontStyle: 'italic' }}
                     />
                   </div>
                 </div>
@@ -1439,7 +1468,7 @@ export function Invoices() {
                      <label>Total Discount</label>
                      <input
                        type="text"
-                       value={totals.taxable > 0 ? `₹${(totals.taxable * 0.1).toFixed(2)}` : '₹0.00'}
+                       value={totals.discount > 0 ? `₹${totals.discount.toFixed(2)}` : '₹0.00'}
                        readOnly
                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9' }}
                      />
@@ -1475,9 +1504,9 @@ export function Invoices() {
                      <label>Total in Words</label>
                      <input
                        type="text"
-                       value={`${totals.total.toFixed(2)} Rupees Only`}
+                       value={totals.totalInWords}
                        readOnly
-                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9' }}
+                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9', fontStyle: 'italic' }}
                      />
                    </div>
                  </div>

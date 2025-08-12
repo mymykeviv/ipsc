@@ -20,8 +20,13 @@ async def test_create_invoice_b2b_intra_state():
 
         payload = {
             "customer_id": cust['id'],
+            "date": "2024-01-15",
+            "place_of_supply": cust.get('billing_state', 'Maharashtra'),
+            "place_of_supply_state_code": "27",  # Maharashtra
+            "bill_to_address": f"{cust.get('billing_address_line1', 'Test Address')}, {cust.get('billing_city', 'Mumbai')}",
+            "ship_to_address": f"{cust.get('shipping_address_line1', cust.get('billing_address_line1', 'Test Address'))}, {cust.get('shipping_city', cust.get('billing_city', 'Mumbai'))}",
             "items": [
-                {"product_id": prod['id'], "qty": 2, "rate": float(prod['price'])}
+                {"product_id": prod['id'], "qty": 2, "rate": float(prod['sales_price']), "discount": 0, "discount_type": "Percentage"}
             ]
         }
 

@@ -11,8 +11,31 @@ from backend.app.auth import create_access_token
 client = TestClient(app)
 
 @pytest.fixture
-def auth_headers():
+def auth_headers(db: Session):
     """Create authentication headers"""
+    # Create admin user if it doesn't exist
+    admin_user = db.query(User).filter(User.username == "admin").first()
+    if not admin_user:
+        from backend.app.models import Role
+        # Create admin role
+        admin_role = db.query(Role).filter(Role.name == "admin").first()
+        if not admin_role:
+            admin_role = Role(name="admin")
+            db.add(admin_role)
+            db.commit()
+            db.refresh(admin_role)
+        
+        # Create admin user
+        from backend.app.auth import pwd_context
+        admin_user = User(
+            username="admin",
+            password_hash=pwd_context.hash("admin123"),
+            role_id=admin_role.id
+        )
+        db.add(admin_user)
+        db.commit()
+        db.refresh(admin_user)
+    
     token = create_access_token("admin")
     return {"Authorization": f"Bearer {token}"}
 
@@ -61,11 +84,12 @@ def sample_product(db: Session):
 @pytest.fixture
 def sample_invoice(db: Session, sample_customer, sample_product):
     """Create a sample invoice"""
+    from datetime import datetime
     invoice = Invoice(
         customer_id=sample_customer.id,
         invoice_no="INV-001",
-        date="2024-01-15T00:00:00",
-        due_date="2024-01-15T00:00:00",
+        date=datetime.fromisoformat("2024-01-15T00:00:00"),
+        due_date=datetime.fromisoformat("2024-01-15T00:00:00"),
         terms="Due on Receipt",
         place_of_supply="Maharashtra",
         place_of_supply_state_code="27",
@@ -174,24 +198,25 @@ def test_edit_invoice_not_found(db: Session, auth_headers, sample_customer, samp
 def test_edit_invoice_duplicate_number(db: Session, auth_headers, sample_customer, sample_product, sample_invoice):
     """Test editing invoice with duplicate invoice number"""
     # Create another invoice with different number
+    from datetime import datetime
     another_invoice = Invoice(
-        customer_id=sample_customer.id,
-        invoice_no="INV-002",
-        date="2024-01-15T00:00:00",
-        due_date="2024-01-15T00:00:00",
-        terms="Due on Receipt",
-        place_of_supply="Maharashtra",
-        place_of_supply_state_code="27",
-        bill_to_address="123 Test Street",
-        ship_to_address="123 Test Street",
-        taxable_value=100.00,
-        total_discount=0.00,
-        cgst=9.00,
-        sgst=9.00,
-        igst=0.00,
-        grand_total=118.00,
-        status="Draft"
-    )
+            customer_id=sample_customer.id,
+            invoice_no="INV-002",
+            date=datetime.fromisoformat("2024-01-15T00:00:00"),
+            due_date=datetime.fromisoformat("2024-01-15T00:00:00"),
+            terms="Due on Receipt",
+            place_of_supply="Maharashtra",
+            place_of_supply_state_code="27",
+            bill_to_address="123 Test Street",
+            ship_to_address="123 Test Street",
+            taxable_value=100.00,
+            total_discount=0.00,
+            cgst=9.00,
+            sgst=9.00,
+            igst=0.00,
+            grand_total=118.00,
+            status="Draft"
+        )
     db.add(another_invoice)
     db.commit()
     

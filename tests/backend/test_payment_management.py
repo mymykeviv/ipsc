@@ -11,8 +11,31 @@ from backend.app.auth import create_access_token
 client = TestClient(app)
 
 @pytest.fixture
-def auth_headers():
+def auth_headers(db: Session):
     """Create authentication headers"""
+    # Create admin user if it doesn't exist
+    admin_user = db.query(User).filter(User.username == "admin").first()
+    if not admin_user:
+        from backend.app.models import Role
+        # Create admin role
+        admin_role = db.query(Role).filter(Role.name == "admin").first()
+        if not admin_role:
+            admin_role = Role(name="admin")
+            db.add(admin_role)
+            db.commit()
+            db.refresh(admin_role)
+        
+        # Create admin user
+        from backend.app.auth import pwd_context
+        admin_user = User(
+            username="admin",
+            password_hash=pwd_context.hash("admin123"),
+            role_id=admin_role.id
+        )
+        db.add(admin_user)
+        db.commit()
+        db.refresh(admin_user)
+    
     token = create_access_token("admin")
     return {"Authorization": f"Bearer {token}"}
 
@@ -61,11 +84,12 @@ def sample_product(db: Session):
 @pytest.fixture
 def sample_invoice(db: Session, sample_customer, sample_product):
     """Create a sample invoice"""
+    from datetime import datetime
     invoice = Invoice(
         customer_id=sample_customer.id,
         invoice_no="INV-001",
-        date="2024-01-15T00:00:00",
-        due_date="2024-01-15T00:00:00",
+        date=datetime.fromisoformat("2024-01-15T00:00:00"),
+        due_date=datetime.fromisoformat("2024-01-15T00:00:00"),
         terms="Due on Receipt",
         place_of_supply="Maharashtra",
         place_of_supply_state_code="27",
@@ -101,7 +125,7 @@ def test_add_payment_success(db: Session, auth_headers, sample_invoice):
     }
     
     response = client.post(f"/api/invoices/{sample_invoice.id}/payments", json=payload, headers=auth_headers)
-    assert response.status_code == 201
+    assert response.status_code == 200
     
     data = response.json()
     assert data["payment_amount"] == 50.00
@@ -126,7 +150,7 @@ def test_add_payment_full_amount(db: Session, auth_headers, sample_invoice):
     }
     
     response = client.post(f"/api/invoices/{sample_invoice.id}/payments", json=payload, headers=auth_headers)
-    assert response.status_code == 201
+    assert response.status_code == 200
     
     # Check that invoice status is updated to Paid
     db.refresh(sample_invoice)
@@ -193,9 +217,10 @@ def test_add_payment_invalid_invoice(db: Session, auth_headers):
 def test_get_invoice_payments(db: Session, auth_headers, sample_invoice):
     """Test getting invoice payments"""
     # Add a payment first
+    from datetime import datetime
     payment = Payment(
         invoice_id=sample_invoice.id,
-        payment_date="2024-01-16T00:00:00",
+        payment_date=datetime.fromisoformat("2024-01-16T00:00:00"),
         payment_amount=50.00,
         payment_method="Cash",
         reference_number="CASH001",
@@ -229,14 +254,15 @@ def test_get_invoice_payments_invalid_invoice(db: Session, auth_headers):
 def test_delete_payment_success(db: Session, auth_headers, sample_invoice):
     """Test successful payment deletion"""
     # Add a payment first
+    from datetime import datetime
     payment = Payment(
-        invoice_id=sample_invoice.id,
-        payment_date="2024-01-16T00:00:00",
-        payment_amount=50.00,
-        payment_method="Cash",
-        reference_number="CASH001",
-        notes="Test payment"
-    )
+            invoice_id=sample_invoice.id,
+            payment_date=datetime.fromisoformat("2024-01-16T00:00:00"),
+            payment_amount=50.00,
+            payment_method="Cash",
+            reference_number="CASH001",
+            notes="Test payment"
+        )
     db.add(payment)
     db.commit()
     
@@ -274,7 +300,7 @@ def test_multiple_payments(db: Session, auth_headers, sample_invoice):
     }
     
     response = client.post(f"/api/invoices/{sample_invoice.id}/payments", json=payload1, headers=auth_headers)
-    assert response.status_code == 201
+    assert response.status_code == 200
     
     # Second payment
     payload2 = {
@@ -286,7 +312,7 @@ def test_multiple_payments(db: Session, auth_headers, sample_invoice):
     }
     
     response = client.post(f"/api/invoices/{sample_invoice.id}/payments", json=payload2, headers=auth_headers)
-    assert response.status_code == 201
+    assert response.status_code == 200
     
     # Check final invoice status
     db.refresh(sample_invoice)

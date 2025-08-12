@@ -584,8 +584,26 @@ export function Products() {
           justifyContent: 'center',
           zIndex: 1000
         }}>
-          <Card style={{ maxWidth: '600px', maxHeight: '90vh', overflow: 'auto' }}>
-            <h2>Add New Product</h2>
+          <Card style={{ width: '80%', maxWidth: '800px', height: '80%', maxHeight: '90vh', overflow: 'auto', position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2>Add New Product</h2>
+              <button 
+                onClick={() => setShowAddModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666',
+                  padding: '4px 8px',
+                  borderRadius: '4px'
+                }}
+                onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#f0f0f0'}
+                onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = 'transparent'}
+              >
+                ×
+              </button>
+            </div>
             {error && (
               <div style={{ 
                 color: 'crimson', 
@@ -748,7 +766,11 @@ export function Products() {
                 <Button type="button" variant="secondary" onClick={() => setShowAddModal(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" variant="primary" disabled={loading}>
+                <Button 
+                  type="submit" 
+                  variant="primary" 
+                  disabled={loading || !formData.name.trim() || !formData.sales_price || !formData.unit}
+                >
                   {loading ? 'Adding...' : 'Add Product'}
                 </Button>
               </div>

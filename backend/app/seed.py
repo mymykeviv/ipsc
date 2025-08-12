@@ -28,7 +28,7 @@ def run_seed():
                     gstin="29ABCDE1234F2Z5",
                     state="Karnataka",
                     state_code="29",
-                    invoice_series="FY24-25/INV/",
+                    invoice_series="INV-",
                 )
             )
 

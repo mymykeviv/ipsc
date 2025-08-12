@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey, DateTime, Numeric
+from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey, DateTime, Numeric, Text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import datetime
 from .db import Base
@@ -124,14 +124,7 @@ class Invoice(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
-class Payment(Base):
-    __tablename__ = 'payments'
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    invoice_id: Mapped[int] = mapped_column(ForeignKey('invoices.id'), nullable=False)
-    amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
-    method: Mapped[str] = mapped_column(String(20), nullable=False)
-    head: Mapped[str] = mapped_column(String(20), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
 
 
 class InvoiceItem(Base):
@@ -160,6 +153,7 @@ class Payment(Base):
     payment_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     payment_amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     payment_method: Mapped[str] = mapped_column(String(50), nullable=False)  # Cash, Bank Transfer, Cheque, UPI, etc.
+    account_head: Mapped[str] = mapped_column(String(50), nullable=False)  # Cash, Bank, Funds, etc.
     reference_number: Mapped[str | None] = mapped_column(String(100), nullable=True)  # Cheque number, UPI reference, etc.
     notes: Mapped[str | None] = mapped_column(String(200), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
@@ -170,9 +164,39 @@ class Purchase(Base):
     __tablename__ = "purchases"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     vendor_id: Mapped[int] = mapped_column(ForeignKey("parties.id"), nullable=False)
+    purchase_no: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)  # max length 16 as per GST law
     date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    taxable_value: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
-    total: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    due_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    terms: Mapped[str] = mapped_column(String(20), nullable=False, default="Due on Receipt")
+    
+    # GST Compliance Fields
+    place_of_supply: Mapped[str] = mapped_column(String(100), nullable=False)
+    place_of_supply_state_code: Mapped[str] = mapped_column(String(10), nullable=False)
+    eway_bill_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    reverse_charge: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    export_supply: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    
+    # Address Details
+    bill_from_address: Mapped[str] = mapped_column(String(200), nullable=False)
+    ship_from_address: Mapped[str] = mapped_column(String(200), nullable=False)
+    
+    # Amount Details
+    taxable_value: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    total_discount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    cgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    sgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    igst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    grand_total: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    
+    # Payment Tracking
+    paid_amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    balance_amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    
+    # Additional Fields
+    notes: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="Draft")  # Draft, Received, Paid, Partially Paid
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
 class PurchaseItem(Base):
@@ -180,7 +204,65 @@ class PurchaseItem(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     purchase_id: Mapped[int] = mapped_column(ForeignKey("purchases.id"), nullable=False)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
+    description: Mapped[str] = mapped_column(String(200), nullable=False)
+    hsn_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
     qty: Mapped[float] = mapped_column(Float, nullable=False)
     rate: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    discount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    discount_type: Mapped[str] = mapped_column(String(20), nullable=False, default="Percentage")  # Percentage, Fixed
+    taxable_value: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    gst_rate: Mapped[float] = mapped_column(Float, nullable=False)
+    cgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    sgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    igst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+
+
+class PurchasePayment(Base):
+    __tablename__ = "purchase_payments"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    purchase_id: Mapped[int] = mapped_column(ForeignKey("purchases.id"), nullable=False)
+    payment_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    payment_amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    payment_method: Mapped[str] = mapped_column(String(50), nullable=False)  # Cash, Bank Transfer, Cheque, UPI, etc.
+    account_head: Mapped[str] = mapped_column(String(50), nullable=False)  # Cash, Bank, Funds, etc.
+    reference_number: Mapped[str | None] = mapped_column(String(100), nullable=True)  # Cheque number, UPI reference, etc.
+    notes: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class Expense(Base):
+    __tablename__ = "expenses"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    expense_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    expense_type: Mapped[str] = mapped_column(String(100), nullable=False)  # Salary, Rent, Electricity, etc.
+    category: Mapped[str] = mapped_column(String(100), nullable=False)  # Direct/COGS, Indirect/Operating
+    subcategory: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    description: Mapped[str] = mapped_column(String(200), nullable=False)
+    amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    payment_method: Mapped[str] = mapped_column(String(50), nullable=False)  # Cash, Bank, UPI, etc.
+    account_head: Mapped[str] = mapped_column(String(50), nullable=False)  # Cash, Bank, Funds, etc.
+    reference_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    vendor_id: Mapped[int | None] = mapped_column(ForeignKey("parties.id"), nullable=True)
+    gst_amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    gst_rate: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    total_amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class AuditTrail(Base):
+    __tablename__ = "audit_trail"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    action: Mapped[str] = mapped_column(String(50), nullable=False)  # CREATE, UPDATE, DELETE, LOGIN, LOGOUT
+    table_name: Mapped[str] = mapped_column(String(50), nullable=False)  # products, invoices, parties, etc.
+    record_id: Mapped[int | None] = mapped_column(Integer, nullable=True)  # ID of the affected record
+    old_values: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON of old values (for updates)
+    new_values: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON of new values
+    ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)  # IPv4 or IPv6
+    user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 

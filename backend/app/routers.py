@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 import re
+from datetime import datetime, timedelta
 
 from .auth import authenticate_user, create_access_token, get_current_user, require_role
 from .db import get_db
-from .models import Product, User, Party, CompanySettings, Invoice, InvoiceItem, StockLedgerEntry, Purchase, PurchaseItem, Payment
+from .models import Product, User, Party, CompanySettings, Invoice, InvoiceItem, StockLedgerEntry, Purchase, PurchaseItem, Payment, PurchasePayment, Expense, AuditTrail
+from .audit import AuditService
 from .gst import money, split_gst
 from decimal import Decimal
 from .emailer import send_email
@@ -116,10 +118,14 @@ class LoginRequest(BaseModel):
 
 
 @api.post("/auth/login")
-def login(payload: LoginRequest, db: Session = Depends(get_db)):
+def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)):
     user = authenticate_user(db, payload.username, payload.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Log successful login
+    AuditService.log_login(db, user, request)
+    
     token = create_access_token(user.username)
     return {"access_token": token, "token_type": "bearer"}
 
@@ -232,15 +238,29 @@ def create_product(payload: ProductCreate, _: User = Depends(require_role("Admin
         db.add(product)
         db.commit()
         db.refresh(product)
+        
+        # Log product creation
+        AuditService.log_create(
+            db=db,
+            user=_,  # Current user from dependency
+            table_name="products",
+            record_id=product.id,
+            new_values=payload.model_dump(),
+            request=None  # We don't have request context here
+        )
+        
         return product
     except Exception as e:
         db.rollback()
         # Check for specific database constraint violations
-        if "unique constraint" in str(e).lower() and "sku" in str(e).lower():
+        error_str = str(e).lower()
+        if "unique constraint" in error_str and "sku" in error_str:
             raise HTTPException(status_code=400, detail="SKU already exists")
-        elif "not null constraint" in str(e).lower():
+        elif "duplicate key value" in error_str and "sku" in error_str:
+            raise HTTPException(status_code=400, detail="SKU already exists")
+        elif "not null constraint" in error_str:
             raise HTTPException(status_code=400, detail="Required fields cannot be empty")
-        elif "check constraint" in str(e).lower():
+        elif "check constraint" in error_str:
             raise HTTPException(status_code=400, detail="Invalid data provided")
         else:
             # Log the actual error for debugging
@@ -404,7 +424,33 @@ def _next_invoice_no(db: Session) -> str:
     prefix = settings.invoice_series if settings else "INV-"
     last = db.query(Invoice).order_by(Invoice.id.desc()).first()
     seq = (last.id + 1) if last else 1
-    return f"{prefix}{seq:05d}"
+    
+    # Ensure the total length doesn't exceed 16 characters
+    # Calculate available space for sequence number
+    max_seq_length = 16 - len(prefix)
+    if max_seq_length < 1:
+        # If prefix is too long, truncate it
+        prefix = prefix[:15]
+        max_seq_length = 16 - len(prefix)
+    
+    # Format sequence number with appropriate padding
+    if max_seq_length >= 5:
+        seq_str = f"{seq:05d}"
+    elif max_seq_length >= 4:
+        seq_str = f"{seq:04d}"
+    elif max_seq_length >= 3:
+        seq_str = f"{seq:03d}"
+    elif max_seq_length >= 2:
+        seq_str = f"{seq:02d}"
+    else:
+        seq_str = str(seq)
+    
+    # Ensure final length doesn't exceed 16
+    result = f"{prefix}{seq_str}"
+    if len(result) > 16:
+        result = result[:16]
+    
+    return result
 
 
 @api.post('/invoices', response_model=InvoiceOut, status_code=status.HTTP_201_CREATED)
@@ -440,7 +486,7 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
     # Calculate due date
     due_date = calculate_due_date(payload.date, payload.terms)
     
-    intra = company and customer and customer.state == company.state
+    intra = company and payload.place_of_supply == company.state
 
     taxable_total = money(0)
     discount_total = money(0)
@@ -616,7 +662,7 @@ def update_invoice(invoice_id: int, payload: InvoiceCreate, _: User = Depends(ge
     
     company = db.query(CompanySettings).first()
     customer = db.query(Party).filter(Party.id == inv.customer_id).first()
-    intra = company and customer and customer.state == inv.place_of_supply
+    intra = company and inv.place_of_supply == company.state
     
     for it in payload.items:
         prod = db.query(Product).filter(Product.id == it.product_id).first()
@@ -800,6 +846,115 @@ def email_invoice(invoice_id: int, payload: EmailRequest, _: User = Depends(get_
     return {"status": "queued" if ok else "disabled"}
 
 
+# Audit Trail Endpoints
+class AuditTrailOut(BaseModel):
+    id: int
+    user_id: int
+    action: str
+    table_name: str
+    record_id: int | None
+    old_values: str | None
+    new_values: str | None
+    ip_address: str | None
+    user_agent: str | None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+@api.get('/audit-trail', response_model=list[AuditTrailOut])
+def get_audit_trail(
+    table_name: str | None = None,
+    user_id: int | None = None,
+    action: str | None = None,
+    from_date: str | None = None,
+    to_date: str | None = None,
+    page: int = 1,
+    limit: int = 50,
+    _: User = Depends(require_role("Admin")),
+    db: Session = Depends(get_db)
+):
+    """Get audit trail entries with filtering and pagination"""
+    query = db.query(AuditTrail)
+    
+    # Apply filters
+    if table_name:
+        query = query.filter(AuditTrail.table_name == table_name)
+    if user_id:
+        query = query.filter(AuditTrail.user_id == user_id)
+    if action:
+        query = query.filter(AuditTrail.action == action)
+    if from_date:
+        query = query.filter(AuditTrail.created_at >= datetime.fromisoformat(from_date))
+    if to_date:
+        query = query.filter(AuditTrail.created_at <= datetime.fromisoformat(to_date))
+    
+    # Apply pagination
+    offset = (page - 1) * limit
+    total = query.count()
+    entries = query.order_by(AuditTrail.created_at.desc()).offset(offset).limit(limit).all()
+    
+    return entries
+
+
+@api.get('/audit-trail/export')
+def export_audit_trail(
+    table_name: str | None = None,
+    user_id: int | None = None,
+    action: str | None = None,
+    from_date: str | None = None,
+    to_date: str | None = None,
+    _: User = Depends(require_role("Admin")),
+    db: Session = Depends(get_db)
+):
+    """Export audit trail to CSV"""
+    import csv
+    from io import StringIO
+    
+    query = db.query(AuditTrail)
+    
+    # Apply filters
+    if table_name:
+        query = query.filter(AuditTrail.table_name == table_name)
+    if user_id:
+        query = query.filter(AuditTrail.user_id == user_id)
+    if action:
+        query = query.filter(AuditTrail.action == action)
+    if from_date:
+        query = query.filter(AuditTrail.created_at >= datetime.fromisoformat(from_date))
+    if to_date:
+        query = query.filter(AuditTrail.created_at <= datetime.fromisoformat(to_date))
+    
+    entries = query.order_by(AuditTrail.created_at.desc()).all()
+    
+    # Create CSV
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['ID', 'User ID', 'Action', 'Table', 'Record ID', 'Old Values', 'New Values', 'IP Address', 'User Agent', 'Created At'])
+    
+    for entry in entries:
+        writer.writerow([
+            entry.id,
+            entry.user_id,
+            entry.action,
+            entry.table_name,
+            entry.record_id,
+            entry.old_values,
+            entry.new_values,
+            entry.ip_address,
+            entry.user_agent,
+            entry.created_at.isoformat()
+        ])
+    
+    output.seek(0)
+    return Response(
+        content=output.getvalue(),
+        media_type='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=audit_trail.csv'}
+    )
+
+
 class InvoiceListOut(BaseModel):
     id: int
     invoice_no: str
@@ -820,6 +975,8 @@ def list_invoices(
     status: str | None = None,
     page: int = 1,
     limit: int = 10,
+    sort_field: str = 'date',
+    sort_direction: str = 'desc',
     _: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
@@ -844,9 +1001,25 @@ def list_invoices(
     # Get total count for pagination
     total_count = query.count()
     
+    # Apply sorting
+    sort_column_map = {
+        'invoice_no': Invoice.invoice_no,
+        'customer_name': Party.name,
+        'date': Invoice.date,
+        'due_date': Invoice.due_date,
+        'grand_total': Invoice.grand_total,
+        'status': Invoice.status
+    }
+    
+    sort_column = sort_column_map.get(sort_field, Invoice.date)
+    if sort_direction.lower() == 'asc':
+        query = query.order_by(sort_column.asc())
+    else:
+        query = query.order_by(sort_column.desc())
+    
     # Apply pagination
     offset = (page - 1) * limit
-    invoices = query.order_by(Invoice.id.desc()).offset(offset).limit(limit).all()
+    invoices = query.offset(offset).limit(limit).all()
     
     # Convert to response format with customer name
     result = []
@@ -946,10 +1119,8 @@ def stock_summary(_: User = Depends(get_current_user), db: Session = Depends(get
     rows: list[StockRow] = []
     products = db.query(Product).order_by(Product.id).all()
     for p in products:
-        qty_in = db.query(StockLedgerEntry).filter(StockLedgerEntry.product_id == p.id, StockLedgerEntry.entry_type == 'in').with_entities(func.coalesce(func.sum(StockLedgerEntry.qty), 0)).scalar()
-        qty_out = db.query(StockLedgerEntry).filter(StockLedgerEntry.product_id == p.id, StockLedgerEntry.entry_type == 'out').with_entities(func.coalesce(func.sum(StockLedgerEntry.qty), 0)).scalar()
-        qty_adj = db.query(StockLedgerEntry).filter(StockLedgerEntry.product_id == p.id, StockLedgerEntry.entry_type == 'adjust').with_entities(func.coalesce(func.sum(StockLedgerEntry.qty), 0)).scalar()
-        onhand = int((qty_in or 0) - (qty_out or 0) + (qty_adj or 0))
+        # Use the product.stock field directly as it's updated by all operations
+        onhand = int(p.stock)
         rows.append(StockRow(product_id=p.id, sku=p.sku or '', name=p.name, onhand=onhand, item_type=p.item_type, unit=p.unit))
     return rows
 
@@ -958,11 +1129,99 @@ class PurchaseItemIn(BaseModel):
     product_id: int
     qty: float
     rate: float
+    description: str | None = None
+    hsn_code: str | None = None
+    discount: float = 0
+    discount_type: str = "Percentage"  # Percentage, Fixed
+    gst_rate: float = 0
 
 
 class PurchaseCreate(BaseModel):
     vendor_id: int
+    date: str  # ISO date string
+    due_date: str  # ISO date string
+    terms: str = "Due on Receipt"
+    place_of_supply: str
+    place_of_supply_state_code: str
+    eway_bill_number: str | None = None
+    reverse_charge: bool = False
+    export_supply: bool = False
+    bill_from_address: str
+    ship_from_address: str
+    total_discount: float = 0
+    notes: str | None = None
     items: list[PurchaseItemIn]
+
+
+class PurchaseOut(BaseModel):
+    id: int
+    purchase_no: str
+    vendor_id: int
+    vendor_name: str
+    date: str
+    due_date: str
+    terms: str
+    place_of_supply: str
+    place_of_supply_state_code: str
+    eway_bill_number: str | None
+    reverse_charge: bool
+    export_supply: bool
+    bill_from_address: str
+    ship_from_address: str
+    taxable_value: float
+    total_discount: float
+    cgst: float
+    sgst: float
+    igst: float
+    grand_total: float
+    paid_amount: float
+    balance_amount: float
+    notes: str | None
+    status: str
+    created_at: str
+    updated_at: str
+
+
+def _next_purchase_no(db: Session) -> str:
+    """Generate next purchase number"""
+    settings = db.query(CompanySettings).first()
+    if not settings:
+        raise HTTPException(status_code=500, detail="Company settings not found")
+    
+    prefix = settings.invoice_series.replace("INV", "PUR")  # Use similar series for purchases
+    last_purchase = db.query(Purchase).filter(Purchase.purchase_no.like(f"{prefix}%")).order_by(Purchase.purchase_no.desc()).first()
+    
+    if last_purchase:
+        # Extract sequence number from last purchase number
+        last_seq = int(last_purchase.purchase_no.replace(prefix, ""))
+        seq = last_seq + 1
+    else:
+        seq = 1
+    
+    # Ensure the total length doesn't exceed 16 characters
+    max_seq_length = 16 - len(prefix)
+    if max_seq_length < 1:
+        prefix = prefix[:15]
+        max_seq_length = 16 - len(prefix)
+    
+    # Format sequence number with appropriate padding
+    if max_seq_length >= 5:
+        seq_str = f"{seq:05d}"
+    elif max_seq_length >= 4:
+        seq_str = f"{seq:04d}"
+    elif max_seq_length >= 3:
+        seq_str = f"{seq:03d}"
+    elif max_seq_length >= 2:
+        seq_str = f"{seq:02d}"
+    else:
+        seq_str = str(seq)
+    
+    # Ensure final length doesn't exceed 16
+    result = f"{prefix}{seq_str}"
+    if len(result) > 16:
+        result = result[:16]
+    
+    return result
 
 
 @api.post('/purchases', status_code=201)
@@ -970,28 +1229,522 @@ def create_purchase(payload: PurchaseCreate, _: User = Depends(get_current_user)
     vendor = db.query(Party).filter(Party.id == payload.vendor_id, Party.type == 'vendor').first()
     if not vendor:
         raise HTTPException(status_code=400, detail='Invalid vendor')
-    total = Decimal('0.00')
-    pur = Purchase(vendor_id=vendor.id, taxable_value=Decimal('0.00'), total=Decimal('0.00'))
+    
+    # Generate purchase number
+    purchase_no = _next_purchase_no(db)
+    
+    # Calculate GST and totals
+    taxable_value = Decimal('0.00')
+    total_cgst = Decimal('0.00')
+    total_sgst = Decimal('0.00')
+    total_igst = Decimal('0.00')
+    
+    # Create purchase
+    pur = Purchase(
+        vendor_id=vendor.id,
+        purchase_no=purchase_no,
+        date=datetime.fromisoformat(payload.date),
+        due_date=datetime.fromisoformat(payload.due_date),
+        terms=payload.terms,
+        place_of_supply=payload.place_of_supply,
+        place_of_supply_state_code=payload.place_of_supply_state_code,
+        eway_bill_number=payload.eway_bill_number,
+        reverse_charge=payload.reverse_charge,
+        export_supply=payload.export_supply,
+        bill_from_address=payload.bill_from_address,
+        ship_from_address=payload.ship_from_address,
+        total_discount=money(payload.total_discount),
+        notes=payload.notes,
+        taxable_value=Decimal('0.00'),
+        cgst=Decimal('0.00'),
+        sgst=Decimal('0.00'),
+        igst=Decimal('0.00'),
+        grand_total=Decimal('0.00'),
+        paid_amount=Decimal('0.00'),
+        balance_amount=Decimal('0.00'),
+        status="Draft"
+    )
     db.add(pur)
     db.flush()
+    
+    # Process items
     for it in payload.items:
         prod = db.query(Product).filter(Product.id == it.product_id).first()
         if not prod:
             raise HTTPException(status_code=400, detail='Invalid product')
-        amount = money(Decimal(it.qty) * Decimal(it.rate))
-        db.add(PurchaseItem(purchase_id=pur.id, product_id=prod.id, qty=it.qty, rate=money(it.rate), amount=amount))
-        total += amount
+        
+        # Calculate item amounts
+        base_amount = Decimal(it.qty) * Decimal(it.rate)
+        discount_amount = Decimal(it.discount) if it.discount_type == "Fixed" else (base_amount * Decimal(it.discount) / 100)
+        taxable_amount = base_amount - discount_amount
+        
+        # Calculate GST
+        gst_rate = Decimal(it.gst_rate)
+        if payload.place_of_supply_state_code == "29":  # Intra-state
+            cgst = taxable_amount * gst_rate / 200  # Half of GST rate
+            sgst = taxable_amount * gst_rate / 200
+            igst = Decimal('0.00')
+        else:  # Inter-state
+            cgst = Decimal('0.00')
+            sgst = Decimal('0.00')
+            igst = taxable_amount * gst_rate / 100
+        
+        item_amount = taxable_amount + cgst + sgst + igst
+        
+        # Create purchase item
+        purchase_item = PurchaseItem(
+            purchase_id=pur.id,
+            product_id=prod.id,
+            description=it.description or prod.name,
+            hsn_code=it.hsn_code or prod.hsn,
+            qty=it.qty,
+            rate=money(it.rate),
+            discount=money(it.discount),
+            discount_type=it.discount_type,
+            taxable_value=money(taxable_amount),
+            gst_rate=it.gst_rate,
+            cgst=money(cgst),
+            sgst=money(sgst),
+            igst=money(igst),
+            amount=money(item_amount)
+        )
+        db.add(purchase_item)
+        
+        # Update totals
+        taxable_value += taxable_amount
+        total_cgst += cgst
+        total_sgst += sgst
+        total_igst += igst
+        
+        # Add stock ledger entry
         db.add(StockLedgerEntry(product_id=prod.id, qty=it.qty, entry_type='in', ref_type='purchase', ref_id=pur.id))
-    pur.taxable_value = total
-    pur.total = total
+    
+    # Update purchase totals
+    pur.taxable_value = money(taxable_value)
+    pur.cgst = money(total_cgst)
+    pur.sgst = money(total_sgst)
+    pur.igst = money(total_igst)
+    pur.grand_total = money(taxable_value + total_cgst + total_sgst + total_igst - Decimal(payload.total_discount))
+    pur.balance_amount = pur.grand_total
+    
     db.commit()
-    return {"id": pur.id}
+    return {"id": pur.id, "purchase_no": purchase_no}
+
+
+@api.get('/purchases', response_model=list[PurchaseOut])
+def list_purchases(
+    search: str | None = None,
+    status: str | None = None,
+    _: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    query = db.query(Purchase).join(Party).filter(Party.type == 'vendor')
+    
+    if search:
+        search_filter = or_(
+            Purchase.purchase_no.ilike(f'%{search}%'),
+            Party.name.ilike(f'%{search}%')
+        )
+        query = query.filter(search_filter)
+    
+    if status:
+        query = query.filter(Purchase.status == status)
+    
+    purchases = query.order_by(Purchase.date.desc()).all()
+    
+    result = []
+    for pur in purchases:
+        vendor = db.query(Party).filter(Party.id == pur.vendor_id).first()
+        result.append(PurchaseOut(
+            id=pur.id,
+            purchase_no=pur.purchase_no,
+            vendor_id=pur.vendor_id,
+            vendor_name=vendor.name if vendor else "Unknown",
+            date=pur.date.isoformat(),
+            due_date=pur.due_date.isoformat(),
+            terms=pur.terms,
+            place_of_supply=pur.place_of_supply,
+            place_of_supply_state_code=pur.place_of_supply_state_code,
+            eway_bill_number=pur.eway_bill_number,
+            reverse_charge=pur.reverse_charge,
+            export_supply=pur.export_supply,
+            bill_from_address=pur.bill_from_address,
+            ship_from_address=pur.ship_from_address,
+            taxable_value=float(pur.taxable_value),
+            total_discount=float(pur.total_discount),
+            cgst=float(pur.cgst),
+            sgst=float(pur.sgst),
+            igst=float(pur.igst),
+            grand_total=float(pur.grand_total),
+            paid_amount=float(pur.paid_amount),
+            balance_amount=float(pur.balance_amount),
+            notes=pur.notes,
+            status=pur.status,
+            created_at=pur.created_at.isoformat(),
+            updated_at=pur.updated_at.isoformat()
+        ))
+    
+    return result
+
+
+@api.get('/purchases/{purchase_id}', response_model=PurchaseOut)
+def get_purchase(purchase_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    purchase = db.query(Purchase).filter(Purchase.id == purchase_id).first()
+    if not purchase:
+        raise HTTPException(status_code=404, detail='Purchase not found')
+    
+    vendor = db.query(Party).filter(Party.id == purchase.vendor_id).first()
+    return PurchaseOut(
+        id=purchase.id,
+        purchase_no=purchase.purchase_no,
+        vendor_id=purchase.vendor_id,
+        vendor_name=vendor.name if vendor else "Unknown",
+        date=purchase.date.isoformat(),
+        due_date=purchase.due_date.isoformat(),
+        terms=purchase.terms,
+        place_of_supply=purchase.place_of_supply,
+        place_of_supply_state_code=purchase.place_of_supply_state_code,
+        eway_bill_number=purchase.eway_bill_number,
+        reverse_charge=purchase.reverse_charge,
+        export_supply=purchase.export_supply,
+        bill_from_address=purchase.bill_from_address,
+        ship_from_address=purchase.ship_from_address,
+        taxable_value=float(purchase.taxable_value),
+        total_discount=float(purchase.total_discount),
+        cgst=float(purchase.cgst),
+        sgst=float(purchase.sgst),
+        igst=float(purchase.igst),
+        grand_total=float(purchase.grand_total),
+        paid_amount=float(purchase.paid_amount),
+        balance_amount=float(purchase.balance_amount),
+        notes=purchase.notes,
+        status=purchase.status,
+        created_at=purchase.created_at.isoformat(),
+        updated_at=purchase.updated_at.isoformat()
+    )
+
+
+@api.delete('/purchases/{purchase_id}')
+def delete_purchase(purchase_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    purchase = db.query(Purchase).filter(Purchase.id == purchase_id).first()
+    if not purchase:
+        raise HTTPException(status_code=404, detail='Purchase not found')
+    
+    if purchase.status in ["Paid", "Partially Paid"]:
+        raise HTTPException(status_code=400, detail='Cannot delete purchase with payments')
+    
+    # Delete related records
+    db.query(PurchaseItem).filter(PurchaseItem.purchase_id == purchase_id).delete()
+    db.query(StockLedgerEntry).filter(
+        StockLedgerEntry.ref_type == 'purchase', 
+        StockLedgerEntry.ref_id == purchase_id
+    ).delete()
+    
+    db.delete(purchase)
+    db.commit()
+    return {"message": "Purchase deleted successfully"}
+
+
+# Expense Management for Cashflow
+class ExpenseIn(BaseModel):
+    expense_date: str  # ISO date string
+    expense_type: str
+    category: str
+    subcategory: str | None = None
+    description: str
+    amount: float
+    payment_method: str
+    account_head: str
+    reference_number: str | None = None
+    vendor_id: int | None = None
+    gst_rate: float = 0
+    notes: str | None = None
+
+
+class ExpenseOut(BaseModel):
+    id: int
+    expense_date: str
+    expense_type: str
+    category: str
+    subcategory: str | None
+    description: str
+    amount: float
+    payment_method: str
+    account_head: str
+    reference_number: str | None
+    vendor_id: int | None
+    vendor_name: str | None
+    gst_amount: float
+    gst_rate: float
+    total_amount: float
+    notes: str | None
+    created_at: str
+    updated_at: str
+
+
+@api.post('/expenses', status_code=201)
+def create_expense(payload: ExpenseIn, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Validate vendor if provided
+    vendor = None
+    if payload.vendor_id:
+        vendor = db.query(Party).filter(Party.id == payload.vendor_id, Party.type == 'vendor').first()
+        if not vendor:
+            raise HTTPException(status_code=400, detail='Invalid vendor')
+    
+    # Calculate GST and total
+    gst_amount = Decimal(payload.amount) * Decimal(payload.gst_rate) / 100
+    total_amount = Decimal(payload.amount) + gst_amount
+    
+    expense = Expense(
+        expense_date=datetime.fromisoformat(payload.expense_date),
+        expense_type=payload.expense_type,
+        category=payload.category,
+        subcategory=payload.subcategory,
+        description=payload.description,
+        amount=money(payload.amount),
+        payment_method=payload.payment_method,
+        account_head=payload.account_head,
+        reference_number=payload.reference_number,
+        vendor_id=payload.vendor_id,
+        gst_amount=money(gst_amount),
+        gst_rate=payload.gst_rate,
+        total_amount=money(total_amount),
+        notes=payload.notes
+    )
+    
+    db.add(expense)
+    db.commit()
+    return {"id": expense.id}
+
+
+@api.get('/expenses', response_model=list[ExpenseOut])
+def list_expenses(
+    search: str | None = None,
+    category: str | None = None,
+    expense_type: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    _: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    query = db.query(Expense)
+    
+    if search:
+        search_filter = or_(
+            Expense.description.ilike(f'%{search}%'),
+            Expense.expense_type.ilike(f'%{search}%')
+        )
+        query = query.filter(search_filter)
+    
+    if category:
+        query = query.filter(Expense.category == category)
+    
+    if expense_type:
+        query = query.filter(Expense.expense_type == expense_type)
+    
+    if start_date:
+        query = query.filter(Expense.expense_date >= datetime.fromisoformat(start_date))
+    
+    if end_date:
+        query = query.filter(Expense.expense_date <= datetime.fromisoformat(end_date))
+    
+    expenses = query.order_by(Expense.expense_date.desc()).all()
+    
+    result = []
+    for exp in expenses:
+        vendor_name = None
+        if exp.vendor_id:
+            vendor = db.query(Party).filter(Party.id == exp.vendor_id).first()
+            vendor_name = vendor.name if vendor else "Unknown"
+        
+        result.append(ExpenseOut(
+            id=exp.id,
+            expense_date=exp.expense_date.isoformat(),
+            expense_type=exp.expense_type,
+            category=exp.category,
+            subcategory=exp.subcategory,
+            description=exp.description,
+            amount=float(exp.amount),
+            payment_method=exp.payment_method,
+            account_head=exp.account_head,
+            reference_number=exp.reference_number,
+            vendor_id=exp.vendor_id,
+            vendor_name=vendor_name,
+            gst_amount=float(exp.gst_amount),
+            gst_rate=exp.gst_rate,
+            total_amount=float(exp.total_amount),
+            notes=exp.notes,
+            created_at=exp.created_at.isoformat(),
+            updated_at=exp.updated_at.isoformat()
+        ))
+    
+    return result
+
+
+@api.get('/expenses/{expense_id}', response_model=ExpenseOut)
+def get_expense(expense_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    expense = db.query(Expense).filter(Expense.id == expense_id).first()
+    if not expense:
+        raise HTTPException(status_code=404, detail='Expense not found')
+    
+    vendor_name = None
+    if expense.vendor_id:
+        vendor = db.query(Party).filter(Party.id == expense.vendor_id).first()
+        vendor_name = vendor.name if vendor else "Unknown"
+    
+    return ExpenseOut(
+        id=expense.id,
+        expense_date=expense.expense_date.isoformat(),
+        expense_type=expense.expense_type,
+        category=expense.category,
+        subcategory=expense.subcategory,
+        description=expense.description,
+        amount=float(expense.amount),
+        payment_method=expense.payment_method,
+        account_head=expense.account_head,
+        reference_number=expense.reference_number,
+        vendor_id=expense.vendor_id,
+        vendor_name=vendor_name,
+        gst_amount=float(expense.gst_amount),
+        gst_rate=expense.gst_rate,
+        total_amount=float(expense.total_amount),
+        notes=expense.notes,
+        created_at=expense.created_at.isoformat(),
+        updated_at=expense.updated_at.isoformat()
+    )
+
+
+@api.put('/expenses/{expense_id}')
+def update_expense(expense_id: int, payload: ExpenseIn, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    expense = db.query(Expense).filter(Expense.id == expense_id).first()
+    if not expense:
+        raise HTTPException(status_code=404, detail='Expense not found')
+    
+    # Validate vendor if provided
+    if payload.vendor_id:
+        vendor = db.query(Party).filter(Party.id == payload.vendor_id, Party.type == 'vendor').first()
+        if not vendor:
+            raise HTTPException(status_code=400, detail='Invalid vendor')
+    
+    # Calculate GST and total
+    gst_amount = Decimal(payload.amount) * Decimal(payload.gst_rate) / 100
+    total_amount = Decimal(payload.amount) + gst_amount
+    
+    # Update expense
+    expense.expense_date = datetime.fromisoformat(payload.expense_date)
+    expense.expense_type = payload.expense_type
+    expense.category = payload.category
+    expense.subcategory = payload.subcategory
+    expense.description = payload.description
+    expense.amount = money(payload.amount)
+    expense.payment_method = payload.payment_method
+    expense.account_head = payload.account_head
+    expense.reference_number = payload.reference_number
+    expense.vendor_id = payload.vendor_id
+    expense.gst_amount = money(gst_amount)
+    expense.gst_rate = payload.gst_rate
+    expense.total_amount = money(total_amount)
+    expense.notes = payload.notes
+    
+    db.commit()
+    return {"message": "Expense updated successfully"}
+
+
+@api.delete('/expenses/{expense_id}')
+def delete_expense(expense_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    expense = db.query(Expense).filter(Expense.id == expense_id).first()
+    if not expense:
+        raise HTTPException(status_code=404, detail='Expense not found')
+    
+    db.delete(expense)
+    db.commit()
+    return {"message": "Expense deleted successfully"}
+
+
+# Cashflow Summary
+@api.get('/cashflow/summary')
+def get_cashflow_summary(
+    start_date: str | None = None,
+    end_date: str | None = None,
+    _: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    # Set default date range if not provided (current month)
+    if not start_date:
+        start_date = datetime.now().replace(day=1).isoformat()
+    if not end_date:
+        end_date = datetime.now().isoformat()
+    
+    start_dt = datetime.fromisoformat(start_date)
+    end_dt = datetime.fromisoformat(end_date)
+    
+    # Get income from invoices
+    income_query = db.query(Invoice).filter(
+        Invoice.date >= start_dt,
+        Invoice.date <= end_dt
+    )
+    total_income = float(sum([inv.grand_total for inv in income_query.all()], 0))
+    
+    # Get expenses
+    expense_query = db.query(Expense).filter(
+        Expense.expense_date >= start_dt,
+        Expense.expense_date <= end_dt
+    )
+    total_expenses = float(sum([exp.total_amount for exp in expense_query.all()], 0))
+    
+    # Get purchase payments (expenses)
+    purchase_payments_query = db.query(PurchasePayment).filter(
+        PurchasePayment.payment_date >= start_dt,
+        PurchasePayment.payment_date <= end_dt
+    )
+    total_purchase_payments = float(sum([pp.payment_amount for pp in purchase_payments_query.all()], 0))
+    
+    # Get invoice payments (income)
+    invoice_payments_query = db.query(Payment).filter(
+        Payment.payment_date >= start_dt,
+        Payment.payment_date <= end_dt
+    )
+    total_invoice_payments = float(sum([p.payment_amount for p in invoice_payments_query.all()], 0))
+    
+    # Calculate net cashflow
+    net_cashflow = total_invoice_payments - total_expenses - total_purchase_payments
+    
+    return {
+        "period": {
+            "start_date": start_date,
+            "end_date": end_date
+        },
+        "income": {
+            "total_invoice_amount": total_income,
+            "total_payments_received": total_invoice_payments
+        },
+        "expenses": {
+            "total_expenses": total_expenses,
+            "total_purchase_payments": total_purchase_payments,
+            "total_outflow": total_expenses + total_purchase_payments
+        },
+        "cashflow": {
+            "net_cashflow": net_cashflow,
+            "cash_inflow": total_invoice_payments,
+            "cash_outflow": total_expenses + total_purchase_payments
+        }
+    }
 
 
 class PaymentIn(BaseModel):
     amount: float
     method: str
-    head: str
+    account_head: str
+    reference_number: str | None = None
+    notes: str | None = None
+
+
+class PurchasePaymentIn(BaseModel):
+    amount: float
+    method: str
+    account_head: str
+    reference_number: str | None = None
+    notes: str | None = None
 
 
 @api.post('/invoices/{invoice_id}/payments', status_code=201)
@@ -999,8 +1752,27 @@ def add_payment(invoice_id: int, payload: PaymentIn, _: User = Depends(get_curre
     inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not inv:
         raise HTTPException(status_code=404, detail='Invoice not found')
-    pay = Payment(invoice_id=invoice_id, amount=money(payload.amount), method=payload.method, head=payload.head)
+    
+    pay = Payment(
+        invoice_id=invoice_id, 
+        payment_amount=money(payload.amount), 
+        payment_method=payload.method, 
+        account_head=payload.account_head,
+        reference_number=payload.reference_number,
+        notes=payload.notes
+    )
     db.add(pay)
+    
+    # Update invoice paid amount
+    inv.paid_amount += money(payload.amount)
+    inv.balance_amount = inv.grand_total - inv.paid_amount
+    
+    # Update invoice status
+    if inv.balance_amount == 0:
+        inv.status = "Paid"
+    elif inv.paid_amount > 0:
+        inv.status = "Partially Paid"
+    
     db.commit()
     return {"id": pay.id}
 
@@ -1010,10 +1782,79 @@ def list_payments(invoice_id: int, _: User = Depends(get_current_user), db: Sess
     inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not inv:
         raise HTTPException(status_code=404, detail='Invoice not found')
+    
     pays = db.query(Payment).filter(Payment.invoice_id == invoice_id).all()
-    total_paid = float(sum([p.amount for p in pays], 0))
+    total_paid = float(sum([p.payment_amount for p in pays], 0))
     outstanding = float(inv.grand_total) - total_paid
-    return {"payments": [{"id": p.id, "amount": float(p.amount), "method": p.method, "head": p.head} for p in pays], "total_paid": total_paid, "outstanding": outstanding}
+    
+    return {
+        "payments": [{
+            "id": p.id, 
+            "payment_date": p.payment_date.isoformat(),
+            "amount": float(p.payment_amount), 
+            "method": p.payment_method, 
+            "account_head": p.account_head,
+            "reference_number": p.reference_number,
+            "notes": p.notes
+        } for p in pays], 
+        "total_paid": total_paid, 
+        "outstanding": outstanding
+    }
+
+
+@api.post('/purchases/{purchase_id}/payments', status_code=201)
+def add_purchase_payment(purchase_id: int, payload: PurchasePaymentIn, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    purchase = db.query(Purchase).filter(Purchase.id == purchase_id).first()
+    if not purchase:
+        raise HTTPException(status_code=404, detail='Purchase not found')
+    
+    pay = PurchasePayment(
+        purchase_id=purchase_id, 
+        payment_amount=money(payload.amount), 
+        payment_method=payload.method, 
+        account_head=payload.account_head,
+        reference_number=payload.reference_number,
+        notes=payload.notes
+    )
+    db.add(pay)
+    
+    # Update purchase paid amount
+    purchase.paid_amount += money(payload.amount)
+    purchase.balance_amount = purchase.grand_total - purchase.paid_amount
+    
+    # Update purchase status
+    if purchase.balance_amount == 0:
+        purchase.status = "Paid"
+    elif purchase.paid_amount > 0:
+        purchase.status = "Partially Paid"
+    
+    db.commit()
+    return {"id": pay.id}
+
+
+@api.get('/purchases/{purchase_id}/payments')
+def list_purchase_payments(purchase_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    purchase = db.query(Purchase).filter(Purchase.id == purchase_id).first()
+    if not purchase:
+        raise HTTPException(status_code=404, detail='Purchase not found')
+    
+    pays = db.query(PurchasePayment).filter(PurchasePayment.purchase_id == purchase_id).all()
+    total_paid = float(sum([p.payment_amount for p in pays], 0))
+    outstanding = float(purchase.grand_total) - total_paid
+    
+    return {
+        "payments": [{
+            "id": p.id, 
+            "payment_date": p.payment_date.isoformat(),
+            "amount": float(p.payment_amount), 
+            "method": p.payment_method, 
+            "account_head": p.account_head,
+            "reference_number": p.reference_number,
+            "notes": p.notes
+        } for p in pays], 
+        "total_paid": total_paid, 
+        "outstanding": outstanding
+    }
 
 
 class StockAdjustmentIn(BaseModel):
@@ -1191,6 +2032,7 @@ def list_parties(
 @api.get('/parties/customers', response_model=list[PartyOut])
 def list_customers(
     search: str | None = None,
+    include_inactive: bool = False,
     _: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
@@ -1210,12 +2052,17 @@ def list_customers(
         )
         query = query.filter(search_filter)
     
-    return query.filter(Party.is_active == True).order_by(Party.name).all()
+    # Include inactive customers if requested
+    if not include_inactive:
+        query = query.filter(Party.is_active == True)
+    
+    return query.order_by(Party.name).all()
 
 
 @api.get('/parties/vendors', response_model=list[PartyOut])
 def list_vendors(
     search: str | None = None,
+    include_inactive: bool = False,
     _: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
@@ -1235,7 +2082,11 @@ def list_vendors(
         )
         query = query.filter(search_filter)
     
-    return query.filter(Party.is_active == True).order_by(Party.name).all()
+    # Include inactive vendors if requested
+    if not include_inactive:
+        query = query.filter(Party.is_active == True)
+    
+    return query.order_by(Party.name).all()
 
 
 @api.post('/parties', response_model=PartyOut, status_code=status.HTTP_201_CREATED)

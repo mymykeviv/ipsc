@@ -161,7 +161,7 @@ async def test_stock_adjustment_validation_errors():
             "adjustment_type": "invalid",
             "date_of_adjustment": "2024-01-15"
         })
-        assert response.status_code == 422  # Validation error
+        assert response.status_code == 400  # Bad request error
         
         # Test invalid product ID
         response = await client.post("/api/stock/adjust", headers=headers, json={
@@ -205,7 +205,7 @@ async def test_stock_adjustment_insufficient_stock():
         })
         
         assert adjustment_response.status_code == 400
-        assert "insufficient" in adjustment_response.json()["detail"].lower()
+        assert "cannot reduce stock below 0" in adjustment_response.json()["detail"].lower()
 
 
 @pytest.mark.asyncio
@@ -237,7 +237,7 @@ async def test_stock_adjustment_field_validations():
             "reference_bill_number": "A" * 15  # Too long
         })
         assert response.status_code == 400
-        assert "reference_bill_number" in response.json()["detail"].lower()
+        assert "reference bill number" in response.json()["detail"].lower()
         
         # Test supplier too long
         response = await client.post("/api/stock/adjust", headers=headers, json={

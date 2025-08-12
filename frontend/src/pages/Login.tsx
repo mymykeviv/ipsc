@@ -58,7 +58,7 @@ export function Login() {
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
       }}>
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <Logo size="large" />
+          <Logo size="large" centered={true} />
           <h1 style={{ 
             marginTop: '16px', 
             fontSize: '24px', 

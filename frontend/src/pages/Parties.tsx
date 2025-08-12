@@ -40,6 +40,7 @@ export function Parties() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
+  const [showInactive, setShowInactive] = useState(false)
   const [formData, setFormData] = useState<PartyFormData>({
     type: 'customer',
     name: '',
@@ -66,9 +67,10 @@ export function Parties() {
   const loadParties = async () => {
     try {
       setLoading(true)
+      setError(null)
       const [customersData, vendorsData] = await Promise.all([
-        apiListParties('customer', searchTerm, true), // Include inactive
-        apiListParties('vendor', searchTerm, true)    // Include inactive
+        apiListCustomers(searchTerm, showInactive),
+        apiListVendors(searchTerm, showInactive)
       ])
       setCustomers(customersData)
       setVendors(vendorsData)
@@ -83,7 +85,7 @@ export function Parties() {
   useEffect(() => {
     loadParties()
     setCurrentPage(1) // Reset to first page when search changes
-  }, [searchTerm])
+  }, [searchTerm, showInactive])
 
   const resetForm = () => {
     setFormData({
@@ -365,21 +367,30 @@ export function Parties() {
           </Button>
         </div>
 
-        {/* Search */}
-        <div style={{ marginBottom: '16px' }}>
+        {/* Search and Filters */}
+        <div style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}>
           <input
             type="text"
             placeholder={`Search ${activeTab}...`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
-              width: '100%',
+              flex: 1,
               padding: '12px 16px',
               border: '1px solid var(--border)',
               borderRadius: 'var(--radius)',
               fontSize: '16px'
             }}
           />
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+            <input
+              type="checkbox"
+              checked={showInactive}
+              onChange={(e) => setShowInactive(e.target.checked)}
+              style={{ width: '16px', height: '16px' }}
+            />
+            Show Inactive
+          </label>
         </div>
 
         {/* Error Display */}

@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, ReactNode, useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { apiLogin } from '../lib/api'
 
 type AuthContextType = {
@@ -25,6 +25,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
   const [expiresAt, setExpiresAt] = useState<number | null>(null)
   const logoutTimer = useRef<number | null>(null)
+
+  // Reset session timer on user activity
+  const resetSessionTimer = useCallback(() => {
+    if (token && expiresAt) {
+      const newExpiry = Date.now() + 30 * 60 * 1000 // 30 minutes
+      setExpiresAt(newExpiry)
+      localStorage.setItem('auth_exp', String(newExpiry))
+    }
+  }, [token, expiresAt])
+
+  // Add event listeners for user activity
+  useEffect(() => {
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
+    
+    const handleUserActivity = () => {
+      resetSessionTimer()
+    }
+
+    events.forEach(event => {
+      document.addEventListener(event, handleUserActivity, true)
+    })
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, handleUserActivity, true)
+      })
+    }
+  }, [resetSessionTimer])
 
   // initialize from localStorage
   useEffect(() => {

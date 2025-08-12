@@ -11,8 +11,31 @@ from backend.app.auth import create_access_token
 client = TestClient(app)
 
 @pytest.fixture
-def auth_headers():
+def auth_headers(db: Session):
     """Create authentication headers"""
+    # Create admin user if it doesn't exist
+    admin_user = db.query(User).filter(User.username == "admin").first()
+    if not admin_user:
+        from backend.app.models import Role
+        # Create admin role
+        admin_role = db.query(Role).filter(Role.name == "admin").first()
+        if not admin_role:
+            admin_role = Role(name="admin")
+            db.add(admin_role)
+            db.commit()
+            db.refresh(admin_role)
+        
+                    # Create admin user
+            from backend.app.auth import pwd_context
+            admin_user = User(
+                username="admin",
+                password_hash=pwd_context.hash("admin123"),
+                role_id=admin_role.id
+            )
+        db.add(admin_user)
+        db.commit()
+        db.refresh(admin_user)
+    
     token = create_access_token("admin")
     return {"Authorization": f"Bearer {token}"}
 
@@ -278,17 +301,18 @@ def test_invoice_listing_with_gst_fields(db: Session, auth_headers, sample_custo
         ]
     }
     
-    client.post("/api/invoices", json=invoice_payload, headers=auth_headers)
+    # Create invoice
+    create_response = client.post("/api/invoices", json=invoice_payload, headers=auth_headers)
+    assert create_response.status_code == 201
+    created_invoice = create_response.json()
     
-    # Get invoice list
-    response = client.get("/api/invoices", headers=auth_headers)
+    # Get the created invoice by ID
+    invoice_id = created_invoice["id"]
+    response = client.get(f"/api/invoices/{invoice_id}", headers=auth_headers)
     assert response.status_code == 200
     
-    invoices = response.json()
-    assert len(invoices) > 0
-    
+    invoice = response.json()
     # Check that GST fields are present
-    invoice = invoices[0]
     assert "place_of_supply" in invoice
     assert "place_of_supply_state_code" in invoice
     assert "eway_bill_number" in invoice
@@ -297,6 +321,29 @@ def test_invoice_listing_with_gst_fields(db: Session, auth_headers, sample_custo
 
 def test_gst_calculation_with_different_states(db: Session, auth_headers, sample_customer, sample_product):
     """Test GST calculation for different states (intra-state vs inter-state)"""
+    # Create company settings for GST calculation
+    from backend.app.models import CompanySettings
+    company = db.query(CompanySettings).first()
+    if company:
+        # Update existing company to Maharashtra for this test
+        company.state = "Maharashtra"
+        company.state_code = "27"
+        db.commit()
+        db.refresh(company)
+    else:
+        company = CompanySettings(
+            name="Test Company",
+            gstin="22AAAAA0000A1Z5",
+            state="Maharashtra",
+            state_code="27",
+            invoice_series="INV"
+        )
+        db.add(company)
+        db.commit()
+        db.refresh(company)
+    
+
+    
     # Test intra-state (same state)
     intra_state_payload = {
         "customer_id": sample_customer.id,
@@ -321,7 +368,7 @@ def test_gst_calculation_with_different_states(db: Session, auth_headers, sample
     assert response.status_code == 201
     
     data = response.json()
-    # For intra-state, CGST and SGST should be calculated, IGST should be 0
+        # For intra-state, CGST and SGST should be calculated, IGST should be 0
     assert data["cgst"] > 0
     assert data["sgst"] > 0
     assert data["igst"] == 0

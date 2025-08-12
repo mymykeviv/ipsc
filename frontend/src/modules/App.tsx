@@ -1,7 +1,6 @@
 import { Link, Navigate, Route, Routes } from 'react-router-dom'
 import { Dashboard } from '../pages/Dashboard'
 import { Products } from '../pages/Products'
-import { Sales } from '../pages/Sales'
 import { Purchases } from '../pages/Purchases'
 import { Parties } from '../pages/Parties'
 import { Reports } from '../pages/Reports'
@@ -9,6 +8,8 @@ import { Settings } from '../pages/Settings'
 import { Login } from '../pages/Login'
 import { AuthProvider, useAuth } from './AuthContext'
 import { Invoices } from '../pages/Invoices'
+import { Expenses } from '../pages/Expenses'
+import { Cashflow } from '../pages/Cashflow'
 import { Logo } from '../components/Logo'
 import { SessionTimer } from '../components/SessionTimer'
 
@@ -39,9 +40,10 @@ function Shell() {
         <nav className="nav">
           <Link className="nav-link" to="/">Dashboard</Link>
           <Link className="nav-link" to="/products">Products</Link>
-          <Link className="nav-link" to="/sales">Sales</Link>
           <Link className="nav-link" to="/invoices">Invoices</Link>
           <Link className="nav-link" to="/purchases">Purchases</Link>
+          <Link className="nav-link" to="/expenses">Expenses</Link>
+          <Link className="nav-link" to="/cashflow">Cashflow</Link>
           <Link className="nav-link" to="/parties">Parties</Link>
           <Link className="nav-link" to="/reports">Reports</Link>
           <Link className="nav-link" to="/settings">Settings</Link>
@@ -72,9 +74,10 @@ function Shell() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/products" element={<Products />} />
-          <Route path="/sales" element={<Sales />} />
           <Route path="/invoices" element={<Invoices />} />
           <Route path="/purchases" element={<Purchases />} />
+          <Route path="/expenses" element={<Expenses />} />
+          <Route path="/cashflow" element={<Cashflow />} />
           <Route path="/parties" element={<Parties />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />
