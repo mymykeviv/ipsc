@@ -3,6 +3,7 @@ import { apiListParties, apiGetProducts, apiCreateInvoice, apiUpdateInvoice, api
 import { useAuth } from '../modules/AuthContext'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
+import { InvoiceForm } from '../components/InvoiceForm'
 
 // Indian States for GST Compliance
 const INDIAN_STATES = {
@@ -798,50 +799,13 @@ export function Invoices() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit}>
-              {/* Invoice Details */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3>Invoice Details</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <label>Invoice Number</label>
-                    <input
-                      type="text"
-                      value={formData.invoice_no}
-                      onChange={(e) => setFormData({...formData, invoice_no: e.target.value})}
-                      placeholder="Auto-generated if empty"
-                      maxLength={16}
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                    />
-                  </div>
-                  <div>
-                    <label>Invoice Date</label>
-                    <input
-                      type="date"
-                      value={formData.date}
-                      onChange={(e) => setFormData({...formData, date: e.target.value})}
-                      required
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                    />
-                  </div>
-                  <div>
-                    <label>Terms</label>
-                    <select
-                      value={formData.terms}
-                      onChange={(e) => setFormData({...formData, terms: e.target.value})}
-                      required
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                    >
-                      <option value="Due on Receipt">Due on Receipt</option>
-                      <option value="15 days">15 days</option>
-                      <option value="30 days">30 days</option>
-                      <option value="45 days">45 days</option>
-                      <option value="60 days">60 days</option>
-                      <option value="90 days">90 days</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
+            <InvoiceForm 
+              onSuccess={() => {
+                setShowModal(false)
+                loadData() // Refresh invoices list
+              }}
+              onCancel={() => setShowModal(false)}
+            />
 
               {/* GST Compliance Details */}
               <div style={{ marginBottom: '24px' }}>
@@ -1192,50 +1156,13 @@ export function Invoices() {
                </div>
              )}
 
-             <form onSubmit={handleSubmit}>
-               {/* Invoice Details */}
-               <div style={{ marginBottom: '24px' }}>
-                 <h3>Invoice Details</h3>
-                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                   <div>
-                     <label>Invoice Number</label>
-                     <input
-                       type="text"
-                       value={formData.invoice_no}
-                       onChange={(e) => setFormData({...formData, invoice_no: e.target.value})}
-                       placeholder="Auto-generated if empty"
-                       maxLength={16}
-                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                     />
-                   </div>
-                   <div>
-                     <label>Invoice Date</label>
-                     <input
-                       type="date"
-                       value={formData.date}
-                       onChange={(e) => setFormData({...formData, date: e.target.value})}
-                       required
-                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                     />
-                   </div>
-                   <div>
-                     <label>Terms</label>
-                     <select
-                       value={formData.terms}
-                       onChange={(e) => setFormData({...formData, terms: e.target.value})}
-                       required
-                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                     >
-                       <option value="Due on Receipt">Due on Receipt</option>
-                       <option value="15 days">15 days</option>
-                       <option value="30 days">30 days</option>
-                       <option value="45 days">45 days</option>
-                       <option value="60 days">60 days</option>
-                       <option value="90 days">90 days</option>
-                     </select>
-                   </div>
-                 </div>
-               </div>
+                         <InvoiceForm 
+              onSuccess={() => {
+                setShowModal(false)
+                loadData() // Refresh invoices list
+              }}
+              onCancel={() => setShowModal(false)}
+            />
 
                {/* GST Compliance Details */}
                <div style={{ marginBottom: '24px' }}>
