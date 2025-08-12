@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiListParties, apiGetProducts, apiCreateInvoice, apiUpdateInvoice, apiGetInvoice, apiDeleteInvoice, apiEmailInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, apiGetInvoices, Party, Product, Payment, PaginationInfo } from '../lib/api'
 import { useAuth } from '../modules/AuthContext'
+import { createApiErrorHandler } from '../lib/apiUtils'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { ComprehensiveInvoiceForm } from '../components/ComprehensiveInvoiceForm'
@@ -16,8 +17,11 @@ interface Invoice {
 }
 
 export function Invoices() {
-  const { token } = useAuth()
+  const { token, forceLogout } = useAuth()
   const [invoices, setInvoices] = useState<Invoice[]>([])
+  
+  // Create error handler that will automatically log out on 401 errors
+  const handleApiError = createApiErrorHandler(forceLogout)
   const [pagination, setPagination] = useState<PaginationInfo>({
     page: 1,
     limit: 10,
@@ -47,7 +51,8 @@ export function Invoices() {
       setInvoices(data.invoices)
       setPagination(data.pagination)
     } catch (err: any) {
-      setError(err.message || 'Failed to load invoices')
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -60,7 +65,8 @@ export function Invoices() {
       await apiDeleteInvoice(id)
       loadData()
     } catch (err: any) {
-      setError(err.message || 'Failed to delete invoice')
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
     }
   }
 
