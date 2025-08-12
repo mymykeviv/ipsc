@@ -18,3 +18,8 @@ def get_db():
     finally:
         db.close()
 
+
+def get_db_url():
+    """Get database URL for migrations"""
+    return settings.database_url
+

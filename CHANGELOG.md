@@ -5,6 +5,31 @@ All notable changes to CASHFLOW will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.7] - 2024-01-15
+
+### Added
+- **Database Migration System Implementation**
+  - **Alembic Integration**: Added Alembic as the database migration tool
+  - **Migration Configuration**: Created `alembic.ini` with proper database configuration
+  - **Environment Setup**: Created `env.py` for Alembic environment configuration
+  - **Migration Scripts**: Created comprehensive migration scripts for all database changes
+  - **Migration Management**: Added `migrate.py` script for easy migration management
+  - **Documentation**: Created comprehensive README for migration system usage
+
+### Changed
+- **Database Schema Management**
+  - Replaced manual database changes with proper migration scripts
+  - Added version control for all database schema changes
+  - Implemented rollback capability for database changes
+  - Enhanced database change tracking and documentation
+
+### Fixed
+- **Dashboard Error Resolution**
+  - Fixed HTTP 500 error caused by missing database columns
+  - Applied all pending database migrations properly
+  - Ensured database schema matches application models
+  - Resolved compatibility issues between frontend and backend
+
 ## [1.6.6] - 2024-01-15
 
 ### Added
