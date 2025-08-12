@@ -172,19 +172,27 @@ export function Products() {
 
   const resetForm = () => {
     setFormData({
+      // Product Details
       name: '',
-      description: '',
-      item_type: 'tradable',
-      sales_price: '',
-      purchase_price: '',
-      stock: '',
+      product_code: '',
       sku: '',
       unit: 'Pcs',
       supplier: '',
+      description: '',
+      product_type: 'Goods',
       category: '',
-      notes: '',
-      hsn: '',
-      gst_rate: '18'
+      
+      // Price Details
+      purchase_price: '',
+      sales_price: '',
+      gst_rate: '18',
+      hsn_code: '',
+      
+      // Stock Details
+      opening_stock: '0',
+      
+      // Other Details
+      notes: ''
     })
   }
 
@@ -324,10 +332,18 @@ export function Products() {
     if (!editingProduct) return
     try {
       const payload = {
-        ...formData,
+        name: formData.name,
+        description: formData.description,
+        item_type: formData.product_type, // Map product_type back to item_type
         sales_price: parseFloat(formData.sales_price),
         purchase_price: formData.purchase_price ? parseFloat(formData.purchase_price) : null,
-        stock: parseFloat(formData.stock),
+        stock: parseFloat(formData.opening_stock), // Map opening_stock back to stock
+        sku: formData.sku,
+        unit: formData.unit,
+        supplier: formData.supplier,
+        category: formData.category,
+        notes: formData.notes,
+        hsn: formData.hsn_code, // Map hsn_code back to hsn
         gst_rate: parseFloat(formData.gst_rate)
       }
       await apiUpdateProduct(editingProduct.id, payload)
@@ -422,19 +438,27 @@ export function Products() {
   const openEditModal = (product: Product) => {
     setEditingProduct(product)
     setFormData({
+      // Product Details
       name: product.name,
-      description: product.description || '',
-      item_type: product.item_type,
-      sales_price: product.sales_price.toString(),
-      purchase_price: product.purchase_price?.toString() || '',
-      stock: product.stock.toString(),
+      product_code: product.sku || '', // Map SKU to product_code for now
       sku: product.sku || '',
       unit: product.unit,
       supplier: product.supplier || '',
+      description: product.description || '',
+      product_type: product.item_type || 'Goods', // Map item_type to product_type
       category: product.category || '',
-      notes: product.notes || '',
-      hsn: product.hsn || '',
-      gst_rate: product.gst_rate.toString()
+      
+      // Price Details
+      purchase_price: product.purchase_price?.toString() || '',
+      sales_price: product.sales_price.toString(),
+      gst_rate: product.gst_rate.toString(),
+      hsn_code: product.hsn || '', // Map hsn to hsn_code
+      
+      // Stock Details
+      opening_stock: product.stock.toString(), // Map stock to opening_stock
+      
+      // Other Details
+      notes: product.notes || ''
     })
     setShowEditModal(true)
   }
