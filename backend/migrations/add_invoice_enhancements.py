@@ -41,6 +41,22 @@ def run_migration():
             conn.execute(text("ALTER TABLE invoices ADD COLUMN ship_to_address VARCHAR(200)"))
             print("Added ship_to_address column")
             
+        if 'eway_bill_number' not in existing_columns:
+            conn.execute(text("ALTER TABLE invoices ADD COLUMN eway_bill_number VARCHAR(50)"))
+            print("Added eway_bill_number column")
+            
+        if 'place_of_supply_state_code' not in existing_columns:
+            conn.execute(text("ALTER TABLE invoices ADD COLUMN place_of_supply_state_code VARCHAR(10)"))
+            print("Added place_of_supply_state_code column")
+            
+        if 'reverse_charge' not in existing_columns:
+            conn.execute(text("ALTER TABLE invoices ADD COLUMN reverse_charge BOOLEAN DEFAULT FALSE"))
+            print("Added reverse_charge column")
+            
+        if 'export_supply' not in existing_columns:
+            conn.execute(text("ALTER TABLE invoices ADD COLUMN export_supply BOOLEAN DEFAULT FALSE"))
+            print("Added export_supply column")
+            
         if 'total_discount' not in existing_columns:
             conn.execute(text("ALTER TABLE invoices ADD COLUMN total_discount DECIMAL(12,2) DEFAULT 0"))
             print("Added total_discount column")

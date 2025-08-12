@@ -4,6 +4,47 @@ import { useAuth } from '../modules/AuthContext'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 
+// Indian States for GST Compliance
+const INDIAN_STATES = {
+  "Andhra Pradesh": "37",
+  "Arunachal Pradesh": "12",
+  "Assam": "18",
+  "Bihar": "10",
+  "Chhattisgarh": "22",
+  "Goa": "30",
+  "Gujarat": "24",
+  "Haryana": "06",
+  "Himachal Pradesh": "02",
+  "Jharkhand": "20",
+  "Karnataka": "29",
+  "Kerala": "32",
+  "Madhya Pradesh": "23",
+  "Maharashtra": "27",
+  "Manipur": "14",
+  "Meghalaya": "17",
+  "Mizoram": "15",
+  "Nagaland": "13",
+  "Odisha": "21",
+  "Punjab": "03",
+  "Rajasthan": "08",
+  "Sikkim": "11",
+  "Tamil Nadu": "33",
+  "Telangana": "36",
+  "Tripura": "16",
+  "Uttar Pradesh": "09",
+  "Uttarakhand": "05",
+  "West Bengal": "19",
+  "Delhi": "07",
+  "Jammu and Kashmir": "01",
+  "Ladakh": "38",
+  "Chandigarh": "04",
+  "Dadra and Nagar Haveli": "26",
+  "Daman and Diu": "25",
+  "Lakshadweep": "31",
+  "Puducherry": "34",
+  "Andaman and Nicobar Islands": "35"
+}
+
 interface InvoiceItem {
   product_id: number
   qty: number
@@ -17,8 +58,19 @@ interface InvoiceFormData {
   invoice_no: string
   date: string
   terms: string
+  
+  // GST Compliance Fields
+  place_of_supply: string
+  place_of_supply_state_code: string
+  eway_bill_number: string
+  reverse_charge: boolean
+  export_supply: boolean
+  
+  // Address Details
   bill_to_address: string
   ship_to_address: string
+  
+  // Items and Notes
   items: InvoiceItem[]
   notes: string
 }
@@ -56,8 +108,19 @@ export function Invoices() {
     invoice_no: '',
     date: new Date().toISOString().split('T')[0],
     terms: 'Due on Receipt',
+    
+    // GST Compliance Fields
+    place_of_supply: '',
+    place_of_supply_state_code: '',
+    eway_bill_number: '',
+    reverse_charge: false,
+    export_supply: false,
+    
+    // Address Details
     bill_to_address: '',
     ship_to_address: '',
+    
+    // Items and Notes
     items: [{ product_id: 0, qty: 1, rate: 0, discount: 0, discount_type: 'Percentage' }],
     notes: ''
   })
@@ -92,6 +155,7 @@ export function Invoices() {
     setFormData(prev => ({
       ...prev,
       customer_id: customerId,
+      place_of_supply: customer ? customer.state : '',
       bill_to_address: customer ? formatAddress(customer, 'billing') : '',
       ship_to_address: customer ? formatAddress(customer, 'shipping') : ''
     }))
@@ -169,13 +233,17 @@ export function Invoices() {
     const errors: string[] = []
     
     if (!formData.customer_id) errors.push('Customer is required')
-    if (!formData.invoice_no && formData.invoice_no.length > 15) errors.push('Invoice number must be 15 characters or less')
+    if (formData.invoice_no && formData.invoice_no.length > 16) errors.push('Invoice number must be 16 characters or less as per GST law')
     if (formData.invoice_no && !/^[a-zA-Z0-9\s-]+$/.test(formData.invoice_no)) errors.push('Invoice number must be alphanumeric with spaces and hyphens only')
+    if (!formData.place_of_supply) errors.push('Place of supply is mandatory as per GST law')
+    if (!formData.place_of_supply_state_code) errors.push('Place of supply state code is mandatory as per GST law')
     if (!formData.bill_to_address) errors.push('Bill to address is required')
     if (formData.bill_to_address.length > 200) errors.push('Bill to address must be 200 characters or less')
     if (!formData.ship_to_address) errors.push('Ship to address is required')
     if (formData.ship_to_address.length > 200) errors.push('Ship to address must be 200 characters or less')
     if (formData.notes.length > 200) errors.push('Notes must be 200 characters or less')
+    if (formData.eway_bill_number && !/^[0-9]+$/.test(formData.eway_bill_number)) errors.push('E-way bill number must contain only numbers')
+    if (formData.eway_bill_number && formData.eway_bill_number.length > 50) errors.push('E-way bill number must be 50 characters or less')
     
     formData.items.forEach((item, index) => {
       if (!item.product_id) errors.push(`Product is required for item ${index + 1}`)
@@ -206,8 +274,19 @@ export function Invoices() {
         invoice_no: formData.invoice_no || undefined,
         date: formData.date,
         terms: formData.terms,
+        
+        // GST Compliance Fields
+        place_of_supply: formData.place_of_supply,
+        place_of_supply_state_code: formData.place_of_supply_state_code,
+        eway_bill_number: formData.eway_bill_number || undefined,
+        reverse_charge: formData.reverse_charge,
+        export_supply: formData.export_supply,
+        
+        // Address Details
         bill_to_address: formData.bill_to_address,
         ship_to_address: formData.ship_to_address,
+        
+        // Items and Notes
         items: formData.items.map(item => ({
           product_id: item.product_id,
           qty: item.qty,
@@ -235,8 +314,19 @@ export function Invoices() {
       invoice_no: '',
       date: new Date().toISOString().split('T')[0],
       terms: 'Due on Receipt',
+      
+      // GST Compliance Fields
+      place_of_supply: '',
+      place_of_supply_state_code: '',
+      eway_bill_number: '',
+      reverse_charge: false,
+      export_supply: false,
+      
+      // Address Details
       bill_to_address: '',
       ship_to_address: '',
+      
+      // Items and Notes
       items: [{ product_id: 0, qty: 1, rate: 0, discount: 0, discount_type: 'Percentage' }],
       notes: ''
     })
@@ -452,7 +542,7 @@ export function Invoices() {
                       value={formData.invoice_no}
                       onChange={(e) => setFormData({...formData, invoice_no: e.target.value})}
                       placeholder="Auto-generated if empty"
-                      maxLength={15}
+                      maxLength={16}
                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
                     />
                   </div>
@@ -481,6 +571,70 @@ export function Invoices() {
                       <option value="60 days">60 days</option>
                       <option value="90 days">90 days</option>
                     </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* GST Compliance Details */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3>GST Compliance Details</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label>Place of Supply *</label>
+                    <select
+                      value={formData.place_of_supply}
+                      onChange={(e) => {
+                        const state = e.target.value
+                        const stateCode = INDIAN_STATES[state as keyof typeof INDIAN_STATES] || ''
+                        setFormData({
+                          ...formData, 
+                          place_of_supply: state,
+                          place_of_supply_state_code: stateCode
+                        })
+                      }}
+                      required
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    >
+                      <option value="">Select State...</option>
+                      {Object.keys(INDIAN_STATES).map(state => (
+                        <option key={state} value={state}>
+                          {state} ({INDIAN_STATES[state as keyof typeof INDIAN_STATES]})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label>E-way Bill Number</label>
+                    <input
+                      type="text"
+                      value={formData.eway_bill_number}
+                      onChange={(e) => setFormData({...formData, eway_bill_number: e.target.value})}
+                      placeholder="Optional - Enter e-way bill number"
+                      maxLength={50}
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                  <div>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={formData.reverse_charge}
+                        onChange={(e) => setFormData({...formData, reverse_charge: e.target.checked})}
+                        style={{ marginRight: '8px' }}
+                      />
+                      Reverse Charge
+                    </label>
+                  </div>
+                  <div>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={formData.export_supply}
+                        onChange={(e) => setFormData({...formData, export_supply: e.target.checked})}
+                        style={{ marginRight: '8px' }}
+                      />
+                      Export Supply
+                    </label>
                   </div>
                 </div>
               </div>

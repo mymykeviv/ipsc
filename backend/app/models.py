@@ -89,19 +89,31 @@ class Invoice(Base):
     __tablename__ = "invoices"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     customer_id: Mapped[int] = mapped_column(ForeignKey("parties.id"), nullable=False)
-    invoice_no: Mapped[str] = mapped_column(String(15), unique=True, nullable=False)  # max length 15
+    invoice_no: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)  # max length 16 as per GST law
     date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     due_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     terms: Mapped[str] = mapped_column(String(20), nullable=False, default="Due on Receipt")
+    
+    # GST Compliance Fields
     place_of_supply: Mapped[str] = mapped_column(String(100), nullable=False)
+    place_of_supply_state_code: Mapped[str] = mapped_column(String(10), nullable=False)
+    eway_bill_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    reverse_charge: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    export_supply: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    
+    # Address Details
     bill_to_address: Mapped[str] = mapped_column(String(200), nullable=False)
     ship_to_address: Mapped[str] = mapped_column(String(200), nullable=False)
+    
+    # Amount Details
     taxable_value: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     total_discount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
     cgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     sgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     igst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     grand_total: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    
+    # Additional Fields
     notes: Mapped[str | None] = mapped_column(String(200), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="Draft")  # Draft, Sent, Paid, Overdue
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)

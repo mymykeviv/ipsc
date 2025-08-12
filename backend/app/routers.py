@@ -12,6 +12,47 @@ from decimal import Decimal
 from .emailer import send_email
 
 
+# Indian States for GST Compliance
+INDIAN_STATES = {
+    "Andhra Pradesh": "37",
+    "Arunachal Pradesh": "12",
+    "Assam": "18",
+    "Bihar": "10",
+    "Chhattisgarh": "22",
+    "Goa": "30",
+    "Gujarat": "24",
+    "Haryana": "06",
+    "Himachal Pradesh": "02",
+    "Jharkhand": "20",
+    "Karnataka": "29",
+    "Kerala": "32",
+    "Madhya Pradesh": "23",
+    "Maharashtra": "27",
+    "Manipur": "14",
+    "Meghalaya": "17",
+    "Mizoram": "15",
+    "Nagaland": "13",
+    "Odisha": "21",
+    "Punjab": "03",
+    "Rajasthan": "08",
+    "Sikkim": "11",
+    "Tamil Nadu": "33",
+    "Telangana": "36",
+    "Tripura": "16",
+    "Uttar Pradesh": "09",
+    "Uttarakhand": "05",
+    "West Bengal": "19",
+    "Delhi": "07",
+    "Jammu and Kashmir": "01",
+    "Ladakh": "38",
+    "Chandigarh": "04",
+    "Dadra and Nagar Haveli": "26",
+    "Daman and Diu": "25",
+    "Lakshadweep": "31",
+    "Puducherry": "34",
+    "Andaman and Nicobar Islands": "35"
+}
+
 # Utility functions for invoice calculations
 def calculate_due_date(invoice_date: str, terms: str) -> datetime:
     """Calculate due date based on terms"""
@@ -283,15 +324,27 @@ class InvoiceOut(BaseModel):
     date: datetime
     due_date: datetime
     terms: str
+    
+    # GST Compliance Fields
     place_of_supply: str
+    place_of_supply_state_code: str
+    eway_bill_number: str | None
+    reverse_charge: bool
+    export_supply: bool
+    
+    # Address Details
     bill_to_address: str
     ship_to_address: str
+    
+    # Amount Details
     taxable_value: float
     total_discount: float
     cgst: float
     sgst: float
     igst: float
     grand_total: float
+    
+    # Additional Fields
     notes: str | None
     status: str
     created_at: datetime
@@ -306,8 +359,19 @@ class InvoiceCreate(BaseModel):
     invoice_no: str | None = None  # Optional, will auto-generate if not provided
     date: str  # ISO date string
     terms: str = "Due on Receipt"
+    
+    # GST Compliance Fields
+    place_of_supply: str
+    place_of_supply_state_code: str
+    eway_bill_number: str | None = None
+    reverse_charge: bool = False
+    export_supply: bool = False
+    
+    # Address Details
     bill_to_address: str
     ship_to_address: str
+    
+    # Items and Notes
     items: list[InvoiceItemIn]
     notes: str | None = None
 
@@ -323,8 +387,8 @@ def _next_invoice_no(db: Session) -> str:
 @api.post('/invoices', response_model=InvoiceOut, status_code=status.HTTP_201_CREATED)
 def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
     # Validation
-    if payload.invoice_no and len(payload.invoice_no) > 15:
-        raise HTTPException(status_code=400, detail="Invoice number must be 15 characters or less")
+    if payload.invoice_no and len(payload.invoice_no) > 16:
+        raise HTTPException(status_code=400, detail="Invoice number must be 16 characters or less as per GST law")
     if payload.invoice_no and not re.match(r'^[a-zA-Z0-9\s-]+$', payload.invoice_no):
         raise HTTPException(status_code=400, detail="Invoice number must be alphanumeric with spaces and hyphens only")
     if len(payload.bill_to_address) > 200:
@@ -333,6 +397,14 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
         raise HTTPException(status_code=400, detail="Ship to address must be 200 characters or less")
     if payload.notes and len(payload.notes) > 200:
         raise HTTPException(status_code=400, detail="Notes must be 200 characters or less")
+    if payload.eway_bill_number and len(payload.eway_bill_number) > 50:
+        raise HTTPException(status_code=400, detail="E-way bill number must be 50 characters or less")
+    if payload.eway_bill_number and not re.match(r'^[0-9]+$', payload.eway_bill_number):
+        raise HTTPException(status_code=400, detail="E-way bill number must contain only numbers")
+    if not payload.place_of_supply:
+        raise HTTPException(status_code=400, detail="Place of supply is mandatory as per GST law")
+    if not payload.place_of_supply_state_code:
+        raise HTTPException(status_code=400, detail="Place of supply state code is mandatory as per GST law")
     
     company = db.query(CompanySettings).first()
     customer = db.query(Party).filter(Party.id == payload.customer_id).first()
@@ -359,7 +431,11 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
         date=datetime.fromisoformat(payload.date.replace('Z', '+00:00')),
         due_date=due_date,
         terms=payload.terms,
-        place_of_supply=customer.state,
+        place_of_supply=payload.place_of_supply,
+        place_of_supply_state_code=payload.place_of_supply_state_code,
+        eway_bill_number=payload.eway_bill_number,
+        reverse_charge=payload.reverse_charge,
+        export_supply=payload.export_supply,
         bill_to_address=payload.bill_to_address,
         ship_to_address=payload.ship_to_address,
         taxable_value=money(0),

@@ -218,8 +218,19 @@ export type InvoiceCreate = {
   invoice_no?: string
   date: string
   terms: string
+  
+  // GST Compliance Fields
+  place_of_supply: string
+  place_of_supply_state_code: string
+  eway_bill_number?: string
+  reverse_charge: boolean
+  export_supply: boolean
+  
+  // Address Details
   bill_to_address: string
   ship_to_address: string
+  
+  // Items and Notes
   items: { 
     product_id: number
     qty: number
@@ -238,6 +249,13 @@ export type Invoice = {
   due_date: string
   grand_total: number
   status: string
+  
+  // GST Compliance Fields
+  place_of_supply: string
+  place_of_supply_state_code: string
+  eway_bill_number: string | null
+  reverse_charge: boolean
+  export_supply: boolean
 }
 
 export async function apiCreateInvoice(payload: InvoiceCreate): Promise<Invoice> {
