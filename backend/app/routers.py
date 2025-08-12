@@ -12,6 +12,9 @@ from .audit import AuditService
 from .gst import money, split_gst
 from decimal import Decimal
 from .emailer import send_email
+from fastapi import Query
+import json
+import calendar
 
 
 # Indian States for GST Compliance
@@ -1054,9 +1057,6 @@ def list_invoices(
     }
 
 
-from fastapi import Query
-
-
 @api.get('/reports/gst-summary')
 def gst_summary(from_: str = Query(alias='from'), to: str = Query(alias='to'), _: User = Depends(get_current_user), db: Session = Depends(get_db)):
     # naive impl: aggregate all invoices between dates
@@ -1103,6 +1103,455 @@ def gst_summary_csv(from_: str = Query(alias='from'), to: str = Query(alias='to'
     for row in data['rate_breakup']:
         w.writerow([row['rate'], row['taxable_value']])
     return Response(content=buf.getvalue(), media_type='text/csv')
+
+
+@api.get('/reports/gst-filing')
+def gst_filing_report(
+    period_type: str = Query(..., description="month/quarter/year"),
+    period_value: str = Query(..., description="YYYY-MM for month, YYYY-Q1/Q2/Q3/Q4 for quarter, YYYY for year"),
+    report_type: str = Query(..., description="gstr1/gstr2/gstr3b"),
+    format: str = Query("json", description="json/csv/excel"),
+    _: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    """Generate GST filing reports compliant with Indian GST portal requirements"""
+    
+    # Calculate date range based on period
+    start_date, end_date = _calculate_period_dates(period_type, period_value)
+    
+    if report_type == "gstr1":
+        return _generate_gstr1_report(start_date, end_date, format, db)
+    elif report_type == "gstr2":
+        return _generate_gstr2_report(start_date, end_date, format, db)
+    elif report_type == "gstr3b":
+        return _generate_gstr3b_report(start_date, end_date, format, db)
+    else:
+        raise HTTPException(status_code=400, detail="Invalid report type. Use gstr1, gstr2, or gstr3b")
+
+
+def _calculate_period_dates(period_type: str, period_value: str) -> tuple[str, str]:
+    """Calculate start and end dates for the given period"""
+    if period_type == "month":
+        # period_value format: YYYY-MM
+        year, month = period_value.split("-")
+        start_date = f"{year}-{month}-01"
+        # Get last day of month
+        last_day = calendar.monthrange(int(year), int(month))[1]
+        end_date = f"{year}-{month}-{last_day}"
+    elif period_type == "quarter":
+        # period_value format: YYYY-Q1/Q2/Q3/Q4
+        year, quarter = period_value.split("-")
+        year = int(year)
+        quarter = int(quarter[1])  # Q1 -> 1, Q2 -> 2, etc.
+        
+        start_month = (quarter - 1) * 3 + 1
+        end_month = quarter * 3
+        
+        start_date = f"{year}-{start_month:02d}-01"
+        last_day = calendar.monthrange(year, end_month)[1]
+        end_date = f"{year}-{end_month:02d}-{last_day}"
+    elif period_type == "year":
+        # period_value format: YYYY
+        year = int(period_value)
+        start_date = f"{year}-01-01"
+        end_date = f"{year}-12-31"
+    else:
+        raise HTTPException(status_code=400, detail="Invalid period type. Use month, quarter, or year")
+    
+    return start_date, end_date
+
+
+def _generate_gstr1_report(start_date: str, end_date: str, format: str, db: Session):
+    """Generate GSTR-1 (Outward Supplies) report"""
+    from sqlalchemy import func, select
+    from .models import Invoice, InvoiceItem, Product, Party
+    
+    # Get all invoices in the period
+    invoices = db.query(Invoice).filter(
+        func.date(Invoice.date) >= func.date(start_date),
+        func.date(Invoice.date) <= func.date(end_date)
+    ).all()
+    
+    gstr1_data = {
+        "period": f"{start_date} to {end_date}",
+        "report_type": "GSTR-1",
+        "generated_on": datetime.now().isoformat(),
+        "sections": {
+            "b2b": [],
+            "b2c": [],
+            "nil_rated": [],
+            "exempted": [],
+            "rate_wise_summary": []
+        }
+    }
+    
+    # Process each invoice
+    for invoice in invoices:
+        customer = db.query(Party).filter(Party.id == invoice.customer_id).first()
+        
+        # Determine if B2B or B2C based on customer GSTIN
+        is_b2b = customer and customer.gstin and len(customer.gstin) == 15
+        
+        invoice_data = {
+            "invoice_no": invoice.invoice_no,
+            "invoice_date": invoice.date.isoformat(),
+            "customer_name": customer.name if customer else "Unknown",
+            "customer_gstin": customer.gstin if customer else "",
+            "place_of_supply": invoice.place_of_supply,
+            "reverse_charge": invoice.reverse_charge,
+            "items": [],
+            "total_taxable_value": float(invoice.taxable_value),
+            "total_cgst": float(invoice.cgst),
+            "total_sgst": float(invoice.sgst),
+            "total_igst": float(invoice.igst),
+            "grand_total": float(invoice.grand_total)
+        }
+        
+        # Get invoice items
+        items = db.query(InvoiceItem).filter(InvoiceItem.invoice_id == invoice.id).all()
+        for item in items:
+            product = db.query(Product).filter(Product.id == item.product_id).first()
+            item_data = {
+                "description": item.description,
+                "hsn_code": product.hsn if product else "",
+                "qty": float(item.qty),
+                "rate": float(item.rate),
+                "taxable_value": float(item.taxable_value),
+                "gst_rate": float(item.gst_rate),
+                "cgst": float(item.cgst),
+                "sgst": float(item.sgst),
+                "igst": float(item.igst),
+                "amount": float(item.amount)
+            }
+            invoice_data["items"].append(item_data)
+        
+        # Categorize invoice
+        if is_b2b:
+            gstr1_data["sections"]["b2b"].append(invoice_data)
+        else:
+            gstr1_data["sections"]["b2c"].append(invoice_data)
+    
+    # Generate rate-wise summary
+    rate_summary = db.execute(
+        select(Product.gst_rate, func.sum(InvoiceItem.taxable_value), func.sum(InvoiceItem.cgst), func.sum(InvoiceItem.sgst), func.sum(InvoiceItem.igst))
+        .join(Product, Product.id == InvoiceItem.product_id)
+        .join(Invoice, Invoice.id == InvoiceItem.invoice_id)
+        .filter(func.date(Invoice.date) >= func.date(start_date), func.date(Invoice.date) <= func.date(end_date))
+        .group_by(Product.gst_rate)
+    ).all()
+    
+    for rate, taxable, cgst, sgst, igst in rate_summary:
+        gstr1_data["sections"]["rate_wise_summary"].append({
+            "gst_rate": float(rate),
+            "taxable_value": float(taxable),
+            "cgst": float(cgst),
+            "sgst": float(sgst),
+            "igst": float(igst)
+        })
+    
+    return _format_report(gstr1_data, format, "gstr1")
+
+
+def _generate_gstr2_report(start_date: str, end_date: str, format: str, db: Session):
+    """Generate GSTR-2 (Inward Supplies) report"""
+    from sqlalchemy import func, select
+    from .models import Purchase, PurchaseItem, Product, Party
+    
+    # Get all purchases in the period
+    purchases = db.query(Purchase).filter(
+        func.date(Purchase.date) >= func.date(start_date),
+        func.date(Purchase.date) <= func.date(end_date)
+    ).all()
+    
+    gstr2_data = {
+        "period": f"{start_date} to {end_date}",
+        "report_type": "GSTR-2",
+        "generated_on": datetime.now().isoformat(),
+        "sections": {
+            "b2b": [],
+            "imports": [],
+            "rate_wise_summary": []
+        }
+    }
+    
+    # Process each purchase
+    for purchase in purchases:
+        vendor = db.query(Party).filter(Party.id == purchase.vendor_id).first()
+        
+        purchase_data = {
+            "purchase_no": purchase.purchase_no,
+            "purchase_date": purchase.date.isoformat(),
+            "vendor_name": vendor.name if vendor else "Unknown",
+            "vendor_gstin": vendor.gstin if vendor else "",
+            "place_of_supply": purchase.place_of_supply,
+            "reverse_charge": purchase.reverse_charge,
+            "items": [],
+            "total_taxable_value": float(purchase.taxable_value),
+            "total_cgst": float(purchase.cgst),
+            "total_sgst": float(purchase.sgst),
+            "total_igst": float(purchase.igst),
+            "grand_total": float(purchase.grand_total)
+        }
+        
+        # Get purchase items
+        items = db.query(PurchaseItem).filter(PurchaseItem.purchase_id == purchase.id).all()
+        for item in items:
+            product = db.query(Product).filter(Product.id == item.product_id).first()
+            item_data = {
+                "description": item.description,
+                "hsn_code": product.hsn if product else "",
+                "qty": float(item.qty),
+                "rate": float(item.rate),
+                "taxable_value": float(item.taxable_value),
+                "gst_rate": float(item.gst_rate),
+                "cgst": float(item.cgst),
+                "sgst": float(item.sgst),
+                "igst": float(item.igst),
+                "amount": float(item.amount)
+            }
+            purchase_data["items"].append(item_data)
+        
+        gstr2_data["sections"]["b2b"].append(purchase_data)
+    
+    # Generate rate-wise summary
+    rate_summary = db.execute(
+        select(Product.gst_rate, func.sum(PurchaseItem.taxable_value), func.sum(PurchaseItem.cgst), func.sum(PurchaseItem.sgst), func.sum(PurchaseItem.igst))
+        .join(Product, Product.id == PurchaseItem.product_id)
+        .join(Purchase, Purchase.id == PurchaseItem.purchase_id)
+        .filter(func.date(Purchase.date) >= func.date(start_date), func.date(Purchase.date) <= func.date(end_date))
+        .group_by(Product.gst_rate)
+    ).all()
+    
+    for rate, taxable, cgst, sgst, igst in rate_summary:
+        gstr2_data["sections"]["rate_wise_summary"].append({
+            "gst_rate": float(rate),
+            "taxable_value": float(taxable),
+            "cgst": float(cgst),
+            "sgst": float(sgst),
+            "igst": float(igst)
+        })
+    
+    return _format_report(gstr2_data, format, "gstr2")
+
+
+def _generate_gstr3b_report(start_date: str, end_date: str, format: str, db: Session):
+    """Generate GSTR-3B (Summary) report"""
+    from sqlalchemy import func, select
+    from .models import Invoice, Purchase, InvoiceItem, PurchaseItem, Product
+    
+    gstr3b_data = {
+        "period": f"{start_date} to {end_date}",
+        "report_type": "GSTR-3B",
+        "generated_on": datetime.now().isoformat(),
+        "sections": {
+            "outward_supplies": {},
+            "inward_supplies": {},
+            "summary": {}
+        }
+    }
+    
+    # Outward supplies (GSTR-1 data)
+    invoices = db.query(Invoice).filter(
+        func.date(Invoice.date) >= func.date(start_date),
+        func.date(Invoice.date) <= func.date(end_date)
+    ).all()
+    
+    outward_taxable = sum([float(i.taxable_value) for i in invoices], 0.0)
+    outward_cgst = sum([float(i.cgst) for i in invoices], 0.0)
+    outward_sgst = sum([float(i.sgst) for i in invoices], 0.0)
+    outward_igst = sum([float(i.igst) for i in invoices], 0.0)
+    
+    gstr3b_data["sections"]["outward_supplies"] = {
+        "total_taxable_value": outward_taxable,
+        "total_cgst": outward_cgst,
+        "total_sgst": outward_sgst,
+        "total_igst": outward_igst,
+        "total_tax": outward_cgst + outward_sgst + outward_igst
+    }
+    
+    # Inward supplies (GSTR-2 data)
+    purchases = db.query(Purchase).filter(
+        func.date(Purchase.date) >= func.date(start_date),
+        func.date(Purchase.date) <= func.date(end_date)
+    ).all()
+    
+    inward_taxable = sum([float(p.taxable_value) for p in purchases], 0.0)
+    inward_cgst = sum([float(p.cgst) for p in purchases], 0.0)
+    inward_sgst = sum([float(p.sgst) for p in purchases], 0.0)
+    inward_igst = sum([float(p.igst) for p in purchases], 0.0)
+    
+    gstr3b_data["sections"]["inward_supplies"] = {
+        "total_taxable_value": inward_taxable,
+        "total_cgst": inward_cgst,
+        "total_sgst": inward_sgst,
+        "total_igst": inward_igst,
+        "total_tax": inward_cgst + inward_sgst + inward_igst
+    }
+    
+    # Summary calculations
+    net_cgst = outward_cgst - inward_cgst
+    net_sgst = outward_sgst - inward_sgst
+    net_igst = outward_igst - inward_igst
+    
+    gstr3b_data["sections"]["summary"] = {
+        "net_cgst": net_cgst,
+        "net_sgst": net_sgst,
+        "net_igst": net_igst,
+        "total_net_tax": net_cgst + net_sgst + net_igst,
+        "total_outward_taxable": outward_taxable,
+        "total_inward_taxable": inward_taxable
+    }
+    
+    return _format_report(gstr3b_data, format, "gstr3b")
+
+
+def _format_report(data: dict, format: str, report_type: str):
+    """Format report in requested format"""
+    if format == "json":
+        return data
+    elif format == "csv":
+        return _convert_to_csv(data, report_type)
+    elif format == "excel":
+        return _convert_to_excel(data, report_type)
+    else:
+        raise HTTPException(status_code=400, detail="Invalid format. Use json, csv, or excel")
+
+
+def _convert_to_csv(data: dict, report_type: str):
+    """Convert report data to CSV format"""
+    import csv
+    from io import StringIO
+    
+    buf = StringIO()
+    w = csv.writer(buf)
+    
+    # Write header
+    w.writerow([f"GST {report_type.upper()} Report"])
+    w.writerow([f"Period: {data['period']}"])
+    w.writerow([f"Generated On: {data['generated_on']}"])
+    w.writerow([])
+    
+    if report_type == "gstr1":
+        # B2B Section
+        w.writerow(["B2B Invoices"])
+        w.writerow(["Invoice No", "Date", "Customer", "GSTIN", "Taxable Value", "CGST", "SGST", "IGST", "Total"])
+        for invoice in data["sections"]["b2b"]:
+            w.writerow([
+                invoice["invoice_no"],
+                invoice["invoice_date"],
+                invoice["customer_name"],
+                invoice["customer_gstin"],
+                invoice["total_taxable_value"],
+                invoice["total_cgst"],
+                invoice["total_sgst"],
+                invoice["total_igst"],
+                invoice["grand_total"]
+            ])
+        
+        w.writerow([])
+        w.writerow(["Rate-wise Summary"])
+        w.writerow(["GST Rate", "Taxable Value", "CGST", "SGST", "IGST"])
+        for rate in data["sections"]["rate_wise_summary"]:
+            w.writerow([
+                rate["gst_rate"],
+                rate["taxable_value"],
+                rate["cgst"],
+                rate["sgst"],
+                rate["igst"]
+            ])
+    
+    elif report_type == "gstr2":
+        # B2B Section
+        w.writerow(["B2B Purchases"])
+        w.writerow(["Purchase No", "Date", "Vendor", "GSTIN", "Taxable Value", "CGST", "SGST", "IGST", "Total"])
+        for purchase in data["sections"]["b2b"]:
+            w.writerow([
+                purchase["purchase_no"],
+                purchase["purchase_date"],
+                purchase["vendor_name"],
+                purchase["vendor_gstin"],
+                purchase["total_taxable_value"],
+                purchase["total_cgst"],
+                purchase["total_sgst"],
+                purchase["total_igst"],
+                purchase["grand_total"]
+            ])
+    
+    elif report_type == "gstr3b":
+        w.writerow(["GSTR-3B Summary"])
+        w.writerow(["Section", "Taxable Value", "CGST", "SGST", "IGST", "Total Tax"])
+        
+        outward = data["sections"]["outward_supplies"]
+        w.writerow(["Outward Supplies", outward["total_taxable_value"], outward["total_cgst"], outward["total_sgst"], outward["total_igst"], outward["total_tax"]])
+        
+        inward = data["sections"]["inward_supplies"]
+        w.writerow(["Inward Supplies", inward["total_taxable_value"], inward["total_cgst"], inward["total_sgst"], inward["total_igst"], inward["total_tax"]])
+        
+        summary = data["sections"]["summary"]
+        w.writerow(["Net Tax", "", summary["net_cgst"], summary["net_sgst"], summary["net_igst"], summary["total_net_tax"]])
+    
+    return Response(content=buf.getvalue(), media_type='text/csv')
+
+
+def _convert_to_excel(data: dict, report_type: str):
+    """Convert report data to Excel format"""
+    try:
+        import openpyxl
+        from openpyxl.styles import Font, Alignment, PatternFill
+    except ImportError:
+        raise HTTPException(status_code=500, detail="Excel export requires openpyxl package")
+    
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"GST {report_type.upper()}"
+    
+    # Header styling
+    header_font = Font(bold=True)
+    header_fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+    
+    # Write header
+    ws['A1'] = f"GST {report_type.upper()} Report"
+    ws['A1'].font = Font(bold=True, size=14)
+    ws['A2'] = f"Period: {data['period']}"
+    ws['A3'] = f"Generated On: {data['generated_on']}"
+    
+    if report_type == "gstr1":
+        # B2B Section
+        row = 5
+        ws[f'A{row}'] = "B2B Invoices"
+        ws[f'A{row}'].font = header_font
+        
+        row += 1
+        headers = ["Invoice No", "Date", "Customer", "GSTIN", "Taxable Value", "CGST", "SGST", "IGST", "Total"]
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=row, column=col, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+        
+        row += 1
+        for invoice in data["sections"]["b2b"]:
+            ws.cell(row=row, column=1, value=invoice["invoice_no"])
+            ws.cell(row=row, column=2, value=invoice["invoice_date"])
+            ws.cell(row=row, column=3, value=invoice["customer_name"])
+            ws.cell(row=row, column=4, value=invoice["customer_gstin"])
+            ws.cell(row=row, column=5, value=invoice["total_taxable_value"])
+            ws.cell(row=row, column=6, value=invoice["total_cgst"])
+            ws.cell(row=row, column=7, value=invoice["total_sgst"])
+            ws.cell(row=row, column=8, value=invoice["total_igst"])
+            ws.cell(row=row, column=9, value=invoice["grand_total"])
+            row += 1
+    
+    # Save to bytes
+    from io import BytesIO
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    return Response(
+        content=output.getvalue(),
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': f'attachment; filename="gst_{report_type}_{data["period"].replace(" ", "_")}.xlsx"'}
+    )
 
 
 class StockRow(BaseModel):

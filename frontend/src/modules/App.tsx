@@ -9,7 +9,7 @@ import { Login } from '../pages/Login'
 import { AuthProvider, useAuth } from './AuthContext'
 import { Invoices } from '../pages/Invoices'
 import { Expenses } from '../pages/Expenses'
-import { Cashflow } from '../pages/Cashflow'
+
 import { Logo } from '../components/Logo'
 import { SessionTimer } from '../components/SessionTimer'
 
@@ -43,7 +43,6 @@ function Shell() {
           <Link className="nav-link" to="/invoices">Invoices</Link>
           <Link className="nav-link" to="/purchases">Purchases</Link>
           <Link className="nav-link" to="/expenses">Expenses</Link>
-          <Link className="nav-link" to="/cashflow">Cashflow</Link>
           <Link className="nav-link" to="/parties">Parties</Link>
           <Link className="nav-link" to="/reports">Reports</Link>
           <Link className="nav-link" to="/settings">Settings</Link>
@@ -77,7 +76,6 @@ function Shell() {
           <Route path="/invoices" element={<Invoices />} />
           <Route path="/purchases" element={<Purchases />} />
           <Route path="/expenses" element={<Expenses />} />
-          <Route path="/cashflow" element={<Cashflow />} />
           <Route path="/parties" element={<Parties />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />

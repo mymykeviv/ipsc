@@ -896,3 +896,56 @@ export async function apiDeletePayment(paymentId: number): Promise<void> {
   }
 }
 
+export type GstFilingReport = {
+  period: string
+  report_type: string
+  generated_on: string
+  sections: {
+    b2b: any[]
+    b2c: any[]
+    nil_rated: any[]
+    exempted: any[]
+    rate_wise_summary: any[]
+    outward_supplies?: any
+    inward_supplies?: any
+    summary?: any
+  }
+}
+
+export async function apiGetGstFilingReport(
+  periodType: 'month' | 'quarter' | 'year',
+  periodValue: string,
+  reportType: 'gstr1' | 'gstr2' | 'gstr3b',
+  format: 'json' | 'csv' | 'excel' = 'json'
+): Promise<GstFilingReport> {
+  const response = await fetch(
+    `/api/reports/gst-filing?period_type=${periodType}&period_value=${periodValue}&report_type=${reportType}&format=${format}`,
+    {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  )
+  
+  if (!response.ok) {
+    throw new Error(`Failed to get GST filing report: ${response.statusText}`)
+  }
+  
+  if (format === 'json') {
+    return response.json()
+  } else {
+    // For CSV and Excel, return the blob for download
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `gst_${reportType}_${periodValue}.${format === 'csv' ? 'csv' : 'xlsx'}`
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+    return {} as GstFilingReport // Return empty object for download
+  }
+}
+

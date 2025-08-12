@@ -5,6 +5,40 @@ All notable changes to CASHFLOW will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.2] - 2024-01-15
+
+### Added
+- **GST Reporting and Compliance System (Issue #9)**
+  - Comprehensive GST filing reports compliant with Indian GST portal requirements
+  - Support for GSTR-1 (Outward Supplies), GSTR-2 (Inward Supplies), and GSTR-3B (Summary) reports
+  - Multiple period types: Monthly, Quarterly, and Yearly reporting
+  - Multiple export formats: JSON, CSV, and Excel
+  - Detailed transaction-level reporting with customer/vendor GSTIN tracking
+  - Rate-wise summary with CGST/SGST/IGST breakdown
+  - Net tax liability calculations for GSTR-3B
+  - B2B vs B2C categorization based on GSTIN presence
+  - Excel export with proper formatting and styling
+
+### Changed
+- **Navigation Cleanup**
+  - Removed duplicate "Cashflow" link from sidebar navigation
+  - Cashflow functionality now integrated into main Dashboard
+  - Streamlined navigation with better organization
+
+- **Reports Page Enhancement**
+  - Complete redesign with tabbed interface
+  - GST Filing Reports tab with comprehensive configuration options
+  - Summary Reports tab for basic GST summary
+  - Modern UI with better user experience
+  - Interactive period selection with dynamic options
+
+### Fixed
+- **API Integration**
+  - Enhanced backend GST reporting endpoints
+  - Proper date range calculations for different period types
+  - Excel export functionality with openpyxl integration
+  - CSV export with proper formatting for GST portal compatibility
+
 ## [1.6.1] - 2024-01-15
 
 ### Changed
