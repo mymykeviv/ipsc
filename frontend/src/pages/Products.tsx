@@ -23,19 +23,27 @@ interface Product {
 }
 
 interface ProductFormData {
+  // Product Details
   name: string
-  description: string
-  item_type: string
-  sales_price: string
-  purchase_price: string
-  stock: string
+  product_code: string
   sku: string
   unit: string
   supplier: string
+  description: string
+  product_type: string
   category: string
-  notes: string
-  hsn: string
+  
+  // Price Details
+  purchase_price: string
+  sales_price: string
   gst_rate: string
+  hsn_code: string
+  
+  // Stock Details
+  opening_stock: string
+  
+  // Other Details
+  notes: string
 }
 
 interface StockFormData {
@@ -64,19 +72,27 @@ export function Products() {
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(25)
   const [formData, setFormData] = useState<ProductFormData>({
+    // Product Details
     name: '',
-    description: '',
-    item_type: 'tradable',
-    sales_price: '',
-    purchase_price: '',
-    stock: '',
+    product_code: '',
     sku: '',
     unit: 'Pcs',
     supplier: '',
+    description: '',
+    product_type: 'Goods',
     category: '',
-    notes: '',
-    hsn: '',
-    gst_rate: '18' // Default to 18%
+    
+    // Price Details
+    purchase_price: '',
+    sales_price: '',
+    gst_rate: '18',
+    hsn_code: '',
+    
+    // Stock Details
+    opening_stock: '0',
+    
+    // Other Details
+    notes: ''
   })
 
   const [stockFormData, setStockFormData] = useState<StockFormData>({
@@ -208,8 +224,8 @@ export function Products() {
         return
       }
       
-      if (formData.hsn.length > 10) {
-        setError('HSN must be 10 characters or less')
+      if (formData.hsn_code.length > 10) {
+        setError('HSN Code must be 10 characters or less')
         return
       }
       
@@ -229,9 +245,9 @@ export function Products() {
       }
       
       // Stock validation
-      const stock = parseInt(formData.stock)
+      const stock = parseInt(formData.opening_stock)
       if (stock < 0 || stock > 999999) {
-        setError('Stock must be between 0 and 999999 (integer only)')
+        setError('Opening stock must be between 0 and 999999 (integer only)')
         return
       }
       
@@ -243,10 +259,18 @@ export function Products() {
       // HSN is now optional
       
       const payload = {
-        ...formData,
+        name: formData.name,
+        description: formData.description,
+        item_type: formData.product_type, // Map product_type to item_type
         sales_price: parseFloat(formData.sales_price),
         purchase_price: formData.purchase_price ? parseFloat(formData.purchase_price) : null,
-        stock: parseInt(formData.stock) || 0,
+        stock: parseInt(formData.opening_stock) || 0,
+        sku: formData.sku || null,
+        unit: formData.unit,
+        supplier: formData.supplier || null,
+        category: formData.category || null,
+        notes: formData.notes || null,
+        hsn: formData.hsn_code || null, // Map hsn_code to hsn
         gst_rate: parseFloat(formData.gst_rate)
       }
       
@@ -960,7 +984,7 @@ export function Products() {
           justifyContent: 'center',
           zIndex: 1000
         }}>
-          <Card style={{ maxWidth: '500px', maxHeight: '90vh', overflow: 'auto' }}>
+          <Card style={{ width: '80%', height: '80%', maxWidth: '1200px', maxHeight: '80vh', overflow: 'auto' }}>
             <h2>Stock Adjustment - {selectedProduct.name}</h2>
             <form onSubmit={handleStockAdjustment}>
               <div style={{ display: 'grid', gap: '16px', marginBottom: '16px' }}>
@@ -1064,6 +1088,91 @@ export function Products() {
                 </Button>
               </div>
             </form>
+          </Card>
+        </div>
+      )}
+
+      {/* Stock History Modal */}
+      {showStockHistoryModal && selectedProduct && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <Card style={{ width: '80%', height: '80%', maxWidth: '1200px', maxHeight: '80vh', overflow: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2>Stock History - {selectedProduct.name}</h2>
+              <Button onClick={() => setShowStockHistoryModal(false)} variant="secondary">×</Button>
+            </div>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label>Current Stock</label>
+                  <input
+                    type="text"
+                    value={selectedProduct.stock}
+                    disabled
+                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f5f5f5' }}
+                  />
+                </div>
+                <div>
+                  <label>Product SKU</label>
+                  <input
+                    type="text"
+                    value={selectedProduct.sku || 'N/A'}
+                    disabled
+                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f5f5f5' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f9f9f9' }}>
+                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Date</th>
+                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Type</th>
+                    <th style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Quantity</th>
+                    <th style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Balance</th>
+                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Reference</th>
+                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
+                    <td style={{ padding: '12px' }}>{new Date().toLocaleDateString()}</td>
+                    <td style={{ padding: '12px' }}>
+                      <span style={{
+                        padding: '4px 8px',
+                        borderRadius: 'var(--radius)',
+                        fontSize: '12px',
+                        backgroundColor: '#d4edda',
+                        color: '#155724'
+                      }}>
+                        Opening Stock
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'right' }}>{selectedProduct.stock}</td>
+                    <td style={{ padding: '12px', textAlign: 'right' }}>{selectedProduct.stock}</td>
+                    <td style={{ padding: '12px' }}>-</td>
+                    <td style={{ padding: '12px' }}>Initial stock</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style={{ marginTop: '16px', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
+              Stock history will be populated as adjustments are made
+            </div>
           </Card>
         </div>
       )}

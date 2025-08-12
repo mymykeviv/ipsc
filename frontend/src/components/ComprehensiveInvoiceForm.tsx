@@ -303,7 +303,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
     }
   }
 
-  // Calculate totals
+  // Calculate totals with GST breakup
   const totals = {
     subtotal: formData.items.reduce((sum, item) => sum + item.amount, 0),
     discount: formData.items.reduce((sum, item) => {
@@ -314,8 +314,29 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
     }, 0),
     gst: formData.items.reduce((sum, item) => sum + item.gst_amount, 0),
     total: 0,
-    totalInWords: ''
+    totalInWords: '',
+    // GST Breakup calculation
+    cgst: 0,
+    sgst: 0,
+    igst: 0,
+    utgst: 0,
+    cess: 0
   }
+  
+  // Calculate GST breakup based on place of supply
+  const supplierState = suppliers.find(s => s.id === formData.supplier_id)?.billing_state || ''
+  const customerState = customers.find(c => c.id === formData.customer_id)?.billing_state || ''
+  const placeOfSupplyState = formData.place_of_supply
+  
+  // If supplier and customer are in same state, apply CGST + SGST
+  // If different states, apply IGST
+  if (supplierState && customerState && supplierState === customerState && supplierState === placeOfSupplyState) {
+    totals.cgst = totals.gst / 2
+    totals.sgst = totals.gst / 2
+  } else {
+    totals.igst = totals.gst
+  }
+  
   totals.total = totals.subtotal + totals.gst
   totals.totalInWords = numberToWords(Math.round(totals.total)) + ' Rupees Only'
 
@@ -809,6 +830,39 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
               style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9' }}
             />
           </div>
+          {totals.cgst > 0 && (
+            <div>
+              <label>CGST (9%)</label>
+              <input
+                type="text"
+                value={`₹${totals.cgst.toFixed(2)}`}
+                readOnly
+                style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9' }}
+              />
+            </div>
+          )}
+          {totals.sgst > 0 && (
+            <div>
+              <label>SGST (9%)</label>
+              <input
+                type="text"
+                value={`₹${totals.sgst.toFixed(2)}`}
+                readOnly
+                style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9' }}
+              />
+            </div>
+          )}
+          {totals.igst > 0 && (
+            <div>
+              <label>IGST (18%)</label>
+              <input
+                type="text"
+                value={`₹${totals.igst.toFixed(2)}`}
+                readOnly
+                style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9' }}
+              />
+            </div>
+          )}
           <div>
             <label>Grand Total</label>
             <input
