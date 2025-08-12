@@ -433,8 +433,11 @@ export function Purchases() {
               </button>
             </div>
 
-            <div style={{ display: 'grid', gap: '16px' }}>
-              {/* Basic Details */}
+            {/* Purchase Information Section */}
+            <div style={{ marginBottom: '24px' }}>
+              <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+                Purchase Information
+              </h3>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <label>
                   <div>Vendor *</div>
@@ -478,8 +481,13 @@ export function Purchases() {
                   />
                 </label>
               </div>
+            </div>
 
-              {/* GST Details */}
+            {/* GST Information Section */}
+            <div style={{ marginBottom: '24px' }}>
+              <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>
+                GST Information
+              </h3>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <label>
                   <div>Place of Supply *</div>
@@ -522,8 +530,13 @@ export function Purchases() {
                   />
                 </label>
               </div>
+            </div>
 
-              {/* Address Details */}
+            {/* Address Information Section */}
+            <div style={{ marginBottom: '24px' }}>
+              <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '8px' }}>
+                Address Information
+              </h3>
               <div style={{ display: 'grid', gap: '16px' }}>
                 <label>
                   <div>Bill From Address *</div>

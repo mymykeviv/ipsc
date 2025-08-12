@@ -408,8 +408,11 @@ export function Expenses() {
               </button>
             </div>
 
-            <div style={{ display: 'grid', gap: '16px' }}>
-              {/* Basic Details */}
+            {/* Expense Details Section */}
+            <div style={{ marginBottom: '24px' }}>
+              <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+                Expense Details
+              </h3>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <label>
                   <div>Expense Date *</div>
@@ -466,8 +469,13 @@ export function Expenses() {
                   />
                 </label>
               </div>
+            </div>
 
-              {/* Amount and Payment Details */}
+            {/* Payment Information Section */}
+            <div style={{ marginBottom: '24px' }}>
+              <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>
+                Payment Information
+              </h3>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <label>
                   <div>Amount *</div>
