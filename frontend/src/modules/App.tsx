@@ -1,4 +1,4 @@
-import { Link, Navigate, Route, Routes } from 'react-router-dom'
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { Dashboard } from '../pages/Dashboard'
 import { Products } from '../pages/Products'
 import { Purchases } from '../pages/Purchases'
@@ -15,6 +15,15 @@ import { SessionTimer } from '../components/SessionTimer'
 
 function Shell() {
   const { token, isAuthenticated, logout, expiresAt } = useAuth()
+  const location = useLocation()
+  
+  // Helper function to check if a link is active
+  const isActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/'
+    }
+    return location.pathname.startsWith(path)
+  }
   
   // If not authenticated, show only login page
   if (!isAuthenticated) {
@@ -38,14 +47,14 @@ function Shell() {
           <Logo size="large" />
         </div>
         <nav className="nav">
-          <Link className="nav-link" to="/">Dashboard</Link>
-          <Link className="nav-link" to="/products">Products</Link>
-          <Link className="nav-link" to="/invoices">Invoices</Link>
-          <Link className="nav-link" to="/purchases">Purchases</Link>
-          <Link className="nav-link" to="/expenses">Expenses</Link>
-          <Link className="nav-link" to="/parties">Parties</Link>
-          <Link className="nav-link" to="/reports">Reports</Link>
-          <Link className="nav-link" to="/settings">Settings</Link>
+          <Link className={`nav-link ${isActive('/') ? 'active' : ''}`} to="/">Dashboard</Link>
+          <Link className={`nav-link ${isActive('/products') ? 'active' : ''}`} to="/products">Products</Link>
+          <Link className={`nav-link ${isActive('/invoices') ? 'active' : ''}`} to="/invoices">Invoices</Link>
+          <Link className={`nav-link ${isActive('/purchases') ? 'active' : ''}`} to="/purchases">Purchases</Link>
+          <Link className={`nav-link ${isActive('/expenses') ? 'active' : ''}`} to="/expenses">Expenses</Link>
+          <Link className={`nav-link ${isActive('/parties') ? 'active' : ''}`} to="/parties">Parties</Link>
+          <Link className={`nav-link ${isActive('/reports') ? 'active' : ''}`} to="/reports">Reports</Link>
+          <Link className={`nav-link ${isActive('/settings') ? 'active' : ''}`} to="/settings">Settings</Link>
           
           {/* Session Timer */}
           {expiresAt && (
