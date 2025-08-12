@@ -414,9 +414,10 @@ export function Purchases() {
             backgroundColor: 'white',
             padding: '24px',
             borderRadius: '8px',
-            width: '90%',
-            maxWidth: '800px',
-            maxHeight: '90vh',
+            width: '80%',
+            height: '80%',
+            maxWidth: '1400px',
+            maxHeight: '80vh',
             overflowY: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -770,8 +771,10 @@ export function Purchases() {
             backgroundColor: 'white',
             padding: '24px',
             borderRadius: '8px',
-            width: '90%',
-            maxWidth: '500px'
+            width: '80%',
+            height: '80%',
+            maxWidth: '1400px',
+            maxHeight: '80vh'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h2>Add Payment</h2>

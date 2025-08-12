@@ -226,9 +226,10 @@ export function Invoices() {
             backgroundColor: 'white',
             borderRadius: 'var(--radius)',
             padding: '24px',
-            width: '90%',
+            width: '80%',
+            height: '80%',
             maxWidth: '1400px',
-            maxHeight: '90vh',
+            maxHeight: '80vh',
             overflow: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -265,9 +266,10 @@ export function Invoices() {
             backgroundColor: 'white',
             borderRadius: 'var(--radius)',
             padding: '24px',
-            width: '90%',
+            width: '80%',
+            height: '80%',
             maxWidth: '1400px',
-            maxHeight: '90vh',
+            maxHeight: '80vh',
             overflow: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -311,8 +313,10 @@ export function Invoices() {
             backgroundColor: 'white',
             borderRadius: 'var(--radius)',
             padding: '24px',
-            width: '400px',
-            maxWidth: '90vw'
+            width: '80%',
+            height: '80%',
+            maxWidth: '1400px',
+            maxHeight: '80vh'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3>Add Payment</h3>
@@ -385,8 +389,10 @@ export function Invoices() {
             backgroundColor: 'white',
             borderRadius: 'var(--radius)',
             padding: '24px',
-            width: '400px',
-            maxWidth: '90vw'
+            width: '80%',
+            height: '80%',
+            maxWidth: '1400px',
+            maxHeight: '80vh'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3>Send Invoice via Email</h3>

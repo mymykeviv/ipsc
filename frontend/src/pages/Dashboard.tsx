@@ -609,9 +609,10 @@ export function Dashboard() {
             backgroundColor: 'white',
             padding: '24px',
             borderRadius: '8px',
-            width: '95%',
-            maxWidth: '800px',
-            maxHeight: '90vh',
+            width: '80%',
+            height: '80%',
+            maxWidth: '1400px',
+            maxHeight: '80vh',
             overflow: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -659,9 +660,10 @@ export function Dashboard() {
             backgroundColor: 'white',
             borderRadius: 'var(--radius)',
             padding: '24px',
-            width: '90%',
+            width: '80%',
+            height: '80%',
             maxWidth: '1400px',
-            maxHeight: '90vh',
+            maxHeight: '80vh',
             overflow: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -696,9 +698,10 @@ export function Dashboard() {
             backgroundColor: 'white',
             borderRadius: 'var(--radius)',
             padding: '24px',
-            width: '90%',
+            width: '80%',
+            height: '80%',
             maxWidth: '1400px',
-            maxHeight: '90vh',
+            maxHeight: '80vh',
             overflow: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>

@@ -387,9 +387,10 @@ export function Expenses() {
             backgroundColor: 'white',
             padding: '24px',
             borderRadius: '8px',
-            width: '90%',
-            maxWidth: '600px',
-            maxHeight: '90vh',
+            width: '80%',
+            height: '80%',
+            maxWidth: '1400px',
+            maxHeight: '80vh',
             overflowY: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
