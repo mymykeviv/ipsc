@@ -826,7 +826,15 @@ export function Products() {
                 <Button 
                   type="submit" 
                   variant="primary" 
-                  disabled={loading || !formData.name.trim() || !formData.sales_price || !formData.unit}
+                  disabled={
+                    loading || 
+                    !formData.name.trim() || 
+                    !formData.sales_price || 
+                    !formData.unit ||
+                    parseFloat(formData.sales_price || '0') <= 0 ||
+                    (formData.purchase_price && parseFloat(formData.purchase_price) < 0) ||
+                    (formData.opening_stock && parseInt(formData.opening_stock || '0') < 0)
+                  }
                 >
                   {loading ? 'Adding...' : 'Add Product'}
                 </Button>
@@ -990,8 +998,20 @@ export function Products() {
                 <Button type="button" variant="secondary" onClick={() => setShowEditModal(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" variant="primary">
-                  Update Product
+                <Button 
+                  type="submit" 
+                  variant="primary"
+                  disabled={
+                    loading || 
+                    !formData.name.trim() || 
+                    !formData.sales_price || 
+                    !formData.unit ||
+                    parseFloat(formData.sales_price || '0') <= 0 ||
+                    (formData.purchase_price && parseFloat(formData.purchase_price) < 0) ||
+                    (formData.stock && parseInt(formData.stock || '0') < 0)
+                  }
+                >
+                  {loading ? 'Updating...' : 'Update Product'}
                 </Button>
               </div>
             </form>
@@ -1154,7 +1174,10 @@ export function Products() {
                   disabled={
                     !stockFormData.quantity || 
                     !stockFormData.date_of_receipt ||
-                    (stockFormData.adjustmentType === 'add' && !stockFormData.supplier)
+                    parseFloat(stockFormData.quantity || '0') <= 0 ||
+                    parseFloat(stockFormData.quantity || '0') > 999999 ||
+                    (stockFormData.adjustmentType === 'add' && !stockFormData.supplier) ||
+                    (stockFormData.adjustmentType === 'add' && stockFormData.supplier.trim() === '')
                   }
                 >
                   Apply Adjustment
