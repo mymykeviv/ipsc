@@ -5,6 +5,26 @@ All notable changes to CASHFLOW will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.4] - 2024-01-15
+
+### Changed
+- **Dashboard Layout Optimization**
+  - Significantly reduced white space between sections for better content density
+  - Compact header layout with title and period selector on same line
+  - Reduced padding and margins throughout all dashboard components
+  - Optimized button sizes and spacing for more efficient use of screen real estate
+  - Integrated period label into quick actions section to save vertical space
+  - Smaller font sizes and tighter spacing in all dashboard sections
+  - Reduced modal sizes and padding for more compact popup dialogs
+  - Improved overall content-to-space ratio for better information density
+
+### Fixed
+- **UI Efficiency**
+  - Eliminated excessive vertical spacing between major dashboard sections
+  - Reduced internal padding within dashboard cards and components
+  - Optimized grid gaps and component spacing for better screen utilization
+  - Streamlined modal dialogs with more compact layouts
+
 ## [1.6.3] - 2024-01-15
 
 ### Added

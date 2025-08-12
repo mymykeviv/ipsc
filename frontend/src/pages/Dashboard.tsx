@@ -95,113 +95,130 @@ export function Dashboard() {
 
   return (
     <Card>
-      {/* Dashboard Title */}
+      {/* Dashboard Title and Period Selector - Compact Layout */}
       <div style={{ 
-        marginBottom: '16px',
-        textAlign: 'center'
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '12px',
+        paddingBottom: '8px',
+        borderBottom: '1px solid #e9ecef'
       }}>
         <h1 style={{ 
           margin: '0',
-          fontSize: '28px',
+          fontSize: '24px',
           fontWeight: '600',
           color: '#2c3e50'
         }}>
           Dashboard - Cashflow Summary
         </h1>
+        
+        {/* Period Selector */}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <select
+            value={periodType}
+            onChange={(e) => handlePeriodChange(e.target.value as 'month' | 'quarter' | 'year' | 'custom')}
+            style={{
+              padding: '6px 10px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '14px',
+              backgroundColor: 'white'
+            }}
+          >
+            <option value="month">This Month</option>
+            <option value="quarter">This Quarter</option>
+            <option value="year">This Year</option>
+            <option value="custom">Custom Range</option>
+          </select>
+          
+          {periodType === 'custom' && (
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                style={{
+                  padding: '4px 6px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '14px'
+                }}
+              />
+              <span style={{ fontSize: '12px' }}>to</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                style={{
+                  padding: '4px 6px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+          )}
+          
+          <button 
+            onClick={loadCashflowData}
+            disabled={loading}
+            style={{
+              padding: '6px 10px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              opacity: loading ? 0.6 : 1
+            }}
+          >
+            {loading ? 'Refreshing...' : '🔄 Refresh'}
+          </button>
+        </div>
       </div>
 
-      {/* Quick Actions Section */}
+      {/* Quick Actions Section - Compact */}
       <div style={{ 
-        marginBottom: '20px',
-        padding: '16px',
+        marginBottom: '12px',
+        padding: '12px',
         backgroundColor: '#f8f9fa',
-        borderRadius: '8px',
+        borderRadius: '6px',
         border: '1px solid #e9ecef'
       }}>
         <div style={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center',
-          marginBottom: '16px'
+          marginBottom: '10px'
         }}>
           <h3 style={{ 
             margin: '0', 
-            fontSize: '18px',
+            fontSize: '16px',
             color: '#495057',
             fontWeight: '600'
           }}>
             🚀 Quick Actions
           </h3>
           
-          {/* Period Selector */}
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <select
-              value={periodType}
-              onChange={(e) => handlePeriodChange(e.target.value as 'month' | 'quarter' | 'year' | 'custom')}
-              style={{
-                padding: '8px 12px',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '14px',
-                backgroundColor: 'white'
-              }}
-            >
-              <option value="month">This Month</option>
-              <option value="quarter">This Quarter</option>
-              <option value="year">This Year</option>
-              <option value="custom">Custom Range</option>
-            </select>
-            
-            {periodType === 'custom' && (
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  style={{
-                    padding: '6px 8px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px',
-                    fontSize: '14px'
-                  }}
-                />
-                <span>to</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  style={{
-                    padding: '6px 8px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-            )}
-            
-            <button 
-              onClick={loadCashflowData}
-              disabled={loading}
-              style={{
-                padding: '8px 12px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                opacity: loading ? 0.6 : 1
-              }}
-            >
-              {loading ? 'Refreshing...' : '🔄 Refresh'}
-            </button>
+          {/* Cashflow Period Label - Compact */}
+          <div style={{ 
+            padding: '4px 8px',
+            backgroundColor: '#e7f3ff',
+            borderRadius: '4px',
+            border: '1px solid #b3d9ff',
+            fontSize: '14px',
+            fontWeight: '500',
+            color: '#0056b3'
+          }}>
+            Period: {getPeriodLabel()}
           </div>
         </div>
         
         <div style={{ 
           display: 'flex', 
-          gap: '12px', 
+          gap: '8px', 
           flexWrap: 'wrap',
           alignItems: 'center'
         }}>
@@ -209,28 +226,28 @@ export function Dashboard() {
             onClick={() => setShowExpenseModal(true)}
             className="btn btn-primary"
             style={{ 
-              padding: '10px 16px', 
-              fontSize: '14px',
-              borderRadius: '6px',
+              padding: '8px 12px', 
+              fontSize: '13px',
+              borderRadius: '4px',
               border: 'none',
               backgroundColor: '#007bff',
               color: 'white',
               cursor: 'pointer',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               transition: 'all 0.2s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '4px'
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.backgroundColor = '#0056b3'
               e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)'
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.15)'
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.backgroundColor = '#007bff'
               e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'
             }}
           >
             💰 Add Expense
@@ -239,28 +256,28 @@ export function Dashboard() {
             onClick={() => setShowInvoiceModal(true)}
             className="btn btn-secondary"
             style={{ 
-              padding: '10px 16px', 
-              fontSize: '14px',
-              borderRadius: '6px',
+              padding: '8px 12px', 
+              fontSize: '13px',
+              borderRadius: '4px',
               border: 'none',
               backgroundColor: '#6c757d',
               color: 'white',
               cursor: 'pointer',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               transition: 'all 0.2s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '4px'
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.backgroundColor = '#545b62'
               e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)'
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.15)'
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.backgroundColor = '#6c757d'
               e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'
             }}
           >
             📄 New Invoice
@@ -269,28 +286,28 @@ export function Dashboard() {
             onClick={() => setShowPurchaseModal(true)}
             className="btn btn-secondary"
             style={{ 
-              padding: '10px 16px', 
-              fontSize: '14px',
-              borderRadius: '6px',
+              padding: '8px 12px', 
+              fontSize: '13px',
+              borderRadius: '4px',
               border: 'none',
               backgroundColor: '#6c757d',
               color: 'white',
               cursor: 'pointer',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               transition: 'all 0.2s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '4px'
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.backgroundColor = '#545b62'
               e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)'
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.15)'
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.backgroundColor = '#6c757d'
               e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'
             }}
           >
             📦 New Purchase
@@ -299,28 +316,28 @@ export function Dashboard() {
             onClick={() => window.location.href = '/products'}
             className="btn btn-secondary"
             style={{ 
-              padding: '10px 16px', 
-              fontSize: '14px',
-              borderRadius: '6px',
+              padding: '8px 12px', 
+              fontSize: '13px',
+              borderRadius: '4px',
               border: 'none',
               backgroundColor: '#6c757d',
               color: 'white',
               cursor: 'pointer',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               transition: 'all 0.2s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '4px'
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.backgroundColor = '#545b62'
               e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)'
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.15)'
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.backgroundColor = '#6c757d'
               e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'
             }}
           >
             🏷️ Manage Products
@@ -328,85 +345,72 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Cashflow Period Label */}
-      <div style={{ 
-        marginBottom: '16px',
-        padding: '12px',
-        backgroundColor: '#e7f3ff',
-        borderRadius: '6px',
-        border: '1px solid #b3d9ff',
-        textAlign: 'center'
-      }}>
-        <div style={{ fontSize: '16px', fontWeight: '500', color: '#0056b3' }}>
-          Cashflow Period: {getPeriodLabel()}
-        </div>
-      </div>
-
       {error && (
         <div style={{ 
-          padding: '12px', 
-          marginBottom: '16px', 
+          padding: '8px 12px', 
+          marginBottom: '12px', 
           backgroundColor: '#fee', 
           border: '1px solid #fcc', 
           borderRadius: '4px', 
-          color: '#c33' 
+          color: '#c33',
+          fontSize: '14px'
         }}>
           {error}
         </div>
       )}
 
       {cashflowData && (
-        <div style={{ display: 'grid', gap: '16px' }}>
-          {/* Net Cashflow Summary */}
+        <div style={{ display: 'grid', gap: '12px' }}>
+          {/* Net Cashflow Summary - Compact */}
           <div style={{ 
-            padding: '24px', 
+            padding: '16px', 
             backgroundColor: '#f8f9fa', 
-            borderRadius: '8px',
-            border: '2px solid var(--border)',
+            borderRadius: '6px',
+            border: '1px solid var(--border)',
             textAlign: 'center'
           }}>
-            <h2 style={{ margin: '0 0 16px 0', color: 'var(--text-secondary)' }}>
+            <h2 style={{ margin: '0 0 8px 0', color: 'var(--text-secondary)', fontSize: '18px' }}>
               Net Cashflow
             </h2>
             <div style={{ 
-              fontSize: '32px', 
+              fontSize: '28px', 
               fontWeight: 'bold',
-              color: getNetCashflowColor(cashflowData.cashflow.net_cashflow)
+              color: getNetCashflowColor(cashflowData.cashflow.net_cashflow),
+              marginBottom: '4px'
             }}>
               {formatCurrency(cashflowData.cashflow.net_cashflow)}
             </div>
             <div style={{ 
-              marginTop: '8px', 
-              fontSize: '14px', 
+              fontSize: '13px', 
               color: 'var(--text-secondary)' 
             }}>
               {cashflowData.cashflow.net_cashflow >= 0 ? 'Positive Cashflow' : 'Negative Cashflow'}
             </div>
           </div>
 
-          {/* Income and Expense Breakdown */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          {/* Income and Expense Breakdown - Compact */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             {/* Income Section */}
             <div style={{ 
-              padding: '20px', 
+              padding: '12px', 
               backgroundColor: '#d4edda', 
-              borderRadius: '8px',
+              borderRadius: '6px',
               border: '1px solid #c3e6cb'
             }}>
-              <h3 style={{ margin: '0 0 16px 0', color: '#155724' }}>
+              <h3 style={{ margin: '0 0 8px 0', color: '#155724', fontSize: '16px' }}>
                 💰 Income
               </h3>
-              <div style={{ display: 'grid', gap: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ display: 'grid', gap: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                   <span>Invoice Amount:</span>
                   <strong>{formatCurrency(cashflowData.income.total_invoice_amount)}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                   <span>Payments Received:</span>
                   <strong>{formatCurrency(cashflowData.income.total_payments_received)}</strong>
                 </div>
-                <hr style={{ border: 'none', borderTop: '1px solid #c3e6cb', margin: '12px 0' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold' }}>
+                <hr style={{ border: 'none', borderTop: '1px solid #c3e6cb', margin: '6px 0' }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 'bold' }}>
                   <span>Total Income:</span>
                   <span>{formatCurrency(cashflowData.cashflow.cash_inflow)}</span>
                 </div>
@@ -415,25 +419,25 @@ export function Dashboard() {
 
             {/* Expense Section */}
             <div style={{ 
-              padding: '20px', 
+              padding: '12px', 
               backgroundColor: '#f8d7da', 
-              borderRadius: '8px',
+              borderRadius: '6px',
               border: '1px solid #f5c6cb'
             }}>
-              <h3 style={{ margin: '0 0 16px 0', color: '#721c24' }}>
+              <h3 style={{ margin: '0 0 8px 0', color: '#721c24', fontSize: '16px' }}>
                 💸 Expenses
               </h3>
-              <div style={{ display: 'grid', gap: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ display: 'grid', gap: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                   <span>Direct Expenses:</span>
                   <strong>{formatCurrency(cashflowData.expenses.total_expenses)}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                   <span>Purchase Payments:</span>
                   <strong>{formatCurrency(cashflowData.expenses.total_purchase_payments)}</strong>
                 </div>
-                <hr style={{ border: 'none', borderTop: '1px solid #f5c6cb', margin: '12px 0' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold' }}>
+                <hr style={{ border: 'none', borderTop: '1px solid #f5c6cb', margin: '6px 0' }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 'bold' }}>
                   <span>Total Outflow:</span>
                   <span>{formatCurrency(cashflowData.cashflow.cash_outflow)}</span>
                 </div>
@@ -441,67 +445,67 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* Detailed Breakdown */}
+          {/* Detailed Breakdown - Compact */}
           <div style={{ 
-            padding: '20px', 
+            padding: '12px', 
             backgroundColor: 'var(--background-secondary)', 
-            borderRadius: '8px'
+            borderRadius: '6px'
           }}>
-            <h3 style={{ margin: '0 0 16px 0' }}>Detailed Breakdown</h3>
-            <div style={{ display: 'grid', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>Detailed Breakdown</h3>
+            <div style={{ display: 'grid', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
                 <div style={{ 
-                  padding: '12px', 
+                  padding: '8px', 
                   backgroundColor: 'white', 
                   borderRadius: '4px',
                   border: '1px solid var(--border)'
                 }}>
-                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
                     Invoice Amount
                   </div>
-                  <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(cashflowData.income.total_invoice_amount)}
                   </div>
                 </div>
 
                 <div style={{ 
-                  padding: '12px', 
+                  padding: '8px', 
                   backgroundColor: 'white', 
                   borderRadius: '4px',
                   border: '1px solid var(--border)'
                 }}>
-                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
                     Payments Received
                   </div>
-                  <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#28a745' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#28a745' }}>
                     {formatCurrency(cashflowData.income.total_payments_received)}
                   </div>
                 </div>
 
                 <div style={{ 
-                  padding: '12px', 
+                  padding: '8px', 
                   backgroundColor: 'white', 
                   borderRadius: '4px',
                   border: '1px solid var(--border)'
                 }}>
-                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
                     Direct Expenses
                   </div>
-                  <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#dc3545' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#dc3545' }}>
                     {formatCurrency(cashflowData.expenses.total_expenses)}
                   </div>
                 </div>
 
                 <div style={{ 
-                  padding: '12px', 
+                  padding: '8px', 
                   backgroundColor: 'white', 
                   borderRadius: '4px',
                   border: '1px solid var(--border)'
                 }}>
-                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
                     Purchase Payments
                   </div>
-                  <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#dc3545' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#dc3545' }}>
                     {formatCurrency(cashflowData.expenses.total_purchase_payments)}
                   </div>
                 </div>
@@ -509,31 +513,31 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* Cashflow Analysis */}
+          {/* Cashflow Analysis - Compact */}
           <div style={{ 
-            padding: '20px', 
+            padding: '12px', 
             backgroundColor: '#e2e3e5', 
-            borderRadius: '8px',
+            borderRadius: '6px',
             border: '1px solid #d6d8db'
           }}>
-            <h3 style={{ margin: '0 0 16px 0', color: '#383d41' }}>
+            <h3 style={{ margin: '0 0 8px 0', color: '#383d41', fontSize: '16px' }}>
               📊 Cashflow Analysis
             </h3>
-            <div style={{ display: 'grid', gap: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'grid', gap: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px' }}>
                 <span>Cash Inflow:</span>
                 <span style={{ fontWeight: 'bold', color: '#28a745' }}>
                   {formatCurrency(cashflowData.cashflow.cash_inflow)}
                 </span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px' }}>
                 <span>Cash Outflow:</span>
                 <span style={{ fontWeight: 'bold', color: '#dc3545' }}>
                   {formatCurrency(cashflowData.cashflow.cash_outflow)}
                 </span>
               </div>
-              <hr style={{ border: 'none', borderTop: '1px solid #d6d8db', margin: '12px 0' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '18px', fontWeight: 'bold' }}>
+              <hr style={{ border: 'none', borderTop: '1px solid #d6d8db', margin: '6px 0' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '16px', fontWeight: 'bold' }}>
                 <span>Net Cashflow:</span>
                 <span style={{ color: getNetCashflowColor(cashflowData.cashflow.net_cashflow) }}>
                   {formatCurrency(cashflowData.cashflow.net_cashflow)}
@@ -542,14 +546,14 @@ export function Dashboard() {
               
               {/* Cashflow Ratio */}
               {cashflowData.cashflow.cash_outflow > 0 && (
-                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: 'white', borderRadius: '4px' }}>
-                  <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                <div style={{ marginTop: '8px', padding: '8px', backgroundColor: 'white', borderRadius: '4px' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
                     Cashflow Ratio (Inflow/Outflow)
                   </div>
-                  <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold' }}>
                     {(cashflowData.cashflow.cash_inflow / cashflowData.cashflow.cash_outflow).toFixed(2)}x
                   </div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
                     {cashflowData.cashflow.cash_inflow / cashflowData.cashflow.cash_outflow >= 1 
                       ? 'Healthy cashflow - Income exceeds expenses' 
                       : 'Attention needed - Expenses exceed income'}
@@ -563,14 +567,14 @@ export function Dashboard() {
 
       {!cashflowData && !loading && (
         <div style={{ 
-          padding: '40px', 
+          padding: '20px', 
           textAlign: 'center', 
           color: 'var(--text-secondary)' 
         }}>
-          <div style={{ fontSize: '18px', marginBottom: '8px' }}>
+          <div style={{ fontSize: '16px', marginBottom: '4px' }}>
             No cashflow data available for the selected period
           </div>
-          <div style={{ fontSize: '14px' }}>
+          <div style={{ fontSize: '13px' }}>
             Try adjusting the date range or create some transactions
           </div>
         </div>
@@ -592,21 +596,21 @@ export function Dashboard() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            padding: '24px',
-            borderRadius: '8px',
+            padding: '20px',
+            borderRadius: '6px',
             width: '90%',
-            maxWidth: '500px',
+            maxWidth: '400px',
             maxHeight: '80vh',
             overflow: 'auto'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0 }}>Add New Expense</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px' }}>Add New Expense</h3>
               <button 
                 onClick={() => setShowExpenseModal(false)}
                 style={{
                   background: 'none',
                   border: 'none',
-                  fontSize: '24px',
+                  fontSize: '20px',
                   cursor: 'pointer',
                   color: '#666'
                 }}
@@ -614,7 +618,7 @@ export function Dashboard() {
                 ×
               </button>
             </div>
-            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <div style={{ textAlign: 'center', padding: '20px' }}>
               <p>Redirecting to Expenses page...</p>
               <button 
                 onClick={() => {
@@ -622,13 +626,13 @@ export function Dashboard() {
                   window.location.href = '/expenses'
                 }}
                 style={{
-                  padding: '10px 20px',
+                  padding: '8px 16px',
                   backgroundColor: '#007bff',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
-                  marginTop: '16px'
+                  marginTop: '12px'
                 }}
               >
                 Go to Expenses
@@ -653,21 +657,21 @@ export function Dashboard() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            padding: '24px',
-            borderRadius: '8px',
+            padding: '20px',
+            borderRadius: '6px',
             width: '90%',
-            maxWidth: '500px',
+            maxWidth: '400px',
             maxHeight: '80vh',
             overflow: 'auto'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0 }}>Create New Invoice</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px' }}>Create New Invoice</h3>
               <button 
                 onClick={() => setShowInvoiceModal(false)}
                 style={{
                   background: 'none',
                   border: 'none',
-                  fontSize: '24px',
+                  fontSize: '20px',
                   cursor: 'pointer',
                   color: '#666'
                 }}
@@ -675,7 +679,7 @@ export function Dashboard() {
                 ×
               </button>
             </div>
-            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <div style={{ textAlign: 'center', padding: '20px' }}>
               <p>Redirecting to Invoices page...</p>
               <button 
                 onClick={() => {
@@ -683,13 +687,13 @@ export function Dashboard() {
                   window.location.href = '/invoices'
                 }}
                 style={{
-                  padding: '10px 20px',
+                  padding: '8px 16px',
                   backgroundColor: '#007bff',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
-                  marginTop: '16px'
+                  marginTop: '12px'
                 }}
               >
                 Go to Invoices
@@ -714,21 +718,21 @@ export function Dashboard() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            padding: '24px',
-            borderRadius: '8px',
+            padding: '20px',
+            borderRadius: '6px',
             width: '90%',
-            maxWidth: '500px',
+            maxWidth: '400px',
             maxHeight: '80vh',
             overflow: 'auto'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0 }}>Create New Purchase</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px' }}>Create New Purchase</h3>
               <button 
                 onClick={() => setShowPurchaseModal(false)}
                 style={{
                   background: 'none',
                   border: 'none',
-                  fontSize: '24px',
+                  fontSize: '20px',
                   cursor: 'pointer',
                   color: '#666'
                 }}
@@ -736,7 +740,7 @@ export function Dashboard() {
                 ×
               </button>
             </div>
-            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <div style={{ textAlign: 'center', padding: '20px' }}>
               <p>Redirecting to Purchases page...</p>
               <button 
                 onClick={() => {
@@ -744,13 +748,13 @@ export function Dashboard() {
                   window.location.href = '/purchases'
                 }}
                 style={{
-                  padding: '10px 20px',
+                  padding: '8px 16px',
                   backgroundColor: '#007bff',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
-                  marginTop: '16px'
+                  marginTop: '12px'
                 }}
               >
                 Go to Purchases
