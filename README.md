@@ -4,7 +4,7 @@ A comprehensive manufacturing operations management system for Indian businesses
 
 ## Version Information
 
-- **Current Version**: 1.2.0
+- **Current Version**: 1.6.1
 - **Build Date**: 2024-01-15
 - **Backend**: FastAPI with PostgreSQL
 - **Frontend**: React with TypeScript
@@ -12,20 +12,26 @@ A comprehensive manufacturing operations management system for Indian businesses
 
 ## Features
 
-### ✅ Implemented (v1.0.0)
+### ✅ Implemented (v1.6.1)
+- **Dashboard**: Cashflow summary with quick action buttons for common tasks
 - **Product Management**: Complete CRUD with HSN/GST details
 - **Authentication**: JWT-based with role-based access control
 - **Stock Management**: Real-time stock tracking and adjustments
 - **GST Compliance**: Indian GST calculation and reporting
-- **Invoice Management**: Generate and email invoices
-- **Purchase Management**: Vendor purchase tracking
-- **Party Management**: Customer and vendor management
+- **Invoice Management**: Generate and email invoices with payment tracking
+- **Purchase Management**: Complete purchase system with GST compliance and payment tracking
+- **Expense Management**: Comprehensive expense tracking with categorization
+- **Cashflow Management**: Income vs expense analysis with date range filtering
+- **Payment Management**: Enhanced payment system with account heads and multiple payment methods
+- **Party Management**: Customer and vendor management with active/inactive filtering
+- **Audit Trail**: Comprehensive logging of all user actions
 - **Reports**: GST summary reports (JSON/CSV)
 
 ### 🚧 In Progress
-- **Payments**: Payment tracking and outstanding calculations
-- **Advanced Reports**: Stock valuation, profit analysis
-- **Email Integration**: Automated invoice delivery
+- **Advanced Reports**: Stock valuation, profit analysis, cashflow forecasting
+- **Email Integration**: Automated invoice delivery and payment reminders
+- **Mobile App**: React Native mobile application
+- **Multi-currency Support**: Support for multiple currencies
 
 ## Quick Start
 

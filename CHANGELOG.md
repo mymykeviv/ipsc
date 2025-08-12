@@ -5,6 +5,16 @@ All notable changes to CASHFLOW will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] - 2024-01-15
+
+### Changed
+- **Dashboard Enhancement**
+  - Moved cashflow summary to be the main dashboard screen
+  - Added quick action buttons in the top left corner for easy access to key functions
+  - Quick actions include: Add Expense, New Invoice, New Purchase, Manage Products
+  - Improved user experience with immediate access to common tasks
+  - Dashboard now serves as a comprehensive financial overview with actionable shortcuts
+
 ## [1.6.0] - 2024-01-15
 
 ### Added
