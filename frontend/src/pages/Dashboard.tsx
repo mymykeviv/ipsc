@@ -52,80 +52,149 @@ export function Dashboard() {
 
   return (
     <Card>
-      {/* Quick Actions in Top Left Corner */}
+      {/* Quick Actions Section */}
       <div style={{ 
-        position: 'absolute', 
-        top: '20px', 
-        left: '20px', 
-        zIndex: 10,
-        display: 'flex',
-        gap: '8px',
-        flexWrap: 'wrap'
+        marginBottom: '24px',
+        padding: '16px',
+        backgroundColor: '#f8f9fa',
+        borderRadius: '8px',
+        border: '1px solid #e9ecef'
       }}>
-        <button 
-          onClick={() => window.location.href = '/expenses'}
-          className="btn btn-primary"
-          style={{ 
-            padding: '8px 16px', 
-            fontSize: '14px',
-            borderRadius: '6px',
-            border: 'none',
-            backgroundColor: '#007bff',
-            color: 'white',
-            cursor: 'pointer',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}
-        >
-          💰 Add Expense
-        </button>
-        <button 
-          onClick={() => window.location.href = '/invoices'}
-          className="btn btn-secondary"
-          style={{ 
-            padding: '8px 16px', 
-            fontSize: '14px',
-            borderRadius: '6px',
-            border: 'none',
-            backgroundColor: '#6c757d',
-            color: 'white',
-            cursor: 'pointer',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}
-        >
-          📄 New Invoice
-        </button>
-        <button 
-          onClick={() => window.location.href = '/purchases'}
-          className="btn btn-secondary"
-          style={{ 
-            padding: '8px 16px', 
-            fontSize: '14px',
-            borderRadius: '6px',
-            border: 'none',
-            backgroundColor: '#6c757d',
-            color: 'white',
-            cursor: 'pointer',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}
-        >
-          📦 New Purchase
-        </button>
-        <button 
-          onClick={() => window.location.href = '/products'}
-          className="btn btn-secondary"
-          style={{ 
-            padding: '8px 16px', 
-            fontSize: '14px',
-            borderRadius: '6px',
-            border: 'none',
-            backgroundColor: '#6c757d',
-            color: 'white',
-            cursor: 'pointer',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}
-        >
-          🏷️ Manage Products
-        </button>
+        <h3 style={{ 
+          margin: '0 0 16px 0', 
+          fontSize: '18px',
+          color: '#495057',
+          fontWeight: '600'
+        }}>
+          🚀 Quick Actions
+        </h3>
+        <div style={{ 
+          display: 'flex', 
+          gap: '12px', 
+          flexWrap: 'wrap',
+          alignItems: 'center'
+        }}>
+          <button 
+            onClick={() => window.location.href = '/expenses'}
+            className="btn btn-primary"
+            style={{ 
+              padding: '10px 16px', 
+              fontSize: '14px',
+              borderRadius: '6px',
+              border: 'none',
+              backgroundColor: '#007bff',
+              color: 'white',
+              cursor: 'pointer',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#0056b3'
+              e.currentTarget.style.transform = 'translateY(-1px)'
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)'
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = '#007bff'
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+          >
+            💰 Add Expense
+          </button>
+          <button 
+            onClick={() => window.location.href = '/invoices'}
+            className="btn btn-secondary"
+            style={{ 
+              padding: '10px 16px', 
+              fontSize: '14px',
+              borderRadius: '6px',
+              border: 'none',
+              backgroundColor: '#6c757d',
+              color: 'white',
+              cursor: 'pointer',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#545b62'
+              e.currentTarget.style.transform = 'translateY(-1px)'
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)'
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = '#6c757d'
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+          >
+            📄 New Invoice
+          </button>
+          <button 
+            onClick={() => window.location.href = '/purchases'}
+            className="btn btn-secondary"
+            style={{ 
+              padding: '10px 16px', 
+              fontSize: '14px',
+              borderRadius: '6px',
+              border: 'none',
+              backgroundColor: '#6c757d',
+              color: 'white',
+              cursor: 'pointer',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#545b62'
+              e.currentTarget.style.transform = 'translateY(-1px)'
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)'
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = '#6c757d'
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+          >
+            📦 New Purchase
+          </button>
+          <button 
+            onClick={() => window.location.href = '/products'}
+            className="btn btn-secondary"
+            style={{ 
+              padding: '10px 16px', 
+              fontSize: '14px',
+              borderRadius: '6px',
+              border: 'none',
+              backgroundColor: '#6c757d',
+              color: 'white',
+              cursor: 'pointer',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#545b62'
+              e.currentTarget.style.transform = 'translateY(-1px)'
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)'
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = '#6c757d'
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+          >
+            🏷️ Manage Products
+          </button>
+        </div>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
