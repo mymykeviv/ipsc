@@ -908,9 +908,13 @@ export function Parties() {
                 ×
               </button>
             </div>
-            <form onSubmit={handleUpdateParty} style={{ display: 'grid', gap: '16px' }}>
-              {/* Same form fields as Add Modal */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <form onSubmit={handleUpdateParty}>
+              {/* Basic Information Section */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+                  Basic Information
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label>Name *</label>
                   <input

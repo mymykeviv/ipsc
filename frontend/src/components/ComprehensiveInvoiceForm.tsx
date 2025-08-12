@@ -379,7 +379,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <form onSubmit={handleSubmit}>
       {error && (
         <div style={{ 
           padding: '12px', 
@@ -393,8 +393,10 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
       )}
 
       {/* Invoice Details Section */}
-      <div style={{ marginBottom: '24px', padding: '20px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
-        <h3 style={{ marginBottom: '16px', color: 'var(--primary)' }}>Invoice Details</h3>
+      <div style={{ marginBottom: '24px' }}>
+        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+          Invoice Details
+        </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
           <div>
             <label>Invoice Number *</label>
@@ -478,8 +480,10 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
       </div>
 
       {/* Supplier Details Section */}
-      <div style={{ marginBottom: '24px', padding: '20px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
-        <h3 style={{ marginBottom: '16px', color: 'var(--primary)' }}>Supplier Details</h3>
+      <div style={{ marginBottom: '24px' }}>
+        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>
+          Supplier Details
+        </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
           <div>
             <label>Supplier Name *</label>
@@ -531,8 +535,10 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
       </div>
 
       {/* GST Compliance Section */}
-      <div style={{ marginBottom: '24px', padding: '20px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
-        <h3 style={{ marginBottom: '16px', color: 'var(--primary)' }}>GST Compliance</h3>
+      <div style={{ marginBottom: '24px' }}>
+        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '8px' }}>
+          GST Compliance
+        </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
           <div>
             <label>Place of Supply *</label>
@@ -589,8 +595,10 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
       </div>
 
       {/* Customer Details Section */}
-      <div style={{ marginBottom: '24px', padding: '20px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
-        <h3 style={{ marginBottom: '16px', color: 'var(--primary)' }}>Customer Details</h3>
+      <div style={{ marginBottom: '24px' }}>
+        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '8px' }}>
+          Customer Details
+        </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
           <div>
             <label>Customer Name *</label>
@@ -653,9 +661,11 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
       </div>
 
       {/* Invoice Items Section */}
-      <div style={{ marginBottom: '24px', padding: '20px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
+      <div style={{ marginBottom: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ color: 'var(--primary)' }}>Invoice Items</h3>
+          <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+          Invoice Items
+        </h3>
           <Button type="button" onClick={addItem} variant="secondary">
             Add Item
           </Button>
@@ -800,8 +810,10 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
       </div>
 
       {/* Invoice Totals Section */}
-      <div style={{ marginBottom: '24px', padding: '20px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
-        <h3 style={{ marginBottom: '16px', color: 'var(--primary)' }}>Invoice Totals</h3>
+      <div style={{ marginBottom: '24px' }}>
+        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>
+          Invoice Totals
+        </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
           <div>
             <label>Subtotal</label>
@@ -885,8 +897,10 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
       </div>
 
       {/* Other Details Section */}
-      <div style={{ marginBottom: '24px', padding: '20px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
-        <h3 style={{ marginBottom: '16px', color: 'var(--primary)' }}>Other Details</h3>
+      <div style={{ marginBottom: '24px' }}>
+        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '8px' }}>
+          Other Details
+        </h3>
         <div>
           <label>Invoice Notes</label>
           <textarea

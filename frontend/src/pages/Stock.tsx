@@ -188,7 +188,12 @@ export function Stock() {
             )}
 
             <form onSubmit={handleStockAdjustment}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              {/* Stock Adjustment Details Section */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+                  Stock Adjustment Details
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label>Product *</label>
                   <select
@@ -265,16 +270,27 @@ export function Stock() {
                     style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
                   />
                 </div>
+                </div>
               </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label>Notes</label>
-                <textarea
-                  value={adjustmentForm.notes}
-                  onChange={(e) => setAdjustmentForm({...adjustmentForm, notes: e.target.value})}
-                  rows={3}
-                  maxLength={200}
-                  style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                />
+
+              {/* Additional Information Section */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '8px' }}>
+                  Additional Information
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+                  <div>
+                    <label>Notes</label>
+                    <textarea
+                      value={adjustmentForm.notes}
+                      onChange={(e) => setAdjustmentForm({...adjustmentForm, notes: e.target.value})}
+                      rows={3}
+                      maxLength={200}
+                      placeholder="Enter adjustment notes (optional)"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                </div>
               </div>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <Button type="button" variant="secondary" onClick={() => setShowAdjustmentModal(false)}>
