@@ -85,7 +85,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '12px' }}>
+    <form onSubmit={handleSubmit}>
       {error && (
         <div style={{ 
           padding: '8px 12px', 
@@ -93,184 +93,128 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
           border: '1px solid #fcc', 
           borderRadius: '4px', 
           color: '#c33',
-          fontSize: '14px'
+          fontSize: '14px',
+          marginBottom: '16px'
         }}>
           {error}
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-            Date *
-          </label>
-          <input
-            type="date"
-            value={formData.expense_date}
-            onChange={(e) => setFormData(prev => ({ ...prev, expense_date: e.target.value }))}
-            required
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
-          />
-        </div>
+      {/* Expense Details Section */}
+      <div style={{ marginBottom: '24px' }}>
+        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+          Expense Details
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div>
+            <label>Date *</label>
+            <input
+              type="date"
+              value={formData.expense_date}
+              onChange={(e) => setFormData(prev => ({ ...prev, expense_date: e.target.value }))}
+              required
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+            />
+          </div>
 
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-            Amount *
-          </label>
-          <input
-            type="number"
-            step="0.01"
-            value={formData.amount || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
-            required
-            placeholder="0.00"
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
-          />
-        </div>
-      </div>
+          <div>
+            <label>Amount *</label>
+            <input
+              type="number"
+              step="0.01"
+              value={formData.amount || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+              required
+              placeholder="Enter amount"
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+            />
+          </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-            Category *
-          </label>
-          <select
-            value={formData.category}
-            onChange={(e) => handleCategoryChange(e.target.value)}
-            required
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px',
-              backgroundColor: 'white'
-            }}
-          >
-            <option value="">Select Category</option>
-            {expenseCategories.map(cat => (
-              <option key={cat.value} value={cat.value}>{cat.label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-            Expense Type *
-          </label>
-          <select
-            value={formData.expense_type}
-            onChange={(e) => setFormData(prev => ({ ...prev, expense_type: e.target.value }))}
-            required
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px',
-              backgroundColor: 'white'
-            }}
-          >
-            <option value="">Select Type</option>
-            {expenseTypes
-              .filter(type => !formData.category || type.category === formData.category)
-              .map(type => (
-                <option key={type.value} value={type.value}>{type.label}</option>
+          <div>
+            <label>Category *</label>
+            <select
+              value={formData.category}
+              onChange={(e) => handleCategoryChange(e.target.value)}
+              required
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+            >
+              <option value="">Select Category</option>
+              {expenseCategories.map(cat => (
+                <option key={cat.value} value={cat.value}>{cat.label}</option>
               ))}
-          </select>
+            </select>
+          </div>
+
+          <div>
+            <label>Expense Type *</label>
+            <select
+              value={formData.expense_type}
+              onChange={(e) => setFormData(prev => ({ ...prev, expense_type: e.target.value }))}
+              required
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+            >
+              <option value="">Select Type</option>
+              {expenseTypes
+                .filter(type => !formData.category || type.category === formData.category)
+                .map(type => (
+                  <option key={type.value} value={type.value}>{type.label}</option>
+                ))}
+            </select>
+          </div>
+
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label>Description *</label>
+            <input
+              type="text"
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              required
+              placeholder="Enter expense description"
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+            />
+          </div>
         </div>
       </div>
 
-      <div>
-        <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-          Description *
-        </label>
-        <input
-          type="text"
-          value={formData.description}
-          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-          required
-          placeholder="Enter expense description"
-          style={{
-            width: '100%',
-            padding: '8px 12px',
-            border: '1px solid #ced4da',
-            borderRadius: '4px',
-            fontSize: '14px'
-          }}
-        />
-      </div>
+      {/* Payment Information Section */}
+      <div style={{ marginBottom: '24px' }}>
+        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>
+          Payment Information
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div>
+            <label>Payment Method</label>
+            <select
+              value={formData.payment_method}
+              onChange={(e) => setFormData(prev => ({ ...prev, payment_method: e.target.value }))}
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+            >
+              {paymentMethods.map(method => (
+                <option key={method} value={method}>{method}</option>
+              ))}
+            </select>
+          </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-            Payment Method
-          </label>
-          <select
-            value={formData.payment_method}
-            onChange={(e) => setFormData(prev => ({ ...prev, payment_method: e.target.value }))}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px',
-              backgroundColor: 'white'
-            }}
-          >
-            {paymentMethods.map(method => (
-              <option key={method} value={method}>{method}</option>
-            ))}
-          </select>
-        </div>
+          <div>
+            <label>Account Head</label>
+            <select
+              value={formData.account_head}
+              onChange={(e) => setFormData(prev => ({ ...prev, account_head: e.target.value }))}
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+            >
+              {accountHeads.map(head => (
+                <option key={head} value={head}>{head}</option>
+              ))}
+            </select>
+          </div>
 
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-            Account Head
-          </label>
-          <select
-            value={formData.account_head}
-            onChange={(e) => setFormData(prev => ({ ...prev, account_head: e.target.value }))}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px',
-              backgroundColor: 'white'
-            }}
-          >
-            {accountHeads.map(head => (
-              <option key={head} value={head}>{head}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-            Vendor
-          </label>
-          <select
-            value={formData.vendor_id || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, vendor_id: e.target.value ? parseInt(e.target.value) : undefined }))}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #ced4da',
+          <div>
+            <label>Vendor</label>
+            <select
+              value={formData.vendor_id || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, vendor_id: e.target.value ? parseInt(e.target.value) : undefined }))}
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+            >
               borderRadius: '4px',
               fontSize: '14px',
               backgroundColor: 'white'

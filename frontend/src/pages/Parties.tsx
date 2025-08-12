@@ -629,168 +629,216 @@ export function Parties() {
                 ×
               </button>
             </div>
-            <form onSubmit={handleAddParty} style={{ display: 'grid', gap: '16px' }}>
-              {/* Basic Information */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div>
-                  <label>Name *</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    required
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </div>
-                <div>
-                  <label>Contact Person</label>
-                  <input
-                    type="text"
-                    value={formData.contact_person}
-                    onChange={(e) => setFormData(prev => ({ ...prev, contact_person: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div>
-                  <label>Contact Number</label>
-                  <input
-                    type="text"
-                    value={formData.contact_number}
-                    onChange={(e) => setFormData(prev => ({ ...prev, contact_number: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </div>
-                <div>
-                  <label>Email</label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div>
-                  <label>GSTIN</label>
-                  <input
-                    type="text"
-                    value={formData.gstin}
-                    onChange={(e) => setFormData(prev => ({ ...prev, gstin: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </div>
-                <div>
-                  <label>GST Registration Status *</label>
-                  <select
-                    value={formData.gst_registration_status}
-                    onChange={(e) => setFormData(prev => ({ ...prev, gst_registration_status: e.target.value }))}
-                    required
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  >
-                    <option value="GST not registered">GST not registered</option>
-                    <option value="GST registered">GST registered</option>
-                    <option value="Composite Scheme">Composite Scheme</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Billing Address */}
-              <div>
-                <h3>Billing Address</h3>
-                <div style={{ display: 'grid', gap: '16px' }}>
-                  <input
-                    type="text"
-                    placeholder="Address Line 1 *"
-                    value={formData.billing_address_line1}
-                    onChange={(e) => setFormData(prev => ({ ...prev, billing_address_line1: e.target.value }))}
-                    required
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Address Line 2"
-                    value={formData.billing_address_line2}
-                    onChange={(e) => setFormData(prev => ({ ...prev, billing_address_line2: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+            <form onSubmit={handleAddParty}>
+              {/* Basic Information Section */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+                  Basic Information
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label>Name *</label>
                     <input
                       type="text"
-                      placeholder="City *"
-                      value={formData.billing_city}
-                      onChange={(e) => setFormData(prev => ({ ...prev, billing_city: e.target.value }))}
+                      value={formData.name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                       required
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
+                      placeholder="Enter party name"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
                     />
+                  </div>
+                  <div>
+                    <label>Contact Person</label>
                     <input
                       type="text"
-                      placeholder="State *"
-                      value={formData.billing_state}
-                      onChange={(e) => setFormData(prev => ({ ...prev, billing_state: e.target.value }))}
-                      required
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
+                      value={formData.contact_person}
+                      onChange={(e) => setFormData(prev => ({ ...prev, contact_person: e.target.value }))}
+                      placeholder="Enter contact person name"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
                     />
+                  </div>
+                  <div>
+                    <label>Contact Number</label>
                     <input
                       type="text"
-                      placeholder="Pincode"
-                      value={formData.billing_pincode}
-                      onChange={(e) => setFormData(prev => ({ ...prev, billing_pincode: e.target.value }))}
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
+                      value={formData.contact_number}
+                      onChange={(e) => setFormData(prev => ({ ...prev, contact_number: e.target.value }))}
+                      placeholder="Enter contact number"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                  <div>
+                    <label>Email</label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="Enter email address"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Shipping Address */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <h3>Shipping Address</h3>
+              {/* GST Information Section */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>
+                  GST Information
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label>GSTIN</label>
+                    <input
+                      type="text"
+                      value={formData.gstin}
+                      onChange={(e) => setFormData(prev => ({ ...prev, gstin: e.target.value }))}
+                      placeholder="Enter GSTIN number"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                  <div>
+                    <label>GST Registration Status *</label>
+                    <select
+                      value={formData.gst_registration_status}
+                      onChange={(e) => setFormData(prev => ({ ...prev, gst_registration_status: e.target.value }))}
+                      required
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    >
+                      <option value="">Select GST Registration Status</option>
+                      <option value="GST not registered">GST not registered</option>
+                      <option value="GST registered">GST registered</option>
+                      <option value="Composite Scheme">Composite Scheme</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Billing Address Section */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '8px' }}>
+                  Billing Address
+                </h3>
+                <div style={{ display: 'grid', gap: '16px' }}>
+                  <div>
+                    <label>Address Line 1 *</label>
+                    <input
+                      type="text"
+                      placeholder="Enter address line 1"
+                      value={formData.billing_address_line1}
+                      onChange={(e) => setFormData(prev => ({ ...prev, billing_address_line1: e.target.value }))}
+                      required
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                  <div>
+                    <label>Address Line 2</label>
+                    <input
+                      type="text"
+                      placeholder="Enter address line 2 (optional)"
+                      value={formData.billing_address_line2}
+                      onChange={(e) => setFormData(prev => ({ ...prev, billing_address_line2: e.target.value }))}
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                    <div>
+                      <label>City *</label>
+                      <input
+                        type="text"
+                        placeholder="Enter city"
+                        value={formData.billing_city}
+                        onChange={(e) => setFormData(prev => ({ ...prev, billing_city: e.target.value }))}
+                        required
+                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      />
+                    </div>
+                    <div>
+                      <label>State *</label>
+                      <input
+                        type="text"
+                        placeholder="Enter state"
+                        value={formData.billing_state}
+                        onChange={(e) => setFormData(prev => ({ ...prev, billing_state: e.target.value }))}
+                        required
+                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      />
+                    </div>
+                    <div>
+                      <label>Pincode</label>
+                      <input
+                        type="text"
+                        placeholder="Enter pincode"
+                        value={formData.billing_pincode}
+                        onChange={(e) => setFormData(prev => ({ ...prev, billing_pincode: e.target.value }))}
+                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Shipping Address Section */}
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3 style={{ color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '8px', margin: 0 }}>
+                    Shipping Address
+                  </h3>
                   <Button type="button" variant="secondary" onClick={copyBillingToShipping}>
                     Copy Billing Address
                   </Button>
                 </div>
                 <div style={{ display: 'grid', gap: '16px' }}>
-                  <input
-                    type="text"
-                    placeholder="Address Line 1"
-                    value={formData.shipping_address_line1}
-                    onChange={(e) => setFormData(prev => ({ ...prev, shipping_address_line1: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Address Line 2"
-                    value={formData.shipping_address_line2}
-                    onChange={(e) => setFormData(prev => ({ ...prev, shipping_address_line2: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
+                  <div>
+                    <label>Address Line 1</label>
+                    <input
+                      type="text"
+                      placeholder="Enter shipping address line 1"
+                      value={formData.shipping_address_line1}
+                      onChange={(e) => setFormData(prev => ({ ...prev, shipping_address_line1: e.target.value }))}
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                  <div>
+                    <label>Address Line 2</label>
+                    <input
+                      type="text"
+                      placeholder="Enter shipping address line 2 (optional)"
+                      value={formData.shipping_address_line2}
+                      onChange={(e) => setFormData(prev => ({ ...prev, shipping_address_line2: e.target.value }))}
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-                    <input
-                      type="text"
-                      placeholder="City"
-                      value={formData.shipping_city}
-                      onChange={(e) => setFormData(prev => ({ ...prev, shipping_city: e.target.value }))}
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="State"
-                      value={formData.shipping_state}
-                      onChange={(e) => setFormData(prev => ({ ...prev, shipping_state: e.target.value }))}
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Pincode"
-                      value={formData.shipping_pincode}
-                      onChange={(e) => setFormData(prev => ({ ...prev, shipping_pincode: e.target.value }))}
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                    />
+                    <div>
+                      <label>City</label>
+                      <input
+                        type="text"
+                        placeholder="Enter shipping city"
+                        value={formData.shipping_city}
+                        onChange={(e) => setFormData(prev => ({ ...prev, shipping_city: e.target.value }))}
+                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      />
+                    </div>
+                    <div>
+                      <label>State</label>
+                      <input
+                        type="text"
+                        placeholder="Enter shipping state"
+                        value={formData.shipping_state}
+                        onChange={(e) => setFormData(prev => ({ ...prev, shipping_state: e.target.value }))}
+                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      />
+                    </div>
+                    <div>
+                      <label>Pincode</label>
+                      <input
+                        type="text"
+                        placeholder="Enter shipping pincode"
+                        value={formData.shipping_pincode}
+                        onChange={(e) => setFormData(prev => ({ ...prev, shipping_pincode: e.target.value }))}
+                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

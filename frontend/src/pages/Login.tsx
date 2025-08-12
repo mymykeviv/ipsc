@@ -75,59 +75,35 @@ export function Login() {
             Sign in to your account to continue
           </p>
         </div>
-        <form onSubmit={onSubmit} style={{ display: 'grid', gap: 20 }}>
-          <div>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontSize: '14px', 
-              fontWeight: '500',
-              color: '#374151'
-            }}>
-              Username
-            </label>
-            <input 
-              value={username} 
-              onChange={e => setUsername(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '16px',
-                transition: 'border-color 0.2s ease',
-                outline: 'none'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-              onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-            />
-          </div>
-          <div>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontSize: '14px', 
-              fontWeight: '500',
-              color: '#374151'
-            }}>
-              Password
-            </label>
-            <input 
-              type="password" 
-              value={password} 
-              onChange={e => setPassword(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '16px',
-                transition: 'border-color 0.2s ease',
-                outline: 'none'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-              onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-            />
+        <form onSubmit={onSubmit}>
+          {/* Login Information Section */}
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+              Login Information
+            </h3>
+            <div style={{ display: 'grid', gap: '16px' }}>
+              <div>
+                <label>Username *</label>
+                <input 
+                  value={username} 
+                  onChange={e => setUsername(e.target.value)}
+                  required
+                  placeholder="Enter your username"
+                  style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                />
+              </div>
+              <div>
+                <label>Password *</label>
+                <input 
+                  type="password" 
+                  value={password} 
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  placeholder="Enter your password"
+                  style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                />
+              </div>
+            </div>
           </div>
           {error && (
             <div style={{ 
