@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { apiCreatePurchase, apiListParties, apiGetProducts, Party, Product } from '../lib/api'
+import { Button } from './Button'
 
 interface PurchaseFormProps {
   onSuccess: () => void
@@ -196,22 +197,18 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
           </div>
         </div>
       </div>
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
-          />
-        </div>
-      </div>
 
       {/* Items Section */}
-      <div style={{ border: '1px solid #ced4da', borderRadius: '4px', padding: '12px' }}>
-        <h4 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>Purchase Items</h4>
+      <div style={{ marginBottom: '24px' }}>
+        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '8px' }}>
+          Purchase Items
+        </h3>
         
         {/* Add Item Form */}
-        <div style={{ display: 'grid', gap: '8px', marginBottom: '12px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: '8px', alignItems: 'end' }}>
+        <div style={{ display: 'grid', gap: '16px', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: '16px', alignItems: 'end' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px' }}>Product</label>
+              <label>Product</label>
               <select
                 value={currentItem.product_id || ''}
                 onChange={(e) => {
@@ -225,14 +222,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                     hsn_code: product?.hsn || ''
                   }))
                 }}
-                style={{
-                  width: '100%',
-                  padding: '6px 8px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  backgroundColor: 'white'
-                }}
+                style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
               >
                 <option value="">Select Product</option>
                 {products.map(product => (
@@ -242,53 +232,38 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
             </div>
             
             <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px' }}>Qty</label>
+              <label>Qty</label>
               <input
                 type="number"
                 value={currentItem.qty || ''}
                 onChange={(e) => setCurrentItem(prev => ({ ...prev, qty: parseInt(e.target.value) || 0 }))}
                 min="1"
-                style={{
-                  width: '100%',
-                  padding: '6px 8px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '12px'
-                }}
+                placeholder="Quantity"
+                style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
               />
             </div>
             
             <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px' }}>Rate</label>
+              <label>Rate</label>
               <input
                 type="number"
                 step="0.01"
                 value={currentItem.rate || ''}
                 onChange={(e) => setCurrentItem(prev => ({ ...prev, rate: parseFloat(e.target.value) || 0 }))}
-                style={{
-                  width: '100%',
-                  padding: '6px 8px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '12px'
-                }}
+                placeholder="Rate"
+                style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
               />
             </div>
             
             <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px' }}>GST %</label>
+              <label>GST %</label>
               <input
                 type="number"
                 step="0.01"
                 value={currentItem.gst_rate || ''}
                 onChange={(e) => setCurrentItem(prev => ({ ...prev, gst_rate: parseFloat(e.target.value) || 0 }))}
-                style={{
-                  width: '100%',
-                  padding: '6px 8px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '12px'
-                }}
+                placeholder="GST %"
+                style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
               />
             </div>
             
@@ -353,58 +328,32 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
         )}
       </div>
 
-      <div>
-        <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-          Notes
-        </label>
-        <textarea
-          value={formData.notes}
-          onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-          placeholder="Additional notes"
-          rows={3}
-          style={{
-            width: '100%',
-            padding: '8px 12px',
-            border: '1px solid #ced4da',
-            borderRadius: '4px',
-            fontSize: '14px',
-            resize: 'vertical'
-          }}
-        />
+      {/* Notes Section */}
+      <div style={{ marginBottom: '24px' }}>
+        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '8px' }}>
+          Additional Information
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+          <div>
+            <label>Notes</label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              placeholder="Enter additional notes (optional)"
+              rows={3}
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+            />
+          </div>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '16px' }}>
-        <button
-          type="button"
-          onClick={onCancel}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#6c757d',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}
-        >
+      <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+        <Button type="button" variant="secondary" onClick={onCancel}>
           Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
-            opacity: loading ? 0.6 : 1
-          }}
-        >
+        </Button>
+        <Button type="submit" variant="primary" disabled={loading}>
           {loading ? 'Creating...' : 'Create Purchase'}
-        </button>
+        </Button>
       </div>
     </form>
   )
