@@ -5,6 +5,22 @@ All notable changes to CASHFLOW will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.9] - 2024-01-15
+
+### Fixed
+- **Invoice Form UI/UX Improvements**
+  - **Due Date Auto-Calculation**: Due date now automatically updates when terms are changed
+  - **Checkbox Functionality**: Fixed disabled checkboxes for Reverse Charge and Export Supply
+  - **Discount Type Selection**: Added discount type dropdown (Percentage/Fixed) in item form
+  - **HSN Code Display**: HSN codes now show in the items table after adding items
+  - **Total in Words UI**: Changed from disabled text box to label for better UI
+  - **Form Consistency**: Both Dashboard and Invoices screen now use the same comprehensive form
+
+### Changed
+- **Terms Default**: Changed default terms from "Immediate" to "Due on Receipt"
+- **Item Table Layout**: Added HSN code column to items table
+- **Discount Handling**: Improved discount type selection and display
+
 ## [1.6.8] - 2024-01-15
 
 ### Added
