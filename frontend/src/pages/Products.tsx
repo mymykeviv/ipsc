@@ -641,7 +641,7 @@ export function Products() {
           justifyContent: 'center',
           zIndex: 1000
         }}>
-          <Card style={{ width: '80%', maxWidth: '800px', height: '80%', maxHeight: '90vh', overflow: 'auto', position: 'relative' }}>
+          <Card style={{ width: '80%', height: '80%', maxWidth: '1400px', maxHeight: '80vh', overflow: 'auto', position: 'relative' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h2>Add New Product</h2>
               <button 
@@ -674,150 +674,221 @@ export function Products() {
               </div>
             )}
             <form onSubmit={handleAddProduct}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label>Name *</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    required
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  />
-                </div>
-                <div>
-                  <label>SKU</label>
-                  <input
-                    type="text"
-                    value={formData.sku}
-                    onChange={(e) => setFormData({...formData, sku: e.target.value})}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  />
-                </div>
-                <div>
-                  <label>Item Type *</label>
-                  <select
-                    value={formData.item_type}
-                    onChange={(e) => setFormData({...formData, item_type: e.target.value})}
-                    required
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  >
-                    <option value="tradable">Tradable Items</option>
-                    <option value="consumable">Consumable Items</option>
-                    <option value="manufactured">Manufactured Goods</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Sales Price *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.sales_price}
-                    onChange={(e) => setFormData({...formData, sales_price: e.target.value})}
-                    required
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  />
-                </div>
-                <div>
-                  <label>Purchase Price</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.purchase_price}
-                    onChange={(e) => setFormData({...formData, purchase_price: e.target.value})}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  />
-                </div>
-                <div>
-                  <label>Stock *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.stock}
-                    onChange={(e) => setFormData({...formData, stock: e.target.value})}
-                    required
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  />
-                </div>
-                <div>
-                  <label>Unit *</label>
-                  <select
-                    value={formData.unit}
-                    onChange={(e) => setFormData({...formData, unit: e.target.value})}
-                    required
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  >
-                    <option value="">Select Unit</option>
-                    <option value="NOS">NOS</option>
-                    <option value="KG">KG</option>
-                    <option value="LITRE">LITRE</option>
-                    <option value="METER">METER</option>
-                    <option value="BUCKET">BUCKET</option>
-                  </select>
-                </div>
-                <div>
-                  <label>HSN</label>
-                  <input
-                    type="text"
-                    value={formData.hsn}
-                    onChange={(e) => setFormData({...formData, hsn: e.target.value})}
-                    maxLength={10}
-                    placeholder="e.g., 7308, 7318"
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  />
-                </div>
-                <div>
-                  <label>GST Rate *</label>
-                  <select
-                    value={formData.gst_rate}
-                    onChange={(e) => setFormData({...formData, gst_rate: e.target.value})}
-                    required
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  >
-                    <option value="">Select GST Rate</option>
-                    <option value="0">0%</option>
-                    <option value="5">5%</option>
-                    <option value="12">12%</option>
-                    <option value="18">18%</option>
-                    <option value="28">28%</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Supplier</label>
-                  <input
-                    type="text"
-                    value={formData.supplier}
-                    onChange={(e) => setFormData({...formData, supplier: e.target.value})}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  />
-                </div>
-                <div>
-                  <label>Category</label>
-                  <input
-                    type="text"
-                    value={formData.category}
-                    onChange={(e) => setFormData({...formData, category: e.target.value})}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  />
+              {/* Product Details Section */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+                  Product Details
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label>Product Name *</label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      required
+                      maxLength={100}
+                      placeholder="Enter product name (max 100 characters)"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                  <div>
+                    <label>Product Code *</label>
+                    <input
+                      type="text"
+                      value={formData.product_code}
+                      onChange={(e) => setFormData({...formData, product_code: e.target.value})}
+                      required
+                      maxLength={20}
+                      placeholder="Enter product code (max 20 characters)"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                  <div>
+                    <label>SKU</label>
+                    <input
+                      type="text"
+                      value={formData.sku}
+                      onChange={(e) => setFormData({...formData, sku: e.target.value})}
+                      placeholder="Enter SKU"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                  <div>
+                    <label>Unit of Measure *</label>
+                    <select
+                      value={formData.unit}
+                      onChange={(e) => setFormData({...formData, unit: e.target.value})}
+                      required
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    >
+                      <option value="">Select Unit</option>
+                      <option value="NOS">NOS</option>
+                      <option value="KG">KG</option>
+                      <option value="LITRE">LITRE</option>
+                      <option value="METER">METER</option>
+                      <option value="BUCKET">BUCKET</option>
+                      <option value="PCS">PCS</option>
+                      <option value="BOX">BOX</option>
+                      <option value="SET">SET</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label>Product Supplier</label>
+                    <input
+                      type="text"
+                      value={formData.supplier}
+                      onChange={(e) => setFormData({...formData, supplier: e.target.value})}
+                      placeholder="Search and select supplier..."
+                      list="product-supplier-list"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                    <datalist id="product-supplier-list">
+                      {vendors.map(vendor => (
+                        <option key={vendor.id} value={vendor.name} />
+                      ))}
+                    </datalist>
+                  </div>
+                  <div>
+                    <label>Product Type *</label>
+                    <select
+                      value={formData.product_type}
+                      onChange={(e) => setFormData({...formData, product_type: e.target.value})}
+                      required
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    >
+                      <option value="Goods">Goods (default)</option>
+                      <option value="Tradable">Tradable</option>
+                      <option value="Consumable">Consumable</option>
+                      <option value="Service">Service</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label>Product Category *</label>
+                    <input
+                      type="text"
+                      value={formData.category}
+                      onChange={(e) => setFormData({...formData, category: e.target.value})}
+                      required
+                      placeholder="Enter category"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label>Product Description</label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      rows={3}
+                      maxLength={200}
+                      placeholder="Enter product description (max 200 characters)"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
                 </div>
               </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label>Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  rows={3}
-                  style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                />
+
+              {/* Price Details Section */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>
+                  Price Details
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label>Purchase Price</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.purchase_price}
+                      onChange={(e) => setFormData({...formData, purchase_price: e.target.value})}
+                      placeholder="Enter purchase price"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                  <div>
+                    <label>Selling Price *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.sales_price}
+                      onChange={(e) => setFormData({...formData, sales_price: e.target.value})}
+                      required
+                      placeholder="Enter selling price"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                  <div>
+                    <label>GST Rate *</label>
+                    <select
+                      value={formData.gst_rate}
+                      onChange={(e) => setFormData({...formData, gst_rate: e.target.value})}
+                      required
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    >
+                      <option value="">Select GST Rate</option>
+                      <option value="0">0%</option>
+                      <option value="5">5%</option>
+                      <option value="12">12%</option>
+                      <option value="18">18% (default)</option>
+                      <option value="28">28%</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label>HSN Code *</label>
+                    <input
+                      type="text"
+                      value={formData.hsn_code}
+                      onChange={(e) => setFormData({...formData, hsn_code: e.target.value})}
+                      required
+                      maxLength={6}
+                      minLength={4}
+                      placeholder="Enter HSN code (4 or 6 digits)"
+                      pattern="[0-9]{4}|[0-9]{6}"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                </div>
               </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label>Notes</label>
-                <textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                  rows={2}
-                  style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                />
+
+              {/* Stock Details Section */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '8px' }}>
+                  Stock Details
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+                  <div>
+                    <label>Opening Stock</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.opening_stock}
+                      onChange={(e) => setFormData({...formData, opening_stock: e.target.value})}
+                      placeholder="Enter opening stock (default: 0)"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Other Details Section */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '8px' }}>
+                  Other Details
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+                  <div>
+                    <label>Notes</label>
+                    <textarea
+                      value={formData.notes}
+                      onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                      rows={3}
+                      maxLength={200}
+                      placeholder="Enter notes (max 200 characters)"
+                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                    />
+                  </div>
+                </div>
               </div>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <Button type="button" variant="secondary" onClick={() => setShowAddModal(false)}>
@@ -829,11 +900,17 @@ export function Products() {
                   disabled={
                     loading || 
                     !formData.name.trim() || 
+                    !formData.product_code.trim() ||
                     !formData.sales_price || 
                     !formData.unit ||
+                    !formData.product_type ||
+                    !formData.category.trim() ||
+                    !formData.gst_rate ||
+                    !formData.hsn_code ||
                     parseFloat(formData.sales_price || '0') <= 0 ||
                     (formData.purchase_price && parseFloat(formData.purchase_price) < 0) ||
-                    (formData.opening_stock && parseInt(formData.opening_stock || '0') < 0)
+                    (formData.opening_stock && parseInt(formData.opening_stock || '0') < 0) ||
+                    (formData.hsn_code && !/^[0-9]{4}$|^[0-9]{6}$/.test(formData.hsn_code))
                   }
                 >
                   {loading ? 'Adding...' : 'Add Product'}
@@ -858,7 +935,7 @@ export function Products() {
           justifyContent: 'center',
           zIndex: 1000
         }}>
-          <Card style={{ maxWidth: '600px', maxHeight: '90vh', overflow: 'auto' }}>
+          <Card style={{ width: '80%', height: '80%', maxWidth: '1400px', maxHeight: '80vh', overflow: 'auto' }}>
             <h2>Edit Product</h2>
             <form onSubmit={handleEditProduct}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
