@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { apiCreateInvoice, apiListParties, apiGetProducts, Party, Product } from '../lib/api'
 import { Button } from './Button'
+import { ErrorMessage } from './ErrorMessage'
+import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface ComprehensiveInvoiceFormProps {
   onSuccess: () => void
@@ -380,33 +382,23 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
 
   return (
     <form onSubmit={handleSubmit}>
-      {error && (
-        <div style={{ 
-          padding: '12px', 
-          backgroundColor: '#fecaca', 
-          color: '#dc2626', 
-          borderRadius: 'var(--radius)', 
-          marginBottom: '16px' 
-        }}>
-          {error}
-        </div>
-      )}
+      <ErrorMessage message={error} />
 
       {/* Invoice Details Section */}
-      <div style={{ marginBottom: '24px' }}>
-        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+      <div style={formStyles.section}>
+        <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('basic') }}>
           Invoice Details
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-          <div>
-            <label>Invoice Number *</label>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Invoice Number *</label>
             <input
               type="text"
               value={formData.invoice_no}
               onChange={(e) => setFormData({...formData, invoice_no: e.target.value})}
               maxLength={16}
               required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+              style={formStyles.input}
             />
           </div>
           <div>
