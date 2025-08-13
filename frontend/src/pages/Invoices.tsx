@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { apiListParties, apiGetProducts, apiCreateInvoice, apiUpdateInvoice, apiGetInvoice, apiDeleteInvoice, apiEmailInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, apiGetInvoices, Party, Product, Payment, PaginationInfo } from '../lib/api'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
-import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { ComprehensiveInvoiceForm } from '../components/ComprehensiveInvoiceForm'
 
@@ -91,122 +90,183 @@ export function Invoices() {
   }
 
   if (loading && invoices.length === 0) {
-    return <div>Loading...</div>
+    return (
+      <div style={{ padding: '20px' }}>
+        <div>Loading...</div>
+      </div>
+    )
   }
 
   return (
-    <div style={{ padding: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1>Invoices</h1>
-        <Button onClick={() => setShowModal(true)} variant="primary">
+    <div style={{ padding: '20px', maxWidth: '100%' }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '24px',
+        paddingBottom: '12px',
+        borderBottom: '2px solid #e9ecef'
+      }}>
+        <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Invoices</h1>
+        <Button variant="primary" onClick={() => setShowModal(true)}>
           Create Invoice
         </Button>
       </div>
 
       {error && (
         <div style={{ 
-          padding: '12px', 
-          backgroundColor: '#fecaca', 
-          color: '#dc2626', 
-          borderRadius: 'var(--radius)', 
-          marginBottom: '16px' 
+          padding: '12px 16px', 
+          marginBottom: '20px', 
+          backgroundColor: '#fee', 
+          border: '1px solid #fcc', 
+          borderRadius: '6px', 
+          color: '#c33',
+          fontSize: '14px'
         }}>
           {error}
         </div>
       )}
 
-      {/* Invoices List */}
-      <Card>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#f9f9f9' }}>
-                <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Invoice No</th>
-                <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Customer</th>
-                <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Date</th>
-                <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Due Date</th>
-                <th style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Amount</th>
-                <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid var(--border)' }}>Status</th>
-                <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid var(--border)' }}>Actions</th>
+      <div style={{ 
+        border: '1px solid #e9ecef', 
+        borderRadius: '8px', 
+        overflow: 'hidden',
+        backgroundColor: 'white'
+      }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #e9ecef' }}>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Invoice No</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Customer</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Date</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Due Date</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Amount</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Status</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoices.map(invoice => (
+              <tr key={invoice.id} style={{ 
+                borderBottom: '1px solid #e9ecef',
+                backgroundColor: 'white'
+              }}>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{invoice.invoice_no}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{invoice.customer_name}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{new Date(invoice.date).toLocaleDateString()}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{new Date(invoice.due_date).toLocaleDateString()}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>₹{invoice.grand_total.toFixed(2)}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
+                  <span style={{ 
+                    padding: '6px 12px', 
+                    borderRadius: '6px', 
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    backgroundColor: invoice.status === 'paid' ? '#d4edda' : '#fff3cd',
+                    color: invoice.status === 'paid' ? '#155724' : '#856404'
+                  }}>
+                    {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                  </span>
+                </td>
+                <td style={{ padding: '12px' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Button 
+                      variant="secondary" 
+                      onClick={() => handleEdit(invoice)}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
+                    >
+                      Edit
+                    </Button>
+                    <Button 
+                      variant="secondary"
+                      onClick={() => handlePayment(invoice)}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
+                    >
+                      Payment
+                    </Button>
+                    <Button 
+                      variant="secondary"
+                      onClick={() => handleEmail(invoice)}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
+                    >
+                      Email
+                    </Button>
+                    <Button 
+                      variant="secondary" 
+                      onClick={() => handleDelete(invoice.id)}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {invoices.map(invoice => (
-                <tr key={invoice.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                  <td style={{ padding: '12px' }}>{invoice.invoice_no}</td>
-                  <td style={{ padding: '12px' }}>{invoice.customer_name}</td>
-                  <td style={{ padding: '12px' }}>{new Date(invoice.date).toLocaleDateString()}</td>
-                  <td style={{ padding: '12px' }}>{new Date(invoice.due_date).toLocaleDateString()}</td>
-                  <td style={{ padding: '12px', textAlign: 'right' }}>₹{invoice.grand_total.toFixed(2)}</td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <span style={{
-                      padding: '4px 8px',
-                      borderRadius: 'var(--radius)',
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      backgroundColor: invoice.status === 'Paid' ? '#dcfce7' : invoice.status === 'Overdue' ? '#fef2f2' : '#fef3c7',
-                      color: invoice.status === 'Paid' ? '#166534' : invoice.status === 'Overdue' ? '#dc2626' : '#d97706'
-                    }}>
-                      {invoice.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                      <Button 
-                        onClick={() => handleEdit(invoice)} 
-                        variant="secondary"
-                      >
-                        Edit
-                      </Button>
-                      <Button 
-                        onClick={() => handlePayment(invoice)} 
-                        variant="secondary"
-                      >
-                        Payment
-                      </Button>
-                      <Button 
-                        onClick={() => handleEmail(invoice)} 
-                        variant="secondary"
-                      >
-                        Email
-                      </Button>
-                      <Button 
-                        onClick={() => handleDelete(invoice.id)} 
-                        variant="secondary"
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-        {/* Pagination */}
-        {pagination.total_pages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
+      {/* Pagination */}
+      {pagination.total_pages > 1 && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginTop: '24px', 
+          padding: '16px',
+          border: '1px solid #e9ecef',
+          borderRadius: '8px',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <div style={{ fontSize: '14px', color: '#495057' }}>
+            Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total_count)} of {pagination.total_count} invoices
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
             <Button 
-              onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+              variant="secondary" 
+              onClick={() => setPagination({...pagination, page: pagination.page - 1})}
               disabled={!pagination.has_prev}
-              variant="secondary"
             >
               Previous
             </Button>
-            <span style={{ padding: '8px 12px' }}>
+            <span style={{ 
+              padding: '8px 12px', 
+              display: 'flex', 
+              alignItems: 'center',
+              fontSize: '14px',
+              color: '#495057',
+              fontWeight: '500'
+            }}>
               Page {pagination.page} of {pagination.total_pages}
             </span>
             <Button 
-              onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+              variant="secondary" 
+              onClick={() => setPagination({...pagination, page: pagination.page + 1})}
               disabled={!pagination.has_next}
-              variant="secondary"
             >
               Next
             </Button>
           </div>
-        )}
-      </Card>
+        </div>
+      )}
+
+      {invoices.length === 0 && !loading && (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px', 
+          color: '#6c757d',
+          border: '1px solid #e9ecef',
+          borderRadius: '8px',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
+            No invoices available
+          </div>
+          <div style={{ fontSize: '14px' }}>
+            Create your first invoice to get started
+          </div>
+        </div>
+      )}
 
       {/* Create Invoice Modal */}
       {showModal && (
@@ -222,28 +282,8 @@ export function Invoices() {
           justifyContent: 'center',
           zIndex: 1000
         }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: 'var(--radius)',
-            padding: '24px',
-            width: '80%',
-            height: '80%',
-            maxWidth: '1400px',
-            maxHeight: '80vh',
-            overflow: 'auto'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2>Create New Invoice</h2>
-              <Button onClick={() => setShowModal(false)} variant="secondary">×</Button>
-            </div>
-
-            <ComprehensiveInvoiceForm 
-              onSuccess={() => {
-                setShowModal(false)
-                loadData()
-              }}
-              onCancel={() => setShowModal(false)}
-            />
+          <div style={{ width: '80%', height: '80%', maxWidth: '1400px', maxHeight: '80vh', overflow: 'auto' }}>
+            <ComprehensiveInvoiceForm onClose={() => setShowModal(false)} />
           </div>
         </div>
       )}
@@ -262,34 +302,10 @@ export function Invoices() {
           justifyContent: 'center',
           zIndex: 1000
         }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: 'var(--radius)',
-            padding: '24px',
-            width: '80%',
-            height: '80%',
-            maxWidth: '1400px',
-            maxHeight: '80vh',
-            overflow: 'auto'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2>Edit Invoice: {editingInvoice.invoice_no}</h2>
-              <Button onClick={() => {
-                setShowEditModal(false)
-                resetForm()
-              }} variant="secondary">×</Button>
-            </div>
-
+          <div style={{ width: '80%', height: '80%', maxWidth: '1400px', maxHeight: '80vh', overflow: 'auto' }}>
             <ComprehensiveInvoiceForm 
-              onSuccess={() => {
-                setShowEditModal(false)
-                resetForm()
-                loadData()
-              }}
-              onCancel={() => {
-                setShowEditModal(false)
-                resetForm()
-              }}
+              invoiceId={editingInvoice.id}
+              onClose={() => setShowEditModal(false)} 
             />
           </div>
         </div>
@@ -309,61 +325,23 @@ export function Invoices() {
           justifyContent: 'center',
           zIndex: 1000
         }}>
-          <div style={{
+          <div style={{ 
+            width: '80%', 
+            height: '80%', 
+            maxWidth: '1400px', 
+            maxHeight: '80vh', 
+            overflow: 'auto',
             backgroundColor: 'white',
-            borderRadius: 'var(--radius)',
-            padding: '24px',
-            width: '80%',
-            height: '80%',
-            maxWidth: '1400px',
-            maxHeight: '80vh'
+            borderRadius: '8px',
+            padding: '24px'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3>Add Payment</h3>
-              <Button onClick={() => setShowPaymentModal(false)} variant="secondary">×</Button>
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label>Invoice: {selectedInvoice.invoice_no}</label>
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label>Payment Amount *</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="Enter payment amount"
-                style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label>Payment Method *</label>
-              <select style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
-                <option value="">Select method...</option>
-                <option value="Cash">Cash</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-                <option value="Cheque">Cheque</option>
-                <option value="UPI">UPI</option>
-                <option value="Credit Card">Credit Card</option>
-              </select>
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label>Reference Number</label>
-              <input
-                type="text"
-                placeholder="Optional reference number"
-                style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <Button type="button" onClick={() => setShowPaymentModal(false)} variant="secondary">
+            <h2>Add Payment for Invoice {selectedInvoice.invoice_no}</h2>
+            {/* Payment form would go here */}
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
+              <Button variant="secondary" onClick={() => setShowPaymentModal(false)}>
                 Cancel
               </Button>
-              <Button type="button" variant="primary">
+              <Button variant="primary">
                 Add Payment
               </Button>
             </div>
@@ -385,58 +363,39 @@ export function Invoices() {
           justifyContent: 'center',
           zIndex: 1000
         }}>
-          <div style={{
+          <div style={{ 
+            width: '80%', 
+            height: '80%', 
+            maxWidth: '1400px', 
+            maxHeight: '80vh', 
+            overflow: 'auto',
             backgroundColor: 'white',
-            borderRadius: 'var(--radius)',
-            padding: '24px',
-            width: '80%',
-            height: '80%',
-            maxWidth: '1400px',
-            maxHeight: '80vh'
+            borderRadius: '8px',
+            padding: '24px'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3>Send Invoice via Email</h3>
-              <Button onClick={() => setShowEmailModal(false)} variant="secondary">×</Button>
-            </div>
-
+            <h2>Email Invoice {selectedInvoice.invoice_no}</h2>
             <div style={{ marginBottom: '16px' }}>
-              <label>Invoice: {selectedInvoice.invoice_no}</label>
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label>Email Address *</label>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Email Address:</label>
               <input
                 type="email"
                 value={emailAddress}
                 onChange={(e) => setEmailAddress(e.target.value)}
-                required
-                placeholder="Enter recipient email address"
-                style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '6px',
+                  fontSize: '14px'
+                }}
+                placeholder="Enter email address"
               />
             </div>
-
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <Button type="button" onClick={() => setShowEmailModal(false)} variant="secondary">
+              <Button variant="secondary" onClick={() => setShowEmailModal(false)}>
                 Cancel
               </Button>
-              <Button 
-                type="button" 
-                variant="primary" 
-                disabled={!emailAddress || loading}
-                onClick={async () => {
-                  try {
-                    setLoading(true)
-                    await apiEmailInvoice(selectedInvoice.id, emailAddress)
-                    setShowEmailModal(false)
-                    setError('')
-                  } catch (err: any) {
-                    setError(err.message || 'Failed to send email')
-                  } finally {
-                    setLoading(false)
-                  }
-                }}
-              >
-                {loading ? 'Sending...' : 'Send Email'}
+              <Button variant="primary">
+                Send Email
               </Button>
             </div>
           </div>

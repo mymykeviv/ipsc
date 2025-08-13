@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { ErrorMessage } from '../components/ErrorMessage'
 import { Party, apiListCustomers, apiListVendors, apiCreateParty, apiUpdateParty, apiToggleParty } from '../lib/api'
@@ -376,236 +375,197 @@ export function Parties() {
   }
 
   return (
-    <div style={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-        <h1>Customer & Vendor Profiles</h1>
-        <Button onClick={() => { resetForm(); setShowAddModal(true) }}>
+    <div style={{ padding: '20px', maxWidth: '100%' }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '24px',
+        paddingBottom: '12px',
+        borderBottom: '2px solid #e9ecef'
+      }}>
+        <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Parties</h1>
+        <Button variant="primary" onClick={() => setShowAddModal(true)}>
           Add {activeTab === 'customers' ? 'Customer' : 'Vendor'}
         </Button>
       </div>
 
-      <Card>
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-          <Button
-            variant={activeTab === 'customers' ? 'primary' : 'secondary'}
-            onClick={() => setActiveTab('customers')}
-          >
-            Customers ({customers.length})
-          </Button>
-          <Button
-            variant={activeTab === 'vendors' ? 'primary' : 'secondary'}
-            onClick={() => setActiveTab('vendors')}
-          >
-            Vendors ({vendors.length})
-          </Button>
-        </div>
+      {/* Tab Navigation */}
+      <div style={{ 
+        display: 'flex', 
+        marginBottom: '24px',
+        borderBottom: '1px solid #e9ecef'
+      }}>
+        <button
+          onClick={() => setActiveTab('customers')}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            backgroundColor: activeTab === 'customers' ? '#007bff' : 'transparent',
+            color: activeTab === 'customers' ? 'white' : '#495057',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: '500',
+            borderBottom: activeTab === 'customers' ? '2px solid #007bff' : 'none'
+          }}
+        >
+          Customers ({customers.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('vendors')}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            backgroundColor: activeTab === 'vendors' ? '#007bff' : 'transparent',
+            color: activeTab === 'vendors' ? 'white' : '#495057',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: '500',
+            borderBottom: activeTab === 'vendors' ? '2px solid #007bff' : 'none'
+          }}
+        >
+          Vendors ({vendors.length})
+        </button>
+      </div>
 
-        {/* Search and Filters */}
-        <div style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+      {/* Search and Filters */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '24px',
+        gap: '16px'
+      }}>
+        <div style={{ flex: 1 }}>
           <input
             type="text"
             placeholder={`Search ${activeTab}...`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
-              flex: 1,
-              padding: '12px 16px',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)',
-              fontSize: '16px'
+              width: '100%',
+              padding: '10px 16px',
+              border: '1px solid #ced4da',
+              borderRadius: '6px',
+              fontSize: '14px'
             }}
           />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
             <input
               type="checkbox"
               checked={showInactive}
               onChange={(e) => setShowInactive(e.target.checked)}
-              style={{ width: '16px', height: '16px' }}
+              style={{ margin: 0 }}
             />
             Show Inactive
           </label>
         </div>
+      </div>
 
-        {/* Table */}
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px' }}>Loading...</div>
-        ) : currentParties.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--muted)' }}>
-            No {activeTab} found
-          </div>
-        ) : (
-          <div style={{ 
-            width: '100%',
-            maxWidth: '100%',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius)'
-          }}>
-            <table style={{ 
-              width: '100%', 
-              borderCollapse: 'collapse',
-              tableLayout: 'auto'
-            }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  <th 
-                    style={{ padding: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
-                    onClick={() => handleSort('name')}
-                  >
-                    Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th 
-                    style={{ padding: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
-                    onClick={() => handleSort('contact_person')}
-                  >
-                    Contact {sortField === 'contact_person' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th 
-                    style={{ padding: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
-                    onClick={() => handleSort('contact_number')}
-                  >
-                    Phone {sortField === 'contact_number' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th 
-                    style={{ padding: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
-                    onClick={() => handleSort('email')}
-                  >
-                    Email {sortField === 'email' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th 
-                    style={{ padding: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
-                    onClick={() => handleSort('gstin')}
-                  >
-                    GSTIN {sortField === 'gstin' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th 
-                    style={{ padding: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
-                    onClick={() => handleSort('gst_registration_status')}
-                  >
-                    GST {sortField === 'gst_registration_status' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th 
-                    style={{ padding: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
-                    onClick={() => handleSort('billing_city')}
-                  >
-                    Address {sortField === 'billing_city' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th 
-                    style={{ padding: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
-                    onClick={() => handleSort('is_active')}
-                  >
-                    Status {sortField === 'is_active' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th style={{ padding: '8px', textAlign: 'left', fontSize: '14px' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedParties.map((party) => (
-                  <tr key={party.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '8px', fontSize: '14px' }}>{party.name}</td>
-                    <td style={{ padding: '8px', fontSize: '14px' }}>{party.contact_person || '-'}</td>
-                    <td style={{ padding: '8px', fontSize: '14px' }}>{party.contact_number || '-'}</td>
-                    <td style={{ padding: '8px', fontSize: '14px' }}>{party.email || '-'}</td>
-                    <td style={{ padding: '8px', fontSize: '14px' }}>{party.gstin || '-'}</td>
-                    <td style={{ padding: '8px' }}>
-                      <span style={{
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: '14px',
-                        backgroundColor: party.gst_registration_status === 'GST registered' ? '#dcfce7' : '#fef3c7',
-                        color: party.gst_registration_status === 'GST registered' ? '#166534' : '#92400e'
-                      }}>
-                        {party.gst_registration_status}
-                      </span>
-                    </td>
-                    <td style={{ padding: '8px' }}>
-                      <div style={{ fontSize: '14px' }}>
-                        <div>{party.billing_city}, {party.billing_state}</div>
-                        <div>{party.billing_pincode}</div>
-                      </div>
-                    </td>
-                    <td style={{ padding: '8px' }}>
-                      <span style={{
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: '14px',
-                        backgroundColor: party.is_active ? '#dcfce7' : '#fecaca',
-                        color: party.is_active ? '#166534' : '#dc2626'
-                      }}>
-                        {party.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '8px' }}>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <Button
-                          variant="secondary"
-                          onClick={() => openEditModal(party)}
-                          style={{ fontSize: '14px', padding: '4px 8px' }}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          onClick={() => handleToggleParty(party)}
-                          style={{ fontSize: '14px', padding: '4px 8px' }}
-                        >
-                          {party.is_active ? 'Deactivate' : 'Activate'}
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
-                marginTop: '20px',
-                padding: '16px 0',
-                borderTop: '1px solid var(--border)'
+      {error && (
+        <div style={{ 
+          padding: '12px 16px', 
+          marginBottom: '20px', 
+          backgroundColor: '#fee', 
+          border: '1px solid #fcc', 
+          borderRadius: '6px', 
+          color: '#c33',
+          fontSize: '14px'
+        }}>
+          {error}
+        </div>
+      )}
+
+      {/* Parties Table */}
+      <div style={{ 
+        border: '1px solid #e9ecef', 
+        borderRadius: '8px', 
+        overflow: 'hidden',
+        backgroundColor: 'white'
+      }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #e9ecef' }}>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Name</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Contact Person</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Contact Number</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Email</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>GSTIN</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Status</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(activeTab === 'customers' ? customers : vendors).map(party => (
+              <tr key={party.id} style={{ 
+                opacity: party.is_active ? 1 : 0.6,
+                borderBottom: '1px solid #e9ecef',
+                backgroundColor: 'white'
               }}>
-                <div style={{ color: 'var(--muted)' }}>
-                  Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, sortedParties.length)} of {sortedParties.length} {activeTab}
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <Button
-                    variant="secondary"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    style={{ fontSize: '14px', padding: '4px 8px' }}
-                  >
-                    Previous
-                  </Button>
-                  
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? 'primary' : 'secondary'}
-                      onClick={() => handlePageChange(page)}
-                      style={{ fontSize: '14px', padding: '4px 8px', minWidth: '32px' }}
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{party.name}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{party.contact_person || '-'}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{party.contact_number || '-'}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{party.email || '-'}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{party.gstin || '-'}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
+                  <span style={{ 
+                    padding: '6px 12px', 
+                    borderRadius: '6px', 
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    backgroundColor: party.is_active ? '#d4edda' : '#f8d7da',
+                    color: party.is_active ? '#155724' : '#721c24'
+                  }}>
+                    {party.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td style={{ padding: '12px' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Button 
+                      variant="secondary" 
+                      onClick={() => {
+                        setEditingParty(party)
+                        setShowEditModal(true)
+                      }}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
-                      {page}
+                      Edit
                     </Button>
-                  ))}
-                  
-                  <Button
-                    variant="secondary"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    style={{ fontSize: '14px', padding: '4px 8px' }}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            )}
+                    <Button 
+                      variant="secondary" 
+                      onClick={() => handleToggleParty(party.id)}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
+                    >
+                      {party.is_active ? 'Deactivate' : 'Activate'}
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Empty State */}
+      {(activeTab === 'customers' ? customers : vendors).length === 0 && !loading && (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px', 
+          color: '#6c757d',
+          border: '1px solid #e9ecef',
+          borderRadius: '8px',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
+            No {activeTab} available
           </div>
-        )}
-      </Card>
+          <div style={{ fontSize: '14px' }}>
+            Add your first {activeTab.slice(0, -1)} to get started
+          </div>
+        </div>
+      )}
 
       {/* Add Party Modal */}
       {showAddModal && (

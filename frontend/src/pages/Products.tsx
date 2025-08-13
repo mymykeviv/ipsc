@@ -493,10 +493,10 @@ export function Products() {
   }
 
   return (
-    <div className="content">
-      {/* Debug info */}
-      {showStockHistoryModal && (
-        <div style={{ 
+    <div style={{ padding: '20px', maxWidth: '100%' }}>
+      {/* Debug Modal State Display */}
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{
           position: 'fixed', 
           top: '10px', 
           right: '10px', 
@@ -509,30 +509,36 @@ export function Products() {
           Modal State: {showStockHistoryModal ? 'OPEN' : 'CLOSED'}
         </div>
       )}
-      <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h1>Products</h1>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <Button variant="secondary" onClick={exportToCSV}>
-              Export CSV
-            </Button>
-            <Button variant="primary" onClick={() => setShowAddModal(true)}>
-              Add Product
-            </Button>
-          </div>
+      
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '12px', borderBottom: '2px solid #e9ecef' }}>
+        <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Products</h1>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <Button variant="secondary" onClick={exportToCSV}>
+            Export CSV
+          </Button>
+          <Button variant="primary" onClick={() => setShowAddModal(true)}>
+            Add Product
+          </Button>
         </div>
+      </div>
 
-        <div style={{ marginBottom: '20px' }}>
-          <SearchBar
-            value={searchTerm}
-            onChange={setSearchTerm}
-            placeholder="Search products by name, SKU, category, description, or supplier..."
-          />
-        </div>
+      <div style={{ marginBottom: '24px' }}>
+        <SearchBar
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="Search products by name, SKU, category, description, or supplier..."
+        />
+      </div>
 
-        <table>
+      <div style={{ 
+        border: '1px solid #e9ecef', 
+        borderRadius: '8px', 
+        overflow: 'hidden',
+        backgroundColor: 'white'
+      }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr>
+            <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #e9ecef' }}>
               <SortableHeader field="name">Name</SortableHeader>
               <SortableHeader field="sku">SKU</SortableHeader>
               <SortableHeader field="category">Category</SortableHeader>
@@ -540,37 +546,42 @@ export function Products() {
               <SortableHeader field="stock">Stock</SortableHeader>
               <SortableHeader field="sales_price">Sales Price</SortableHeader>
               <SortableHeader field="gst_rate">GST Rate</SortableHeader>
-              <th>Status</th>
-              <th>Actions</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Status</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Actions</th>
             </tr>
           </thead>
-                      <tbody>
-              {paginatedProducts.map(product => (
-              <tr key={product.id} style={{ opacity: product.is_active ? 1 : 0.6 }}>
-                <td>{product.name}</td>
-                <td>{product.sku || '-'}</td>
-                <td>{product.category || '-'}</td>
-                <td>{product.unit}</td>
-                <td>{product.stock}</td>
-                <td>₹{product.sales_price.toFixed(2)}</td>
-                <td>{product.gst_rate}%</td>
-                <td>
+          <tbody>
+            {paginatedProducts.map(product => (
+              <tr key={product.id} style={{ 
+                opacity: product.is_active ? 1 : 0.6,
+                borderBottom: '1px solid #e9ecef',
+                backgroundColor: 'white'
+              }}>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{product.name}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{product.sku || '-'}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{product.category || '-'}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{product.unit}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{product.stock}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>₹{product.sales_price.toFixed(2)}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{product.gst_rate}%</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
                   <span style={{ 
-                    padding: '4px 8px', 
-                    borderRadius: '4px', 
+                    padding: '6px 12px', 
+                    borderRadius: '6px', 
                     fontSize: '14px',
+                    fontWeight: '500',
                     backgroundColor: product.is_active ? '#d4edda' : '#f8d7da',
                     color: product.is_active ? '#155724' : '#721c24'
                   }}>
                     {product.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td>
+                <td style={{ padding: '12px' }}>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <Button 
                       variant="secondary" 
                       onClick={() => openEditModal(product)}
-                      style={{ fontSize: '14px', padding: '4px 8px' }}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       Edit
                     </Button>
@@ -580,7 +591,7 @@ export function Products() {
                         setSelectedProduct(product)
                         setShowStockModal(true)
                       }}
-                      style={{ fontSize: '14px', padding: '4px 8px' }}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       Stock
                     </Button>
@@ -591,16 +602,16 @@ export function Products() {
                         setSelectedProduct(product)
                         setShowStockHistoryModal(true)
                       }}
-                      style={{ fontSize: '14px', padding: '4px 8px' }}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       History
                     </Button>
                     <Button 
                       variant="secondary" 
                       onClick={() => handleToggleProduct(product.id)}
-                      style={{ fontSize: '14px', padding: '4px 8px' }}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
-                      {product.is_active ? 'Disable' : 'Enable'}
+                      {product.is_active ? 'Deactivate' : 'Activate'}
                     </Button>
                   </div>
                 </td>
@@ -608,57 +619,91 @@ export function Products() {
             ))}
           </tbody>
         </table>
+      </div>
 
-        {filteredAndSortedProducts.length === 0 && (
-          <p style={{ textAlign: 'center', marginTop: '20px', color: '#666' }}>
-            {searchTerm ? 'No products found matching your search.' : 'No products available.'}
-          </p>
-        )}
-
-        {/* Pagination Controls */}
-        {filteredAndSortedProducts.length > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', padding: '16px 0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span>Rows per page:</span>
-              <select 
-                value={rowsPerPage} 
-                onChange={(e) => {
-                  setRowsPerPage(Number(e.target.value))
-                  setCurrentPage(1)
-                }}
-                style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-              >
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={200}>200</option>
-              </select>
-              <span>
-                Showing {startIndex + 1} to {Math.min(endIndex, filteredAndSortedProducts.length)} of {filteredAndSortedProducts.length} products
-              </span>
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <Button 
-                variant="secondary" 
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </Button>
-              <span style={{ padding: '8px 12px', display: 'flex', alignItems: 'center' }}>
-                Page {currentPage} of {totalPages}
-              </span>
-              <Button 
-                variant="secondary" 
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </Button>
-            </div>
+      {/* Pagination Controls */}
+      {filteredAndSortedProducts.length > 0 && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginTop: '24px', 
+          padding: '16px',
+          border: '1px solid #e9ecef',
+          borderRadius: '8px',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '14px', color: '#495057' }}>Rows per page:</span>
+            <select 
+              value={rowsPerPage} 
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value))
+                setCurrentPage(1)
+              }}
+              style={{ 
+                padding: '6px 12px', 
+                border: '1px solid #ced4da', 
+                borderRadius: '6px',
+                fontSize: '14px',
+                backgroundColor: 'white'
+              }}
+            >
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={200}>200</option>
+            </select>
+            <span style={{ fontSize: '14px', color: '#495057' }}>
+              Showing {startIndex + 1} to {Math.min(endIndex, filteredAndSortedProducts.length)} of {filteredAndSortedProducts.length} products
+            </span>
           </div>
-        )}
-      </Card>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Button 
+              variant="secondary" 
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <span style={{ 
+              padding: '8px 12px', 
+              display: 'flex', 
+              alignItems: 'center',
+              fontSize: '14px',
+              color: '#495057',
+              fontWeight: '500'
+            }}>
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button 
+              variant="secondary" 
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {filteredAndSortedProducts.length === 0 && (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px', 
+          color: '#6c757d',
+          border: '1px solid #e9ecef',
+          borderRadius: '8px',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
+            {searchTerm ? 'No products found matching your search' : 'No products available'}
+          </div>
+          <div style={{ fontSize: '14px' }}>
+            {searchTerm ? 'Try adjusting your search terms' : 'Add your first product to get started'}
+          </div>
+        </div>
+      )}
 
       {/* Add Product Modal */}
       {showAddModal && (
