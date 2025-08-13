@@ -122,88 +122,66 @@ export function Dashboard() {
         }}>
           Dashboard - Cashflow Summary
         </h1>
-      </div>
-
-      {/* Quick Actions Section */}
-      <div style={{ 
-        marginBottom: '24px',
-        padding: '16px',
-        borderBottom: '1px solid #e9ecef'
-      }}>
+        
+        {/* Quick Actions moved to header */}
         <div style={{ 
           display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: '12px'
+          gap: '12px', 
+          flexWrap: 'wrap',
+          alignItems: 'center'
         }}>
-          <h3 style={{ 
-            margin: '0', 
-            fontSize: '18px',
-            color: '#495057',
-            fontWeight: '600'
-          }}>
-            🚀 Quick Actions
-          </h3>
-          
-          <div style={{ 
-            display: 'flex', 
-            gap: '12px', 
-            flexWrap: 'wrap',
-            alignItems: 'center'
-          }}>
-            <Button 
-              onClick={() => setShowExpenseModal(true)}
-              variant="primary"
-              style={{ 
-                padding: '10px 16px', 
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              💰 Add Expense
-            </Button>
-            <Button 
-              onClick={() => setShowInvoiceModal(true)}
-              variant="primary"
-              style={{ 
-                padding: '10px 16px', 
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              📄 New Invoice
-            </Button>
-            <Button 
-              onClick={() => setShowPurchaseModal(true)}
-              variant="primary"
-              style={{ 
-                padding: '10px 16px', 
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              📦 New Purchase
-            </Button>
-            <Button 
-              onClick={() => navigate('/products')}
-              variant="primary"
-              style={{ 
-                padding: '10px 16px', 
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              🏷️ Manage Products
-            </Button>
-          </div>
+          <Button 
+            onClick={() => setShowExpenseModal(true)}
+            variant="primary"
+            style={{ 
+              padding: '10px 16px', 
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            💰 Add Expense
+          </Button>
+          <Button 
+            onClick={() => setShowInvoiceModal(true)}
+            variant="primary"
+            style={{ 
+              padding: '10px 16px', 
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            📄 New Invoice
+          </Button>
+          <Button 
+            onClick={() => setShowPurchaseModal(true)}
+            variant="primary"
+            style={{ 
+              padding: '10px 16px', 
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            📦 New Purchase
+          </Button>
+          <Button 
+            onClick={() => navigate('/products')}
+            variant="primary"
+            style={{ 
+              padding: '10px 16px', 
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            🏷️ Manage Products
+          </Button>
         </div>
       </div>
 

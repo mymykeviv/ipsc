@@ -494,22 +494,6 @@ export function Products() {
 
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
-      {/* Debug Modal State Display */}
-      {process.env.NODE_ENV === 'development' && (
-        <div style={{
-          position: 'fixed', 
-          top: '10px', 
-          right: '10px', 
-          backgroundColor: 'red', 
-          color: 'white', 
-          padding: '10px', 
-          zIndex: 10000,
-          fontSize: '12px'
-        }}>
-          Modal State: {showStockHistoryModal ? 'OPEN' : 'CLOSED'}
-        </div>
-      )}
-      
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '12px', borderBottom: '2px solid #e9ecef' }}>
         <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Products</h1>
         <div style={{ display: 'flex', gap: '12px' }}>

@@ -11,7 +11,8 @@ import {
   Party,
   ExpenseCreate
 } from '../lib/api'
-import { Card } from '../components/Card'
+import { Button } from '../components/Button'
+import { ExpenseForm } from '../components/ExpenseForm'
 
 export function Expenses() {
   const { token } = useAuth()
@@ -104,9 +105,7 @@ export function Expenses() {
       setError(null)
       await apiCreateExpense(formData)
       setShowCreateForm(false)
-      resetForm()
       loadData()
-      alert('Expense created successfully!')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create expense')
     } finally {
@@ -115,9 +114,7 @@ export function Expenses() {
   }
 
   const handleUpdateExpense = async () => {
-    if (!selectedExpense) return
-
-    if (!formData.expense_type || !formData.category || !formData.description || formData.amount <= 0) {
+    if (!selectedExpense || !formData.expense_type || !formData.category || !formData.description || formData.amount <= 0) {
       setError('Please fill all required fields')
       return
     }
@@ -127,10 +124,7 @@ export function Expenses() {
       setError(null)
       await apiUpdateExpense(selectedExpense.id, formData)
       setShowEditForm(false)
-      setSelectedExpense(null)
-      resetForm()
       loadData()
-      alert('Expense updated successfully!')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update expense')
     } finally {
@@ -146,7 +140,6 @@ export function Expenses() {
       setError(null)
       await apiDeleteExpense(id)
       loadData()
-      alert('Expense deleted successfully!')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete expense')
     } finally {
@@ -154,7 +147,7 @@ export function Expenses() {
     }
   }
 
-  const handleEditExpense = (expense: Expense) => {
+  const handleEdit = (expense: Expense) => {
     setSelectedExpense(expense)
     setFormData({
       expense_date: expense.expense_date,
@@ -166,7 +159,7 @@ export function Expenses() {
       payment_method: expense.payment_method,
       account_head: expense.account_head,
       reference_number: expense.reference_number || '',
-      vendor_id: expense.vendor_id || undefined,
+      vendor_id: expense.vendor_id,
       gst_rate: expense.gst_rate,
       notes: expense.notes || ''
     })
@@ -190,152 +183,164 @@ export function Expenses() {
     })
   }
 
-  const calculateTotalAmount = () => {
-    const gstAmount = formData.amount * formData.gst_rate / 100
-    return formData.amount + gstAmount
-  }
+  const filteredExpenses = expenses.filter(expense => {
+    const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         expense.expense_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         expense.category.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = !categoryFilter || expense.category === categoryFilter
+    const matchesType = !expenseTypeFilter || expense.expense_type === expenseTypeFilter
+    return matchesSearch && matchesCategory && matchesType
+  })
 
-  // Pagination
-  const totalPages = Math.ceil(expenses.length / itemsPerPage)
+  const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
-  const currentExpenses = expenses.slice(startIndex, endIndex)
+  const paginatedExpenses = filteredExpenses.slice(startIndex, endIndex)
 
   if (loading && expenses.length === 0) {
     return (
-      <Card>
-        <h1>Expenses</h1>
+      <div style={{ padding: '20px' }}>
         <div>Loading...</div>
-      </Card>
+      </div>
     )
   }
 
   return (
-    <Card>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1>Expense Management</h1>
-        <button 
-          onClick={() => setShowCreateForm(true)}
-          className="btn btn-primary"
-          style={{ padding: '10px 20px' }}
-        >
-          Add New Expense
-        </button>
+    <div style={{ padding: '20px', maxWidth: '100%' }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '24px',
+        paddingBottom: '12px',
+        borderBottom: '2px solid #e9ecef'
+      }}>
+        <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Expenses</h1>
+        <Button variant="primary" onClick={() => setShowCreateForm(true)}>
+          Add Expense
+        </Button>
+      </div>
+
+      {/* Search and Filters */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '24px',
+        gap: '16px'
+      }}>
+        <div style={{ flex: 1 }}>
+          <input
+            type="text"
+            placeholder="Search expenses by description, type, or category..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px 16px',
+              border: '1px solid #ced4da',
+              borderRadius: '6px',
+              fontSize: '14px'
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            style={{
+              padding: '10px 16px',
+              border: '1px solid #ced4da',
+              borderRadius: '6px',
+              fontSize: '14px',
+              backgroundColor: 'white'
+            }}
+          >
+            <option value="">All Categories</option>
+            {expenseCategories.map(cat => (
+              <option key={cat.value} value={cat.value}>{cat.label}</option>
+            ))}
+          </select>
+          <select
+            value={expenseTypeFilter}
+            onChange={(e) => setExpenseTypeFilter(e.target.value)}
+            style={{
+              padding: '10px 16px',
+              border: '1px solid #ced4da',
+              borderRadius: '6px',
+              fontSize: '14px',
+              backgroundColor: 'white'
+            }}
+          >
+            <option value="">All Types</option>
+            {expenseTypes.map(type => (
+              <option key={type.value} value={type.value}>{type.label}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {error && (
         <div style={{ 
-          padding: '12px', 
-          marginBottom: '16px', 
+          padding: '12px 16px', 
+          marginBottom: '20px', 
           backgroundColor: '#fee', 
           border: '1px solid #fcc', 
-          borderRadius: '4px', 
-          color: '#c33' 
+          borderRadius: '6px', 
+          color: '#c33',
+          fontSize: '14px'
         }}>
           {error}
         </div>
       )}
 
-      {/* Search and Filters */}
-      <div style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}>
-        <input
-          type="text"
-          placeholder="Search expenses..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            flex: 1,
-            padding: '12px 16px',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius)',
-            fontSize: '14px'
-          }}
-        />
-        <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          style={{
-            padding: '12px 16px',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius)',
-            fontSize: '14px'
-          }}
-        >
-          <option value="">All Categories</option>
-          {expenseCategories.map(cat => (
-            <option key={cat.value} value={cat.value}>{cat.label}</option>
-          ))}
-        </select>
-        <select
-          value={expenseTypeFilter}
-          onChange={(e) => setExpenseTypeFilter(e.target.value)}
-          style={{
-            padding: '12px 16px',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius)',
-            fontSize: '14px'
-          }}
-        >
-          <option value="">All Types</option>
-          {expenseTypes.map(type => (
-            <option key={type.value} value={type.value}>{type.label}</option>
-          ))}
-        </select>
-      </div>
-
       {/* Expenses Table */}
-      <div style={{ overflowX: 'auto' }}>
+      <div style={{ 
+        border: '1px solid #e9ecef', 
+        borderRadius: '8px', 
+        overflow: 'hidden',
+        backgroundColor: 'white'
+      }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ backgroundColor: 'var(--background-secondary)' }}>
-              <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Date</th>
-              <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Type</th>
-              <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Category</th>
-              <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Description</th>
-              <th style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Amount</th>
-              <th style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>GST</th>
-              <th style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Total</th>
-              <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid var(--border)' }}>Payment Method</th>
-              <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid var(--border)' }}>Actions</th>
+            <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #e9ecef' }}>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Date</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Type</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Category</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Description</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Amount</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Payment Method</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {currentExpenses.map(expense => (
-              <tr key={expense.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                <td style={{ padding: '12px' }}>{new Date(expense.expense_date).toLocaleDateString()}</td>
-                <td style={{ padding: '12px' }}>{expense.expense_type}</td>
-                <td style={{ padding: '12px' }}>{expense.category}</td>
-                <td style={{ padding: '12px' }}>{expense.description}</td>
-                <td style={{ padding: '12px', textAlign: 'right' }}>₹{expense.amount.toFixed(2)}</td>
-                <td style={{ padding: '12px', textAlign: 'right' }}>₹{expense.gst_amount.toFixed(2)}</td>
-                <td style={{ padding: '12px', textAlign: 'right' }}>₹{expense.total_amount.toFixed(2)}</td>
-                <td style={{ padding: '12px', textAlign: 'center' }}>
-                  <span style={{
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    backgroundColor: '#e9ecef',
-                    color: '#495057'
-                  }}>
-                    {expense.payment_method}
-                  </span>
-                </td>
-                <td style={{ padding: '12px', textAlign: 'center' }}>
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                    <button
-                      onClick={() => handleEditExpense(expense)}
-                      className="btn btn-secondary"
-                      style={{ padding: '4px 8px', fontSize: '12px' }}
+            {paginatedExpenses.map(expense => (
+              <tr key={expense.id} style={{ 
+                borderBottom: '1px solid #e9ecef',
+                backgroundColor: 'white'
+              }}>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{new Date(expense.expense_date).toLocaleDateString()}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{expense.expense_type}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{expense.category}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{expense.description}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>₹{expense.amount.toFixed(2)}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{expense.payment_method}</td>
+                <td style={{ padding: '12px' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Button 
+                      variant="secondary" 
+                      onClick={() => handleEdit(expense)}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       Edit
-                    </button>
-                    <button
+                    </Button>
+                    <Button 
+                      variant="secondary" 
                       onClick={() => handleDeleteExpense(expense.id)}
-                      className="btn btn-danger"
-                      style={{ padding: '4px 8px', fontSize: '12px' }}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       Delete
-                    </button>
+                    </Button>
                   </div>
                 </td>
               </tr>
@@ -346,31 +351,68 @@ export function Expenses() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
-          <button
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-            className="btn btn-secondary"
-            style={{ padding: '8px 12px' }}
-          >
-            Previous
-          </button>
-          <span style={{ padding: '8px 12px', display: 'flex', alignItems: 'center' }}>
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-            disabled={currentPage === totalPages}
-            className="btn btn-secondary"
-            style={{ padding: '8px 12px' }}
-          >
-            Next
-          </button>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginTop: '24px', 
+          padding: '16px',
+          border: '1px solid #e9ecef',
+          borderRadius: '8px',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <div style={{ fontSize: '14px', color: '#495057' }}>
+            Showing {startIndex + 1} to {Math.min(endIndex, filteredExpenses.length)} of {filteredExpenses.length} expenses
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Button 
+              variant="secondary" 
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <span style={{ 
+              padding: '8px 12px', 
+              display: 'flex', 
+              alignItems: 'center',
+              fontSize: '14px',
+              color: '#495057',
+              fontWeight: '500'
+            }}>
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button 
+              variant="secondary" 
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       )}
 
-      {/* Create/Edit Expense Modal */}
-      {(showCreateForm || showEditForm) && (
+      {filteredExpenses.length === 0 && !loading && (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px', 
+          color: '#6c757d',
+          border: '1px solid #e9ecef',
+          borderRadius: '8px',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
+            No expenses available
+          </div>
+          <div style={{ fontSize: '14px' }}>
+            Add your first expense to get started
+          </div>
+        </div>
+      )}
+
+      {/* Add Expense Modal */}
+      {showCreateForm && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -379,253 +421,35 @@ export function Expenses() {
           bottom: 0,
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           display: 'flex',
-          justifyContent: 'center',
           alignItems: 'center',
+          justifyContent: 'center',
           zIndex: 1000
         }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: '24px',
-            borderRadius: '8px',
-            width: '80%',
-            height: '80%',
-            maxWidth: '1400px',
-            maxHeight: '80vh',
-            overflowY: 'auto'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2>{showEditForm ? 'Edit Expense' : 'Add New Expense'}</h2>
-              <button
-                onClick={() => {
-                  setShowCreateForm(false)
-                  setShowEditForm(false)
-                  setSelectedExpense(null)
-                  resetForm()
-                }}
-                className="btn btn-secondary"
-                style={{ padding: '8px 12px' }}
-              >
-                Close
-              </button>
-            </div>
-
-            {/* Expense Details Section */}
-            <div style={{ marginBottom: '24px' }}>
-              <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
-                Expense Details
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <label>
-                  <div>Expense Date *</div>
-                  <input
-                    type="date"
-                    value={formData.expense_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, expense_date: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </label>
-
-                <label>
-                  <div>Expense Type *</div>
-                  <select
-                    value={formData.expense_type}
-                    onChange={(e) => {
-                      const selectedType = expenseTypes.find(type => type.value === e.target.value)
-                      setFormData(prev => ({ 
-                        ...prev, 
-                        expense_type: e.target.value,
-                        category: selectedType?.category || ''
-                      }))
-                    }}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  >
-                    <option value="">Select Type...</option>
-                    {expenseTypes.map(type => (
-                      <option key={type.value} value={type.value}>{type.label}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label>
-                  <div>Category *</div>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  >
-                    <option value="">Select Category...</option>
-                    {expenseCategories.map(cat => (
-                      <option key={cat.value} value={cat.value}>{cat.label}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label>
-                  <div>Subcategory</div>
-                  <input
-                    type="text"
-                    value={formData.subcategory}
-                    onChange={(e) => setFormData(prev => ({ ...prev, subcategory: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* Payment Information Section */}
-            <div style={{ marginBottom: '24px' }}>
-              <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>
-                Payment Information
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <label>
-                  <div>Amount *</div>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.amount}
-                    onChange={(e) => setFormData(prev => ({ ...prev, amount: Number(e.target.value) }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </label>
-
-                <label>
-                  <div>GST Rate %</div>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="100"
-                    value={formData.gst_rate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, gst_rate: Number(e.target.value) }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </label>
-
-                <label>
-                  <div>Payment Method *</div>
-                  <select
-                    value={formData.payment_method}
-                    onChange={(e) => setFormData(prev => ({ ...prev, payment_method: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  >
-                    {paymentMethods.map(method => (
-                      <option key={method} value={method}>{method}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label>
-                  <div>Account Head *</div>
-                  <select
-                    value={formData.account_head}
-                    onChange={(e) => setFormData(prev => ({ ...prev, account_head: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  >
-                    {accountHeads.map(head => (
-                      <option key={head} value={head}>{head}</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
-              {/* Description and Reference */}
-              <div style={{ display: 'grid', gap: '16px' }}>
-                <label>
-                  <div>Description *</div>
-                  <input
-                    type="text"
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </label>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <label>
-                    <div>Reference Number</div>
-                    <input
-                      type="text"
-                      value={formData.reference_number}
-                      onChange={(e) => setFormData(prev => ({ ...prev, reference_number: e.target.value }))}
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                    />
-                  </label>
-
-                  <label>
-                    <div>Vendor (Optional)</div>
-                    <select
-                      value={formData.vendor_id || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, vendor_id: e.target.value ? Number(e.target.value) : undefined }))}
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                    >
-                      <option value="">Select Vendor...</option>
-                      {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                    </select>
-                  </label>
-                </div>
-              </div>
-
-              {/* Notes */}
-              <label>
-                <div>Notes</div>
-                <textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                  style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px', minHeight: '60px' }}
-                />
-              </label>
-
-              {/* Total Calculation */}
-              {formData.amount > 0 && (
-                <div style={{ 
-                  padding: '16px', 
-                  backgroundColor: 'var(--background-secondary)', 
-                  borderRadius: '4px',
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '16px'
-                }}>
-                  <div>
-                    <strong>Base Amount:</strong> ₹{formData.amount.toFixed(2)}
-                  </div>
-                  <div>
-                    <strong>GST Amount:</strong> ₹{(formData.amount * formData.gst_rate / 100).toFixed(2)}
-                  </div>
-                  <div>
-                    <strong>Total Amount:</strong> ₹{calculateTotalAmount().toFixed(2)}
-                  </div>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={() => {
-                    setShowCreateForm(false)
-                    setShowEditForm(false)
-                    setSelectedExpense(null)
-                    resetForm()
-                  }}
-                  className="btn btn-secondary"
-                  style={{ padding: '12px 24px' }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={showEditForm ? handleUpdateExpense : handleCreateExpense}
-                  disabled={loading || !formData.expense_type || !formData.category || !formData.description || formData.amount <= 0}
-                  className="btn btn-primary"
-                  style={{ padding: '12px 24px' }}
-                >
-                  {loading ? (showEditForm ? 'Updating...' : 'Creating...') : (showEditForm ? 'Update Expense' : 'Create Expense')}
-                </button>
-              </div>
-            </div>
+          <div style={{ width: '80%', height: '80%', maxWidth: '1400px', maxHeight: '80vh', overflow: 'auto' }}>
+            <ExpenseForm onClose={() => setShowCreateForm(false)} />
           </div>
         </div>
       )}
-    </Card>
+
+      {/* Edit Expense Modal */}
+      {showEditForm && selectedExpense && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{ width: '80%', height: '80%', maxWidth: '1400px', maxHeight: '80vh', overflow: 'auto' }}>
+            <ExpenseForm expenseId={selectedExpense.id} onClose={() => setShowEditForm(false)} />
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

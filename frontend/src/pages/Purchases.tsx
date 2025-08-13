@@ -12,7 +12,8 @@ import {
   Product,
   PurchaseCreate
 } from '../lib/api'
-import { Card } from '../components/Card'
+import { Button } from '../components/Button'
+import { PurchaseForm } from '../components/PurchaseForm'
 
 export function Purchases() {
   const { token } = useAuth()
@@ -98,9 +99,7 @@ export function Purchases() {
       setError(null)
       const result = await apiCreatePurchase(formData)
       setShowCreateForm(false)
-      resetForm()
       loadData()
-      alert(`Purchase created successfully! Purchase No: ${result.purchase_no}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create purchase')
     } finally {
@@ -116,7 +115,6 @@ export function Purchases() {
       setError(null)
       await apiDeletePurchase(id)
       loadData()
-      alert('Purchase deleted successfully!')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete purchase')
     } finally {
@@ -124,45 +122,9 @@ export function Purchases() {
     }
   }
 
-  const addItem = () => {
-    if (!currentItem.product_id || currentItem.qty <= 0 || currentItem.rate <= 0) {
-      setError('Please fill all item details')
-      return
-    }
-
-    const product = products.find(p => p.id === currentItem.product_id)
-    if (!product) return
-
-    const newItem = {
-      ...currentItem,
-      description: currentItem.description || product.name,
-      hsn_code: currentItem.hsn_code || product.hsn || '',
-      gst_rate: currentItem.gst_rate || product.gst_rate
-    }
-
-    setFormData(prev => ({
-      ...prev,
-      items: [...prev.items, newItem]
-    }))
-
-    setCurrentItem({
-      product_id: 0,
-      qty: 1,
-      rate: 0,
-      description: '',
-      hsn_code: '',
-      discount: 0,
-      discount_type: 'Percentage',
-      gst_rate: 0
-    })
-    setError(null)
-  }
-
-  const removeItem = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      items: prev.items.filter((_, i) => i !== index)
-    }))
+  const handlePayment = (purchase: Purchase) => {
+    setSelectedPurchase(purchase)
+    setShowPaymentForm(true)
   }
 
   const resetForm = () => {
@@ -194,175 +156,227 @@ export function Purchases() {
     })
   }
 
-  const calculateTotals = () => {
-    let taxableValue = 0
-    let totalCGST = 0
-    let totalSGST = 0
-    let totalIGST = 0
+  const addItem = () => {
+    if (!currentItem.product_id || currentItem.qty <= 0 || currentItem.rate <= 0) {
+      setError('Please fill all required fields for the item')
+      return
+    }
 
-    formData.items.forEach(item => {
-      const baseAmount = item.qty * item.rate
-      const discountAmount = item.discount_type === 'Fixed' ? item.discount : (baseAmount * item.discount / 100)
-      const taxableAmount = baseAmount - discountAmount
+    const product = products.find(p => p.id === currentItem.product_id)
+    if (!product) {
+      setError('Selected product not found')
+      return
+    }
 
-      if (formData.place_of_supply_state_code === '29') {
-        const cgst = taxableAmount * item.gst_rate / 200
-        const sgst = taxableAmount * item.gst_rate / 200
-        totalCGST += cgst
-        totalSGST += sgst
-      } else {
-        const igst = taxableAmount * item.gst_rate / 100
-        totalIGST += igst
-      }
+    const newItem = {
+      ...currentItem,
+      description: product.name,
+      hsn_code: product.hsn || '',
+      gst_rate: product.gst_rate || 0
+    }
 
-      taxableValue += taxableAmount
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, newItem]
+    }))
+
+    setCurrentItem({
+      product_id: 0,
+      qty: 1,
+      rate: 0,
+      description: '',
+      hsn_code: '',
+      discount: 0,
+      discount_type: 'Percentage',
+      gst_rate: 0
     })
-
-    const grandTotal = taxableValue + totalCGST + totalSGST + totalIGST - formData.total_discount
-
-    return { taxableValue, totalCGST, totalSGST, totalIGST, grandTotal }
   }
 
-  const totals = calculateTotals()
+  const removeItem = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index)
+    }))
+  }
 
-  // Pagination
-  const totalPages = Math.ceil(purchases.length / itemsPerPage)
+  const updateItem = (index: number, field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.map((item, i) => 
+        i === index ? { ...item, [field]: value } : item
+      )
+    }))
+  }
+
+  const calculateTotals = () => {
+    const subtotal = formData.items.reduce((sum, item) => {
+      const itemTotal = item.qty * item.rate
+      const discount = item.discount_type === 'Percentage' 
+        ? (itemTotal * item.discount / 100) 
+        : item.discount
+      return sum + (itemTotal - discount)
+    }, 0)
+
+    const totalDiscount = formData.total_discount
+    const taxableAmount = subtotal - totalDiscount
+    const cgst = taxableAmount * 0.09 // Assuming 18% GST split equally
+    const sgst = taxableAmount * 0.09
+    const total = taxableAmount + cgst + sgst
+
+    return { subtotal, totalDiscount, taxableAmount, cgst, sgst, total }
+  }
+
+  const filteredPurchases = purchases.filter(purchase => {
+    const matchesSearch = purchase.vendor_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         purchase.purchase_no.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = !statusFilter || purchase.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
+
+  const totalPages = Math.ceil(filteredPurchases.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
-  const currentPurchases = purchases.slice(startIndex, endIndex)
+  const paginatedPurchases = filteredPurchases.slice(startIndex, endIndex)
 
   if (loading && purchases.length === 0) {
     return (
-      <Card>
-        <h1>Purchases</h1>
+      <div style={{ padding: '20px' }}>
         <div>Loading...</div>
-      </Card>
+      </div>
     )
   }
 
   return (
-    <Card>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1>Purchase Management</h1>
-        <button 
-          onClick={() => setShowCreateForm(true)}
-          className="btn btn-primary"
-          style={{ padding: '10px 20px' }}
-        >
-          Create New Purchase
-        </button>
+    <div style={{ padding: '20px', maxWidth: '100%' }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '24px',
+        paddingBottom: '12px',
+        borderBottom: '2px solid #e9ecef'
+      }}>
+        <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Purchases</h1>
+        <Button variant="primary" onClick={() => setShowCreateForm(true)}>
+          Create Purchase
+        </Button>
+      </div>
+
+      {/* Search and Filters */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '24px',
+        gap: '16px'
+      }}>
+        <div style={{ flex: 1 }}>
+          <input
+            type="text"
+            placeholder="Search purchases by vendor or purchase number..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px 16px',
+              border: '1px solid #ced4da',
+              borderRadius: '6px',
+              fontSize: '14px'
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{
+              padding: '10px 16px',
+              border: '1px solid #ced4da',
+              borderRadius: '6px',
+              fontSize: '14px',
+              backgroundColor: 'white'
+            }}
+          >
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
+            <option value="overdue">Overdue</option>
+          </select>
+        </div>
       </div>
 
       {error && (
         <div style={{ 
-          padding: '12px', 
-          marginBottom: '16px', 
+          padding: '12px 16px', 
+          marginBottom: '20px', 
           backgroundColor: '#fee', 
           border: '1px solid #fcc', 
-          borderRadius: '4px', 
-          color: '#c33' 
+          borderRadius: '6px', 
+          color: '#c33',
+          fontSize: '14px'
         }}>
           {error}
         </div>
       )}
 
-      {/* Search and Filters */}
-      <div style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}>
-        <input
-          type="text"
-          placeholder="Search purchases..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            flex: 1,
-            padding: '12px 16px',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius)',
-            fontSize: '14px'
-          }}
-        />
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          style={{
-            padding: '12px 16px',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius)',
-            fontSize: '14px'
-          }}
-        >
-          <option value="">All Status</option>
-          <option value="Draft">Draft</option>
-          <option value="Received">Received</option>
-          <option value="Paid">Paid</option>
-          <option value="Partially Paid">Partially Paid</option>
-        </select>
-      </div>
-
       {/* Purchases Table */}
-      <div style={{ overflowX: 'auto' }}>
+      <div style={{ 
+        border: '1px solid #e9ecef', 
+        borderRadius: '8px', 
+        overflow: 'hidden',
+        backgroundColor: 'white'
+      }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ backgroundColor: 'var(--background-secondary)' }}>
-              <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Purchase No</th>
-              <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Vendor</th>
-              <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Date</th>
-              <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Due Date</th>
-              <th style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Total</th>
-              <th style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Paid</th>
-              <th style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Balance</th>
-              <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid var(--border)' }}>Status</th>
-              <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid var(--border)' }}>Actions</th>
+            <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #e9ecef' }}>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Purchase No</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Vendor</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Date</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Due Date</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Amount</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Status</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {currentPurchases.map(purchase => (
-              <tr key={purchase.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                <td style={{ padding: '12px' }}>{purchase.purchase_no}</td>
-                <td style={{ padding: '12px' }}>{purchase.vendor_name}</td>
-                <td style={{ padding: '12px' }}>{new Date(purchase.date).toLocaleDateString()}</td>
-                <td style={{ padding: '12px' }}>{new Date(purchase.due_date).toLocaleDateString()}</td>
-                <td style={{ padding: '12px', textAlign: 'right' }}>₹{purchase.grand_total.toFixed(2)}</td>
-                <td style={{ padding: '12px', textAlign: 'right' }}>₹{purchase.paid_amount.toFixed(2)}</td>
-                <td style={{ padding: '12px', textAlign: 'right' }}>₹{purchase.balance_amount.toFixed(2)}</td>
-                <td style={{ padding: '12px', textAlign: 'center' }}>
-                  <span style={{
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    backgroundColor: 
-                      purchase.status === 'Paid' ? '#d4edda' :
-                      purchase.status === 'Partially Paid' ? '#fff3cd' :
-                      purchase.status === 'Received' ? '#cce5ff' : '#f8d7da',
-                    color: 
-                      purchase.status === 'Paid' ? '#155724' :
-                      purchase.status === 'Partially Paid' ? '#856404' :
-                      purchase.status === 'Received' ? '#004085' : '#721c24'
+            {paginatedPurchases.map(purchase => (
+              <tr key={purchase.id} style={{ 
+                borderBottom: '1px solid #e9ecef',
+                backgroundColor: 'white'
+              }}>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{purchase.purchase_no}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{purchase.vendor_name}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{new Date(purchase.date).toLocaleDateString()}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{new Date(purchase.due_date).toLocaleDateString()}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>₹{purchase.grand_total.toFixed(2)}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
+                  <span style={{ 
+                    padding: '6px 12px', 
+                    borderRadius: '6px', 
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    backgroundColor: purchase.status === 'paid' ? '#d4edda' : purchase.status === 'overdue' ? '#f8d7da' : '#fff3cd',
+                    color: purchase.status === 'paid' ? '#155724' : purchase.status === 'overdue' ? '#721c24' : '#856404'
                   }}>
-                    {purchase.status}
+                    {purchase.status.charAt(0).toUpperCase() + purchase.status.slice(1)}
                   </span>
                 </td>
-                <td style={{ padding: '12px', textAlign: 'center' }}>
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                    <button
-                      onClick={() => {
-                        setSelectedPurchase(purchase)
-                        setShowPaymentForm(true)
-                      }}
-                      className="btn btn-secondary"
-                      style={{ padding: '4px 8px', fontSize: '12px' }}
+                <td style={{ padding: '12px' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Button 
+                      variant="secondary"
+                      onClick={() => handlePayment(purchase)}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       Payment
-                    </button>
-                    <button
+                    </Button>
+                    <Button 
+                      variant="secondary" 
                       onClick={() => handleDeletePurchase(purchase.id)}
-                      className="btn btn-danger"
-                      style={{ padding: '4px 8px', fontSize: '12px' }}
-                      disabled={purchase.status === 'Paid' || purchase.status === 'Partially Paid'}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       Delete
-                    </button>
+                    </Button>
                   </div>
                 </td>
               </tr>
@@ -373,26 +387,63 @@ export function Purchases() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
-          <button
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-            className="btn btn-secondary"
-            style={{ padding: '8px 12px' }}
-          >
-            Previous
-          </button>
-          <span style={{ padding: '8px 12px', display: 'flex', alignItems: 'center' }}>
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-            disabled={currentPage === totalPages}
-            className="btn btn-secondary"
-            style={{ padding: '8px 12px' }}
-          >
-            Next
-          </button>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginTop: '24px', 
+          padding: '16px',
+          border: '1px solid #e9ecef',
+          borderRadius: '8px',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <div style={{ fontSize: '14px', color: '#495057' }}>
+            Showing {startIndex + 1} to {Math.min(endIndex, filteredPurchases.length)} of {filteredPurchases.length} purchases
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Button 
+              variant="secondary" 
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <span style={{ 
+              padding: '8px 12px', 
+              display: 'flex', 
+              alignItems: 'center',
+              fontSize: '14px',
+              color: '#495057',
+              fontWeight: '500'
+            }}>
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button 
+              variant="secondary" 
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {filteredPurchases.length === 0 && !loading && (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px', 
+          color: '#6c757d',
+          border: '1px solid #e9ecef',
+          borderRadius: '8px',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
+            No purchases available
+          </div>
+          <div style={{ fontSize: '14px' }}>
+            Create your first purchase to get started
+          </div>
         </div>
       )}
 
@@ -406,349 +457,12 @@ export function Purchases() {
           bottom: 0,
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           display: 'flex',
-          justifyContent: 'center',
           alignItems: 'center',
+          justifyContent: 'center',
           zIndex: 1000
         }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: '24px',
-            borderRadius: '8px',
-            width: '80%',
-            height: '80%',
-            maxWidth: '1400px',
-            maxHeight: '80vh',
-            overflowY: 'auto'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2>Create New Purchase</h2>
-              <button
-                onClick={() => {
-                  setShowCreateForm(false)
-                  resetForm()
-                }}
-                className="btn btn-secondary"
-                style={{ padding: '8px 12px' }}
-              >
-                Close
-              </button>
-            </div>
-
-            {/* Purchase Information Section */}
-            <div style={{ marginBottom: '24px' }}>
-              <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
-                Purchase Information
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <label>
-                  <div>Vendor *</div>
-                  <select
-                    value={formData.vendor_id}
-                    onChange={(e) => setFormData(prev => ({ ...prev, vendor_id: Number(e.target.value) }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  >
-                    <option value={0}>Select Vendor...</option>
-                    {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                  </select>
-                </label>
-
-                <label>
-                  <div>Purchase Date *</div>
-                  <input
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </label>
-
-                <label>
-                  <div>Due Date *</div>
-                  <input
-                    type="date"
-                    value={formData.due_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </label>
-
-                <label>
-                  <div>Terms</div>
-                  <input
-                    type="text"
-                    value={formData.terms}
-                    onChange={(e) => setFormData(prev => ({ ...prev, terms: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* GST Information Section */}
-            <div style={{ marginBottom: '24px' }}>
-              <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>
-                GST Information
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <label>
-                  <div>Place of Supply *</div>
-                  <input
-                    type="text"
-                    value={formData.place_of_supply}
-                    onChange={(e) => setFormData(prev => ({ ...prev, place_of_supply: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </label>
-
-                <label>
-                  <div>State Code *</div>
-                  <input
-                    type="text"
-                    value={formData.place_of_supply_state_code}
-                    onChange={(e) => setFormData(prev => ({ ...prev, place_of_supply_state_code: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </label>
-
-                <label>
-                  <div>E-way Bill Number</div>
-                  <input
-                    type="text"
-                    value={formData.eway_bill_number}
-                    onChange={(e) => setFormData(prev => ({ ...prev, eway_bill_number: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </label>
-
-                <label>
-                  <div>Total Discount</div>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.total_discount}
-                    onChange={(e) => setFormData(prev => ({ ...prev, total_discount: Number(e.target.value) }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* Address Information Section */}
-            <div style={{ marginBottom: '24px' }}>
-              <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '8px' }}>
-                Address Information
-              </h3>
-              <div style={{ display: 'grid', gap: '16px' }}>
-                <label>
-                  <div>Bill From Address *</div>
-                  <textarea
-                    value={formData.bill_from_address}
-                    onChange={(e) => setFormData(prev => ({ ...prev, bill_from_address: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px', minHeight: '60px' }}
-                  />
-                </label>
-
-                <label>
-                  <div>Ship From Address *</div>
-                  <textarea
-                    value={formData.ship_from_address}
-                    onChange={(e) => setFormData(prev => ({ ...prev, ship_from_address: e.target.value }))}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px', minHeight: '60px' }}
-                  />
-                </label>
-              </div>
-
-              {/* Items Section */}
-              <div>
-                <h3>Purchase Items</h3>
-                <div style={{ display: 'grid', gap: '16px', marginBottom: '16px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr', gap: '8px', alignItems: 'end' }}>
-                    <label>
-                      <div>Product *</div>
-                      <select
-                        value={currentItem.product_id}
-                        onChange={(e) => {
-                          const product = products.find(p => p.id === Number(e.target.value))
-                          setCurrentItem(prev => ({
-                            ...prev,
-                            product_id: Number(e.target.value),
-                            rate: product?.purchase_price || 0,
-                            gst_rate: product?.gst_rate || 0,
-                            hsn_code: product?.hsn || '',
-                            description: product?.name || ''
-                          }))
-                        }}
-                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                      >
-                        <option value={0}>Select Product...</option>
-                        {products.map(p => <option key={p.id} value={p.id}>{p.sku} - {p.name}</option>)}
-                      </select>
-                    </label>
-
-                    <label>
-                      <div>Qty *</div>
-                      <input
-                        type="number"
-                        min="1"
-                        value={currentItem.qty}
-                        onChange={(e) => setCurrentItem(prev => ({ ...prev, qty: Number(e.target.value) }))}
-                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                      />
-                    </label>
-
-                    <label>
-                      <div>Rate *</div>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={currentItem.rate}
-                        onChange={(e) => setCurrentItem(prev => ({ ...prev, rate: Number(e.target.value) }))}
-                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                      />
-                    </label>
-
-                    <label>
-                      <div>Discount</div>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={currentItem.discount}
-                        onChange={(e) => setCurrentItem(prev => ({ ...prev, discount: Number(e.target.value) }))}
-                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                      />
-                    </label>
-
-                    <label>
-                      <div>GST Rate %</div>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={currentItem.gst_rate}
-                        onChange={(e) => setCurrentItem(prev => ({ ...prev, gst_rate: Number(e.target.value) }))}
-                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                      />
-                    </label>
-
-                    <button
-                      onClick={addItem}
-                      className="btn btn-primary"
-                      style={{ padding: '8px 12px' }}
-                    >
-                      Add Item
-                    </button>
-                  </div>
-                </div>
-
-                {/* Items List */}
-                {formData.items.length > 0 && (
-                  <div style={{ marginBottom: '16px' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr style={{ backgroundColor: 'var(--background-secondary)' }}>
-                          <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>Product</th>
-                          <th style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Qty</th>
-                          <th style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Rate</th>
-                          <th style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Discount</th>
-                          <th style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Amount</th>
-                          <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid var(--border)' }}>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {formData.items.map((item, index) => {
-                          const baseAmount = item.qty * item.rate
-                          const discountAmount = item.discount_type === 'Fixed' ? item.discount : (baseAmount * item.discount / 100)
-                          const taxableAmount = baseAmount - discountAmount
-                          const gstAmount = taxableAmount * item.gst_rate / 100
-                          const totalAmount = taxableAmount + gstAmount
-
-                          return (
-                            <tr key={index} style={{ borderBottom: '1px solid var(--border)' }}>
-                              <td style={{ padding: '8px' }}>{item.description}</td>
-                              <td style={{ padding: '8px', textAlign: 'right' }}>{item.qty}</td>
-                              <td style={{ padding: '8px', textAlign: 'right' }}>₹{item.rate.toFixed(2)}</td>
-                              <td style={{ padding: '8px', textAlign: 'right' }}>₹{discountAmount.toFixed(2)}</td>
-                              <td style={{ padding: '8px', textAlign: 'right' }}>₹{totalAmount.toFixed(2)}</td>
-                              <td style={{ padding: '8px', textAlign: 'center' }}>
-                                <button
-                                  onClick={() => removeItem(index)}
-                                  className="btn btn-danger"
-                                  style={{ padding: '4px 8px', fontSize: '12px' }}
-                                >
-                                  Remove
-                                </button>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-
-                {/* Totals */}
-                {formData.items.length > 0 && (
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: '1fr 1fr', 
-                    gap: '16px', 
-                    padding: '16px', 
-                    backgroundColor: 'var(--background-secondary)', 
-                    borderRadius: '4px' 
-                  }}>
-                    <div>
-                      <strong>Taxable Value:</strong> ₹{totals.taxableValue.toFixed(2)}
-                    </div>
-                    <div>
-                      <strong>CGST:</strong> ₹{totals.totalCGST.toFixed(2)}
-                    </div>
-                    <div>
-                      <strong>SGST:</strong> ₹{totals.totalSGST.toFixed(2)}
-                    </div>
-                    <div>
-                      <strong>IGST:</strong> ₹{totals.totalIGST.toFixed(2)}
-                    </div>
-                    <div>
-                      <strong>Total Discount:</strong> ₹{formData.total_discount.toFixed(2)}
-                    </div>
-                    <div>
-                      <strong>Grand Total:</strong> ₹{totals.grandTotal.toFixed(2)}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Notes */}
-              <label>
-                <div>Notes</div>
-                <textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                  style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px', minHeight: '60px' }}
-                />
-              </label>
-
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={() => {
-                    setShowCreateForm(false)
-                    resetForm()
-                  }}
-                  className="btn btn-secondary"
-                  style={{ padding: '12px 24px' }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreatePurchase}
-                  disabled={loading || formData.vendor_id === 0 || formData.items.length === 0}
-                  className="btn btn-primary"
-                  style={{ padding: '12px 24px' }}
-                >
-                  {loading ? 'Creating...' : 'Create Purchase'}
-                </button>
-              </div>
-            </div>
+          <div style={{ width: '80%', height: '80%', maxWidth: '1400px', maxHeight: '80vh', overflow: 'auto' }}>
+            <PurchaseForm onClose={() => setShowCreateForm(false)} />
           </div>
         </div>
       )}
@@ -763,48 +477,34 @@ export function Purchases() {
           bottom: 0,
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           display: 'flex',
-          justifyContent: 'center',
           alignItems: 'center',
+          justifyContent: 'center',
           zIndex: 1000
         }}>
-          <div style={{
+          <div style={{ 
+            width: '80%', 
+            height: '80%', 
+            maxWidth: '1400px', 
+            maxHeight: '80vh', 
+            overflow: 'auto',
             backgroundColor: 'white',
-            padding: '24px',
             borderRadius: '8px',
-            width: '80%',
-            height: '80%',
-            maxWidth: '1400px',
-            maxHeight: '80vh'
+            padding: '24px'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2>Add Payment</h2>
-              <button
-                onClick={() => {
-                  setShowPaymentForm(false)
-                  setSelectedPurchase(null)
-                }}
-                className="btn btn-secondary"
-                style={{ padding: '8px 12px' }}
-              >
-                Close
-              </button>
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <strong>Purchase:</strong> {selectedPurchase.purchase_no}<br />
-              <strong>Vendor:</strong> {selectedPurchase.vendor_name}<br />
-              <strong>Total Amount:</strong> ₹{selectedPurchase.grand_total.toFixed(2)}<br />
-              <strong>Paid Amount:</strong> ₹{selectedPurchase.paid_amount.toFixed(2)}<br />
-              <strong>Balance:</strong> ₹{selectedPurchase.balance_amount.toFixed(2)}
-            </div>
-
-            <div style={{ textAlign: 'center', color: '#666' }}>
-              Payment functionality will be implemented in the next phase.
+            <h2>Add Payment for Purchase {selectedPurchase.purchase_no}</h2>
+            {/* Payment form would go here */}
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
+              <Button variant="secondary" onClick={() => setShowPaymentForm(false)}>
+                Cancel
+              </Button>
+              <Button variant="primary">
+                Add Payment
+              </Button>
             </div>
           </div>
         </div>
       )}
-    </Card>
+    </div>
   )
 }
 
