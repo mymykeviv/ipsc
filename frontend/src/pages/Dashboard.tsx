@@ -304,33 +304,6 @@ export function Dashboard() {
 
       {cashflowData && (
         <div style={{ display: 'grid', gap: '12px' }}>
-          {/* Net Cashflow Summary - Compact */}
-          <div style={{ 
-            padding: '16px', 
-            backgroundColor: '#f8f9fa', 
-            borderRadius: '6px',
-            border: '1px solid var(--border)',
-            textAlign: 'center'
-          }}>
-            <h2 style={{ margin: '0 0 8px 0', color: 'var(--text-secondary)', fontSize: '18px' }}>
-              Net Cashflow
-            </h2>
-            <div style={{ 
-              fontSize: '28px', 
-              fontWeight: 'bold',
-              color: getNetCashflowColor(cashflowData.cashflow.net_cashflow),
-              marginBottom: '4px'
-            }}>
-              {formatCurrency(cashflowData.cashflow.net_cashflow)}
-            </div>
-            <div style={{ 
-              fontSize: '13px', 
-              color: 'var(--text-secondary)' 
-            }}>
-              {cashflowData.cashflow.net_cashflow >= 0 ? 'Positive Cashflow' : 'Negative Cashflow'}
-            </div>
-          </div>
-
           {/* Income and Expense Breakdown - Unified */}
           <div style={{ 
             padding: '16px', 
@@ -341,6 +314,35 @@ export function Dashboard() {
             <h3 style={{ margin: '0 0 16px 0', color: '#495057', fontSize: '18px', textAlign: 'center' }}>
               📊 Income & Expenses Summary
             </h3>
+            
+            {/* Net Cashflow Section */}
+            <div style={{ 
+              textAlign: 'center',
+              marginBottom: '20px',
+              padding: '16px',
+              backgroundColor: 'white',
+              borderRadius: '6px',
+              border: '1px solid #e9ecef'
+            }}>
+              <h2 style={{ margin: '0 0 8px 0', color: 'var(--text-secondary)', fontSize: '18px' }}>
+                Net Cashflow
+              </h2>
+              <div style={{ 
+                fontSize: '28px', 
+                fontWeight: 'bold',
+                color: getNetCashflowColor(cashflowData.cashflow.net_cashflow),
+                marginBottom: '4px'
+              }}>
+                {formatCurrency(cashflowData.cashflow.net_cashflow)}
+              </div>
+              <div style={{ 
+                fontSize: '13px', 
+                color: 'var(--text-secondary)' 
+              }}>
+                {cashflowData.cashflow.net_cashflow >= 0 ? 'Positive Cashflow' : 'Negative Cashflow'}
+              </div>
+            </div>
+            
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               {/* Income Column */}
               <div style={{ 
