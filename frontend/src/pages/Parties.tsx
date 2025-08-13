@@ -165,6 +165,24 @@ export function Parties() {
       errors.push('Billing Address must be 200 characters or less')
     }
     
+    if (!formData.billing_city.trim()) {
+      errors.push('Billing City is required')
+    } else if (formData.billing_city.length > 100) {
+      errors.push('Billing City must be 100 characters or less')
+    }
+    
+    if (!formData.billing_state.trim()) {
+      errors.push('Billing State is required')
+    } else if (formData.billing_state.length > 100) {
+      errors.push('Billing State must be 100 characters or less')
+    }
+    
+    if (!formData.billing_country.trim()) {
+      errors.push('Billing Country is required')
+    } else if (formData.billing_country.length > 100) {
+      errors.push('Billing Country must be 100 characters or less')
+    }
+    
     // Shipping Address validation
     if (formData.shipping_address_line1 && formData.shipping_address_line1.length > 200) {
       errors.push('Shipping Address must be 200 characters or less')
@@ -178,7 +196,9 @@ export function Parties() {
     setError(null)
     
     const validation = validateForm()
+    console.log('Validation result:', validation)
     if (!validation.isValid) {
+      console.log('Validation errors:', validation.errors)
       setError(validation.errors.join(', '))
       return
     }
@@ -209,12 +229,22 @@ export function Parties() {
         notes: formData.notes || null
       }
 
+      console.log('Creating party with payload:', payload)
+      console.log('Form data:', formData)
+      console.log('Active tab:', activeTab)
+
       await apiCreateParty(payload)
       setShowAddModal(false)
       resetForm()
       loadParties()
     } catch (err: any) {
       console.error('Failed to create party:', err)
+      console.error('Error details:', {
+        message: err.message,
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data
+      })
       handleApiError(err)
       setError(err.message || 'Failed to create party')
     } finally {
@@ -740,7 +770,7 @@ export function Parties() {
                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
                     />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px' }}>
                     <div>
                       <label>City *</label>
                       <input
@@ -759,6 +789,17 @@ export function Parties() {
                         placeholder="Enter state"
                         value={formData.billing_state}
                         onChange={(e) => setFormData(prev => ({ ...prev, billing_state: e.target.value }))}
+                        required
+                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      />
+                    </div>
+                    <div>
+                      <label>Country *</label>
+                      <input
+                        type="text"
+                        placeholder="Enter country"
+                        value={formData.billing_country}
+                        onChange={(e) => setFormData(prev => ({ ...prev, billing_country: e.target.value }))}
                         required
                         style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
                       />
@@ -808,7 +849,7 @@ export function Parties() {
                       style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
                     />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px' }}>
                     <div>
                       <label>City</label>
                       <input
@@ -826,6 +867,16 @@ export function Parties() {
                         placeholder="Enter shipping state"
                         value={formData.shipping_state}
                         onChange={(e) => setFormData(prev => ({ ...prev, shipping_state: e.target.value }))}
+                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      />
+                    </div>
+                    <div>
+                      <label>Country</label>
+                      <input
+                        type="text"
+                        placeholder="Enter shipping country"
+                        value={formData.shipping_country}
+                        onChange={(e) => setFormData(prev => ({ ...prev, shipping_country: e.target.value }))}
                         style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
                       />
                     </div>
