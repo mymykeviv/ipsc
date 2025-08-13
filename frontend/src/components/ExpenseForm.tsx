@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { apiCreateExpense, apiListParties, ExpenseCreate, Party } from '../lib/api'
 import { Button } from './Button'
+import { ErrorMessage } from './ErrorMessage'
+import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface ExpenseFormProps {
   onSuccess: () => void
@@ -87,39 +89,27 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-      {error && (
-        <div style={{ 
-          padding: '8px 12px', 
-          backgroundColor: '#fee', 
-          border: '1px solid #fcc', 
-          borderRadius: '4px', 
-          color: '#c33',
-          fontSize: '14px',
-          marginBottom: '16px'
-        }}>
-          {error}
-        </div>
-      )}
+      <ErrorMessage message={error} />
 
       {/* Expense Details Section */}
-      <div style={{ marginBottom: '24px' }}>
-        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+      <div style={formStyles.section}>
+        <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('basic') }}>
           Expense Details
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-          <div>
-            <label>Date *</label>
+        <div style={formStyles.grid2Col}>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Date *</label>
             <input
               type="date"
               value={formData.expense_date}
               onChange={(e) => setFormData(prev => ({ ...prev, expense_date: e.target.value }))}
               required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+              style={formStyles.input}
             />
           </div>
 
-          <div>
-            <label>Amount *</label>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Amount *</label>
             <input
               type="number"
               step="0.01"
@@ -127,17 +117,17 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
               onChange={(e) => setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
               required
               placeholder="Enter amount"
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+              style={formStyles.input}
             />
           </div>
 
-          <div>
-            <label>Category *</label>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Category *</label>
             <select
               value={formData.category}
               onChange={(e) => handleCategoryChange(e.target.value)}
               required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+              style={formStyles.select}
             >
               <option value="">Select Category</option>
               {expenseCategories.map(cat => (
@@ -146,13 +136,13 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
             </select>
           </div>
 
-          <div>
-            <label>Expense Type *</label>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Expense Type *</label>
             <select
               value={formData.expense_type}
               onChange={(e) => setFormData(prev => ({ ...prev, expense_type: e.target.value }))}
               required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+              style={formStyles.select}
             >
               <option value="">Select Type</option>
               {expenseTypes
@@ -163,32 +153,32 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
             </select>
           </div>
 
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label>Description *</label>
+          <div style={{ ...formStyles.formGroup, gridColumn: '1 / -1' }}>
+            <label style={formStyles.label}>Description *</label>
             <input
               type="text"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               required
               placeholder="Enter expense description"
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+              style={formStyles.input}
             />
           </div>
         </div>
       </div>
 
       {/* Payment Information Section */}
-      <div style={{ marginBottom: '24px' }}>
-        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>
+      <div style={formStyles.section}>
+        <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('payment') }}>
           Payment Information
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-          <div>
-            <label>Payment Method</label>
+        <div style={formStyles.grid2Col}>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Payment Method</label>
             <select
               value={formData.payment_method}
               onChange={(e) => setFormData(prev => ({ ...prev, payment_method: e.target.value }))}
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+              style={formStyles.select}
             >
               {paymentMethods.map(method => (
                 <option key={method} value={method}>{method}</option>
@@ -196,12 +186,12 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
             </select>
           </div>
 
-          <div>
-            <label>Account Head</label>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Account Head</label>
             <select
               value={formData.account_head}
               onChange={(e) => setFormData(prev => ({ ...prev, account_head: e.target.value }))}
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+              style={formStyles.select}
             >
               {accountHeads.map(head => (
                 <option key={head} value={head}>{head}</option>
