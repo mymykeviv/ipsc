@@ -282,16 +282,16 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   // Render different content based on mode
   if (mode === 'add' || mode === 'edit') {
     return (
-      <div style={{ padding: '20px' }}>
+      <div style={{ padding: '24px', maxWidth: '100%' }}>
         <div style={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center', 
-          marginBottom: '24px',
-          paddingBottom: '12px',
+          marginBottom: '32px',
+          paddingBottom: '16px',
           borderBottom: '2px solid #e9ecef'
         }}>
-          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
+          <h1 style={{ margin: '0', fontSize: '32px', fontWeight: '600', color: '#2c3e50' }}>
             {mode === 'add' ? 'Add New Product' : 'Edit Product'}
           </h1>
           <Button variant="secondary" onClick={() => navigate('/products')}>
@@ -301,7 +301,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
 
         {error && <ErrorMessage message={error} />}
 
-        <form onSubmit={mode === 'add' ? handleAddProduct : handleEditProduct} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <form onSubmit={mode === 'add' ? handleAddProduct : handleEditProduct} style={{ display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: '100%' }}>
           {/* Product Details Section */}
           <div style={formStyles.section}>
             <h2 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('basic') }}>
@@ -385,26 +385,25 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                 </select>
               </div>
               
-              <div style={formStyles.grid2Col}>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Product Category *</label>
-                  <input
-                    type="text"
-                    value={formData.category}
-                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                    style={formStyles.input}
-                    required
-                  />
-                </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Product Description</label>
-                  <input
-                    type="text"
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    style={formStyles.input}
-                  />
-                </div>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Product Category *</label>
+                <input
+                  type="text"
+                  value={formData.category}
+                  onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                  style={formStyles.input}
+                  required
+                />
+              </div>
+              
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Product Description</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  style={formStyles.textarea}
+                  placeholder="Enter detailed product description..."
+                />
               </div>
             </div>
           </div>
@@ -472,39 +471,44 @@ export function Products({ mode = 'manage' }: ProductsProps) {
               📊 Stock Details
             </h2>
             <div style={formStyles.grid}>
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Opening Stock</label>
-                <input
-                  type="number"
-                  step="1"
-                  value={formData.opening_stock}
-                  onChange={(e) => setFormData(prev => ({ ...prev, opening_stock: e.target.value }))}
-                  style={formStyles.input}
-                />
+              <div style={formStyles.grid2Col}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Opening Stock</label>
+                  <input
+                    type="number"
+                    step="1"
+                    value={formData.opening_stock}
+                    onChange={(e) => setFormData(prev => ({ ...prev, opening_stock: e.target.value }))}
+                    style={formStyles.input}
+                    placeholder="Enter opening stock quantity"
+                  />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Notes</label>
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                    style={formStyles.textarea}
+                    placeholder="Enter any additional notes..."
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Other Details Section */}
-          <div style={formStyles.section}>
-            <h2 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('other') }}>
-              📝 Other Details
-            </h2>
-            <div style={formStyles.grid}>
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Notes</label>
-                <textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                  style={formStyles.textarea}
-                  rows={3}
-                />
-              </div>
-            </div>
-          </div>
+
 
           {/* Form Actions */}
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
+          <div style={{ 
+            display: 'flex', 
+            gap: '16px', 
+            justifyContent: 'flex-end', 
+            marginTop: '32px',
+            padding: '24px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '12px',
+            border: '1px solid #e9ecef'
+          }}>
             <Button type="button" variant="secondary" onClick={() => navigate('/products')}>
               Cancel
             </Button>
