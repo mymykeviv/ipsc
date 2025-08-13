@@ -123,13 +123,13 @@ export function Dashboard() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '6px'
-                                }, children: "\uD83D\uDCE6 New Purchase" }), _jsx(Button, { onClick: () => navigate('/products'), variant: "primary", style: {
+                                }, children: "\uD83D\uDCE6 New Purchase" }), _jsx(Button, { onClick: () => navigate('/products/add'), variant: "primary", style: {
                                     padding: '10px 16px',
                                     fontSize: '14px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '6px'
-                                }, children: "\uD83C\uDFF7\uFE0F Manage Products" })] })] }), error && (_jsx("div", { style: {
+                                }, children: "\uD83C\uDFF7\uFE0F Add Product" })] })] }), error && (_jsx("div", { style: {
                     padding: '12px 16px',
                     marginBottom: '20px',
                     backgroundColor: '#fee',
