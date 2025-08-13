@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../modules/AuthContext'
+import { createApiErrorHandler } from '../lib/apiUtils'
 import { 
   apiCreatePurchase, 
   apiListPurchases, 
@@ -14,96 +16,101 @@ import {
 } from '../lib/api'
 import { Button } from '../components/Button'
 import { PurchaseForm } from '../components/PurchaseForm'
+import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
-export function Purchases() {
-  const { token } = useAuth()
+interface PurchasesProps {
+  mode?: 'manage' | 'add' | 'edit' | 'payments' | 'add-payment'
+}
+
+export function Purchases({ mode = 'manage' }: PurchasesProps) {
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const { token, forceLogout } = useAuth()
   const [purchases, setPurchases] = useState<Purchase[]>([])
   const [vendors, setVendors] = useState<Party[]>([])
   const [products, setProducts] = useState<Product[]>([])
+  const [currentPurchase, setCurrentPurchase] = useState<Purchase | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
-  const [showCreateForm, setShowCreateForm] = useState(false)
-  const [showPaymentForm, setShowPaymentForm] = useState(false)
-  const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
 
-  // Form state
-  const [formData, setFormData] = useState<PurchaseCreate>({
-    vendor_id: 0,
-    date: new Date().toISOString().split('T')[0],
-    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    terms: 'Due on Receipt',
-    place_of_supply: 'Karnataka',
-    place_of_supply_state_code: '29',
-    eway_bill_number: '',
-    reverse_charge: false,
-    export_supply: false,
-    bill_from_address: '',
-    ship_from_address: '',
-    total_discount: 0,
-    notes: '',
-    items: []
-  })
+  // Create error handler that will automatically log out on 401 errors
+  const handleApiError = createApiErrorHandler(forceLogout)
 
-  const [currentItem, setCurrentItem] = useState({
-    product_id: 0,
-    qty: 1,
-    rate: 0,
-    description: '',
-    hsn_code: '',
-    discount: 0,
-    discount_type: 'Percentage',
-    gst_rate: 0
+  // Form state for payment
+  const [paymentForm, setPaymentForm] = useState({
+    payment_amount: 0,
+    payment_date: new Date().toISOString().split('T')[0],
+    payment_method: 'Cash',
+    payment_notes: ''
   })
 
   useEffect(() => {
-    if (!token) return
-    loadData()
-  }, [token])
+    if (mode === 'manage') {
+      loadPurchases()
+    } else if (mode === 'edit' && id) {
+      loadPurchase(parseInt(id))
+    } else if (mode === 'add-payment' && id) {
+      loadPurchase(parseInt(id))
+    } else if (mode === 'add') {
+      loadVendorsAndProducts()
+      setLoading(false)
+    }
+  }, [mode, id])
 
-  const loadData = async () => {
+  const loadPurchases = async () => {
     try {
       setLoading(true)
       setError(null)
-      const [purchasesData, vendorsData, productsData] = await Promise.all([
-        apiListPurchases(searchTerm, statusFilter),
-        apiListParties(),
-        apiGetProducts()
-      ])
+      const purchasesData = await apiListPurchases(searchTerm, statusFilter)
       setPurchases(purchasesData)
-      setVendors(vendorsData.filter(p => p.type === 'vendor'))
-      setProducts(productsData)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data')
+    } catch (err: any) {
+      handleApiError(err)
+      setError('Failed to load purchases')
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => {
-    loadData()
-    setCurrentPage(1)
-  }, [searchTerm, statusFilter])
-
-  const handleCreatePurchase = async () => {
-    if (!formData.vendor_id || formData.items.length === 0) {
-      setError('Please select a vendor and add at least one item')
-      return
-    }
-
+  const loadPurchase = async (purchaseId: number) => {
     try {
       setLoading(true)
-      setError(null)
-      const result = await apiCreatePurchase(formData)
-      setShowCreateForm(false)
-      loadData()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create purchase')
+      const data = await apiListPurchases('', '') // Get all purchases to find the specific one
+      const purchase = data.find(p => p.id === purchaseId)
+      if (purchase) {
+        setCurrentPurchase(purchase)
+        if (mode === 'add-payment') {
+          setPaymentForm({
+            payment_amount: purchase.grand_total,
+            payment_date: new Date().toISOString().split('T')[0],
+            payment_method: 'Cash',
+            payment_notes: ''
+          })
+        }
+      } else {
+        setError('Purchase not found')
+      }
+    } catch (err: any) {
+      handleApiError(err)
+      setError('Failed to load purchase')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadVendorsAndProducts = async () => {
+    try {
+      const [vendorsData, productsData] = await Promise.all([
+        apiListParties(),
+        apiGetProducts()
+      ])
+      setVendors(vendorsData.filter(p => p.type === 'vendor'))
+      setProducts(productsData)
+    } catch (err: any) {
+      handleApiError(err)
     }
   }
 
@@ -114,137 +121,298 @@ export function Purchases() {
       setLoading(true)
       setError(null)
       await apiDeletePurchase(id)
-      loadData()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete purchase')
+      loadPurchases()
+    } catch (err: any) {
+      handleApiError(err)
+      setError('Failed to delete purchase')
     } finally {
       setLoading(false)
     }
   }
 
-  const handlePayment = (purchase: Purchase) => {
-    setSelectedPurchase(purchase)
-    setShowPaymentForm(true)
-  }
-
-  const resetForm = () => {
-    setFormData({
-      vendor_id: 0,
-      date: new Date().toISOString().split('T')[0],
-      due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      terms: 'Due on Receipt',
-      place_of_supply: 'Karnataka',
-      place_of_supply_state_code: '29',
-      eway_bill_number: '',
-      reverse_charge: false,
-      export_supply: false,
-      bill_from_address: '',
-      ship_from_address: '',
-      total_discount: 0,
-      notes: '',
-      items: []
-    })
-    setCurrentItem({
-      product_id: 0,
-      qty: 1,
-      rate: 0,
-      description: '',
-      hsn_code: '',
-      discount: 0,
-      discount_type: 'Percentage',
-      gst_rate: 0
-    })
-  }
-
-  const addItem = () => {
-    if (!currentItem.product_id || currentItem.qty <= 0 || currentItem.rate <= 0) {
-      setError('Please fill all required fields for the item')
-      return
+  const handleAddPayment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!currentPurchase || paymentForm.payment_amount <= 0) return
+    
+    try {
+      setLoading(true)
+      // TODO: Implement purchase payment API
+      alert('Purchase payment functionality will be implemented here.')
+      navigate('/purchases')
+    } catch (err: any) {
+      handleApiError(err)
+      setError('Failed to add payment')
+    } finally {
+      setLoading(false)
     }
-
-    const product = products.find(p => p.id === currentItem.product_id)
-    if (!product) {
-      setError('Selected product not found')
-      return
-    }
-
-    const newItem = {
-      ...currentItem,
-      description: product.name,
-      hsn_code: product.hsn || '',
-      gst_rate: product.gst_rate || 0
-    }
-
-    setFormData(prev => ({
-      ...prev,
-      items: [...prev.items, newItem]
-    }))
-
-    setCurrentItem({
-      product_id: 0,
-      qty: 1,
-      rate: 0,
-      description: '',
-      hsn_code: '',
-      discount: 0,
-      discount_type: 'Percentage',
-      gst_rate: 0
-    })
   }
 
-  const removeItem = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      items: prev.items.filter((_, i) => i !== index)
-    }))
+  // Render different content based on mode
+  if (mode === 'add' || mode === 'edit') {
+    return (
+      <div style={{ padding: '20px', maxWidth: '100%' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '24px',
+          paddingBottom: '12px',
+          borderBottom: '2px solid #e9ecef'
+        }}>
+          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
+            {mode === 'add' ? 'Add New Purchase' : 'Edit Purchase'}
+          </h1>
+          <Button variant="secondary" onClick={() => navigate('/purchases')}>
+            ← Back to Purchases
+          </Button>
+        </div>
+        
+        <PurchaseForm 
+          onSuccess={() => navigate('/purchases')}
+          onCancel={() => navigate('/purchases')}
+        />
+      </div>
+    )
   }
 
-  const updateItem = (index: number, field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      items: prev.items.map((item, i) => 
-        i === index ? { ...item, [field]: value } : item
+  if (mode === 'payments') {
+    return (
+      <div style={{ padding: '20px', maxWidth: '100%' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '24px',
+          paddingBottom: '12px',
+          borderBottom: '2px solid #e9ecef'
+        }}>
+          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
+            Purchase Payments
+          </h1>
+          <Button variant="secondary" onClick={() => navigate('/purchases')}>
+            ← Back to Purchases
+          </Button>
+        </div>
+        
+        <div style={{ 
+          padding: '20px', 
+          border: '1px solid #e9ecef',
+          borderRadius: '8px',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <p style={{ margin: '0', color: '#6c757d' }}>
+            Purchase payment management functionality will be implemented here.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (mode === 'add-payment') {
+    if (loading) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <div>Loading...</div>
+        </div>
       )
-    }))
+    }
+
+    if (!currentPurchase) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <div>Purchase not found</div>
+        </div>
+      )
+    }
+
+    return (
+      <div style={{ padding: '20px', maxWidth: '100%' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '24px',
+          paddingBottom: '12px',
+          borderBottom: '2px solid #e9ecef'
+        }}>
+          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
+            Add Payment for Purchase {currentPurchase.purchase_no}
+          </h1>
+          <Button variant="secondary" onClick={() => navigate('/purchases')}>
+            ← Back to Purchases
+          </Button>
+        </div>
+
+        {error && (
+          <div style={{ 
+            padding: '12px 16px', 
+            marginBottom: '20px', 
+            backgroundColor: '#fee', 
+            border: '1px solid #fcc', 
+            borderRadius: '6px', 
+            color: '#c33',
+            fontSize: '14px'
+          }}>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleAddPayment} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Purchase Details Section */}
+          <div style={formStyles.section}>
+            <h2 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('basic') }}>
+              📦 Purchase Details
+            </h2>
+            <div style={formStyles.grid}>
+              <div style={formStyles.grid2Col}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Purchase Number</label>
+                  <input
+                    type="text"
+                    value={currentPurchase.purchase_no}
+                    disabled
+                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
+                  />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Vendor</label>
+                  <input
+                    type="text"
+                    value={currentPurchase.vendor_name}
+                    disabled
+                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
+                  />
+                </div>
+              </div>
+              <div style={formStyles.grid2Col}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Purchase Amount</label>
+                  <input
+                    type="text"
+                    value={`₹${currentPurchase.grand_total.toFixed(2)}`}
+                    disabled
+                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
+                  />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Due Date</label>
+                  <input
+                    type="text"
+                    value={new Date(currentPurchase.due_date).toLocaleDateString()}
+                    disabled
+                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Details Section */}
+          <div style={formStyles.section}>
+            <h2 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('payment') }}>
+              💰 Payment Details
+            </h2>
+            <div style={formStyles.grid}>
+              <div style={formStyles.grid2Col}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Payment Amount *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max={currentPurchase.grand_total}
+                    value={paymentForm.payment_amount}
+                    onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_amount: Number(e.target.value) }))}
+                    style={formStyles.input}
+                    required
+                  />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Payment Date *</label>
+                  <input
+                    type="date"
+                    value={paymentForm.payment_date}
+                    onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_date: e.target.value }))}
+                    style={formStyles.input}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Payment Method *</label>
+                <select
+                  value={paymentForm.payment_method}
+                  onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_method: e.target.value }))}
+                  style={formStyles.select}
+                  required
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Cheque">Cheque</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Credit Card">Credit Card</option>
+                  <option value="Debit Card">Debit Card</option>
+                </select>
+              </div>
+
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Payment Notes (Optional)</label>
+                <textarea
+                  value={paymentForm.payment_notes}
+                  onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_notes: e.target.value }))}
+                  maxLength={200}
+                  rows={3}
+                  style={formStyles.textarea}
+                  placeholder="Enter payment notes (max 200 characters)"
+                />
+                <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+                  {paymentForm.payment_notes.length}/200 characters
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
+            <Button type="button" variant="secondary" onClick={() => navigate('/purchases')}>
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              variant="primary" 
+              disabled={loading || paymentForm.payment_amount <= 0 || paymentForm.payment_amount > currentPurchase.grand_total}
+            >
+              {loading ? 'Adding Payment...' : 'Add Payment'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    )
   }
 
-  const calculateTotals = () => {
-    const subtotal = formData.items.reduce((sum, item) => {
-      const itemTotal = item.qty * item.rate
-      const discount = item.discount_type === 'Percentage' 
-        ? (itemTotal * item.discount / 100) 
-        : item.discount
-      return sum + (itemTotal - discount)
-    }, 0)
-
-    const totalDiscount = formData.total_discount
-    const taxableAmount = subtotal - totalDiscount
-    const cgst = taxableAmount * 0.09 // Assuming 18% GST split equally
-    const sgst = taxableAmount * 0.09
-    const total = taxableAmount + cgst + sgst
-
-    return { subtotal, totalDiscount, taxableAmount, cgst, sgst, total }
-  }
-
-  const filteredPurchases = purchases.filter(purchase => {
-    const matchesSearch = purchase.vendor_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         purchase.purchase_no.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = !statusFilter || purchase.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
-
-  const totalPages = Math.ceil(filteredPurchases.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const paginatedPurchases = filteredPurchases.slice(startIndex, endIndex)
-
-  if (loading && purchases.length === 0) {
+  // Manage Purchases Mode
+  if (loading) {
     return (
       <div style={{ padding: '20px' }}>
         <div>Loading...</div>
       </div>
     )
   }
+
+  // Filter purchases
+  const filteredPurchases = purchases.filter(purchase => {
+    const matchesSearch = purchase.purchase_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         purchase.vendor_name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = !statusFilter || purchase.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
+
+  // Pagination
+  const totalPages = Math.ceil(filteredPurchases.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedPurchases = filteredPurchases.slice(startIndex, endIndex)
 
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
@@ -256,11 +424,25 @@ export function Purchases() {
         paddingBottom: '12px',
         borderBottom: '2px solid #e9ecef'
       }}>
-        <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Purchases</h1>
-        <Button variant="primary" onClick={() => setShowCreateForm(true)}>
+        <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Manage Purchases</h1>
+        <Button variant="primary" onClick={() => navigate('/purchases/add')}>
           Create Purchase
         </Button>
       </div>
+
+      {error && (
+        <div style={{ 
+          padding: '12px 16px', 
+          marginBottom: '20px', 
+          backgroundColor: '#fee', 
+          border: '1px solid #fcc', 
+          borderRadius: '6px', 
+          color: '#c33',
+          fontSize: '14px'
+        }}>
+          {error}
+        </div>
+      )}
 
       {/* Search and Filters */}
       <div style={{ 
@@ -273,7 +455,7 @@ export function Purchases() {
         <div style={{ flex: 1 }}>
           <input
             type="text"
-            placeholder="Search purchases by vendor or purchase number..."
+            placeholder="Search purchases by number or vendor..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -298,28 +480,14 @@ export function Purchases() {
             }}
           >
             <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="paid">Paid</option>
-            <option value="overdue">Overdue</option>
+            <option value="Draft">Draft</option>
+            <option value="Pending">Pending</option>
+            <option value="Paid">Paid</option>
+            <option value="Overdue">Overdue</option>
           </select>
         </div>
       </div>
 
-      {error && (
-        <div style={{ 
-          padding: '12px 16px', 
-          marginBottom: '20px', 
-          backgroundColor: '#fee', 
-          border: '1px solid #fcc', 
-          borderRadius: '6px', 
-          color: '#c33',
-          fontSize: '14px'
-        }}>
-          {error}
-        </div>
-      )}
-
-      {/* Purchases Table */}
       <div style={{ 
         border: '1px solid #e9ecef', 
         borderRadius: '8px', 
@@ -355,20 +523,27 @@ export function Purchases() {
                     borderRadius: '6px', 
                     fontSize: '14px',
                     fontWeight: '500',
-                    backgroundColor: purchase.status === 'paid' ? '#d4edda' : purchase.status === 'overdue' ? '#f8d7da' : '#fff3cd',
-                    color: purchase.status === 'paid' ? '#155724' : purchase.status === 'overdue' ? '#721c24' : '#856404'
+                    backgroundColor: purchase.status === 'paid' ? '#d4edda' : '#fff3cd',
+                    color: purchase.status === 'paid' ? '#155724' : '#856404'
                   }}>
                     {purchase.status.charAt(0).toUpperCase() + purchase.status.slice(1)}
                   </span>
                 </td>
                 <td style={{ padding: '12px' }}>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <Button 
-                      variant="secondary"
-                      onClick={() => handlePayment(purchase)}
+                      variant="secondary" 
+                      onClick={() => navigate(`/purchases/edit/${purchase.id}`)}
                       style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
-                      Payment
+                      Edit
+                    </Button>
+                    <Button 
+                      variant="secondary"
+                      onClick={() => navigate(`/purchases/add-payment/${purchase.id}`)}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
+                    >
+                      Add Payment
                     </Button>
                     <Button 
                       variant="secondary" 
@@ -429,7 +604,7 @@ export function Purchases() {
         </div>
       )}
 
-      {filteredPurchases.length === 0 && !loading && (
+      {paginatedPurchases.length === 0 && !loading && (
         <div style={{ 
           textAlign: 'center', 
           padding: '40px', 
@@ -443,64 +618,6 @@ export function Purchases() {
           </div>
           <div style={{ fontSize: '14px' }}>
             Create your first purchase to get started
-          </div>
-        </div>
-      )}
-
-      {/* Create Purchase Modal */}
-      {showCreateForm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{ width: '80%', height: '80%', maxWidth: '1400px', maxHeight: '80vh', overflow: 'auto' }}>
-            <PurchaseForm onClose={() => setShowCreateForm(false)} />
-          </div>
-        </div>
-      )}
-
-      {/* Payment Modal */}
-      {showPaymentForm && selectedPurchase && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{ 
-            width: '80%', 
-            height: '80%', 
-            maxWidth: '1400px', 
-            maxHeight: '80vh', 
-            overflow: 'auto',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            padding: '24px'
-          }}>
-            <h2>Add Payment for Purchase {selectedPurchase.purchase_no}</h2>
-            {/* Payment form would go here */}
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
-              <Button variant="secondary" onClick={() => setShowPaymentForm(false)}>
-                Cancel
-              </Button>
-              <Button variant="primary">
-                Add Payment
-              </Button>
-            </div>
           </div>
         </div>
       )}

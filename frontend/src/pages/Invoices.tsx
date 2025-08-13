@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useParams, useLocation } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { apiListParties, apiGetProducts, apiCreateInvoice, apiUpdateInvoice, apiGetInvoice, apiDeleteInvoice, apiEmailInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, apiGetInvoices, Party, Product, Payment, PaginationInfo } from '../lib/api'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
 import { ComprehensiveInvoiceForm } from '../components/ComprehensiveInvoiceForm'
+import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface Invoice {
   id: number
@@ -23,14 +24,22 @@ interface InvoicePaymentForm {
   payment_notes: string
 }
 
-export function Invoices() {
-  const { token, forceLogout } = useAuth()
+interface InvoiceEmailForm {
+  email_address: string
+  subject: string
+  message: string
+}
+
+interface InvoicesProps {
+  mode?: 'manage' | 'add' | 'edit' | 'payments' | 'add-payment' | 'edit-payment' | 'email' | 'print'
+}
+
+export function Invoices({ mode = 'manage' }: InvoicesProps) {
   const { id } = useParams<{ id: string }>()
-  const location = useLocation()
-  const searchParams = new URLSearchParams(location.search)
-  const mode = searchParams.get('mode') || 'manage'
-  
+  const navigate = useNavigate()
+  const { token, forceLogout } = useAuth()
   const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [currentInvoice, setCurrentInvoice] = useState<Invoice | null>(null)
   
   // Create error handler that will automatically log out on 401 errors
   const handleApiError = createApiErrorHandler(forceLogout)
@@ -44,16 +53,10 @@ export function Invoices() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [showEmailModal, setShowEmailModal] = useState(false)
-  const [showPrintModal, setShowPrintModal] = useState(false)
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
-  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
-  const [emailAddress, setEmailAddress] = useState('')
-  const [emailSubject, setEmailSubject] = useState('')
-  const [emailMessage, setEmailMessage] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+
+  // Form states for different modes
   const [paymentForm, setPaymentForm] = useState<InvoicePaymentForm>({
     payment_amount: 0,
     payment_date: new Date().toISOString().split('T')[0],
@@ -61,18 +64,69 @@ export function Invoices() {
     payment_notes: ''
   })
 
+  const [emailForm, setEmailForm] = useState<InvoiceEmailForm>({
+    email_address: '',
+    subject: '',
+    message: ''
+  })
+
   useEffect(() => {
     if (mode === 'manage') {
-      loadData()
+      loadInvoices()
+    } else if (mode === 'edit' && id) {
+      loadInvoice(parseInt(id))
+    } else if (mode === 'payments' && id) {
+      loadInvoice(parseInt(id))
+    } else if (mode === 'add-payment' && id) {
+      loadInvoice(parseInt(id))
+    } else if (mode === 'email' && id) {
+      loadInvoice(parseInt(id))
+    } else if (mode === 'print' && id) {
+      loadInvoice(parseInt(id))
+    } else if (mode === 'add') {
+      setLoading(false)
     }
-  }, [pagination.page, mode])
+  }, [mode, id])
 
-  const loadData = async () => {
+  const loadInvoices = async () => {
     try {
       setLoading(true)
-      const data = await apiGetInvoices(pagination.page, pagination.limit)
+      const data = await apiGetInvoices(undefined, undefined, pagination.page, pagination.limit)
       setInvoices(data.invoices)
       setPagination(data.pagination)
+    } catch (err: any) {
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadInvoice = async (invoiceId: number) => {
+    try {
+      setLoading(true)
+      const data = await apiGetInvoices(undefined, undefined, 1, 1000) // Get all invoices to find the specific one
+      const invoice = data.invoices.find(inv => inv.id === invoiceId)
+      if (invoice) {
+        setCurrentInvoice(invoice)
+        // Pre-populate forms based on mode
+        if (mode === 'add-payment') {
+          setPaymentForm({
+            payment_amount: invoice.grand_total,
+            payment_date: new Date().toISOString().split('T')[0],
+            payment_method: 'Cash',
+            payment_notes: ''
+          })
+        } else if (mode === 'email') {
+          setEmailForm({
+            email_address: '',
+            subject: `Invoice ${invoice.invoice_no}`,
+            message: `Please find attached invoice ${invoice.invoice_no} for ₹${invoice.grand_total.toFixed(2)}.`
+          })
+        }
+      } else {
+        setError('Invoice not found')
+      }
     } catch (err: any) {
       const errorMessage = handleApiError(err)
       setError(errorMessage)
@@ -86,83 +140,63 @@ export function Invoices() {
     
     try {
       await apiDeleteInvoice(id)
-      loadData()
+      loadInvoices()
     } catch (err: any) {
       const errorMessage = handleApiError(err)
       setError(errorMessage)
     }
   }
 
-  const handleEmail = async (invoice: Invoice) => {
-    setSelectedInvoice(invoice)
-    setEmailSubject(`Invoice ${invoice.invoice_no}`)
-    setEmailMessage(`Please find attached invoice ${invoice.invoice_no} for ₹${invoice.grand_total.toFixed(2)}.`)
-    setShowEmailModal(true)
-  }
-
-  const handlePayment = async (invoice: Invoice) => {
-    setSelectedInvoice(invoice)
-    setPaymentForm({
-      payment_amount: invoice.grand_total,
-      payment_date: new Date().toISOString().split('T')[0],
-      payment_method: 'Cash',
-      payment_notes: ''
-    })
-    setShowPaymentModal(true)
-  }
-
-  const handlePrint = async (invoice: Invoice) => {
-    setSelectedInvoice(invoice)
-    setShowPrintModal(true)
-  }
-
-  const handleEdit = async (invoice: Invoice) => {
-    setEditingInvoice(invoice)
-    setShowEditModal(true)
-  }
-
-  const handleSendEmail = async () => {
-    if (!selectedInvoice || !emailAddress) return
+  const handleAddPayment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!currentInvoice || paymentForm.payment_amount <= 0) return
     
     try {
-      await apiEmailInvoice(selectedInvoice.id, {
-        email: emailAddress,
-        subject: emailSubject,
-        message: emailMessage
-      })
-      setShowEmailModal(false)
-      setError('')
-      alert('Email sent successfully!')
-    } catch (err: any) {
-      const errorMessage = handleApiError(err)
-      setError(errorMessage)
-    }
-  }
-
-  const handleAddPayment = async () => {
-    if (!selectedInvoice || paymentForm.payment_amount <= 0) return
-    
-    try {
-      await apiAddPayment(selectedInvoice.id, {
-        amount: paymentForm.payment_amount,
+      setLoading(true)
+      await apiAddPayment(currentInvoice.id, {
+        payment_amount: paymentForm.payment_amount,
         payment_date: paymentForm.payment_date,
         payment_method: paymentForm.payment_method,
+        account_head: 'Cash',
         reference_number: `PAY-${Date.now()}`,
         notes: paymentForm.payment_notes
       })
-      setShowPaymentModal(false)
-      setError('')
-      alert('Payment added successfully!')
-      loadData()
+      navigate('/invoices')
+    } catch (err: any) {
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSendEmail = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!currentInvoice || !emailForm.email_address) return
+    
+    try {
+      setLoading(true)
+      await apiEmailInvoice(currentInvoice.id, emailForm.email_address)
+      navigate('/invoices')
+    } catch (err: any) {
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePrint = async () => {
+    if (!currentInvoice) return
+    
+    try {
+      // TODO: Implement actual PDF generation and printing
+      alert('PDF generation and printing functionality will be implemented here.')
+      navigate('/invoices')
     } catch (err: any) {
       const errorMessage = handleApiError(err)
       setError(errorMessage)
     }
-  }
-
-  const resetForm = () => {
-    setEditingInvoice(null)
-    setError('')
   }
 
   // Render different content based on mode
@@ -180,15 +214,14 @@ export function Invoices() {
           <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
             {mode === 'add' ? 'Add New Invoice' : 'Edit Invoice'}
           </h1>
-          <Button variant="secondary" onClick={() => window.history.back()}>
+          <Button variant="secondary" onClick={() => navigate('/invoices')}>
             ← Back to Invoices
           </Button>
         </div>
         
         <ComprehensiveInvoiceForm 
-          mode={mode}
-          invoiceId={mode === 'edit' && id ? parseInt(id) : undefined}
-          onSuccess={() => window.history.back()}
+          onSuccess={() => navigate('/invoices')}
+          onCancel={() => navigate('/invoices')}
         />
       </div>
     )
@@ -208,7 +241,7 @@ export function Invoices() {
           <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
             Invoice Payments
           </h1>
-          <Button variant="secondary" onClick={() => window.history.back()}>
+          <Button variant="secondary" onClick={() => navigate('/invoices')}>
             ← Back to Invoices
           </Button>
         </div>
@@ -227,13 +260,496 @@ export function Invoices() {
     )
   }
 
-  if (loading && invoices.length === 0) {
+  if (mode === 'add-payment') {
+    if (loading) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <div>Loading...</div>
+        </div>
+      )
+    }
+
+    if (!currentInvoice) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <div>Invoice not found</div>
+        </div>
+      )
+    }
+
+    return (
+      <div style={{ padding: '20px', maxWidth: '100%' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '24px',
+          paddingBottom: '12px',
+          borderBottom: '2px solid #e9ecef'
+        }}>
+          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
+            Add Payment for Invoice {currentInvoice.invoice_no}
+          </h1>
+          <Button variant="secondary" onClick={() => navigate('/invoices')}>
+            ← Back to Invoices
+          </Button>
+        </div>
+
+        {error && (
+          <div style={{ 
+            padding: '12px 16px', 
+            marginBottom: '20px', 
+            backgroundColor: '#fee', 
+            border: '1px solid #fcc', 
+            borderRadius: '6px', 
+            color: '#c33',
+            fontSize: '14px'
+          }}>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleAddPayment} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Invoice Details Section */}
+          <div style={formStyles.section}>
+            <h2 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('basic') }}>
+              📄 Invoice Details
+            </h2>
+            <div style={formStyles.grid}>
+              <div style={formStyles.grid2Col}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Invoice Number</label>
+                  <input
+                    type="text"
+                    value={currentInvoice.invoice_no}
+                    disabled
+                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
+                  />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Customer</label>
+                  <input
+                    type="text"
+                    value={currentInvoice.customer_name}
+                    disabled
+                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
+                  />
+                </div>
+              </div>
+              <div style={formStyles.grid2Col}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Invoice Amount</label>
+                  <input
+                    type="text"
+                    value={`₹${currentInvoice.grand_total.toFixed(2)}`}
+                    disabled
+                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
+                  />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Due Date</label>
+                  <input
+                    type="text"
+                    value={new Date(currentInvoice.due_date).toLocaleDateString()}
+                    disabled
+                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Details Section */}
+          <div style={formStyles.section}>
+            <h2 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('payment') }}>
+              💰 Payment Details
+            </h2>
+            <div style={formStyles.grid}>
+              <div style={formStyles.grid2Col}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Payment Amount *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max={currentInvoice.grand_total}
+                    value={paymentForm.payment_amount}
+                    onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_amount: Number(e.target.value) }))}
+                    style={formStyles.input}
+                    required
+                  />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Payment Date *</label>
+                  <input
+                    type="date"
+                    value={paymentForm.payment_date}
+                    onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_date: e.target.value }))}
+                    style={formStyles.input}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Payment Method *</label>
+                <select
+                  value={paymentForm.payment_method}
+                  onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_method: e.target.value }))}
+                  style={formStyles.select}
+                  required
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Cheque">Cheque</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Credit Card">Credit Card</option>
+                  <option value="Debit Card">Debit Card</option>
+                </select>
+              </div>
+
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Payment Notes (Optional)</label>
+                <textarea
+                  value={paymentForm.payment_notes}
+                  onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_notes: e.target.value }))}
+                  maxLength={200}
+                  rows={3}
+                  style={formStyles.textarea}
+                  placeholder="Enter payment notes (max 200 characters)"
+                />
+                <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+                  {paymentForm.payment_notes.length}/200 characters
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
+            <Button type="button" variant="secondary" onClick={() => navigate('/invoices')}>
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              variant="primary" 
+              disabled={loading || paymentForm.payment_amount <= 0 || paymentForm.payment_amount > currentInvoice.grand_total}
+            >
+              {loading ? 'Adding Payment...' : 'Add Payment'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    )
+  }
+
+  if (mode === 'email') {
+    if (loading) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <div>Loading...</div>
+        </div>
+      )
+    }
+
+    if (!currentInvoice) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <div>Invoice not found</div>
+        </div>
+      )
+    }
+
+    return (
+      <div style={{ padding: '20px', maxWidth: '100%' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '24px',
+          paddingBottom: '12px',
+          borderBottom: '2px solid #e9ecef'
+        }}>
+          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
+            Send Invoice {currentInvoice.invoice_no} via Email
+          </h1>
+          <Button variant="secondary" onClick={() => navigate('/invoices')}>
+            ← Back to Invoices
+          </Button>
+        </div>
+
+        {error && (
+          <div style={{ 
+            padding: '12px 16px', 
+            marginBottom: '20px', 
+            backgroundColor: '#fee', 
+            border: '1px solid #fcc', 
+            borderRadius: '6px', 
+            color: '#c33',
+            fontSize: '14px'
+          }}>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSendEmail} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Invoice Details Section */}
+          <div style={formStyles.section}>
+            <h2 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('basic') }}>
+              📄 Invoice Details
+            </h2>
+            <div style={formStyles.grid}>
+              <div style={formStyles.grid2Col}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Invoice Number</label>
+                  <input
+                    type="text"
+                    value={currentInvoice.invoice_no}
+                    disabled
+                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
+                  />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Customer</label>
+                  <input
+                    type="text"
+                    value={currentInvoice.customer_name}
+                    disabled
+                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
+                  />
+                </div>
+              </div>
+              <div style={formStyles.grid2Col}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Invoice Amount</label>
+                  <input
+                    type="text"
+                    value={`₹${currentInvoice.grand_total.toFixed(2)}`}
+                    disabled
+                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
+                  />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Due Date</label>
+                  <input
+                    type="text"
+                    value={new Date(currentInvoice.due_date).toLocaleDateString()}
+                    disabled
+                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Email Details Section */}
+          <div style={formStyles.section}>
+            <h2 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('other') }}>
+              📧 Email Details
+            </h2>
+            <div style={formStyles.grid}>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Email Address *</label>
+                <input
+                  type="email"
+                  value={emailForm.email_address}
+                  onChange={(e) => setEmailForm(prev => ({ ...prev, email_address: e.target.value }))}
+                  style={formStyles.input}
+                  placeholder="Enter customer email address"
+                  required
+                />
+              </div>
+
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Subject *</label>
+                <input
+                  type="text"
+                  value={emailForm.subject}
+                  onChange={(e) => setEmailForm(prev => ({ ...prev, subject: e.target.value }))}
+                  style={formStyles.input}
+                  required
+                />
+              </div>
+
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Message *</label>
+                <textarea
+                  value={emailForm.message}
+                  onChange={(e) => setEmailForm(prev => ({ ...prev, message: e.target.value }))}
+                  rows={6}
+                  style={formStyles.textarea}
+                  placeholder="Enter email message"
+                  required
+                />
+              </div>
+
+              <div style={{ 
+                padding: '12px', 
+                backgroundColor: '#e7f3ff', 
+                borderRadius: '6px',
+                border: '1px solid #b3d9ff'
+              }}>
+                <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+                  📎 Attachment
+                </div>
+                <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                  Invoice PDF will be automatically attached to this email.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
+            <Button type="button" variant="secondary" onClick={() => navigate('/invoices')}>
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              variant="primary" 
+              disabled={loading || !emailForm.email_address || !emailForm.subject || !emailForm.message}
+            >
+              {loading ? 'Sending Email...' : 'Send Email'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    )
+  }
+
+  if (mode === 'print') {
+    if (loading) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <div>Loading...</div>
+        </div>
+      )
+    }
+
+    if (!currentInvoice) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <div>Invoice not found</div>
+        </div>
+      )
+    }
+
+    return (
+      <div style={{ padding: '20px', maxWidth: '100%' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '24px',
+          paddingBottom: '12px',
+          borderBottom: '2px solid #e9ecef'
+        }}>
+          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
+            Print Invoice {currentInvoice.invoice_no}
+          </h1>
+          <Button variant="secondary" onClick={() => navigate('/invoices')}>
+            ← Back to Invoices
+          </Button>
+        </div>
+
+        {error && (
+          <div style={{ 
+            padding: '12px 16px', 
+            marginBottom: '20px', 
+            backgroundColor: '#fee', 
+            border: '1px solid #fcc', 
+            borderRadius: '6px', 
+            color: '#c33',
+            fontSize: '14px'
+          }}>
+            {error}
+          </div>
+        )}
+
+        <div style={{ 
+          padding: '24px', 
+          border: '1px solid #e9ecef',
+          borderRadius: '8px',
+          backgroundColor: 'white'
+        }}>
+          <h2 style={{ marginBottom: '20px', color: '#2c3e50' }}>Invoice Preview</h2>
+          
+          <div style={{ display: 'grid', gap: '16px', marginBottom: '24px' }}>
+            <div style={formStyles.grid2Col}>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Invoice Number</label>
+                <div style={{ padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', border: '1px solid #e9ecef' }}>
+                  {currentInvoice.invoice_no}
+                </div>
+              </div>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Customer</label>
+                <div style={{ padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', border: '1px solid #e9ecef' }}>
+                  {currentInvoice.customer_name}
+                </div>
+              </div>
+            </div>
+            
+            <div style={formStyles.grid2Col}>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Amount</label>
+                <div style={{ padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', border: '1px solid #e9ecef' }}>
+                  ₹{currentInvoice.grand_total.toFixed(2)}
+                </div>
+              </div>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Date</label>
+                <div style={{ padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', border: '1px solid #e9ecef' }}>
+                  {new Date(currentInvoice.date).toLocaleDateString()}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ 
+            padding: '12px', 
+            backgroundColor: '#e7f3ff', 
+            borderRadius: '6px',
+            border: '1px solid #b3d9ff',
+            marginBottom: '24px'
+          }}>
+            <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+              📄 PDF Generation
+            </div>
+            <div style={{ fontSize: '12px', color: '#6c757d' }}>
+              The invoice will be generated as a PDF using a standard Indian GST invoice template.
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <Button variant="secondary" onClick={() => navigate('/invoices')}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handlePrint}>
+              Generate PDF & Print
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Manage Invoices Mode
+  if (loading) {
     return (
       <div style={{ padding: '20px' }}>
         <div>Loading...</div>
       </div>
     )
   }
+
+  // Filter invoices
+  const filteredInvoices = invoices.filter(invoice => {
+    const matchesSearch = invoice.invoice_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         invoice.customer_name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
 
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
@@ -246,7 +762,7 @@ export function Invoices() {
         borderBottom: '2px solid #e9ecef'
       }}>
         <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Manage Invoices</h1>
-        <Button variant="primary" onClick={() => setShowModal(true)}>
+        <Button variant="primary" onClick={() => navigate('/invoices/add')}>
           Create Invoice
         </Button>
       </div>
@@ -264,6 +780,50 @@ export function Invoices() {
           {error}
         </div>
       )}
+
+      {/* Search and Filters */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '24px',
+        gap: '16px'
+      }}>
+        <div style={{ flex: 1 }}>
+          <input
+            type="text"
+            placeholder="Search invoices by number or customer..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px 16px',
+              border: '1px solid #ced4da',
+              borderRadius: '6px',
+              fontSize: '14px'
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{
+              padding: '10px 16px',
+              border: '1px solid #ced4da',
+              borderRadius: '6px',
+              fontSize: '14px',
+              backgroundColor: 'white'
+            }}
+          >
+            <option value="all">All Status</option>
+            <option value="Draft">Draft</option>
+            <option value="Sent">Sent</option>
+            <option value="Paid">Paid</option>
+            <option value="Overdue">Overdue</option>
+          </select>
+        </div>
+      </div>
 
       <div style={{ 
         border: '1px solid #e9ecef', 
@@ -284,7 +844,7 @@ export function Invoices() {
             </tr>
           </thead>
           <tbody>
-            {invoices.map(invoice => (
+            {filteredInvoices.map(invoice => (
               <tr key={invoice.id} style={{ 
                 borderBottom: '1px solid #e9ecef',
                 backgroundColor: 'white'
@@ -310,28 +870,28 @@ export function Invoices() {
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <Button 
                       variant="secondary" 
-                      onClick={() => handleEdit(invoice)}
+                      onClick={() => navigate(`/invoices/edit/${invoice.id}`)}
                       style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       Edit
                     </Button>
                     <Button 
                       variant="secondary"
-                      onClick={() => handlePrint(invoice)}
+                      onClick={() => navigate(`/invoices/print/${invoice.id}`)}
                       style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       Print
                     </Button>
                     <Button 
                       variant="secondary"
-                      onClick={() => handlePayment(invoice)}
+                      onClick={() => navigate(`/invoices/add-payment/${invoice.id}`)}
                       style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       Add Payment
                     </Button>
                     <Button 
                       variant="secondary"
-                      onClick={() => handleEmail(invoice)}
+                      onClick={() => navigate(`/invoices/email/${invoice.id}`)}
                       style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       Email
@@ -395,7 +955,7 @@ export function Invoices() {
         </div>
       )}
 
-      {invoices.length === 0 && !loading && (
+      {filteredInvoices.length === 0 && !loading && (
         <div style={{ 
           textAlign: 'center', 
           padding: '40px', 
@@ -409,353 +969,6 @@ export function Invoices() {
           </div>
           <div style={{ fontSize: '14px' }}>
             Create your first invoice to get started
-          </div>
-        </div>
-      )}
-
-      {/* Create Invoice Modal */}
-      {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{ width: '80%', height: '80%', maxWidth: '1400px', maxHeight: '80vh', overflow: 'auto' }}>
-            <ComprehensiveInvoiceForm onClose={() => setShowModal(false)} />
-          </div>
-        </div>
-      )}
-
-      {/* Edit Invoice Modal */}
-      {showEditModal && editingInvoice && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{ width: '80%', height: '80%', maxWidth: '1400px', maxHeight: '80vh', overflow: 'auto' }}>
-            <ComprehensiveInvoiceForm 
-              mode="edit"
-              invoiceId={editingInvoice.id}
-              onClose={() => setShowEditModal(false)} 
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Print Invoice Modal */}
-      {showPrintModal && selectedInvoice && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{ 
-            width: '80%', 
-            height: '80%', 
-            maxWidth: '1400px', 
-            maxHeight: '80vh', 
-            overflow: 'auto',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            padding: '24px'
-          }}>
-            <h2>Print Invoice {selectedInvoice.invoice_no}</h2>
-            <div style={{ marginBottom: '20px' }}>
-              <p><strong>Customer:</strong> {selectedInvoice.customer_name}</p>
-              <p><strong>Amount:</strong> ₹{selectedInvoice.grand_total.toFixed(2)}</p>
-              <p><strong>Date:</strong> {new Date(selectedInvoice.date).toLocaleDateString()}</p>
-            </div>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
-              <Button variant="secondary" onClick={() => setShowPrintModal(false)}>
-                Cancel
-              </Button>
-              <Button variant="primary" onClick={() => {
-                // TODO: Implement actual PDF generation and printing
-                alert('PDF generation and printing functionality will be implemented here.')
-                setShowPrintModal(false)
-              }}>
-                Generate PDF & Print
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Payment Modal */}
-      {showPaymentModal && selectedInvoice && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{ 
-            width: '80%', 
-            height: '80%', 
-            maxWidth: '1400px', 
-            maxHeight: '80vh', 
-            overflow: 'auto',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            padding: '24px'
-          }}>
-            <h2>Add Payment for Invoice {selectedInvoice.invoice_no}</h2>
-            
-            <div style={{ marginBottom: '20px' }}>
-              <p><strong>Invoice Amount:</strong> ₹{selectedInvoice.grand_total.toFixed(2)}</p>
-              <p><strong>Customer:</strong> {selectedInvoice.customer_name}</p>
-            </div>
-
-            <div style={{ display: 'grid', gap: '16px', marginBottom: '20px' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                  Payment Amount *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max={selectedInvoice.grand_total}
-                  value={paymentForm.payment_amount}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_amount: Number(e.target.value) }))}
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                  Payment Date *
-                </label>
-                <input
-                  type="date"
-                  value={paymentForm.payment_date}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_date: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                  Payment Method *
-                </label>
-                <select
-                  value={paymentForm.payment_method}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_method: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    backgroundColor: 'white'
-                  }}
-                >
-                  <option value="Cash">Cash</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="Cheque">Cheque</option>
-                  <option value="UPI">UPI</option>
-                  <option value="Credit Card">Credit Card</option>
-                  <option value="Debit Card">Debit Card</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                  Payment Notes (Optional)
-                </label>
-                <textarea
-                  value={paymentForm.payment_notes}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_notes: e.target.value }))}
-                  maxLength={200}
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    resize: 'vertical'
-                  }}
-                  placeholder="Enter payment notes (max 200 characters)"
-                />
-                <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
-                  {paymentForm.payment_notes.length}/200 characters
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
-              <Button variant="secondary" onClick={() => setShowPaymentModal(false)}>
-                Cancel
-              </Button>
-              <Button 
-                variant="primary" 
-                onClick={handleAddPayment}
-                disabled={paymentForm.payment_amount <= 0 || paymentForm.payment_amount > selectedInvoice.grand_total}
-              >
-                Add Payment
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Email Invoice Modal */}
-      {showEmailModal && selectedInvoice && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{ 
-            width: '80%', 
-            height: '80%', 
-            maxWidth: '1400px', 
-            maxHeight: '80vh', 
-            overflow: 'auto',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            padding: '24px'
-          }}>
-            <h2>Send Invoice {selectedInvoice.invoice_no} via Email</h2>
-            
-            <div style={{ marginBottom: '20px' }}>
-              <p><strong>Invoice Amount:</strong> ₹{selectedInvoice.grand_total.toFixed(2)}</p>
-              <p><strong>Customer:</strong> {selectedInvoice.customer_name}</p>
-            </div>
-
-            <div style={{ display: 'grid', gap: '16px', marginBottom: '20px' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  value={emailAddress}
-                  onChange={(e) => setEmailAddress(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
-                  placeholder="Enter customer email address"
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                  Subject *
-                </label>
-                <input
-                  type="text"
-                  value={emailSubject}
-                  onChange={(e) => setEmailSubject(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                  Message *
-                </label>
-                <textarea
-                  value={emailMessage}
-                  onChange={(e) => setEmailMessage(e.target.value)}
-                  rows={6}
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    resize: 'vertical'
-                  }}
-                  placeholder="Enter email message"
-                />
-              </div>
-
-              <div style={{ 
-                padding: '12px', 
-                backgroundColor: '#e7f3ff', 
-                borderRadius: '6px',
-                border: '1px solid #b3d9ff'
-              }}>
-                <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
-                  📎 Attachment
-                </div>
-                <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                  Invoice PDF will be automatically attached to this email.
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
-              <Button variant="secondary" onClick={() => setShowEmailModal(false)}>
-                Cancel
-              </Button>
-              <Button 
-                variant="primary" 
-                onClick={handleSendEmail}
-                disabled={!emailAddress || !emailSubject || !emailMessage}
-              >
-                Send Email
-              </Button>
-            </div>
           </div>
         </div>
       )}

@@ -185,16 +185,16 @@ function Shell() {
           <Route path="/invoices/add" element={<Invoices mode="add" />} />
           <Route path="/invoices/edit/:id" element={<Invoices mode="edit" />} />
           <Route path="/invoices/payments" element={<Invoices mode="payments" />} />
-          <Route path="/invoices/payments/add" element={<Invoices mode="add-payment" />} />
-          <Route path="/invoices/payments/edit/:id" element={<Invoices mode="edit-payment" />} />
+          <Route path="/invoices/add-payment/:id" element={<Invoices mode="add-payment" />} />
+          <Route path="/invoices/email/:id" element={<Invoices mode="email" />} />
+          <Route path="/invoices/print/:id" element={<Invoices mode="print" />} />
           
           {/* Purchases Routes */}
           <Route path="/purchases" element={<Purchases />} />
           <Route path="/purchases/add" element={<Purchases mode="add" />} />
           <Route path="/purchases/edit/:id" element={<Purchases mode="edit" />} />
           <Route path="/purchases/payments" element={<Purchases mode="payments" />} />
-          <Route path="/purchases/payments/add" element={<Purchases mode="add-payment" />} />
-          <Route path="/purchases/payments/edit/:id" element={<Purchases mode="edit-payment" />} />
+          <Route path="/purchases/add-payment/:id" element={<Purchases mode="add-payment" />} />
           
           {/* Customers Routes */}
           <Route path="/customers" element={<Parties type="customer" />} />
