@@ -701,7 +701,8 @@ export function Products() {
                 <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('basic') }}>
                   Product Details
                 </h3>
-                <div style={formStyles.grid2Col}>
+                {/* 3 Column Layout: Product Name | Product Code | SKU */}
+                <div style={formStyles.grid3Col}>
                   <div style={formStyles.formGroup}>
                     <label style={formStyles.label}>Product Name *</label>
                     <input
@@ -736,6 +737,10 @@ export function Products() {
                       style={formStyles.input}
                     />
                   </div>
+                </div>
+
+                {/* 3 Column Layout: Unit of Measure | Product Supplier | Product Type */}
+                <div style={formStyles.grid3Col}>
                   <div style={formStyles.formGroup}>
                     <label style={formStyles.label}>Unit of Measure *</label>
                     <select
@@ -786,6 +791,10 @@ export function Products() {
                       <option value="Other">Other</option>
                     </select>
                   </div>
+                </div>
+
+                {/* 2 Column Layout: Product Category (30%) | Product Description (70%) */}
+                <div style={{ display: 'grid', gridTemplateColumns: '30% 70%', gap: '16px' }}>
                   <div style={formStyles.formGroup}>
                     <label style={formStyles.label}>Product Category *</label>
                     <input
@@ -797,7 +806,7 @@ export function Products() {
                       style={formStyles.input}
                     />
                   </div>
-                  <div style={{ ...formStyles.formGroup, gridColumn: '1 / -1' }}>
+                  <div style={formStyles.formGroup}>
                     <label style={formStyles.label}>Product Description</label>
                     <textarea
                       value={formData.description}
@@ -816,7 +825,8 @@ export function Products() {
                 <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('payment') }}>
                   Price Details
                 </h3>
-                <div style={formStyles.grid2Col}>
+                {/* 4 Column Layout: Purchase Price | Selling Price | GST Rate | HSN Code */}
+                <div style={formStyles.grid4Col}>
                   <div style={formStyles.formGroup}>
                     <label style={formStyles.label}>Purchase Price</label>
                     <input
@@ -840,13 +850,13 @@ export function Products() {
                       style={formStyles.input}
                     />
                   </div>
-                  <div>
-                    <label>GST Rate *</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>GST Rate *</label>
                     <select
                       value={formData.gst_rate}
                       onChange={(e) => setFormData({...formData, gst_rate: e.target.value})}
                       required
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.select}
                     >
                       <option value="">Select GST Rate</option>
                       <option value="0">0%</option>
@@ -856,8 +866,8 @@ export function Products() {
                       <option value="28">28%</option>
                     </select>
                   </div>
-                  <div>
-                    <label>HSN Code *</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>HSN Code *</label>
                     <input
                       type="text"
                       value={formData.hsn_code}
@@ -867,47 +877,39 @@ export function Products() {
                       minLength={4}
                       placeholder="Enter HSN code (4 or 6 digits)"
                       pattern="[0-9]{4}|[0-9]{6}"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Stock Details Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '8px' }}>
-                  Stock Details
+              {/* Stock Details and Other Details Section */}
+              <div style={formStyles.section}>
+                <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('other') }}>
+                  Stock Details & Other Details
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-                  <div>
-                    <label>Opening Stock</label>
+                {/* 2 Column Layout: Stock Details (30%) | Other Details (70%) */}
+                <div style={{ display: 'grid', gridTemplateColumns: '30% 70%', gap: '16px' }}>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Opening Stock</label>
                     <input
                       type="number"
                       min="0"
                       value={formData.opening_stock}
                       onChange={(e) => setFormData({...formData, opening_stock: e.target.value})}
                       placeholder="Enter opening stock (default: 0)"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                </div>
-              </div>
-
-              {/* Other Details Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '8px' }}>
-                  Other Details
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-                  <div>
-                    <label>Notes</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Notes</label>
                     <textarea
                       value={formData.notes}
                       onChange={(e) => setFormData({...formData, notes: e.target.value})}
                       rows={3}
                       maxLength={200}
                       placeholder="Enter notes (max 200 characters)"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.textarea}
                     />
                   </div>
                 </div>
@@ -961,13 +963,14 @@ export function Products() {
             <h2>Edit Product</h2>
             <form onSubmit={handleEditProduct}>
               {/* Product Details Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+              <div style={formStyles.section}>
+                <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('basic') }}>
                   Product Details
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <label>Product Name *</label>
+                {/* 3 Column Layout: Product Name | Product Code | SKU */}
+                <div style={formStyles.grid3Col}>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Product Name *</label>
                     <input
                       type="text"
                       value={formData.name}
@@ -975,11 +978,11 @@ export function Products() {
                       required
                       maxLength={100}
                       placeholder="Enter product name (max 100 characters)"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div>
-                    <label>Product Code *</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Product Code *</label>
                     <input
                       type="text"
                       value={formData.product_code}
@@ -987,26 +990,30 @@ export function Products() {
                       required
                       maxLength={20}
                       placeholder="Enter product code (max 20 characters)"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div>
-                    <label>SKU</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>SKU</label>
                     <input
                       type="text"
                       value={formData.sku}
                       onChange={(e) => setFormData({...formData, sku: e.target.value})}
                       placeholder="Enter SKU"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div>
-                    <label>Unit of Measure *</label>
+                </div>
+
+                {/* 3 Column Layout: Unit of Measure | Product Supplier | Product Type */}
+                <div style={formStyles.grid3Col}>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Unit of Measure *</label>
                     <select
                       value={formData.unit}
                       onChange={(e) => setFormData({...formData, unit: e.target.value})}
                       required
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.select}
                     >
                       <option value="">Select Unit</option>
                       <option value="NOS">NOS</option>
@@ -1019,15 +1026,15 @@ export function Products() {
                       <option value="SET">SET</option>
                     </select>
                   </div>
-                  <div>
-                    <label>Product Supplier</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Product Supplier</label>
                     <input
                       type="text"
                       value={formData.supplier}
                       onChange={(e) => setFormData({...formData, supplier: e.target.value})}
                       placeholder="Search and select supplier..."
                       list="edit-product-supplier-list"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                     <datalist id="edit-product-supplier-list">
                       {vendors.map(vendor => (
@@ -1035,13 +1042,13 @@ export function Products() {
                       ))}
                     </datalist>
                   </div>
-                  <div>
-                    <label>Product Type *</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Product Type *</label>
                     <select
                       value={formData.product_type}
                       onChange={(e) => setFormData({...formData, product_type: e.target.value})}
                       required
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.select}
                     >
                       <option value="Goods">Goods (default)</option>
                       <option value="Tradable">Tradable</option>
@@ -1050,50 +1057,55 @@ export function Products() {
                       <option value="Other">Other</option>
                     </select>
                   </div>
-                  <div>
-                    <label>Product Category *</label>
+                </div>
+
+                {/* 2 Column Layout: Product Category (30%) | Product Description (70%) */}
+                <div style={{ display: 'grid', gridTemplateColumns: '30% 70%', gap: '16px' }}>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Product Category *</label>
                     <input
                       type="text"
                       value={formData.category}
                       onChange={(e) => setFormData({...formData, category: e.target.value})}
                       required
                       placeholder="Enter category"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label>Product Description</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Product Description</label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({...formData, description: e.target.value})}
                       rows={3}
                       maxLength={200}
                       placeholder="Enter product description (max 200 characters)"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.textarea}
                     />
                   </div>
                 </div>
               </div>
 
               {/* Price Details Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>
+              <div style={formStyles.section}>
+                <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('payment') }}>
                   Price Details
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <label>Purchase Price</label>
+                {/* 4 Column Layout: Purchase Price | Selling Price | GST Rate | HSN Code */}
+                <div style={formStyles.grid4Col}>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Purchase Price</label>
                     <input
                       type="number"
                       step="0.01"
                       value={formData.purchase_price}
                       onChange={(e) => setFormData({...formData, purchase_price: e.target.value})}
                       placeholder="Enter purchase price"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div>
-                    <label>Selling Price *</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Selling Price *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -1101,16 +1113,16 @@ export function Products() {
                       onChange={(e) => setFormData({...formData, sales_price: e.target.value})}
                       required
                       placeholder="Enter selling price"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div>
-                    <label>GST Rate *</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>GST Rate *</label>
                     <select
                       value={formData.gst_rate}
                       onChange={(e) => setFormData({...formData, gst_rate: e.target.value})}
                       required
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.select}
                     >
                       <option value="">Select GST Rate</option>
                       <option value="0">0%</option>
@@ -1120,8 +1132,8 @@ export function Products() {
                       <option value="28">28%</option>
                     </select>
                   </div>
-                  <div>
-                    <label>HSN Code *</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>HSN Code *</label>
                     <input
                       type="text"
                       value={formData.hsn_code}
@@ -1131,47 +1143,39 @@ export function Products() {
                       minLength={4}
                       placeholder="Enter HSN code (4 or 6 digits)"
                       pattern="[0-9]{4}|[0-9]{6}"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Stock Details Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '8px' }}>
-                  Stock Details
+              {/* Stock Details and Other Details Section */}
+              <div style={formStyles.section}>
+                <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('other') }}>
+                  Stock Details & Other Details
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-                  <div>
-                    <label>Opening Stock</label>
+                {/* 2 Column Layout: Stock Details (30%) | Other Details (70%) */}
+                <div style={{ display: 'grid', gridTemplateColumns: '30% 70%', gap: '16px' }}>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Opening Stock</label>
                     <input
                       type="number"
                       min="0"
                       value={formData.opening_stock}
                       onChange={(e) => setFormData({...formData, opening_stock: e.target.value})}
                       placeholder="Enter opening stock (default: 0)"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                </div>
-              </div>
-
-              {/* Other Details Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '8px' }}>
-                  Other Details
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-                  <div>
-                    <label>Notes</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Notes</label>
                     <textarea
                       value={formData.notes}
                       onChange={(e) => setFormData({...formData, notes: e.target.value})}
                       rows={3}
                       maxLength={200}
                       placeholder="Enter notes (max 200 characters)"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.textarea}
                     />
                   </div>
                 </div>
