@@ -148,18 +148,7 @@ export function Dashboard() {
             🚀 Quick Actions
           </h3>
           
-          {/* Cashflow Period Label - Compact */}
-          <div style={{ 
-            padding: '4px 8px',
-            backgroundColor: '#e7f3ff',
-            borderRadius: '4px',
-            border: '1px solid #b3d9ff',
-            fontSize: '14px',
-            fontWeight: '500',
-            color: '#0056b3'
-          }}>
-            Period: {getPeriodLabel()}
-          </div>
+
         </div>
         
         <div style={{ 
