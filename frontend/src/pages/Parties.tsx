@@ -187,13 +187,18 @@ export function Parties() {
 
     try {
       const payload = {
-        ...formData,
+        name: formData.name,
         type: activeTab === 'customers' ? 'customer' : 'vendor' as const,
         contact_person: formData.contact_person || null,
         contact_number: formData.contact_number || null,
         email: formData.email || null,
         gstin: formData.gstin || null,
+        gst_registration_status: formData.gst_registration_status,
+        billing_address_line1: formData.billing_address_line1,
         billing_address_line2: formData.billing_address_line2 || null,
+        billing_city: formData.billing_city,
+        billing_state: formData.billing_state,
+        billing_country: formData.billing_country,
         billing_pincode: formData.billing_pincode || null,
         shipping_address_line1: formData.shipping_address_line1 || null,
         shipping_address_line2: formData.shipping_address_line2 || null,
