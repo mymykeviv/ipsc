@@ -194,7 +194,8 @@ export function Dashboard() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gap: '24px' }}>
+      {cashflowData ? (
+        <div style={{ display: 'grid', gap: '24px' }}>
           {/* Income and Expense Summary */}
           <div style={{ 
             padding: '20px', 
@@ -468,9 +469,23 @@ export function Dashboard() {
             </div>
           </div>
         </div>
+      ) : (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px', 
+          color: '#6c757d',
+          border: '1px solid #e9ecef',
+          borderRadius: '8px',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
+            No cashflow data available
+          </div>
+          <div style={{ fontSize: '14px' }}>
+            Click the refresh button to load data
+          </div>
+        </div>
       )}
-
-
     </div>
   )
 }
