@@ -302,6 +302,9 @@ export function Products() {
     } catch (error: any) {
       console.error('Failed to create product:', error)
       
+      // Use centralized error handling for session expiration
+      handleApiError(error)
+      
       // Extract detailed error information
       let errorMessage = 'Failed to create product. Please try again.'
       
@@ -353,6 +356,7 @@ export function Products() {
       loadProducts()
     } catch (error) {
       console.error('Failed to update product:', error)
+      handleApiError(error)
     }
   }
 
@@ -362,6 +366,7 @@ export function Products() {
       loadProducts()
     } catch (error) {
       console.error('Failed to toggle product:', error)
+      handleApiError(error)
     }
   }
 
@@ -399,6 +404,8 @@ export function Products() {
       })
       loadProducts()
     } catch (error: any) {
+      console.error('Failed to adjust stock:', error)
+      handleApiError(error)
       setError(error.message || 'Failed to adjust stock')
     }
   }
