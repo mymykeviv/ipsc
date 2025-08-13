@@ -4,7 +4,7 @@ export const formStyles = {
     // Standard input field styling
     input: {
         width: '100%',
-        padding: '8px 12px',
+        padding: '6px 10px',
         border: '1px solid var(--border)',
         borderRadius: 'var(--radius)',
         fontSize: '14px',
@@ -22,7 +22,7 @@ export const formStyles = {
     // Standard select field styling
     select: {
         width: '100%',
-        padding: '8px 12px',
+        padding: '6px 10px',
         border: '1px solid var(--border)',
         borderRadius: 'var(--radius)',
         fontSize: '14px',
@@ -35,7 +35,7 @@ export const formStyles = {
     // Standard textarea styling
     textarea: {
         width: '100%',
-        padding: '8px 12px',
+        padding: '6px 10px',
         border: '1px solid var(--border)',
         borderRadius: 'var(--radius)',
         fontSize: '14px',
@@ -43,20 +43,20 @@ export const formStyles = {
         color: 'var(--text)',
         backgroundColor: 'white',
         resize: 'vertical',
-        minHeight: '80px',
+        minHeight: '60px',
         transition: 'border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
     },
     // Standard label styling
     label: {
         display: 'block',
-        marginBottom: '6px',
+        marginBottom: '4px',
         fontSize: '14px',
         fontWeight: '500',
         color: 'var(--text)',
     },
     // Form group container
     formGroup: {
-        marginBottom: '16px',
+        marginBottom: '12px',
     },
     // Form section styling
     section: {
@@ -74,25 +74,25 @@ export const formStyles = {
     // Grid container for form fields
     grid: {
         display: 'grid',
-        gap: '16px',
+        gap: '12px',
     },
     // Two column grid
     grid2Col: {
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
-        gap: '16px',
+        gap: '12px',
     },
     // Three column grid
     grid3Col: {
         display: 'grid',
         gridTemplateColumns: '1fr 1fr 1fr',
-        gap: '16px',
+        gap: '12px',
     },
     // Four column grid
     grid4Col: {
         display: 'grid',
         gridTemplateColumns: '1fr 1fr 1fr 1fr',
-        gap: '16px',
+        gap: '12px',
     },
 };
 // Standardized error message styling

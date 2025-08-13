@@ -246,10 +246,10 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
 
         {error && <ErrorMessage message={error} />}
 
-        <form onSubmit={handleSubmit} style={formStyles.form}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {/* Party Type Section */}
           <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor(0) }}>
+            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('basic') }}>
               Party Type
             </h3>
             <div style={formStyles.grid2Col}>
@@ -270,7 +270,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
 
           {/* Basic Information Section */}
           <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor(1) }}>
+            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('billing') }}>
               Basic Information
             </h3>
             <div style={formStyles.grid2Col}>
@@ -318,7 +318,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
 
           {/* GST Information Section */}
           <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor(2) }}>
+            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('shipping') }}>
               GST Information
             </h3>
             <div style={formStyles.grid2Col}>

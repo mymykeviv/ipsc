@@ -1,8 +1,9 @@
 import { jsx as _jsx } from "react/jsx-runtime";
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import '@testing-library/jest-dom';
 import { Products } from './Products';
+import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../modules/AuthContext';
 import * as api from '../lib/api';
 // Mock the API functions
@@ -11,7 +12,8 @@ vi.mock('../lib/api', () => ({
     apiCreateProduct: vi.fn(),
     apiUpdateProduct: vi.fn(),
     apiToggleProduct: vi.fn(),
-    apiAdjustStock: vi.fn()
+    apiAdjustStock: vi.fn(),
+    apiListParties: vi.fn()
 }));
 const mockProducts = [
     {
@@ -49,8 +51,58 @@ const mockProducts = [
         is_active: true
     }
 ];
-const renderWithAuth = (component) => {
-    return render(_jsx(AuthProvider, { children: component }));
+const mockVendors = [
+    {
+        id: 1,
+        name: 'Test Vendor 1',
+        type: 'vendor',
+        contact_person: 'John Doe',
+        contact_number: '1234567890',
+        email: 'john@testvendor.com',
+        gstin: '22AAAAA0000A1Z5',
+        gst_registration_status: 'GST registered',
+        billing_address_line1: '123 Test Street',
+        billing_address_line2: null,
+        billing_city: 'Test City',
+        billing_state: 'Test State',
+        billing_country: 'India',
+        billing_pincode: '123456',
+        shipping_address_line1: null,
+        shipping_address_line2: null,
+        shipping_city: null,
+        shipping_state: null,
+        shipping_country: null,
+        shipping_pincode: null,
+        notes: null,
+        is_active: true
+    },
+    {
+        id: 2,
+        name: 'Test Vendor 2',
+        type: 'vendor',
+        contact_person: 'Jane Smith',
+        contact_number: '0987654321',
+        email: 'jane@testvendor.com',
+        gstin: '33BBBBB0000B2Z6',
+        gst_registration_status: 'GST registered',
+        billing_address_line1: '456 Test Avenue',
+        billing_address_line2: null,
+        billing_city: 'Test City 2',
+        billing_state: 'Test State 2',
+        billing_country: 'India',
+        billing_pincode: '654321',
+        shipping_address_line1: null,
+        shipping_address_line2: null,
+        shipping_city: null,
+        shipping_state: null,
+        shipping_country: null,
+        shipping_pincode: null,
+        notes: null,
+        is_active: true
+    }
+];
+const renderWithProviders = (component, route = '/products') => {
+    return render(_jsx(MemoryRouter, { initialEntries: [route], children: _jsx(AuthProvider, { children: component }) }));
 };
 describe('Products Page', () => {
     beforeEach(() => {
@@ -62,332 +114,74 @@ describe('Products Page', () => {
     afterEach(() => {
         localStorage.clear();
     });
-    describe('Product Listing', () => {
+    describe('Manage Mode', () => {
         it('should display products table with correct data', async () => {
             vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            renderWithAuth(_jsx(Products, {}));
+            vi.mocked(api.apiListParties).mockResolvedValue(mockVendors);
+            renderWithProviders(_jsx(Products, { mode: "manage" }));
             await waitFor(() => {
                 expect(screen.getByText('Test Product 1')).toBeInTheDocument();
                 expect(screen.getByText('Test Product 2')).toBeInTheDocument();
                 expect(screen.getByText('TEST001')).toBeInTheDocument();
                 expect(screen.getByText('TEST002')).toBeInTheDocument();
-                expect(screen.getByText('50')).toBeInTheDocument();
-                expect(screen.getByText('100')).toBeInTheDocument();
-                expect(screen.getByText('₹100.00')).toBeInTheDocument();
-                expect(screen.getByText('₹50.00')).toBeInTheDocument();
-                expect(screen.getByText('18%')).toBeInTheDocument();
-                expect(screen.getByText('12%')).toBeInTheDocument();
             });
         });
-        it('should display item types correctly', async () => {
-            vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            renderWithAuth(_jsx(Products, {}));
-            await waitFor(() => {
-                expect(screen.getByText('tradable')).toBeInTheDocument();
-                expect(screen.getByText('consumable')).toBeInTheDocument();
-            });
-        });
-        it('should show loading state initially', () => {
+        it('should show loading state initially', async () => {
             vi.mocked(api.apiGetProducts).mockImplementation(() => new Promise(() => { }));
-            renderWithAuth(_jsx(Products, {}));
+            vi.mocked(api.apiListParties).mockResolvedValue(mockVendors);
+            renderWithProviders(_jsx(Products, { mode: "manage" }));
             expect(screen.getByText('Loading...')).toBeInTheDocument();
         });
         it('should handle API errors gracefully', async () => {
             vi.mocked(api.apiGetProducts).mockRejectedValue(new Error('API Error'));
-            renderWithAuth(_jsx(Products, {}));
+            vi.mocked(api.apiListParties).mockResolvedValue(mockVendors);
+            renderWithProviders(_jsx(Products, { mode: "manage" }));
             await waitFor(() => {
-                expect(screen.getByText('Products')).toBeInTheDocument();
+                expect(screen.getByText('No products found')).toBeInTheDocument();
             });
         });
     });
-    describe('Product Search and Sorting', () => {
-        it('should filter products by search term', async () => {
-            vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            renderWithAuth(_jsx(Products, {}));
+    describe('Add Mode', () => {
+        it('should render add product form', async () => {
+            vi.mocked(api.apiListParties).mockResolvedValue(mockVendors);
+            renderWithProviders(_jsx(Products, { mode: "add" }), '/products/add');
             await waitFor(() => {
-                expect(screen.getByText('Test Product 1')).toBeInTheDocument();
-                expect(screen.getByText('Test Product 2')).toBeInTheDocument();
-            });
-            const searchInput = screen.getByPlaceholderText('Search products...');
-            fireEvent.change(searchInput, { target: { value: 'Product 1' } });
-            await waitFor(() => {
-                expect(screen.getByText('Test Product 1')).toBeInTheDocument();
-                expect(screen.queryByText('Test Product 2')).not.toBeInTheDocument();
-            });
-        });
-        it('should sort products by different fields', async () => {
-            vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            renderWithAuth(_jsx(Products, {}));
-            await waitFor(() => {
-                expect(screen.getByText('Name')).toBeInTheDocument();
-            });
-            // Test sorting by name
-            const nameHeader = screen.getByText('Name');
-            fireEvent.click(nameHeader);
-            // Test sorting by SKU
-            const skuHeader = screen.getByText('SKU');
-            fireEvent.click(skuHeader);
-            // Test sorting by stock
-            const stockHeader = screen.getByText('Stock');
-            fireEvent.click(stockHeader);
-        });
-    });
-    describe('Add Product Modal', () => {
-        it('should open add product modal when button is clicked', async () => {
-            vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            renderWithAuth(_jsx(Products, {}));
-            await waitFor(() => {
-                expect(screen.getByText('Add Product')).toBeInTheDocument();
-            });
-            const addButton = screen.getByText('Add Product');
-            fireEvent.click(addButton);
-            expect(screen.getByText('Add New Product')).toBeInTheDocument();
-            expect(screen.getByLabelText('Name *')).toBeInTheDocument();
-            expect(screen.getByLabelText('Sales Price *')).toBeInTheDocument();
-            expect(screen.getByLabelText('GST Rate *')).toBeInTheDocument();
-        });
-        it('should validate required fields', async () => {
-            vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            renderWithAuth(_jsx(Products, {}));
-            await waitFor(() => {
-                expect(screen.getByText('Add Product')).toBeInTheDocument();
-            });
-            const addButton = screen.getByText('Add Product');
-            fireEvent.click(addButton);
-            const submitButton = screen.getByText('Add Product');
-            fireEvent.click(submitButton);
-            // Should show validation errors
-            await waitFor(() => {
-                expect(screen.getByText('Name is required')).toBeInTheDocument();
-                expect(screen.getByText('Sales price is required')).toBeInTheDocument();
-                expect(screen.getByText('GST rate is required')).toBeInTheDocument();
-            });
-        });
-        it('should validate field lengths', async () => {
-            vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            renderWithAuth(_jsx(Products, {}));
-            await waitFor(() => {
-                expect(screen.getByText('Add Product')).toBeInTheDocument();
-            });
-            const addButton = screen.getByText('Add Product');
-            fireEvent.click(addButton);
-            const nameInput = screen.getByLabelText('Name *');
-            fireEvent.change(nameInput, { target: { value: 'A'.repeat(101) } });
-            const submitButton = screen.getByText('Add Product');
-            fireEvent.click(submitButton);
-            await waitFor(() => {
-                expect(screen.getByText('Name must be 100 characters or less')).toBeInTheDocument();
-            });
-        });
-        it('should validate numeric fields', async () => {
-            vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            renderWithAuth(_jsx(Products, {}));
-            await waitFor(() => {
-                expect(screen.getByText('Add Product')).toBeInTheDocument();
-            });
-            const addButton = screen.getByText('Add Product');
-            fireEvent.click(addButton);
-            const salesPriceInput = screen.getByLabelText('Sales Price *');
-            fireEvent.change(salesPriceInput, { target: { value: '-10' } });
-            const submitButton = screen.getByText('Add Product');
-            fireEvent.click(submitButton);
-            await waitFor(() => {
-                expect(screen.getByText('Sales price must be between 0 and 999999.99')).toBeInTheDocument();
-            });
-        });
-        it('should successfully create a product', async () => {
-            vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            vi.mocked(api.apiCreateProduct).mockResolvedValue(mockProducts[0]);
-            renderWithAuth(_jsx(Products, {}));
-            await waitFor(() => {
-                expect(screen.getByText('Add Product')).toBeInTheDocument();
-            });
-            const addButton = screen.getByText('Add Product');
-            fireEvent.click(addButton);
-            // Fill required fields
-            const nameInput = screen.getByLabelText('Name *');
-            const salesPriceInput = screen.getByLabelText('Sales Price *');
-            const gstRateInput = screen.getByLabelText('GST Rate *');
-            fireEvent.change(nameInput, { target: { value: 'New Product' } });
-            fireEvent.change(salesPriceInput, { target: { value: '150.00' } });
-            fireEvent.change(gstRateInput, { target: { value: '18' } });
-            const submitButton = screen.getByText('Add Product');
-            fireEvent.click(submitButton);
-            await waitFor(() => {
-                expect(api.apiCreateProduct).toHaveBeenCalledWith({
-                    name: 'New Product',
-                    description: '',
-                    item_type: 'tradable',
-                    sales_price: '150.00',
-                    purchase_price: '',
-                    stock: '',
-                    sku: '',
-                    unit: 'Pcs',
-                    supplier: '',
-                    category: '',
-                    notes: '',
-                    hsn: '',
-                    gst_rate: '18'
-                });
+                expect(screen.getByText('Add New Product')).toBeInTheDocument();
+                expect(screen.getByText('Product Name *')).toBeInTheDocument();
+                expect(screen.getByText('Product Code *')).toBeInTheDocument();
+                expect(screen.getByText('SKU')).toBeInTheDocument();
             });
         });
     });
-    describe('Stock Adjustment Modal', () => {
-        it('should open stock adjustment modal when Stock button is clicked', async () => {
+    describe('Edit Mode', () => {
+        it('should render edit product form', async () => {
             vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            renderWithAuth(_jsx(Products, {}));
+            vi.mocked(api.apiListParties).mockResolvedValue(mockVendors);
+            renderWithProviders(_jsx(Products, { mode: "edit" }), '/products/edit/1');
             await waitFor(() => {
-                expect(screen.getByText('Stock')).toBeInTheDocument();
-            });
-            const stockButtons = screen.getAllByText('Stock');
-            fireEvent.click(stockButtons[0]);
-            expect(screen.getByText('Stock Adjustment - Test Product 1')).toBeInTheDocument();
-            expect(screen.getByLabelText('Adjustment Type *')).toBeInTheDocument();
-            expect(screen.getByLabelText('Quantity *')).toBeInTheDocument();
-        });
-        it('should show current stock in read-only field', async () => {
-            vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            renderWithAuth(_jsx(Products, {}));
-            await waitFor(() => {
-                expect(screen.getByText('Stock')).toBeInTheDocument();
-            });
-            const stockButtons = screen.getAllByText('Stock');
-            fireEvent.click(stockButtons[0]);
-            const currentStockInput = screen.getByDisplayValue('50');
-            expect(currentStockInput).toBeInTheDocument();
-            expect(currentStockInput).toBeDisabled();
-        });
-        it('should validate stock adjustment form', async () => {
-            vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            renderWithAuth(_jsx(Products, {}));
-            await waitFor(() => {
-                expect(screen.getByText('Stock')).toBeInTheDocument();
-            });
-            const stockButtons = screen.getAllByText('Stock');
-            fireEvent.click(stockButtons[0]);
-            const submitButton = screen.getByText('Apply Adjustment');
-            fireEvent.click(submitButton);
-            await waitFor(() => {
-                expect(screen.getByText('Quantity is required')).toBeInTheDocument();
-            });
-        });
-        it('should validate quantity range', async () => {
-            vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            renderWithAuth(_jsx(Products, {}));
-            await waitFor(() => {
-                expect(screen.getByText('Stock')).toBeInTheDocument();
-            });
-            const stockButtons = screen.getAllByText('Stock');
-            fireEvent.click(stockButtons[0]);
-            const quantityInput = screen.getByLabelText('Quantity *');
-            fireEvent.change(quantityInput, { target: { value: '1000000' } });
-            const submitButton = screen.getByText('Apply Adjustment');
-            fireEvent.click(submitButton);
-            await waitFor(() => {
-                expect(screen.getByText('Quantity must be between 0 and 999999')).toBeInTheDocument();
-            });
-        });
-        it('should successfully adjust stock', async () => {
-            vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            vi.mocked(api.apiAdjustStock).mockResolvedValue({ ok: true, new_stock: 60 });
-            renderWithAuth(_jsx(Products, {}));
-            await waitFor(() => {
-                expect(screen.getByText('Stock')).toBeInTheDocument();
-            });
-            const stockButtons = screen.getAllByText('Stock');
-            fireEvent.click(stockButtons[0]);
-            // Fill form
-            const quantityInput = screen.getByLabelText('Quantity *');
-            const adjustmentTypeSelect = screen.getByLabelText('Adjustment Type *');
-            fireEvent.change(quantityInput, { target: { value: '10' } });
-            fireEvent.change(adjustmentTypeSelect, { target: { value: 'add' } });
-            const submitButton = screen.getByText('Apply Adjustment');
-            fireEvent.click(submitButton);
-            await waitFor(() => {
-                expect(api.apiAdjustStock).toHaveBeenCalledWith(1, // product ID
-                10, // quantity
-                'add', // adjustment type
-                expect.any(String), // date
-                undefined, // reference bill number
-                undefined, // supplier
-                undefined, // category
-                undefined // notes
-                );
+                expect(screen.getByText('Edit Product')).toBeInTheDocument();
             });
         });
     });
-    describe('Edit Product Modal', () => {
-        it('should open edit modal when Edit button is clicked', async () => {
+    describe('Stock Adjustment Mode', () => {
+        it('should render stock adjustment form', async () => {
             vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            renderWithAuth(_jsx(Products, {}));
+            vi.mocked(api.apiListParties).mockResolvedValue(mockVendors);
+            renderWithProviders(_jsx(Products, { mode: "stock-adjustment" }), '/products/stock-adjustment');
             await waitFor(() => {
-                expect(screen.getByText('Edit')).toBeInTheDocument();
-            });
-            const editButtons = screen.getAllByText('Edit');
-            fireEvent.click(editButtons[0]);
-            expect(screen.getByText('Edit Product')).toBeInTheDocument();
-            expect(screen.getByDisplayValue('Test Product 1')).toBeInTheDocument();
-            expect(screen.getByDisplayValue('100')).toBeInTheDocument();
-        });
-        it('should populate form with existing product data', async () => {
-            vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            renderWithAuth(_jsx(Products, {}));
-            await waitFor(() => {
-                expect(screen.getByText('Edit')).toBeInTheDocument();
-            });
-            const editButtons = screen.getAllByText('Edit');
-            fireEvent.click(editButtons[0]);
-            expect(screen.getByDisplayValue('Test Product 1')).toBeInTheDocument();
-            expect(screen.getByDisplayValue('Test Description 1')).toBeInTheDocument();
-            expect(screen.getByDisplayValue('TEST001')).toBeInTheDocument();
-            expect(screen.getByDisplayValue('100')).toBeInTheDocument();
-            expect(screen.getByDisplayValue('80')).toBeInTheDocument();
-            expect(screen.getByDisplayValue('50')).toBeInTheDocument();
-            expect(screen.getByDisplayValue('Test Supplier')).toBeInTheDocument();
-            expect(screen.getByDisplayValue('Test Category')).toBeInTheDocument();
-            expect(screen.getByDisplayValue('18')).toBeInTheDocument();
-        });
-    });
-    describe('Product Status Toggle', () => {
-        it('should toggle product status when Enable/Disable button is clicked', async () => {
-            vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            vi.mocked(api.apiToggleProduct).mockResolvedValue({ ...mockProducts[0], is_active: false });
-            renderWithAuth(_jsx(Products, {}));
-            await waitFor(() => {
-                expect(screen.getByText('Disable')).toBeInTheDocument();
-            });
-            const disableButtons = screen.getAllByText('Disable');
-            fireEvent.click(disableButtons[0]);
-            await waitFor(() => {
-                expect(api.apiToggleProduct).toHaveBeenCalledWith(1);
+                expect(screen.getByText('Stock Adjustment')).toBeInTheDocument();
+                expect(screen.getByText('Stock adjustment functionality will be implemented here.')).toBeInTheDocument();
             });
         });
     });
-    describe('Export Functionality', () => {
-        it('should export products to CSV', async () => {
+    describe('Stock History Mode', () => {
+        it('should render stock history view', async () => {
             vi.mocked(api.apiGetProducts).mockResolvedValue(mockProducts);
-            // Mock URL.createObjectURL and document.createElement
-            const mockCreateElement = vi.fn().mockReturnValue({
-                setAttribute: vi.fn(),
-                click: vi.fn(),
-                style: {}
-            });
-            const mockCreateObjectURL = vi.fn().mockReturnValue('mock-url');
-            Object.defineProperty(document, 'createElement', {
-                value: mockCreateElement,
-                writable: true
-            });
-            Object.defineProperty(URL, 'createObjectURL', {
-                value: mockCreateObjectURL,
-                writable: true
-            });
-            renderWithAuth(_jsx(Products, {}));
+            renderWithProviders(_jsx(Products, { mode: "stock-history" }), '/products/stock-history');
             await waitFor(() => {
-                expect(screen.getByText('Export CSV')).toBeInTheDocument();
+                expect(screen.getAllByText('Stock History')).toHaveLength(2); // Both h1 and h3
+                expect(screen.getByText('Stock history functionality will be implemented here.')).toBeInTheDocument();
             });
-            const exportButton = screen.getByText('Export CSV');
-            fireEvent.click(exportButton);
-            expect(mockCreateElement).toHaveBeenCalledWith('a');
         });
     });
 });

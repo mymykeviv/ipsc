@@ -381,109 +381,116 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: '100%' }}>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '100%' }}>
       <ErrorMessage message={error} />
 
       {/* Invoice Details Section */}
-      <div style={formStyles.section}>
-        <h3 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('basic') }}>
+      <div style={{ marginBottom: '4px' }}>
+        <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '2px' }}>
           📄 Invoice Details
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-          <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>Invoice Number *</label>
-            <input
-              type="text"
-              value={formData.invoice_no}
-              onChange={(e) => setFormData({...formData, invoice_no: e.target.value})}
-              maxLength={16}
-              required
-              style={formStyles.input}
-            />
+        <div style={formStyles.grid}>
+          {/* First Row: 4 columns */}
+          <div style={formStyles.grid4Col}>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Invoice Number *</label>
+              <input
+                type="text"
+                value={formData.invoice_no}
+                onChange={(e) => setFormData({...formData, invoice_no: e.target.value})}
+                maxLength={16}
+                required
+                style={formStyles.input}
+              />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Invoice Date *</label>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({...formData, date: e.target.value})}
+                required
+                style={formStyles.input}
+              />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Invoice Due Date *</label>
+              <input
+                type="date"
+                value={formData.due_date}
+                onChange={(e) => setFormData({...formData, due_date: e.target.value})}
+                required
+                style={formStyles.input}
+              />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Invoice Terms *</label>
+              <select
+                value={formData.terms}
+                onChange={(e) => updateDueDate(e.target.value)}
+                required
+                style={formStyles.select}
+              >
+                {INVOICE_TERMS.map(term => (
+                  <option key={term} value={term}>{term}</option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div>
-            <label>Invoice Date *</label>
-            <input
-              type="date"
-              value={formData.date}
-              onChange={(e) => setFormData({...formData, date: e.target.value})}
-              required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-            />
-          </div>
-          <div>
-            <label>Invoice Due Date *</label>
-            <input
-              type="date"
-              value={formData.due_date}
-              onChange={(e) => setFormData({...formData, due_date: e.target.value})}
-              required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-            />
-          </div>
-          <div>
-            <label>Invoice Status</label>
-            <input
-              type="text"
-              value={formData.status}
-              readOnly
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9' }}
-            />
-          </div>
-          <div>
-            <label>Invoice Type *</label>
-            <select
-              value={formData.invoice_type}
-              onChange={(e) => setFormData({...formData, invoice_type: e.target.value})}
-              required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-            >
-              {INVOICE_TYPES.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label>Invoice Currency</label>
-            <select
-              value={formData.currency}
-              onChange={(e) => setFormData({...formData, currency: e.target.value})}
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-            >
-              {CURRENCIES.map(currency => (
-                <option key={currency} value={currency}>{currency}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label>Invoice Terms *</label>
-            <select
-              value={formData.terms}
-              onChange={(e) => updateDueDate(e.target.value)}
-              required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-            >
-              {INVOICE_TERMS.map(term => (
-                <option key={term} value={term}>{term}</option>
-              ))}
-            </select>
+          
+          {/* Second Row: 3 columns */}
+          <div style={formStyles.grid3Col}>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Invoice Status</label>
+              <input
+                type="text"
+                value={formData.status}
+                readOnly
+                style={{ ...formStyles.input, backgroundColor: '#f9f9f9' }}
+              />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Invoice Type *</label>
+              <select
+                value={formData.invoice_type}
+                onChange={(e) => setFormData({...formData, invoice_type: e.target.value})}
+                required
+                style={formStyles.select}
+              >
+                {INVOICE_TYPES.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Invoice Currency</label>
+              <select
+                value={formData.currency}
+                onChange={(e) => setFormData({...formData, currency: e.target.value})}
+                style={formStyles.select}
+              >
+                {CURRENCIES.map(currency => (
+                  <option key={currency} value={currency}>{currency}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Supplier Details Section */}
-      <div style={{ marginBottom: '24px' }}>
-        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>
+      <div style={{ marginBottom: '4px' }}>
+        <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '2px' }}>
           Supplier Details
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-          <div>
-            <label>Supplier Name *</label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '4px' }}>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Supplier Name *</label>
             <select
               value={formData.supplier_id || ''}
               onChange={(e) => updateSupplierDetails(Number(e.target.value))}
               required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+              style={formStyles.select}
             >
               <option value="">Select Supplier...</option>
               {suppliers.map(supplier => (
@@ -491,30 +498,30 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
               ))}
             </select>
           </div>
-          <div>
-            <label>Supplier Address *</label>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Supplier Address *</label>
             <input
               type="text"
               value={formData.supplier_address}
               onChange={(e) => setFormData({...formData, supplier_address: e.target.value})}
               maxLength={200}
               required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+              style={formStyles.input}
             />
           </div>
-          <div>
-            <label>Supplier GSTIN *</label>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Supplier GSTIN *</label>
             <input
               type="text"
               value={formData.supplier_gstin}
               onChange={(e) => setFormData({...formData, supplier_gstin: e.target.value})}
               maxLength={15}
               required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+              style={formStyles.input}
             />
           </div>
-          <div>
-            <label>Supplier Email</label>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Supplier Email</label>
             <input
               type="email"
               value={formData.supplier_email}
@@ -527,11 +534,11 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
       </div>
 
       {/* GST Compliance Section */}
-      <div style={{ marginBottom: '24px' }}>
-        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '8px' }}>
+      <div style={{ marginBottom: '4px' }}>
+        <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '2px' }}>
           GST Compliance
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '4px' }}>
           <div>
             <label>Place of Supply *</label>
             <select
@@ -587,11 +594,11 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
       </div>
 
       {/* Customer Details Section */}
-      <div style={{ marginBottom: '24px' }}>
-        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '8px' }}>
+      <div style={{ marginBottom: '4px' }}>
+        <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '2px' }}>
           Customer Details
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '4px' }}>
           <div>
             <label>Customer Name *</label>
             <select

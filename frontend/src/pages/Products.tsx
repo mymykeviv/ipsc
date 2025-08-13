@@ -301,14 +301,15 @@ export function Products({ mode = 'manage' }: ProductsProps) {
 
         {error && <ErrorMessage message={error} />}
 
-        <form onSubmit={mode === 'add' ? handleAddProduct : handleEditProduct} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <form onSubmit={mode === 'add' ? handleAddProduct : handleEditProduct} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {/* Product Details Section */}
-          <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+          <div style={{ marginBottom: '4px' }}>
+            <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '2px' }}>
               Product Details
             </h3>
             <div style={formStyles.grid}>
-              <div style={formStyles.grid3Col}>
+              {/* First Row: 4 columns */}
+              <div style={formStyles.grid4Col}>
                 <div style={formStyles.formGroup}>
                   <label style={formStyles.label}>Product Name *</label>
                   <input
@@ -338,9 +339,6 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                     style={formStyles.input}
                   />
                 </div>
-              </div>
-              
-              <div style={formStyles.grid2Col}>
                 <div style={formStyles.formGroup}>
                   <label style={formStyles.label}>Unit of Measure *</label>
                   <select
@@ -357,6 +355,10 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                     <option value="Set">Set</option>
                   </select>
                 </div>
+              </div>
+              
+              {/* Second Row: 4 columns */}
+              <div style={formStyles.grid4Col}>
                 <div style={formStyles.formGroup}>
                   <label style={formStyles.label}>Product Supplier</label>
                   <select
@@ -370,47 +372,44 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                     ))}
                   </select>
                 </div>
-              </div>
-              
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Product Type *</label>
-                <select
-                  value={formData.product_type}
-                  onChange={(e) => setFormData(prev => ({ ...prev, product_type: e.target.value }))}
-                  style={formStyles.select}
-                  required
-                >
-                  <option value="Goods">Goods</option>
-                  <option value="Services">Services</option>
-                </select>
-              </div>
-              
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Product Category *</label>
-                <input
-                  type="text"
-                  value={formData.category}
-                  onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                  style={formStyles.input}
-                  required
-                />
-              </div>
-              
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Product Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  style={formStyles.textarea}
-                  placeholder="Enter detailed product description..."
-                />
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Product Type *</label>
+                  <select
+                    value={formData.product_type}
+                    onChange={(e) => setFormData(prev => ({ ...prev, product_type: e.target.value }))}
+                    style={formStyles.select}
+                    required
+                  >
+                    <option value="Goods">Goods</option>
+                    <option value="Services">Services</option>
+                  </select>
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Product Category *</label>
+                  <input
+                    type="text"
+                    value={formData.category}
+                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                    style={formStyles.input}
+                    required
+                  />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Product Description</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    style={formStyles.textarea}
+                    placeholder="Enter detailed product description..."
+                  />
+                </div>
               </div>
             </div>
           </div>
 
           {/* Price Details Section */}
-          <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>
+          <div style={{ marginBottom: '4px' }}>
+            <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '2px' }}>
               Price Details
             </h3>
             <div style={formStyles.grid}>
@@ -466,8 +465,8 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           </div>
 
           {/* Stock Details Section */}
-          <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '8px' }}>
+          <div style={{ marginBottom: '4px' }}>
+            <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '2px' }}>
               Stock Details
             </h3>
             <div style={formStyles.grid}>

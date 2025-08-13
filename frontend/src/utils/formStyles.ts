@@ -5,7 +5,7 @@ export const formStyles = {
   // Standard input field styling
   input: {
     width: '100%',
-    padding: '8px 12px',
+    padding: '6px 10px',
     border: '1px solid var(--border)',
     borderRadius: 'var(--radius)',
     fontSize: '14px',
@@ -25,7 +25,7 @@ export const formStyles = {
   // Standard select field styling
   select: {
     width: '100%',
-    padding: '8px 12px',
+    padding: '6px 10px',
     border: '1px solid var(--border)',
     borderRadius: 'var(--radius)',
     fontSize: '14px',
@@ -39,7 +39,7 @@ export const formStyles = {
   // Standard textarea styling
   textarea: {
     width: '100%',
-    padding: '8px 12px',
+    padding: '6px 10px',
     border: '1px solid var(--border)',
     borderRadius: 'var(--radius)',
     fontSize: '14px',
@@ -47,14 +47,14 @@ export const formStyles = {
     color: 'var(--text)',
     backgroundColor: 'white',
     resize: 'vertical',
-    minHeight: '80px',
+    minHeight: '60px',
     transition: 'border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
   } as const,
 
   // Standard label styling
   label: {
     display: 'block',
-    marginBottom: '6px',
+    marginBottom: '2px',
     fontSize: '14px',
     fontWeight: '500',
     color: 'var(--text)',
@@ -62,7 +62,7 @@ export const formStyles = {
 
   // Form group container
   formGroup: {
-    marginBottom: '16px',
+    marginBottom: '6px',
   } as const,
 
   // Form section styling
@@ -83,28 +83,28 @@ export const formStyles = {
   // Grid container for form fields
   grid: {
     display: 'grid',
-    gap: '16px',
+    gap: '8px',
   } as const,
 
   // Two column grid
   grid2Col: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: '16px',
+    gap: '8px',
   } as const,
 
   // Three column grid
   grid3Col: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr 1fr',
-    gap: '16px',
+    gap: '8px',
   } as const,
 
   // Four column grid
   grid4Col: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr 1fr 1fr',
-    gap: '16px',
+    gap: '8px',
   } as const,
 } as const;
 
