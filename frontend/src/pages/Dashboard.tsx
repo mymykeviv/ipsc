@@ -148,67 +148,65 @@ export function Dashboard() {
             🚀 Quick Actions
           </h3>
           
-
-        </div>
-        
-        <div style={{ 
-          display: 'flex', 
-          gap: '8px', 
-          flexWrap: 'wrap',
-          alignItems: 'center'
-        }}>
-          <Button 
-            onClick={() => setShowExpenseModal(true)}
-            variant="primary"
-            style={{ 
-              padding: '8px 12px', 
-              fontSize: '13px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}
-          >
-            💰 Add Expense
-          </Button>
-          <Button 
-            onClick={() => setShowInvoiceModal(true)}
-            variant="primary"
-            style={{ 
-              padding: '8px 12px', 
-              fontSize: '13px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}
-          >
-            📄 New Invoice
-          </Button>
-          <Button 
-            onClick={() => setShowPurchaseModal(true)}
-            variant="primary"
-            style={{ 
-              padding: '8px 12px', 
-              fontSize: '13px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}
-          >
-            📦 New Purchase
-          </Button>
-          <Button 
-            onClick={() => navigate('/products')}
-            variant="primary"
-            style={{ 
-              padding: '8px 12px', 
-              fontSize: '13px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}
-          >
-            🏷️ Manage Products
-          </Button>
+          <div style={{ 
+            display: 'flex', 
+            gap: '8px', 
+            flexWrap: 'wrap',
+            alignItems: 'center'
+          }}>
+            <Button 
+              onClick={() => setShowExpenseModal(true)}
+              variant="primary"
+              style={{ 
+                padding: '8px 12px', 
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              💰 Add Expense
+            </Button>
+            <Button 
+              onClick={() => setShowInvoiceModal(true)}
+              variant="primary"
+              style={{ 
+                padding: '8px 12px', 
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              📄 New Invoice
+            </Button>
+            <Button 
+              onClick={() => setShowPurchaseModal(true)}
+              variant="primary"
+              style={{ 
+                padding: '8px 12px', 
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              📦 New Purchase
+            </Button>
+            <Button 
+              onClick={() => navigate('/products')}
+              variant="primary"
+              style={{ 
+                padding: '8px 12px', 
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              🏷️ Manage Products
+            </Button>
+          </div>
         </div>
       </div>
 
