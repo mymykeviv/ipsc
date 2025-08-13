@@ -78,12 +78,18 @@ a:hover { background: var(--panel); }
   overflow-x: hidden;
 }
 .sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 320px;
   border-right: 1px solid var(--border);
   padding: 16px;
   background: var(--panel);
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
   backdrop-filter: blur(10px);
   overflow-y: auto;
+  z-index: 100;
 }
 .brand {
   font-weight: 700;
@@ -179,8 +185,11 @@ nav.nav {
   color: #b91c1c !important;
 }
 .content {
+  margin-left: 320px;
   padding: 16px;
   background: var(--bg);
+  min-height: 100vh;
+  overflow-y: auto;
 }
 
 /* Generic components */

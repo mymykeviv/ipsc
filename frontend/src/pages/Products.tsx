@@ -282,7 +282,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   // Render different content based on mode
   if (mode === 'add' || mode === 'edit') {
     return (
-      <div style={{ padding: '20px', maxWidth: '100%' }}>
+      <div style={{ padding: '20px' }}>
         <div style={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
@@ -608,7 +608,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   )
 
   return (
-    <div style={{ padding: '20px', maxWidth: '100%' }}>
+    <div style={{ padding: '20px' }}>
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 

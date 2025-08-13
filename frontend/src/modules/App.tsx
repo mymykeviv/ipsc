@@ -17,6 +17,21 @@ import { SessionTimer } from '../components/SessionTimer'
 function Shell() {
   const { token, isAuthenticated, logout, expiresAt } = useAuth()
   const location = useLocation()
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
+    products: false,
+    invoices: false,
+    purchases: false,
+    customers: false,
+    cashflow: false,
+    settings: false
+  })
+
+  const toggleSection = (section: string) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }))
+  }
   
   // Helper function to check if a link is active
   const isActive = (path: string) => {
@@ -57,6 +72,11 @@ function Shell() {
       return !location.pathname.includes('/add') && 
              !location.pathname.includes('/edit')
     }
+    if (path === '/expenses' && location.pathname.startsWith('/expenses')) {
+      // Only highlight /expenses if we're not on a specific sub-path
+      return !location.pathname.includes('/add') && 
+             !location.pathname.includes('/edit')
+    }
     return location.pathname.startsWith(path)
   }
   
@@ -89,97 +109,158 @@ function Shell() {
           
           {/* Products Section */}
           <div className="nav-section">
-            <div className="nav-section-header">🏷️ Products</div>
-            <Link className={`nav-link sub-link ${isActive('/products') ? 'active' : ''}`} to="/products">
-              Manage Products
-            </Link>
-            <Link className={`nav-link sub-link ${isActive('/products/add') ? 'active' : ''}`} to="/products/add">
-              Add/Edit Product
-            </Link>
+            <div 
+              className="nav-section-header" 
+              onClick={() => toggleSection('products')}
+              style={{ cursor: 'pointer', userSelect: 'none' }}
+            >
+              🏷️ Products {collapsedSections.products ? '▼' : '▶'}
+            </div>
+            {!collapsedSections.products && (
+              <>
+                <Link className={`nav-link sub-link ${isActive('/products') ? 'active' : ''}`} to="/products">
+                  Manage Products
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/products/add') ? 'active' : ''}`} to="/products/add">
+                  Add/Edit Product
+                </Link>
+              </>
+            )}
           </div>
           
           {/* Invoices Section */}
           <div className="nav-section">
-            <div className="nav-section-header">📄 Invoices</div>
-            <Link className={`nav-link sub-link ${isActive('/invoices') ? 'active' : ''}`} to="/invoices">
-              Manage Invoices
-            </Link>
-            <Link className={`nav-link sub-link ${isActive('/invoices/add') ? 'active' : ''}`} to="/invoices/add">
-              Add/Edit Invoice
-            </Link>
-            <Link className={`nav-link sub-link ${isActive('/invoices/payments') ? 'active' : ''}`} to="/invoices/payments">
-              Invoice Payments
-            </Link>
-            <Link className={`nav-link sub-link ${isActive('/invoices/payments/add') ? 'active' : ''}`} to="/invoices/payments/add">
-              Add/Edit Invoice Payment
-            </Link>
+            <div 
+              className="nav-section-header" 
+              onClick={() => toggleSection('invoices')}
+              style={{ cursor: 'pointer', userSelect: 'none' }}
+            >
+              📄 Invoices {collapsedSections.invoices ? '▼' : '▶'}
+            </div>
+            {!collapsedSections.invoices && (
+              <>
+                <Link className={`nav-link sub-link ${isActive('/invoices') ? 'active' : ''}`} to="/invoices">
+                  Manage Invoices
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/invoices/add') ? 'active' : ''}`} to="/invoices/add">
+                  Add/Edit Invoice
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/invoices/payments') ? 'active' : ''}`} to="/invoices/payments">
+                  Invoice Payments
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/invoices/payments/add') ? 'active' : ''}`} to="/invoices/payments/add">
+                  Add/Edit Invoice Payment
+                </Link>
+              </>
+            )}
           </div>
           
           {/* Purchases Section */}
           <div className="nav-section">
-            <div className="nav-section-header">📦 Purchases</div>
-            <Link className={`nav-link sub-link ${isActive('/purchases') ? 'active' : ''}`} to="/purchases">
-              Manage Purchases
-            </Link>
-            <Link className={`nav-link sub-link ${isActive('/purchases/add') ? 'active' : ''}`} to="/purchases/add">
-              Add/Edit Purchase
-            </Link>
-            <Link className={`nav-link sub-link ${isActive('/purchases/payments') ? 'active' : ''}`} to="/purchases/payments">
-              Purchase Payments
-            </Link>
-            <Link className={`nav-link sub-link ${isActive('/purchases/payments/add') ? 'active' : ''}`} to="/purchases/payments/add">
-              Add/Edit Purchase Payment
-            </Link>
+            <div 
+              className="nav-section-header" 
+              onClick={() => toggleSection('purchases')}
+              style={{ cursor: 'pointer', userSelect: 'none' }}
+            >
+              📦 Purchases {collapsedSections.purchases ? '▼' : '▶'}
+            </div>
+            {!collapsedSections.purchases && (
+              <>
+                <Link className={`nav-link sub-link ${isActive('/purchases') ? 'active' : ''}`} to="/purchases">
+                  Manage Purchases
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/purchases/add') ? 'active' : ''}`} to="/purchases/add">
+                  Add/Edit Purchase
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/purchases/payments') ? 'active' : ''}`} to="/purchases/payments">
+                  Purchase Payments
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/purchases/payments/add') ? 'active' : ''}`} to="/purchases/payments/add">
+                  Add/Edit Purchase Payment
+                </Link>
+              </>
+            )}
           </div>
           
-          {/* Customers Section */}
+          {/* Customers / Vendors Section */}
           <div className="nav-section">
-            <div className="nav-section-header">👥 Customers</div>
-            <Link className={`nav-link sub-link ${isActive('/customers') ? 'active' : ''}`} to="/customers">
-              Manage Customers
-            </Link>
-            <Link className={`nav-link sub-link ${isActive('/customers/add') ? 'active' : ''}`} to="/customers/add">
-              Add/Edit Customer
-            </Link>
-          </div>
-          
-          {/* Vendors/Suppliers Section */}
-          <div className="nav-section">
-            <div className="nav-section-header">🏢 Vendors/Suppliers</div>
-            <Link className={`nav-link sub-link ${isActive('/vendors') ? 'active' : ''}`} to="/vendors">
-              Manage Vendors/Suppliers
-            </Link>
-            <Link className={`nav-link sub-link ${isActive('/vendors/add') ? 'active' : ''}`} to="/vendors/add">
-              Add/Edit Vendor/Supplier
-            </Link>
+            <div 
+              className="nav-section-header" 
+              onClick={() => toggleSection('customers')}
+              style={{ cursor: 'pointer', userSelect: 'none' }}
+            >
+              👥 Customers / Vendors {collapsedSections.customers ? '▼' : '▶'}
+            </div>
+            {!collapsedSections.customers && (
+              <>
+                <Link className={`nav-link sub-link ${isActive('/customers') ? 'active' : ''}`} to="/customers">
+                  Customers
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/customers/add') ? 'active' : ''}`} to="/customers/add">
+                  Add/Edit Customer
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/vendors') ? 'active' : ''}`} to="/vendors">
+                  Vendors
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/vendors/add') ? 'active' : ''}`} to="/vendors/add">
+                  Add/Edit Vendor
+                </Link>
+              </>
+            )}
           </div>
           
           {/* Cashflow Section */}
           <div className="nav-section">
-            <div className="nav-section-header">💰 Cashflow</div>
-            <Link className={`nav-link sub-link ${isActive('/cashflow') ? 'active' : ''}`} to="/cashflow">
-              View Cashflow Transactions
-            </Link>
+            <div 
+              className="nav-section-header" 
+              onClick={() => toggleSection('cashflow')}
+              style={{ cursor: 'pointer', userSelect: 'none' }}
+            >
+              💰 Cashflow {collapsedSections.cashflow ? '▼' : '▶'}
+            </div>
+            {!collapsedSections.cashflow && (
+              <>
+                <Link className={`nav-link sub-link ${isActive('/cashflow') ? 'active' : ''}`} to="/cashflow">
+                  View Cashflow Transactions
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/expenses') ? 'active' : ''}`} to="/expenses">
+                  Manage Expenses
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/expenses/add') ? 'active' : ''}`} to="/expenses/add">
+                  Add/Edit Expense
+                </Link>
+              </>
+            )}
           </div>
           
           {/* Settings Section */}
           <div className="nav-section">
-            <div className="nav-section-header">⚙️ Settings</div>
-            <Link className={`nav-link sub-link ${isActive('/settings/company') ? 'active' : ''}`} to="/settings/company">
-              Company Details
-            </Link>
-            <Link className={`nav-link sub-link ${isActive('/settings/tax') ? 'active' : ''}`} to="/settings/tax">
-              Tax Settings
-            </Link>
-            <Link className={`nav-link sub-link ${isActive('/settings/users') ? 'active' : ''}`} to="/settings/users">
-              Users
-            </Link>
-            <Link className={`nav-link sub-link ${isActive('/settings/email') ? 'active' : ''}`} to="/settings/email">
-              Email Settings
-            </Link>
-            <Link className={`nav-link sub-link ${isActive('/settings/invoice') ? 'active' : ''}`} to="/settings/invoice">
-              Invoice Settings
-            </Link>
+            <div 
+              className="nav-section-header" 
+              onClick={() => toggleSection('settings')}
+              style={{ cursor: 'pointer', userSelect: 'none' }}
+            >
+              ⚙️ Settings {collapsedSections.settings ? '▼' : '▶'}
+            </div>
+            {!collapsedSections.settings && (
+              <>
+                <Link className={`nav-link sub-link ${isActive('/settings/company') ? 'active' : ''}`} to="/settings/company">
+                  Company Details
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/settings/tax') ? 'active' : ''}`} to="/settings/tax">
+                  Tax Settings
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/settings/users') ? 'active' : ''}`} to="/settings/users">
+                  Users
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/settings/email') ? 'active' : ''}`} to="/settings/email">
+                  Email Settings
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/settings/invoice') ? 'active' : ''}`} to="/settings/invoice">
+                  Invoice Settings
+                </Link>
+              </>
+            )}
           </div>
           
           {/* Session Timer */}

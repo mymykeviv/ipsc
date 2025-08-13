@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../modules/AuthContext'
 import { 
   apiCreateExpense, 
@@ -14,8 +15,14 @@ import {
 import { Button } from '../components/Button'
 import { ExpenseForm } from '../components/ExpenseForm'
 
-export function Expenses() {
+interface ExpensesProps {
+  mode?: 'manage' | 'add' | 'edit'
+}
+
+export function Expenses({ mode = 'manage' }: ExpensesProps) {
   const { token } = useAuth()
+  const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>()
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [vendors, setVendors] = useState<Party[]>([])
   const [loading, setLoading] = useState(false)
@@ -23,27 +30,11 @@ export function Expenses() {
   const [searchTerm, setSearchTerm] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [expenseTypeFilter, setExpenseTypeFilter] = useState('')
-  const [showCreateForm, setShowCreateForm] = useState(false)
-  const [showEditForm, setShowEditForm] = useState(false)
-  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null)
+  const [currentExpense, setCurrentExpense] = useState<Expense | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
 
-  // Form state
-  const [formData, setFormData] = useState<ExpenseCreate>({
-    expense_date: new Date().toISOString().split('T')[0],
-    expense_type: '',
-    category: '',
-    subcategory: '',
-    description: '',
-    amount: 0,
-    payment_method: 'Cash',
-    account_head: 'Cash',
-    reference_number: '',
-    vendor_id: undefined,
-    gst_rate: 0,
-    notes: ''
-  })
+
 
   // Expense categories and types
   const expenseCategories = [
@@ -69,68 +60,57 @@ export function Expenses() {
 
   useEffect(() => {
     if (!token) return
-    loadData()
-  }, [token])
+    
+    if (mode === 'manage') {
+      loadExpenses()
+    } else if (mode === 'edit' && id) {
+      loadExpense()
+    }
+    loadVendors()
+  }, [token, mode, id])
 
-  const loadData = async () => {
+  const loadExpenses = async () => {
     try {
       setLoading(true)
       setError(null)
-      const [expensesData, vendorsData] = await Promise.all([
-        apiListExpenses(searchTerm, categoryFilter, expenseTypeFilter),
-        apiListParties()
-      ])
+      const expensesData = await apiListExpenses(searchTerm, categoryFilter, expenseTypeFilter)
       setExpenses(expensesData)
-      setVendors(vendorsData.filter(p => p.type === 'vendor'))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data')
+      setError(err instanceof Error ? err.message : 'Failed to load expenses')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadExpense = async () => {
+    if (!id) return
+    try {
+      setLoading(true)
+      setError(null)
+      const expenseData = await apiGetExpense(parseInt(id))
+      setCurrentExpense(expenseData)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load expense')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadVendors = async () => {
+    try {
+      const vendorsData = await apiListParties()
+      setVendors(vendorsData.filter(p => p.type === 'vendor'))
+    } catch (err) {
+      console.error('Failed to load vendors:', err)
     }
   }
 
   useEffect(() => {
-    loadData()
-    setCurrentPage(1)
+    if (mode === 'manage') {
+      loadExpenses()
+      setCurrentPage(1)
+    }
   }, [searchTerm, categoryFilter, expenseTypeFilter])
-
-  const handleCreateExpense = async () => {
-    if (!formData.expense_type || !formData.category || !formData.description || formData.amount <= 0) {
-      setError('Please fill all required fields')
-      return
-    }
-
-    try {
-      setLoading(true)
-      setError(null)
-      await apiCreateExpense(formData)
-      setShowCreateForm(false)
-      loadData()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create expense')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleUpdateExpense = async () => {
-    if (!selectedExpense || !formData.expense_type || !formData.category || !formData.description || formData.amount <= 0) {
-      setError('Please fill all required fields')
-      return
-    }
-
-    try {
-      setLoading(true)
-      setError(null)
-      await apiUpdateExpense(selectedExpense.id, formData)
-      setShowEditForm(false)
-      loadData()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update expense')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleDeleteExpense = async (id: number) => {
     if (!confirm('Are you sure you want to delete this expense?')) return
@@ -139,48 +119,12 @@ export function Expenses() {
       setLoading(true)
       setError(null)
       await apiDeleteExpense(id)
-      loadData()
+      loadExpenses()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete expense')
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleEdit = (expense: Expense) => {
-    setSelectedExpense(expense)
-    setFormData({
-      expense_date: expense.expense_date,
-      expense_type: expense.expense_type,
-      category: expense.category,
-      subcategory: expense.subcategory || '',
-      description: expense.description,
-      amount: expense.amount,
-      payment_method: expense.payment_method,
-      account_head: expense.account_head,
-      reference_number: expense.reference_number || '',
-      vendor_id: expense.vendor_id,
-      gst_rate: expense.gst_rate,
-      notes: expense.notes || ''
-    })
-    setShowEditForm(true)
-  }
-
-  const resetForm = () => {
-    setFormData({
-      expense_date: new Date().toISOString().split('T')[0],
-      expense_type: '',
-      category: '',
-      subcategory: '',
-      description: '',
-      amount: 0,
-      payment_method: 'Cash',
-      account_head: 'Cash',
-      reference_number: '',
-      vendor_id: undefined,
-      gst_rate: 0,
-      notes: ''
-    })
   }
 
   const filteredExpenses = expenses.filter(expense => {
@@ -205,6 +149,50 @@ export function Expenses() {
     )
   }
 
+  // Render different modes
+  if (mode === 'add' || mode === 'edit') {
+    return (
+      <div style={{ padding: '20px', maxWidth: '100%' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '24px',
+          paddingBottom: '12px',
+          borderBottom: '2px solid #e9ecef'
+        }}>
+          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
+            {mode === 'add' ? 'Add Expense' : 'Edit Expense'}
+          </h1>
+          <Button variant="secondary" onClick={() => navigate('/expenses')}>
+            Back to Expenses
+          </Button>
+        </div>
+
+        {error && (
+          <div style={{ 
+            padding: '12px 16px', 
+            marginBottom: '20px', 
+            backgroundColor: '#fee', 
+            border: '1px solid #fcc', 
+            borderRadius: '6px', 
+            color: '#c33',
+            fontSize: '14px'
+          }}>
+            {error}
+          </div>
+        )}
+
+        <ExpenseForm 
+          expenseId={mode === 'edit' ? currentExpense?.id : undefined}
+          onSuccess={() => navigate('/expenses')}
+          onCancel={() => navigate('/expenses')}
+        />
+      </div>
+    )
+  }
+
+  // Manage Expenses Mode
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
       <div style={{ 
@@ -215,8 +203,8 @@ export function Expenses() {
         paddingBottom: '12px',
         borderBottom: '2px solid #e9ecef'
       }}>
-        <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Expenses</h1>
-        <Button variant="primary" onClick={() => setShowCreateForm(true)}>
+        <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Manage Expenses</h1>
+        <Button variant="primary" onClick={() => navigate('/expenses/add')}>
           Add Expense
         </Button>
       </div>
@@ -329,7 +317,7 @@ export function Expenses() {
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <Button 
                       variant="secondary" 
-                      onClick={() => handleEdit(expense)}
+                      onClick={() => navigate(`/expenses/edit/${expense.id}`)}
                       style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       Edit
@@ -411,45 +399,8 @@ export function Expenses() {
         </div>
       )}
 
-      {/* Add Expense Modal */}
-      {showCreateForm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{ width: '80%', height: '80%', maxWidth: '1400px', maxHeight: '80vh', overflow: 'auto' }}>
-            <ExpenseForm onClose={() => setShowCreateForm(false)} />
-          </div>
-        </div>
-      )}
 
-      {/* Edit Expense Modal */}
-      {showEditForm && selectedExpense && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{ width: '80%', height: '80%', maxWidth: '1400px', maxHeight: '80vh', overflow: 'auto' }}>
-            <ExpenseForm expenseId={selectedExpense.id} onClose={() => setShowEditForm(false)} />
-          </div>
-        </div>
-      )}
     </div>
   )
 }
+
