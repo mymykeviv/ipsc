@@ -331,58 +331,68 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* Income and Expense Breakdown - Compact */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            {/* Income Section */}
-            <div style={{ 
-              padding: '12px', 
-              backgroundColor: '#d4edda', 
-              borderRadius: '6px',
-              border: '1px solid #c3e6cb'
-            }}>
-              <h3 style={{ margin: '0 0 8px 0', color: '#155724', fontSize: '16px' }}>
-                💰 Income
-              </h3>
-              <div style={{ display: 'grid', gap: '6px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                  <span>Invoice Amount:</span>
-                  <strong>{formatCurrency(cashflowData.income.total_invoice_amount)}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                  <span>Payments Received:</span>
-                  <strong>{formatCurrency(cashflowData.income.total_payments_received)}</strong>
-                </div>
-                <hr style={{ border: 'none', borderTop: '1px solid #c3e6cb', margin: '6px 0' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 'bold' }}>
-                  <span>Total Income:</span>
-                  <span>{formatCurrency(cashflowData.cashflow.cash_inflow)}</span>
+          {/* Income and Expense Breakdown - Unified */}
+          <div style={{ 
+            padding: '16px', 
+            backgroundColor: '#f8f9fa', 
+            borderRadius: '8px',
+            border: '1px solid #e9ecef'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0', color: '#495057', fontSize: '18px', textAlign: 'center' }}>
+              📊 Income & Expenses Summary
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              {/* Income Column */}
+              <div style={{ 
+                padding: '12px', 
+                backgroundColor: '#d4edda', 
+                borderRadius: '6px',
+                border: '1px solid #c3e6cb'
+              }}>
+                <h4 style={{ margin: '0 0 8px 0', color: '#155724', fontSize: '16px', textAlign: 'center' }}>
+                  💰 Income
+                </h4>
+                <div style={{ display: 'grid', gap: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                    <span>Invoice Amount:</span>
+                    <strong>{formatCurrency(cashflowData.income.total_invoice_amount)}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                    <span>Payments Received:</span>
+                    <strong>{formatCurrency(cashflowData.income.total_payments_received)}</strong>
+                  </div>
+                  <hr style={{ border: 'none', borderTop: '1px solid #c3e6cb', margin: '6px 0' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 'bold' }}>
+                    <span>Total Income:</span>
+                    <span style={{ color: '#28a745' }}>{formatCurrency(cashflowData.cashflow.cash_inflow)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Expense Section */}
-            <div style={{ 
-              padding: '12px', 
-              backgroundColor: '#f8d7da', 
-              borderRadius: '6px',
-              border: '1px solid #f5c6cb'
-            }}>
-              <h3 style={{ margin: '0 0 8px 0', color: '#721c24', fontSize: '16px' }}>
-                💸 Expenses
-              </h3>
-              <div style={{ display: 'grid', gap: '6px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                  <span>Direct Expenses:</span>
-                  <strong>{formatCurrency(cashflowData.expenses.total_expenses)}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                  <span>Purchase Payments:</span>
-                  <strong>{formatCurrency(cashflowData.expenses.total_purchase_payments)}</strong>
-                </div>
-                <hr style={{ border: 'none', borderTop: '1px solid #f5c6cb', margin: '6px 0' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 'bold' }}>
-                  <span>Total Outflow:</span>
-                  <span>{formatCurrency(cashflowData.cashflow.cash_outflow)}</span>
+              {/* Expense Column */}
+              <div style={{ 
+                padding: '12px', 
+                backgroundColor: '#f8d7da', 
+                borderRadius: '6px',
+                border: '1px solid #f5c6cb'
+              }}>
+                <h4 style={{ margin: '0 0 8px 0', color: '#721c24', fontSize: '16px', textAlign: 'center' }}>
+                  💸 Expenses
+                </h4>
+                <div style={{ display: 'grid', gap: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                    <span>Direct Expenses:</span>
+                    <strong>{formatCurrency(cashflowData.expenses.total_expenses)}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                    <span>Purchase Payments:</span>
+                    <strong>{formatCurrency(cashflowData.expenses.total_purchase_payments)}</strong>
+                  </div>
+                  <hr style={{ border: 'none', borderTop: '1px solid #f5c6cb', margin: '6px 0' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 'bold' }}>
+                    <span>Total Outflow:</span>
+                    <span style={{ color: '#dc3545' }}>{formatCurrency(cashflowData.cashflow.cash_outflow)}</span>
+                  </div>
                 </div>
               </div>
             </div>
