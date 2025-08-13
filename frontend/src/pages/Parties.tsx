@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
+import { ErrorMessage } from '../components/ErrorMessage'
 import { Party, apiListCustomers, apiListVendors, apiCreateParty, apiUpdateParty, apiToggleParty } from '../lib/api'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
+import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface PartyFormData {
   type: 'customer' | 'vendor'
@@ -649,78 +651,78 @@ export function Parties() {
             </div>
             <form onSubmit={handleAddParty}>
               {/* Basic Information Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+              <div style={formStyles.section}>
+                <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('basic') }}>
                   Basic Information
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <label>Name *</label>
+                <div style={formStyles.grid2Col}>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Name *</label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                       required
                       placeholder="Enter party name"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div>
-                    <label>Contact Person</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Contact Person</label>
                     <input
                       type="text"
                       value={formData.contact_person}
                       onChange={(e) => setFormData(prev => ({ ...prev, contact_person: e.target.value }))}
                       placeholder="Enter contact person name"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div>
-                    <label>Contact Number</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Contact Number</label>
                     <input
                       type="text"
                       value={formData.contact_number}
                       onChange={(e) => setFormData(prev => ({ ...prev, contact_number: e.target.value }))}
                       placeholder="Enter contact number"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div>
-                    <label>Email</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Email</label>
                     <input
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                       placeholder="Enter email address"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
                 </div>
               </div>
 
               {/* GST Information Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>
+              <div style={formStyles.section}>
+                <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('gst') }}>
                   GST Information
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <label>GSTIN</label>
+                <div style={formStyles.grid2Col}>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>GSTIN</label>
                     <input
                       type="text"
                       value={formData.gstin}
                       onChange={(e) => setFormData(prev => ({ ...prev, gstin: e.target.value }))}
                       placeholder="Enter GSTIN number"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div>
-                    <label>GST Registration Status *</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>GST Registration Status *</label>
                     <select
                       value={formData.gst_registration_status}
                       onChange={(e) => setFormData(prev => ({ ...prev, gst_registration_status: e.target.value }))}
                       required
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.select}
                     >
                       <option value="">Select GST Registration Status</option>
                       <option value="GST not registered">GST not registered</option>
@@ -732,74 +734,74 @@ export function Parties() {
               </div>
 
               {/* Billing Address Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '8px' }}>
+              <div style={formStyles.section}>
+                <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('billing') }}>
                   Billing Address
                 </h3>
-                <div style={{ display: 'grid', gap: '16px' }}>
-                  <div>
-                    <label>Address Line 1 *</label>
+                <div style={formStyles.grid}>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Address Line 1 *</label>
                     <input
                       type="text"
                       placeholder="Enter address line 1"
                       value={formData.billing_address_line1}
                       onChange={(e) => setFormData(prev => ({ ...prev, billing_address_line1: e.target.value }))}
                       required
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div>
-                    <label>Address Line 2</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Address Line 2</label>
                     <input
                       type="text"
                       placeholder="Enter address line 2 (optional)"
                       value={formData.billing_address_line2}
                       onChange={(e) => setFormData(prev => ({ ...prev, billing_address_line2: e.target.value }))}
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px' }}>
-                    <div>
-                      <label>City *</label>
+                  <div style={formStyles.grid4Col}>
+                    <div style={formStyles.formGroup}>
+                      <label style={formStyles.label}>City *</label>
                       <input
                         type="text"
                         placeholder="Enter city"
                         value={formData.billing_city}
                         onChange={(e) => setFormData(prev => ({ ...prev, billing_city: e.target.value }))}
                         required
-                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                        style={formStyles.input}
                       />
                     </div>
-                    <div>
-                      <label>State *</label>
+                    <div style={formStyles.formGroup}>
+                      <label style={formStyles.label}>State *</label>
                       <input
                         type="text"
                         placeholder="Enter state"
                         value={formData.billing_state}
                         onChange={(e) => setFormData(prev => ({ ...prev, billing_state: e.target.value }))}
                         required
-                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                        style={formStyles.input}
                       />
                     </div>
-                    <div>
-                      <label>Country *</label>
+                    <div style={formStyles.formGroup}>
+                      <label style={formStyles.label}>Country *</label>
                       <input
                         type="text"
                         placeholder="Enter country"
                         value={formData.billing_country}
                         onChange={(e) => setFormData(prev => ({ ...prev, billing_country: e.target.value }))}
                         required
-                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                        style={formStyles.input}
                       />
                     </div>
-                    <div>
-                      <label>Pincode</label>
+                    <div style={formStyles.formGroup}>
+                      <label style={formStyles.label}>Pincode</label>
                       <input
                         type="text"
                         placeholder="Enter pincode"
                         value={formData.billing_pincode}
                         onChange={(e) => setFormData(prev => ({ ...prev, billing_pincode: e.target.value }))}
-                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                        style={formStyles.input}
                       />
                     </div>
                   </div>
@@ -807,104 +809,93 @@ export function Parties() {
               </div>
 
               {/* Shipping Address Section */}
-              <div style={{ marginBottom: '24px' }}>
+              <div style={formStyles.section}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h3 style={{ color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '8px', margin: 0 }}>
+                  <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('shipping'), margin: 0 }}>
                     Shipping Address
                   </h3>
                   <Button type="button" variant="secondary" onClick={copyBillingToShipping}>
                     Copy Billing Address
                   </Button>
                 </div>
-                <div style={{ display: 'grid', gap: '16px' }}>
-                  <div>
-                    <label>Address Line 1</label>
+                <div style={formStyles.grid}>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Address Line 1</label>
                     <input
                       type="text"
                       placeholder="Enter shipping address line 1"
                       value={formData.shipping_address_line1}
                       onChange={(e) => setFormData(prev => ({ ...prev, shipping_address_line1: e.target.value }))}
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div>
-                    <label>Address Line 2</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Address Line 2</label>
                     <input
                       type="text"
                       placeholder="Enter shipping address line 2 (optional)"
                       value={formData.shipping_address_line2}
                       onChange={(e) => setFormData(prev => ({ ...prev, shipping_address_line2: e.target.value }))}
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px' }}>
-                    <div>
-                      <label>City</label>
+                  <div style={formStyles.grid4Col}>
+                    <div style={formStyles.formGroup}>
+                      <label style={formStyles.label}>City</label>
                       <input
                         type="text"
                         placeholder="Enter shipping city"
                         value={formData.shipping_city}
                         onChange={(e) => setFormData(prev => ({ ...prev, shipping_city: e.target.value }))}
-                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                        style={formStyles.input}
                       />
                     </div>
-                    <div>
-                      <label>State</label>
+                    <div style={formStyles.formGroup}>
+                      <label style={formStyles.label}>State</label>
                       <input
                         type="text"
                         placeholder="Enter shipping state"
                         value={formData.shipping_state}
                         onChange={(e) => setFormData(prev => ({ ...prev, shipping_state: e.target.value }))}
-                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                        style={formStyles.input}
                       />
                     </div>
-                    <div>
-                      <label>Country</label>
+                    <div style={formStyles.formGroup}>
+                      <label style={formStyles.label}>Country</label>
                       <input
                         type="text"
                         placeholder="Enter shipping country"
                         value={formData.shipping_country}
                         onChange={(e) => setFormData(prev => ({ ...prev, shipping_country: e.target.value }))}
-                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                        style={formStyles.input}
                       />
                     </div>
-                    <div>
-                      <label>Pincode</label>
+                    <div style={formStyles.formGroup}>
+                      <label style={formStyles.label}>Pincode</label>
                       <input
                         type="text"
                         placeholder="Enter shipping pincode"
                         value={formData.shipping_pincode}
                         onChange={(e) => setFormData(prev => ({ ...prev, shipping_pincode: e.target.value }))}
-                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                        style={formStyles.input}
                       />
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div>
-                <label>Notes</label>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Notes</label>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                   rows={3}
-                  style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px' }}
+                  style={formStyles.textarea}
                 />
               </div>
 
               {/* Error Display within Modal */}
-              {error && (
-                <div style={{
-                  color: '#dc2626',
-                  padding: '12px 16px',
-                  backgroundColor: '#fef2f2',
-                  borderRadius: '8px',
-                  border: '1px solid #fecaca',
-                  marginBottom: '16px'
-                }}>
-                  {error}
-                </div>
-              )}
+              <ErrorMessage message={error} />
 
               <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end' }}>
                 <Button type="button" variant="secondary" onClick={() => setShowAddModal(false)}>
