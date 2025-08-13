@@ -4,7 +4,9 @@ import { createApiErrorHandler } from '../lib/apiUtils'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { SearchBar } from '../components/SearchBar'
+import { ErrorMessage } from '../components/ErrorMessage'
 import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAdjustStock, apiListParties, Party } from '../lib/api'
+import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface Product {
   id: number
@@ -692,27 +694,16 @@ export function Products() {
                 ×
               </button>
             </div>
-            {error && (
-              <div style={{ 
-                color: 'crimson', 
-                padding: '8px', 
-                backgroundColor: '#ffe6e6', 
-                borderRadius: '4px', 
-                border: '1px solid #ff9999',
-                marginBottom: '16px'
-              }}>
-                {error}
-              </div>
-            )}
+            <ErrorMessage message={error} />
             <form onSubmit={handleAddProduct}>
               {/* Product Details Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+              <div style={formStyles.section}>
+                <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('basic') }}>
                   Product Details
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <label>Product Name *</label>
+                <div style={formStyles.grid2Col}>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Product Name *</label>
                     <input
                       type="text"
                       value={formData.name}
@@ -720,11 +711,11 @@ export function Products() {
                       required
                       maxLength={100}
                       placeholder="Enter product name (max 100 characters)"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div>
-                    <label>Product Code *</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Product Code *</label>
                     <input
                       type="text"
                       value={formData.product_code}
@@ -732,26 +723,26 @@ export function Products() {
                       required
                       maxLength={20}
                       placeholder="Enter product code (max 20 characters)"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div>
-                    <label>SKU</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>SKU</label>
                     <input
                       type="text"
                       value={formData.sku}
                       onChange={(e) => setFormData({...formData, sku: e.target.value})}
                       placeholder="Enter SKU"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div>
-                    <label>Unit of Measure *</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Unit of Measure *</label>
                     <select
                       value={formData.unit}
                       onChange={(e) => setFormData({...formData, unit: e.target.value})}
                       required
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.select}
                     >
                       <option value="">Select Unit</option>
                       <option value="NOS">NOS</option>
@@ -764,15 +755,15 @@ export function Products() {
                       <option value="SET">SET</option>
                     </select>
                   </div>
-                  <div>
-                    <label>Product Supplier</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Product Supplier</label>
                     <input
                       type="text"
                       value={formData.supplier}
                       onChange={(e) => setFormData({...formData, supplier: e.target.value})}
                       placeholder="Search and select supplier..."
                       list="product-supplier-list"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                     <datalist id="product-supplier-list">
                       {vendors.map(vendor => (
@@ -780,13 +771,13 @@ export function Products() {
                       ))}
                     </datalist>
                   </div>
-                  <div>
-                    <label>Product Type *</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Product Type *</label>
                     <select
                       value={formData.product_type}
                       onChange={(e) => setFormData({...formData, product_type: e.target.value})}
                       required
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.select}
                     >
                       <option value="Goods">Goods (default)</option>
                       <option value="Tradable">Tradable</option>
@@ -795,50 +786,50 @@ export function Products() {
                       <option value="Other">Other</option>
                     </select>
                   </div>
-                  <div>
-                    <label>Product Category *</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Product Category *</label>
                     <input
                       type="text"
                       value={formData.category}
                       onChange={(e) => setFormData({...formData, category: e.target.value})}
                       required
                       placeholder="Enter category"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label>Product Description</label>
+                  <div style={{ ...formStyles.formGroup, gridColumn: '1 / -1' }}>
+                    <label style={formStyles.label}>Product Description</label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({...formData, description: e.target.value})}
                       rows={3}
                       maxLength={200}
                       placeholder="Enter product description (max 200 characters)"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.textarea}
                     />
                   </div>
                 </div>
               </div>
 
               {/* Price Details Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>
+              <div style={formStyles.section}>
+                <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('payment') }}>
                   Price Details
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <label>Purchase Price</label>
+                <div style={formStyles.grid2Col}>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Purchase Price</label>
                     <input
                       type="number"
                       step="0.01"
                       value={formData.purchase_price}
                       onChange={(e) => setFormData({...formData, purchase_price: e.target.value})}
                       placeholder="Enter purchase price"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
-                  <div>
-                    <label>Selling Price *</label>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Selling Price *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -846,7 +837,7 @@ export function Products() {
                       onChange={(e) => setFormData({...formData, sales_price: e.target.value})}
                       required
                       placeholder="Enter selling price"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      style={formStyles.input}
                     />
                   </div>
                   <div>
