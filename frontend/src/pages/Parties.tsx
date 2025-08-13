@@ -393,20 +393,6 @@ export function Parties() {
           </label>
         </div>
 
-        {/* Error Display */}
-        {error && (
-          <div style={{
-            color: '#dc2626',
-            padding: '12px 16px',
-            backgroundColor: '#fef2f2',
-            borderRadius: '8px',
-            border: '1px solid #fecaca',
-            marginBottom: '16px'
-          }}>
-            {error}
-          </div>
-        )}
-
         {/* Table */}
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px' }}>Loading...</div>
@@ -853,6 +839,20 @@ export function Parties() {
                 />
               </div>
 
+              {/* Error Display within Modal */}
+              {error && (
+                <div style={{
+                  color: '#dc2626',
+                  padding: '12px 16px',
+                  backgroundColor: '#fef2f2',
+                  borderRadius: '8px',
+                  border: '1px solid #fecaca',
+                  marginBottom: '16px'
+                }}>
+                  {error}
+                </div>
+              )}
+
               <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end' }}>
                 <Button type="button" variant="secondary" onClick={() => setShowAddModal(false)}>
                   Cancel
@@ -1121,6 +1121,20 @@ export function Parties() {
                   </div>
                 </div>
               </div>
+
+              {/* Error Display within Modal */}
+              {error && (
+                <div style={{
+                  color: '#dc2626',
+                  padding: '12px 16px',
+                  backgroundColor: '#fef2f2',
+                  borderRadius: '8px',
+                  border: '1px solid #fecaca',
+                  marginBottom: '16px'
+                }}>
+                  {error}
+                </div>
+              )}
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <Button type="button" variant="secondary" onClick={() => { setShowEditModal(false); setEditingParty(null) }}>
