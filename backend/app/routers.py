@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 from .auth import authenticate_user, create_access_token, get_current_user, require_role
 from .db import get_db
-from .models import Product, User, Party, CompanySettings, Invoice, InvoiceItem, StockLedgerEntry, Purchase, PurchaseItem, Payment, PurchasePayment, Expense, AuditTrail
+from .models import Product, User, Party, CompanySettings, Invoice, InvoiceItem, StockLedgerEntry, Purchase, PurchaseItem, Payment, PurchasePayment, Expense, CashflowTransaction, AuditTrail
 from .audit import AuditService
 from .gst import money, split_gst
 from decimal import Decimal
@@ -2634,4 +2634,151 @@ def toggle_party(party_id: int, _: User = Depends(get_current_user), db: Session
     db.commit()
     db.refresh(party)
     return party
+
+
+# Cashflow Transaction Management
+class CashflowTransactionOut(BaseModel):
+    id: int
+    transaction_date: str
+    type: str
+    description: str
+    reference_number: str | None
+    payment_method: str
+    amount: float
+    account_head: str
+    source_type: str | None
+    source_id: int | None
+    created_at: str
+    updated_at: str
+
+    class Config:
+        from_attributes = True
+
+
+class CashflowTransactionCreate(BaseModel):
+    transaction_date: str
+    type: str  # inflow, outflow
+    description: str
+    reference_number: str | None = None
+    payment_method: str
+    amount: float
+    account_head: str
+    source_type: str | None = None
+    source_id: int | None = None
+
+
+@api.get('/cashflow/transactions', response_model=list[CashflowTransactionOut])
+def get_cashflow_transactions(
+    search: str | None = None,
+    type_filter: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    page: int = 1,
+    limit: int = 25,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get cashflow transactions with filtering and pagination"""
+    query = db.query(CashflowTransaction)
+    
+    # Apply filters
+    if search:
+        search_filter = (
+            CashflowTransaction.description.ilike(f"%{search}%") |
+            CashflowTransaction.reference_number.ilike(f"%{search}%") |
+            CashflowTransaction.payment_method.ilike(f"%{search}%")
+        )
+        query = query.filter(search_filter)
+    
+    if type_filter and type_filter in ['inflow', 'outflow']:
+        query = query.filter(CashflowTransaction.type == type_filter)
+    
+    if start_date:
+        query = query.filter(CashflowTransaction.transaction_date >= datetime.fromisoformat(start_date))
+    
+    if end_date:
+        query = query.filter(CashflowTransaction.transaction_date <= datetime.fromisoformat(end_date))
+    
+    # Apply pagination
+    offset = (page - 1) * limit
+    transactions = query.order_by(CashflowTransaction.transaction_date.desc()).offset(offset).limit(limit).all()
+    
+    return transactions
+
+
+@api.post('/cashflow/transactions', response_model=CashflowTransactionOut, status_code=status.HTTP_201_CREATED)
+def create_cashflow_transaction(
+    payload: CashflowTransactionCreate,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new cashflow transaction"""
+    if payload.type not in ['inflow', 'outflow']:
+        raise HTTPException(status_code=400, detail="Type must be 'inflow' or 'outflow'")
+    
+    transaction = CashflowTransaction(
+        transaction_date=datetime.fromisoformat(payload.transaction_date),
+        type=payload.type,
+        description=payload.description,
+        reference_number=payload.reference_number,
+        payment_method=payload.payment_method,
+        amount=money(payload.amount),
+        account_head=payload.account_head,
+        source_type=payload.source_type,
+        source_id=payload.source_id
+    )
+    
+    db.add(transaction)
+    db.commit()
+    db.refresh(transaction)
+    
+    return transaction
+
+
+@api.get('/cashflow/summary')
+def get_cashflow_summary(
+    start_date: str | None = None,
+    end_date: str | None = None,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get cashflow summary for a date range"""
+    query = db.query(CashflowTransaction)
+    
+    if start_date:
+        query = query.filter(CashflowTransaction.transaction_date >= datetime.fromisoformat(start_date))
+    
+    if end_date:
+        query = query.filter(CashflowTransaction.transaction_date <= datetime.fromisoformat(end_date))
+    
+    # Calculate totals
+    inflow_total = query.filter(CashflowTransaction.type == 'inflow').with_entities(
+        func.sum(CashflowTransaction.amount)
+    ).scalar() or Decimal('0.00')
+    
+    outflow_total = query.filter(CashflowTransaction.type == 'outflow').with_entities(
+        func.sum(CashflowTransaction.amount)
+    ).scalar() or Decimal('0.00')
+    
+    net_cashflow = inflow_total - outflow_total
+    
+    return {
+        "period": {
+            "start_date": start_date,
+            "end_date": end_date
+        },
+        "cashflow": {
+            "cash_inflow": float(inflow_total),
+            "cash_outflow": float(outflow_total),
+            "net_cashflow": float(net_cashflow)
+        },
+        "income": {
+            "total_invoice_amount": 0.0,  # TODO: Calculate from invoices
+            "total_payments_received": float(inflow_total)
+        },
+        "expenses": {
+            "total_expenses": 0.0,  # TODO: Calculate from expenses
+            "total_purchase_payments": 0.0  # TODO: Calculate from purchase payments
+        }
+    }
 

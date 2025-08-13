@@ -263,6 +263,25 @@ class Expense(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class CashflowTransaction(Base):
+    __tablename__ = "cashflow_transactions"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    transaction_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    type: Mapped[str] = mapped_column(String(10), nullable=False)  # inflow, outflow
+    description: Mapped[str] = mapped_column(String(200), nullable=False)
+    reference_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    payment_method: Mapped[str] = mapped_column(String(50), nullable=False)  # Cash, Bank Transfer, Cheque, UPI, etc.
+    amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    account_head: Mapped[str] = mapped_column(String(50), nullable=False)  # Cash, Bank, Funds, etc.
+    
+    # Reference fields for tracking source
+    source_type: Mapped[str | None] = mapped_column(String(20), nullable=True)  # invoice, purchase, expense, payment
+    source_id: Mapped[int | None] = mapped_column(Integer, nullable=True)  # ID of the source record
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
 class AuditTrail(Base):
     __tablename__ = "audit_trail"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
