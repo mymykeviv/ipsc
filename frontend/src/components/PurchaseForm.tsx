@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { apiCreatePurchase, apiListParties, apiGetProducts, Party, Product } from '../lib/api'
 import { Button } from './Button'
+import { ErrorMessage } from './ErrorMessage'
+import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface PurchaseFormProps {
   onSuccess: () => void
@@ -129,33 +131,21 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-      {error && (
-        <div style={{ 
-          padding: '8px 12px', 
-          backgroundColor: '#fee', 
-          border: '1px solid #fcc', 
-          borderRadius: '4px', 
-          color: '#c33',
-          fontSize: '14px',
-          marginBottom: '16px'
-        }}>
-          {error}
-        </div>
-      )}
+      <ErrorMessage message={error} />
 
       {/* Purchase Information Section */}
-      <div style={{ marginBottom: '24px' }}>
-        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+      <div style={formStyles.section}>
+        <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('basic') }}>
           Purchase Information
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-          <div>
-            <label>Vendor *</label>
+        <div style={formStyles.grid2Col}>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Vendor *</label>
             <select
               value={formData.vendor_id || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, vendor_id: parseInt(e.target.value) || 0 }))}
               required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+              style={formStyles.select}
             >
               <option value="">Select Vendor</option>
               {vendors.map(vendor => (
@@ -164,43 +154,43 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
             </select>
           </div>
 
-          <div>
-            <label>Purchase Date *</label>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Purchase Date *</label>
             <input
               type="date"
               value={formData.date}
               onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
               required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+              style={formStyles.input}
             />
           </div>
 
-          <div>
-            <label>Due Date</label>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Due Date</label>
             <input
               type="date"
               value={formData.due_date}
               onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+              style={formStyles.input}
             />
           </div>
 
-          <div>
-            <label>Terms</label>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Terms</label>
             <input
               type="text"
               value={formData.terms}
               onChange={(e) => setFormData(prev => ({ ...prev, terms: e.target.value }))}
               placeholder="Enter payment terms"
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+              style={formStyles.input}
             />
           </div>
         </div>
       </div>
 
       {/* Items Section */}
-      <div style={{ marginBottom: '24px' }}>
-        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '8px' }}>
+      <div style={formStyles.section}>
+        <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('items') }}>
           Purchase Items
         </h3>
         
