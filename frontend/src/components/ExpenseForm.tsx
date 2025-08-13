@@ -5,6 +5,7 @@ import { ErrorMessage } from './ErrorMessage'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface ExpenseFormProps {
+  expenseId?: number
   onSuccess: () => void
   onCancel: () => void
 }

@@ -1,4 +1,5 @@
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { useState } from 'react'
 import { Dashboard } from '../pages/Dashboard'
 import { Products } from '../pages/Products'
 import { Purchases } from '../pages/Purchases'

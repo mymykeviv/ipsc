@@ -29,7 +29,12 @@ interface PartyFormData {
   notes: string
 }
 
-export function Parties() {
+interface PartiesProps {
+  type?: 'customer' | 'vendor'
+  mode?: 'manage' | 'add' | 'edit'
+}
+
+export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
   const { forceLogout } = useAuth()
   const handleApiError = createApiErrorHandler(forceLogout)
   
@@ -207,11 +212,11 @@ export function Parties() {
     try {
       const payload = {
         name: formData.name,
-        type: activeTab === 'customers' ? 'customer' : 'vendor' as const,
-        contact_person: formData.contact_person || undefined,
-        contact_number: formData.contact_number || undefined,
-        email: formData.email || undefined,
-        gstin: formData.gstin || undefined,
+        type: (activeTab === 'customers' ? 'customer' : 'vendor') as 'customer' | 'vendor',
+        contact_person: formData.contact_person || null,
+        contact_number: formData.contact_number || null,
+        email: formData.email || null,
+        gstin: formData.gstin || null,
         gst_registration_status: formData.gst_registration_status,
         billing_address_line1: formData.billing_address_line1,
         billing_address_line2: formData.billing_address_line2 || undefined,
@@ -225,7 +230,7 @@ export function Parties() {
         shipping_state: formData.shipping_state || undefined,
         shipping_country: formData.shipping_country || undefined,
         shipping_pincode: formData.shipping_pincode || undefined,
-        notes: formData.notes || undefined
+        notes: formData.notes || null
       }
 
       await apiCreateParty(payload)
