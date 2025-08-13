@@ -194,8 +194,7 @@ export function Dashboard() {
         </div>
       )}
 
-      {cashflowData && (
-        <div style={{ display: 'grid', gap: '24px' }}>
+      <div style={{ display: 'grid', gap: '24px' }}>
           {/* Income and Expense Summary */}
           <div style={{ 
             padding: '20px', 
@@ -304,17 +303,17 @@ export function Dashboard() {
                   <div style={{ 
                     fontSize: '28px', 
                     fontWeight: 'bold',
-                    color: getNetCashflowColor(cashflowData.cashflow.net_cashflow),
+                    color: getNetCashflowColor(cashflowData?.cashflow?.net_cashflow || 0),
                     marginBottom: '8px'
                   }}>
-                    {formatCurrency(cashflowData.cashflow.net_cashflow)}
+                    {formatCurrency(cashflowData?.cashflow?.net_cashflow || 0)}
                   </div>
                   <div style={{ 
                     fontSize: '14px', 
                     color: '#6c757d',
                     fontWeight: '500'
                   }}>
-                    {cashflowData.cashflow.net_cashflow >= 0 ? 'Positive Cashflow' : 'Negative Cashflow'}
+                    {(cashflowData?.cashflow?.net_cashflow || 0) >= 0 ? 'Positive Cashflow' : 'Negative Cashflow'}
                   </div>
                 </div>
 
@@ -330,16 +329,16 @@ export function Dashboard() {
                   <div style={{ display: 'grid', gap: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px' }}>
                       <span>Invoice Amount:</span>
-                      <strong>{formatCurrency(cashflowData.income.total_invoice_amount)}</strong>
+                      <strong>{formatCurrency(cashflowData?.income?.total_invoice_amount || 0)}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px' }}>
                       <span>Payments Received:</span>
-                      <strong>{formatCurrency(cashflowData.income.total_payments_received)}</strong>
+                      <strong>{formatCurrency(cashflowData?.income?.total_payments_received || 0)}</strong>
                     </div>
                     <hr style={{ border: 'none', borderTop: '2px solid #d4edda', margin: '12px 0' }} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold' }}>
                       <span>Total Income:</span>
-                      <span style={{ color: '#28a745' }}>{formatCurrency(cashflowData.cashflow.cash_inflow)}</span>
+                      <span style={{ color: '#28a745' }}>{formatCurrency(cashflowData?.cashflow?.cash_inflow || 0)}</span>
                     </div>
                   </div>
                 </div>
@@ -356,16 +355,16 @@ export function Dashboard() {
                   <div style={{ display: 'grid', gap: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px' }}>
                       <span>Direct Expenses:</span>
-                      <strong>{formatCurrency(cashflowData.expenses.total_expenses)}</strong>
+                      <strong>{formatCurrency(cashflowData?.expenses?.total_expenses || 0)}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px' }}>
                       <span>Purchase Payments:</span>
-                      <strong>{formatCurrency(cashflowData.expenses.total_purchase_payments)}</strong>
+                      <strong>{formatCurrency(cashflowData?.expenses?.total_purchase_payments || 0)}</strong>
                     </div>
                     <hr style={{ border: 'none', borderTop: '2px solid #f8d7da', margin: '12px 0' }} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold' }}>
                       <span>Total Outflow:</span>
-                      <span style={{ color: '#dc3545' }}>{formatCurrency(cashflowData.cashflow.cash_outflow)}</span>
+                      <span style={{ color: '#dc3545' }}>{formatCurrency(cashflowData?.cashflow?.cash_outflow || 0)}</span>
                     </div>
                   </div>
                 </div>
@@ -389,7 +388,7 @@ export function Dashboard() {
                         Invoice Amount
                       </div>
                       <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
-                        {formatCurrency(cashflowData.income.total_invoice_amount)}
+                        {formatCurrency(cashflowData?.income?.total_invoice_amount || 0)}
                       </div>
                     </div>
 
@@ -402,7 +401,7 @@ export function Dashboard() {
                         Payments Received
                       </div>
                       <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#28a745' }}>
-                        {formatCurrency(cashflowData.income.total_payments_received)}
+                        {formatCurrency(cashflowData?.income?.total_payments_received || 0)}
                       </div>
                     </div>
 
@@ -415,7 +414,7 @@ export function Dashboard() {
                         Direct Expenses
                       </div>
                       <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#dc3545' }}>
-                        {formatCurrency(cashflowData.expenses.total_expenses)}
+                        {formatCurrency(cashflowData?.expenses?.total_expenses || 0)}
                       </div>
                     </div>
 
@@ -428,7 +427,7 @@ export function Dashboard() {
                         Purchase Payments
                       </div>
                       <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#dc3545' }}>
-                        {formatCurrency(cashflowData.expenses.total_purchase_payments)}
+                        {formatCurrency(cashflowData?.expenses?.total_purchase_payments || 0)}
                       </div>
                     </div>
                   </div>
@@ -450,20 +449,20 @@ export function Dashboard() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '16px' }}>
                 <span>Cash Inflow:</span>
                 <span style={{ fontWeight: 'bold', color: '#28a745', fontSize: '18px' }}>
-                  {formatCurrency(cashflowData.cashflow.cash_inflow)}
+                  {formatCurrency(cashflowData?.cashflow?.cash_inflow || 0)}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '16px' }}>
                 <span>Cash Outflow:</span>
                 <span style={{ fontWeight: 'bold', color: '#dc3545', fontSize: '18px' }}>
-                  {formatCurrency(cashflowData.cashflow.cash_outflow)}
+                  {formatCurrency(cashflowData?.cashflow?.cash_outflow || 0)}
                 </span>
               </div>
               <hr style={{ border: 'none', borderTop: '2px solid #e9ecef', margin: '12px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '18px', fontWeight: 'bold' }}>
                 <span>Net Cashflow:</span>
-                <span style={{ color: getNetCashflowColor(cashflowData.cashflow.net_cashflow), fontSize: '20px' }}>
-                  {formatCurrency(cashflowData.cashflow.net_cashflow)}
+                <span style={{ color: getNetCashflowColor(cashflowData?.cashflow?.net_cashflow || 0), fontSize: '20px' }}>
+                  {formatCurrency(cashflowData?.cashflow?.net_cashflow || 0)}
                 </span>
               </div>
             </div>

@@ -28,10 +28,22 @@ function Shell() {
   })
 
   const toggleSection = (section: string) => {
-    setCollapsedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }))
+    setCollapsedSections(prev => {
+      const newState = { ...prev }
+      // If the section is currently collapsed, open it and close all others
+      if (prev[section]) {
+        // Close all sections first
+        Object.keys(newState).forEach(key => {
+          newState[key] = true
+        })
+        // Then open the clicked section
+        newState[section] = false
+      } else {
+        // If the section is open, close it
+        newState[section] = true
+      }
+      return newState
+    })
   }
   
   // Helper function to check if a link is active
@@ -350,10 +362,6 @@ function Shell() {
 }
 
 export function App() {
-  return (
-    <AuthProvider>
-      <Shell />
-    </AuthProvider>
-  )
+  return <Shell />
 }
 

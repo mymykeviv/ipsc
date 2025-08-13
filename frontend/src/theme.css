@@ -108,19 +108,20 @@ nav.nav {
 
 /* Navigation sections */
 .nav-section {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .nav-section-header {
   font-weight: 600;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 8px;
-  padding: 4px 12px;
+  margin-bottom: 4px;
+  padding: 6px 12px;
   border-left: 2px solid var(--primary);
   background: rgba(59, 130, 246, 0.05);
+  transition: all 0.2s ease;
 }
 
 .nav-link {
@@ -130,14 +131,14 @@ nav.nav {
   border-radius: var(--radius);
   margin-bottom: 2px;
   transition: all 0.2s ease;
-  font-size: 13px;
+  font-size: 14px;
   display: flex;
   align-items: center;
 }
 
 .nav-link.sub-link {
   padding-left: 24px;
-  font-size: 12px;
+  font-size: 13px;
   margin-bottom: 1px;
   border-left: 1px solid transparent;
 }
