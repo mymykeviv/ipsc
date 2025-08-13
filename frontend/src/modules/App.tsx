@@ -23,6 +23,40 @@ function Shell() {
     if (path === '/') {
       return location.pathname === '/'
     }
+    // For exact matches (like /invoices/add), use exact path matching
+    if (path.includes('/add') || path.includes('/edit') || path.includes('/payments') || path.includes('/email') || path.includes('/print')) {
+      return location.pathname === path
+    }
+    // For base paths (like /invoices), check if it's the exact path or a sub-path that doesn't match specific patterns
+    if (path === '/invoices' && location.pathname.startsWith('/invoices')) {
+      // Only highlight /invoices if we're not on a specific sub-path
+      return !location.pathname.includes('/add') && 
+             !location.pathname.includes('/edit') && 
+             !location.pathname.includes('/payments') && 
+             !location.pathname.includes('/email') && 
+             !location.pathname.includes('/print')
+    }
+    if (path === '/purchases' && location.pathname.startsWith('/purchases')) {
+      // Only highlight /purchases if we're not on a specific sub-path
+      return !location.pathname.includes('/add') && 
+             !location.pathname.includes('/edit') && 
+             !location.pathname.includes('/payments')
+    }
+    if (path === '/products' && location.pathname.startsWith('/products')) {
+      // Only highlight /products if we're not on a specific sub-path
+      return !location.pathname.includes('/add') && 
+             !location.pathname.includes('/edit')
+    }
+    if (path === '/customers' && location.pathname.startsWith('/customers')) {
+      // Only highlight /customers if we're not on a specific sub-path
+      return !location.pathname.includes('/add') && 
+             !location.pathname.includes('/edit')
+    }
+    if (path === '/vendors' && location.pathname.startsWith('/vendors')) {
+      // Only highlight /vendors if we're not on a specific sub-path
+      return !location.pathname.includes('/add') && 
+             !location.pathname.includes('/edit')
+    }
     return location.pathname.startsWith(path)
   }
   
@@ -217,8 +251,12 @@ function Shell() {
           <Route path="/settings/email" element={<Settings section="email" />} />
           <Route path="/settings/invoice" element={<Settings section="invoice" />} />
           
-          {/* Legacy Routes for backward compatibility */}
+          {/* Expenses Routes */}
           <Route path="/expenses" element={<Expenses />} />
+          <Route path="/expenses/add" element={<Expenses mode="add" />} />
+          <Route path="/expenses/edit/:id" element={<Expenses mode="edit" />} />
+          
+          {/* Legacy Routes for backward compatibility */}
           <Route path="/parties" element={<Parties />} />
           <Route path="/reports" element={<Reports />} />
           

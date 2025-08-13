@@ -4,9 +4,7 @@ import { useAuth } from '../modules/AuthContext'
 import { apiGetCashflowSummary, CashflowSummary } from '../lib/api'
 import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
-import { ExpenseForm } from '../components/ExpenseForm'
-import { ComprehensiveInvoiceForm } from '../components/ComprehensiveInvoiceForm'
-import { PurchaseForm } from '../components/PurchaseForm'
+
 
 export function Dashboard() {
   const { token, forceLogout } = useAuth()
@@ -21,10 +19,7 @@ export function Dashboard() {
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0].substring(0, 7) + '-01')
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0])
   
-  // Modal states
-  const [showExpenseModal, setShowExpenseModal] = useState(false)
-  const [showInvoiceModal, setShowInvoiceModal] = useState(false)
-  const [showPurchaseModal, setShowPurchaseModal] = useState(false)
+
 
   useEffect(() => {
     if (!token) return
@@ -131,7 +126,7 @@ export function Dashboard() {
           alignItems: 'center'
         }}>
           <Button 
-            onClick={() => setShowExpenseModal(true)}
+            onClick={() => navigate('/expenses/add')}
             variant="primary"
             style={{ 
               padding: '10px 16px', 
@@ -144,7 +139,7 @@ export function Dashboard() {
             💰 Add Expense
           </Button>
           <Button 
-            onClick={() => setShowInvoiceModal(true)}
+            onClick={() => navigate('/invoices/add')}
             variant="primary"
             style={{ 
               padding: '10px 16px', 
@@ -157,7 +152,7 @@ export function Dashboard() {
             📄 New Invoice
           </Button>
           <Button 
-            onClick={() => setShowPurchaseModal(true)}
+            onClick={() => navigate('/purchases/add')}
             variant="primary"
             style={{ 
               padding: '10px 16px', 
@@ -476,63 +471,7 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Modals */}
-      {showExpenseModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{ width: '80%', height: '80%', maxWidth: '1400px', maxHeight: '80vh', overflow: 'auto' }}>
-            <ExpenseForm onClose={() => setShowExpenseModal(false)} />
-          </div>
-        </div>
-      )}
 
-      {showInvoiceModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{ width: '80%', height: '80%', maxWidth: '1400px', maxHeight: '80vh', overflow: 'auto' }}>
-            <ComprehensiveInvoiceForm onClose={() => setShowInvoiceModal(false)} />
-          </div>
-        </div>
-      )}
-
-      {showPurchaseModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{ width: '80%', height: '80%', maxWidth: '1400px', maxHeight: '80vh', overflow: 'auto' }}>
-            <PurchaseForm onClose={() => setShowPurchaseModal(false)} />
-          </div>
-        </div>
-      )}
     </div>
   )
 }
