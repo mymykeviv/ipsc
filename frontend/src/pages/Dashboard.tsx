@@ -165,7 +165,7 @@ export function Dashboard() {
             📦 New Purchase
           </Button>
           <Button 
-            onClick={() => navigate('/products')}
+            onClick={() => navigate('/products/add')}
             variant="primary"
             style={{ 
               padding: '10px 16px', 
@@ -175,7 +175,7 @@ export function Dashboard() {
               gap: '6px'
             }}
           >
-            🏷️ Manage Products
+            🏷️ Add Product
           </Button>
         </div>
       </div>

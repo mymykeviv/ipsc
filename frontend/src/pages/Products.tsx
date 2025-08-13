@@ -61,7 +61,7 @@ interface StockFormData {
 }
 
 interface ProductsProps {
-  mode?: 'manage' | 'add' | 'edit'
+  mode?: 'manage' | 'add' | 'edit' | 'stock-adjustment' | 'stock-history'
 }
 
 export function Products({ mode = 'manage' }: ProductsProps) {
@@ -512,6 +512,84 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     )
   }
 
+  // Stock Adjustment Mode
+  if (mode === 'stock-adjustment') {
+    return (
+      <div style={{ padding: '20px' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '24px',
+          paddingBottom: '12px',
+          borderBottom: '2px solid #e9ecef'
+        }}>
+          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
+            Stock Adjustment
+          </h1>
+          <Button variant="secondary" onClick={() => navigate('/products')}>
+            ← Back to Products
+          </Button>
+        </div>
+
+        {error && <ErrorMessage message={error} />}
+
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+            Stock Adjustment Form
+          </h3>
+          <div style={{ padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #e9ecef' }}>
+            <p style={{ color: '#6c757d', fontSize: '16px', textAlign: 'center' }}>
+              Stock adjustment functionality will be implemented here.
+            </p>
+            <p style={{ color: '#6c757d', fontSize: '14px', textAlign: 'center', marginTop: '8px' }}>
+              Users can select a product and adjust its stock quantity.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Stock History Mode
+  if (mode === 'stock-history') {
+    return (
+      <div style={{ padding: '20px' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '24px',
+          paddingBottom: '12px',
+          borderBottom: '2px solid #e9ecef'
+        }}>
+          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
+            Stock History
+          </h1>
+          <Button variant="secondary" onClick={() => navigate('/products')}>
+            ← Back to Products
+          </Button>
+        </div>
+
+        {error && <ErrorMessage message={error} />}
+
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+            Stock History
+          </h3>
+          <div style={{ padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #e9ecef' }}>
+            <p style={{ color: '#6c757d', fontSize: '16px', textAlign: 'center' }}>
+              Stock history functionality will be implemented here.
+            </p>
+            <p style={{ color: '#6c757d', fontSize: '14px', textAlign: 'center', marginTop: '8px' }}>
+              Users can view the history of stock movements for selected products.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Manage Products Mode
   if (loading) {
     return (
@@ -688,20 +766,14 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                     </Button>
                     <Button 
                       variant="secondary"
-                      onClick={() => {
-                        setSelectedProduct(product)
-                        setShowStockModal(true)
-                      }}
+                      onClick={() => navigate(`/products/stock-adjustment?product=${product.id}`)}
                       style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       Stock
                     </Button>
                     <Button 
                       variant="secondary"
-                      onClick={() => {
-                        setSelectedProduct(product)
-                        setShowStockHistoryModal(true)
-                      }}
+                      onClick={() => navigate(`/products/stock-history?product=${product.id}`)}
                       style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       History

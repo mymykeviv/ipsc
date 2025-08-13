@@ -137,6 +137,12 @@ function Shell() {
                 <Link className={`nav-link sub-link ${isActive('/products/add') ? 'active' : ''}`} to="/products/add">
                   Add/Edit Product
                 </Link>
+                <Link className={`nav-link sub-link ${isActive('/products/stock-adjustment') ? 'active' : ''}`} to="/products/stock-adjustment">
+                  Stock Adjustment
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/products/stock-history') ? 'active' : ''}`} to="/products/stock-history">
+                  Stock History
+                </Link>
               </>
             )}
           </div>
@@ -307,6 +313,8 @@ function Shell() {
           <Route path="/products" element={<Products />} />
           <Route path="/products/add" element={<Products mode="add" />} />
           <Route path="/products/edit/:id" element={<Products mode="edit" />} />
+          <Route path="/products/stock-adjustment" element={<Products mode="stock-adjustment" />} />
+          <Route path="/products/stock-history" element={<Products mode="stock-history" />} />
           
           {/* Invoices Routes */}
           <Route path="/invoices" element={<Invoices />} />
