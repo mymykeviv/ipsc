@@ -935,6 +935,36 @@ export type GstFilingReport = {
   }
 }
 
+export type CashflowTransaction = {
+  id: number
+  transaction_date: string
+  type: 'inflow' | 'outflow'
+  description: string
+  reference_number?: string
+  payment_method: string
+  amount: number
+  account_head: string
+  created_at: string
+  updated_at: string
+}
+
+export async function apiGetCashflowTransactions(): Promise<CashflowTransaction[]> {
+  const r = await fetch('/api/cashflow/transactions', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
 export async function apiGetGstFilingReport(
   periodType: 'month' | 'quarter' | 'year',
   periodValue: string,
