@@ -196,9 +196,7 @@ export function Parties() {
     setError(null)
     
     const validation = validateForm()
-    console.log('Validation result:', validation)
     if (!validation.isValid) {
-      console.log('Validation errors:', validation.errors)
       setError(validation.errors.join(', '))
       return
     }
@@ -209,29 +207,25 @@ export function Parties() {
       const payload = {
         name: formData.name,
         type: activeTab === 'customers' ? 'customer' : 'vendor' as const,
-        contact_person: formData.contact_person || null,
-        contact_number: formData.contact_number || null,
-        email: formData.email || null,
-        gstin: formData.gstin || null,
+        contact_person: formData.contact_person || undefined,
+        contact_number: formData.contact_number || undefined,
+        email: formData.email || undefined,
+        gstin: formData.gstin || undefined,
         gst_registration_status: formData.gst_registration_status,
         billing_address_line1: formData.billing_address_line1,
-        billing_address_line2: formData.billing_address_line2 || null,
+        billing_address_line2: formData.billing_address_line2 || undefined,
         billing_city: formData.billing_city,
         billing_state: formData.billing_state,
         billing_country: formData.billing_country,
-        billing_pincode: formData.billing_pincode || null,
-        shipping_address_line1: formData.shipping_address_line1 || null,
-        shipping_address_line2: formData.shipping_address_line2 || null,
-        shipping_city: formData.shipping_city || null,
-        shipping_state: formData.shipping_state || null,
-        shipping_country: formData.shipping_country || null,
-        shipping_pincode: formData.shipping_pincode || null,
-        notes: formData.notes || null
+        billing_pincode: formData.billing_pincode || undefined,
+        shipping_address_line1: formData.shipping_address_line1 || undefined,
+        shipping_address_line2: formData.shipping_address_line2 || undefined,
+        shipping_city: formData.shipping_city || undefined,
+        shipping_state: formData.shipping_state || undefined,
+        shipping_country: formData.shipping_country || undefined,
+        shipping_pincode: formData.shipping_pincode || undefined,
+        notes: formData.notes || undefined
       }
-
-      console.log('Creating party with payload:', payload)
-      console.log('Form data:', formData)
-      console.log('Active tab:', activeTab)
 
       await apiCreateParty(payload)
       setShowAddModal(false)
@@ -239,12 +233,6 @@ export function Parties() {
       loadParties()
     } catch (err: any) {
       console.error('Failed to create party:', err)
-      console.error('Error details:', {
-        message: err.message,
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        data: err.response?.data
-      })
       handleApiError(err)
       setError(err.message || 'Failed to create party')
     } finally {
