@@ -123,71 +123,6 @@ export function Dashboard() {
         }}>
           Dashboard - Cashflow Summary
         </h1>
-        
-        {/* Period Selector */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <select
-            value={periodType}
-            onChange={(e) => handlePeriodChange(e.target.value as 'month' | 'quarter' | 'year' | 'custom')}
-            style={{
-              padding: '6px 10px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px',
-              backgroundColor: 'white'
-            }}
-          >
-            <option value="month">This Month</option>
-            <option value="quarter">This Quarter</option>
-            <option value="year">This Year</option>
-            <option value="custom">Custom Range</option>
-          </select>
-          
-          {periodType === 'custom' && (
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                style={{
-                  padding: '4px 6px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '14px'
-                }}
-              />
-              <span style={{ fontSize: '12px' }}>to</span>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                style={{
-                  padding: '4px 6px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-          )}
-          
-          <button 
-            onClick={loadCashflowData}
-            disabled={loading}
-            style={{
-              padding: '6px 10px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              opacity: loading ? 0.6 : 1
-            }}
-          >
-            {loading ? 'Refreshing...' : '🔄 Refresh'}
-          </button>
-        </div>
       </div>
 
       {/* Quick Actions Section - Compact */}
@@ -311,9 +246,92 @@ export function Dashboard() {
             borderRadius: '8px',
             border: '1px solid #e9ecef'
           }}>
-            <h3 style={{ margin: '0 0 16px 0', color: '#495057', fontSize: '18px', textAlign: 'center' }}>
-              📊 Income & Expenses Summary
-            </h3>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <h3 style={{ margin: '0', color: '#495057', fontSize: '18px' }}>
+                📊 Income & Expenses Summary
+              </h3>
+              
+              {/* Period Selector */}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div style={{ 
+                  padding: '4px 8px',
+                  backgroundColor: '#e7f3ff',
+                  borderRadius: '4px',
+                  border: '1px solid #b3d9ff',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#0056b3'
+                }}>
+                  Period: {getPeriodLabel()}
+                </div>
+                <select
+                  value={periodType}
+                  onChange={(e) => handlePeriodChange(e.target.value as 'month' | 'quarter' | 'year' | 'custom')}
+                  style={{
+                    padding: '4px 8px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    backgroundColor: 'white'
+                  }}
+                >
+                  <option value="month">This Month</option>
+                  <option value="quarter">This Quarter</option>
+                  <option value="year">This Year</option>
+                  <option value="custom">Custom Range</option>
+                </select>
+                
+                {periodType === 'custom' && (
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      style={{
+                        padding: '2px 4px',
+                        border: '1px solid #ced4da',
+                        borderRadius: '4px',
+                        fontSize: '12px'
+                      }}
+                    />
+                    <span style={{ fontSize: '10px' }}>to</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      style={{
+                        padding: '2px 4px',
+                        border: '1px solid #ced4da',
+                        borderRadius: '4px',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </div>
+                )}
+                
+                <button 
+                  onClick={loadCashflowData}
+                  disabled={loading}
+                  style={{
+                    padding: '4px 8px',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    fontSize: '12px',
+                    opacity: loading ? 0.6 : 1
+                  }}
+                >
+                  {loading ? 'Refreshing...' : '🔄'}
+                </button>
+              </div>
+            </div>
             
             <div style={{ display: 'grid', gap: '16px' }}>
               {/* First Row: Net Cashflow, Income, Expenses */}
