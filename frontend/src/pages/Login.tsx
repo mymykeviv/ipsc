@@ -1,5 +1,7 @@
 import { FormEvent, useState } from 'react'
 import { useAuth } from '../modules/AuthContext'
+import { ErrorMessage } from '../components/ErrorMessage'
+import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 import { useNavigate } from 'react-router-dom'
 import { Card } from '../components/Card'
 import { Logo } from '../components/Logo'
@@ -77,47 +79,35 @@ export function Login() {
         </div>
         <form onSubmit={onSubmit}>
           {/* Login Information Section */}
-          <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+          <div style={formStyles.section}>
+            <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('basic') }}>
               Login Information
             </h3>
-            <div style={{ display: 'grid', gap: '16px' }}>
-              <div>
-                <label>Username *</label>
+            <div style={formStyles.grid}>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Username *</label>
                 <input 
                   value={username} 
                   onChange={e => setUsername(e.target.value)}
                   required
                   placeholder="Enter your username"
-                  style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                  style={formStyles.input}
                 />
               </div>
-              <div>
-                <label>Password *</label>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Password *</label>
                 <input 
                   type="password" 
                   value={password} 
                   onChange={e => setPassword(e.target.value)}
                   required
                   placeholder="Enter your password"
-                  style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                  style={formStyles.input}
                 />
               </div>
             </div>
           </div>
-          {error && (
-            <div style={{ 
-              color: '#dc2626', 
-              padding: '12px 16px', 
-              backgroundColor: '#fef2f2', 
-              borderRadius: '8px', 
-              border: '1px solid #fecaca',
-              fontSize: '14px',
-              marginTop: '8px'
-            }}>
-              {error}
-            </div>
-          )}
+          <ErrorMessage message={error} />
           <button 
             type="submit" 
             disabled={loading}
