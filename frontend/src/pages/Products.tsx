@@ -793,8 +793,8 @@ export function Products() {
                   </div>
                 </div>
 
-                {/* 2 Column Layout: Product Category (30%) | Product Description (70%) */}
-                <div style={{ display: 'grid', gridTemplateColumns: '30% 70%', gap: '16px' }}>
+                {/* 2 Column Layout: Product Category (1/3) | Product Description (2/3) */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px' }}>
                   <div style={formStyles.formGroup}>
                     <label style={formStyles.label}>Product Category *</label>
                     <input
@@ -914,31 +914,36 @@ export function Products() {
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between' }}>
                 <Button type="button" variant="secondary" onClick={() => setShowAddModal(false)}>
-                  Cancel
+                  ← Back to Products
                 </Button>
-                <Button 
-                  type="submit" 
-                  variant="primary" 
-                  disabled={
-                    loading || 
-                    !formData.name.trim() || 
-                    !formData.product_code.trim() ||
-                    !formData.sales_price || 
-                    !formData.unit ||
-                    !formData.product_type ||
-                    !formData.category.trim() ||
-                    !formData.gst_rate ||
-                    !formData.hsn_code ||
-                    parseFloat(formData.sales_price || '0') <= 0 ||
-                    (formData.purchase_price && parseFloat(formData.purchase_price) < 0) ||
-                    (formData.opening_stock && parseInt(formData.opening_stock || '0') < 0) ||
-                    (formData.hsn_code && !/^[0-9]{4}$|^[0-9]{6}$/.test(formData.hsn_code))
-                  }
-                >
-                  {loading ? 'Adding...' : 'Add Product'}
-                </Button>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <Button type="button" variant="secondary" onClick={() => setShowAddModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    variant="primary" 
+                    disabled={
+                      loading || 
+                      !formData.name.trim() || 
+                      !formData.product_code.trim() ||
+                      !formData.sales_price || 
+                      !formData.unit ||
+                      !formData.product_type ||
+                      !formData.category.trim() ||
+                      !formData.gst_rate ||
+                      !formData.hsn_code ||
+                      parseFloat(formData.sales_price || '0') <= 0 ||
+                      (formData.purchase_price && parseFloat(formData.purchase_price) < 0) ||
+                      (formData.opening_stock && parseInt(formData.opening_stock || '0') < 0) ||
+                      (formData.hsn_code && !/^[0-9]{4}$|^[0-9]{6}$/.test(formData.hsn_code))
+                    }
+                  >
+                    {loading ? 'Adding...' : 'Add Product'}
+                  </Button>
+                </div>
               </div>
             </form>
           </Card>
@@ -1059,8 +1064,8 @@ export function Products() {
                   </div>
                 </div>
 
-                {/* 2 Column Layout: Product Category (30%) | Product Description (70%) */}
-                <div style={{ display: 'grid', gridTemplateColumns: '30% 70%', gap: '16px' }}>
+                {/* 2 Column Layout: Product Category (1/3) | Product Description (2/3) */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px' }}>
                   <div style={formStyles.formGroup}>
                     <label style={formStyles.label}>Product Category *</label>
                     <input
@@ -1180,31 +1185,36 @@ export function Products() {
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between' }}>
                 <Button type="button" variant="secondary" onClick={() => setShowEditModal(false)}>
-                  Cancel
+                  ← Back to Products
                 </Button>
-                <Button 
-                  type="submit" 
-                  variant="primary"
-                  disabled={
-                    loading || 
-                    !formData.name.trim() || 
-                    !formData.product_code.trim() ||
-                    !formData.sales_price || 
-                    !formData.unit ||
-                    !formData.product_type ||
-                    !formData.category.trim() ||
-                    !formData.gst_rate ||
-                    !formData.hsn_code ||
-                    parseFloat(formData.sales_price || '0') <= 0 ||
-                    (formData.purchase_price && parseFloat(formData.purchase_price) < 0) ||
-                    (formData.opening_stock && parseInt(formData.opening_stock || '0') < 0) ||
-                    (formData.hsn_code && !/^[0-9]{4}$|^[0-9]{6}$/.test(formData.hsn_code))
-                  }
-                >
-                  {loading ? 'Updating...' : 'Update Product'}
-                </Button>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <Button type="button" variant="secondary" onClick={() => setShowEditModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    variant="primary"
+                    disabled={
+                      loading || 
+                      !formData.name.trim() || 
+                      !formData.product_code.trim() ||
+                      !formData.sales_price || 
+                      !formData.unit ||
+                      !formData.product_type ||
+                      !formData.category.trim() ||
+                      !formData.gst_rate ||
+                      !formData.hsn_code ||
+                      parseFloat(formData.sales_price || '0') <= 0 ||
+                      (formData.purchase_price && parseFloat(formData.purchase_price) < 0) ||
+                      (formData.opening_stock && parseInt(formData.opening_stock || '0') < 0) ||
+                      (formData.hsn_code && !/^[0-9]{4}$|^[0-9]{6}$/.test(formData.hsn_code))
+                    }
+                  >
+                    {loading ? 'Updating...' : 'Update Product'}
+                  </Button>
+                </div>
               </div>
             </form>
           </Card>
