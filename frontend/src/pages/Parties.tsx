@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
 import { Party, apiListCustomers, apiListVendors, apiCreateParty, apiUpdateParty, apiToggleParty } from '../lib/api'
+import { useAuth } from '../modules/AuthContext'
+import { createApiErrorHandler } from '../lib/apiUtils'
 
 interface PartyFormData {
   type: 'customer' | 'vendor'
@@ -27,6 +29,9 @@ interface PartyFormData {
 }
 
 export function Parties() {
+  const { forceLogout } = useAuth()
+  const handleApiError = createApiErrorHandler(forceLogout)
+  
   const [activeTab, setActiveTab] = useState<'customers' | 'vendors'>('customers')
   const [customers, setCustomers] = useState<Party[]>([])
   const [vendors, setVendors] = useState<Party[]>([])
@@ -76,6 +81,7 @@ export function Parties() {
       setVendors(vendorsData)
     } catch (err) {
       console.error('Failed to load parties:', err)
+      handleApiError(err)
       setError('Failed to load parties')
     } finally {
       setLoading(false)
@@ -204,6 +210,7 @@ export function Parties() {
       loadParties()
     } catch (err: any) {
       console.error('Failed to create party:', err)
+      handleApiError(err)
       setError(err.message || 'Failed to create party')
     } finally {
       setLoading(false)
@@ -254,6 +261,7 @@ export function Parties() {
       loadParties()
     } catch (err: any) {
       console.error('Failed to update party:', err)
+      handleApiError(err)
       setError(err.message || 'Failed to update party')
     } finally {
       setLoading(false)
@@ -266,6 +274,7 @@ export function Parties() {
       loadParties()
     } catch (err) {
       console.error('Failed to toggle party:', err)
+      handleApiError(err)
       setError('Failed to toggle party status')
     }
   }
