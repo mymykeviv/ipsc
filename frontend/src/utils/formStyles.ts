@@ -5,10 +5,10 @@ export const formStyles = {
   // Standard input field styling
   input: {
     width: '100%',
-    padding: '12px 16px',
+    padding: '8px 12px',
     border: '1px solid var(--border)',
     borderRadius: 'var(--radius)',
-    fontSize: '16px',
+    fontSize: '14px',
     lineHeight: '1.5',
     color: 'var(--text)',
     backgroundColor: 'white',
@@ -25,10 +25,10 @@ export const formStyles = {
   // Standard select field styling
   select: {
     width: '100%',
-    padding: '12px 16px',
+    padding: '8px 12px',
     border: '1px solid var(--border)',
     borderRadius: 'var(--radius)',
-    fontSize: '16px',
+    fontSize: '14px',
     lineHeight: '1.5',
     color: 'var(--text)',
     backgroundColor: 'white',
@@ -39,80 +39,72 @@ export const formStyles = {
   // Standard textarea styling
   textarea: {
     width: '100%',
-    padding: '12px 16px',
+    padding: '8px 12px',
     border: '1px solid var(--border)',
     borderRadius: 'var(--radius)',
-    fontSize: '16px',
+    fontSize: '14px',
     lineHeight: '1.5',
     color: 'var(--text)',
     backgroundColor: 'white',
     resize: 'vertical',
-    minHeight: '100px',
+    minHeight: '80px',
     transition: 'border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
   } as const,
 
   // Standard label styling
   label: {
     display: 'block',
-    marginBottom: '8px',
-    fontSize: '16px',
+    marginBottom: '6px',
+    fontSize: '14px',
     fontWeight: '500',
     color: 'var(--text)',
   } as const,
 
   // Form group container
   formGroup: {
-    marginBottom: '20px',
+    marginBottom: '16px',
   } as const,
 
   // Form section styling
   section: {
-    marginBottom: '32px',
-    padding: '24px',
-    backgroundColor: '#f8f9fa',
-    borderRadius: '12px',
-    border: '1px solid #e9ecef',
+    marginBottom: '24px',
   } as const,
 
   // Section header styling
   sectionHeader: {
-    marginBottom: '20px',
-    color: '#fff',
-    backgroundColor: '#007bff',
-    padding: '12px 20px',
-    fontSize: '18px',
+    marginBottom: '16px',
+    color: '#333',
+    borderBottom: '2px solid #007bff',
+    paddingBottom: '8px',
+    fontSize: '16px',
     fontWeight: '600',
-    borderRadius: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
   } as const,
 
   // Grid container for form fields
   grid: {
     display: 'grid',
-    gap: '20px',
+    gap: '16px',
   } as const,
 
   // Two column grid
   grid2Col: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: '20px',
+    gap: '16px',
   } as const,
 
   // Three column grid
   grid3Col: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr 1fr',
-    gap: '20px',
+    gap: '16px',
   } as const,
 
   // Four column grid
   grid4Col: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr 1fr 1fr',
-    gap: '20px',
+    gap: '16px',
   } as const,
 } as const;
 

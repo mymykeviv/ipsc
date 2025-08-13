@@ -282,16 +282,16 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   // Render different content based on mode
   if (mode === 'add' || mode === 'edit') {
     return (
-      <div style={{ padding: '24px', maxWidth: '100%' }}>
+      <div style={{ padding: '20px' }}>
         <div style={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center', 
-          marginBottom: '32px',
-          paddingBottom: '16px',
+          marginBottom: '24px',
+          paddingBottom: '12px',
           borderBottom: '2px solid #e9ecef'
         }}>
-          <h1 style={{ margin: '0', fontSize: '32px', fontWeight: '600', color: '#2c3e50' }}>
+          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
             {mode === 'add' ? 'Add New Product' : 'Edit Product'}
           </h1>
           <Button variant="secondary" onClick={() => navigate('/products')}>
@@ -301,12 +301,12 @@ export function Products({ mode = 'manage' }: ProductsProps) {
 
         {error && <ErrorMessage message={error} />}
 
-        <form onSubmit={mode === 'add' ? handleAddProduct : handleEditProduct} style={{ display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: '100%' }}>
+        <form onSubmit={mode === 'add' ? handleAddProduct : handleEditProduct} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Product Details Section */}
-          <div style={formStyles.section}>
-            <h2 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('basic') }}>
-              📦 Product Details
-            </h2>
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+              Product Details
+            </h3>
             <div style={formStyles.grid}>
               <div style={formStyles.grid3Col}>
                 <div style={formStyles.formGroup}>
@@ -409,10 +409,10 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           </div>
 
           {/* Price Details Section */}
-          <div style={formStyles.section}>
-            <h2 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('payment') }}>
-              💰 Price Details
-            </h2>
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>
+              Price Details
+            </h3>
             <div style={formStyles.grid}>
               <div style={formStyles.grid4Col}>
                 <div style={formStyles.formGroup}>
@@ -466,10 +466,10 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           </div>
 
           {/* Stock Details Section */}
-          <div style={formStyles.section}>
-            <h2 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('other') }}>
-              📊 Stock Details
-            </h2>
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '8px' }}>
+              Stock Details
+            </h3>
             <div style={formStyles.grid}>
               <div style={formStyles.grid2Col}>
                 <div style={formStyles.formGroup}>
@@ -499,16 +499,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
 
 
           {/* Form Actions */}
-          <div style={{ 
-            display: 'flex', 
-            gap: '16px', 
-            justifyContent: 'flex-end', 
-            marginTop: '32px',
-            padding: '24px',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '12px',
-            border: '1px solid #e9ecef'
-          }}>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
             <Button type="button" variant="secondary" onClick={() => navigate('/products')}>
               Cancel
             </Button>

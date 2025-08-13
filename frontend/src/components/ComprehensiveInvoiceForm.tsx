@@ -381,13 +381,13 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: '100%' }}>
       <ErrorMessage message={error} />
 
       {/* Invoice Details Section */}
       <div style={formStyles.section}>
-        <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('basic') }}>
-          Invoice Details
+        <h3 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('basic') }}>
+          📄 Invoice Details
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
           <div style={formStyles.formGroup}>
