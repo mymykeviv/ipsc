@@ -315,35 +315,34 @@ export function Dashboard() {
               📊 Income & Expenses Summary
             </h3>
             
-            {/* Net Cashflow Section */}
-            <div style={{ 
-              textAlign: 'center',
-              marginBottom: '20px',
-              padding: '16px',
-              backgroundColor: 'white',
-              borderRadius: '6px',
-              border: '1px solid #e9ecef'
-            }}>
-              <h2 style={{ margin: '0 0 8px 0', color: 'var(--text-secondary)', fontSize: '18px' }}>
-                Net Cashflow
-              </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '20% 40% 40%', gap: '16px' }}>
+              {/* Net Cashflow Section */}
               <div style={{ 
-                fontSize: '28px', 
-                fontWeight: 'bold',
-                color: getNetCashflowColor(cashflowData.cashflow.net_cashflow),
-                marginBottom: '4px'
+                textAlign: 'center',
+                padding: '16px',
+                backgroundColor: 'white',
+                borderRadius: '6px',
+                border: '1px solid #e9ecef'
               }}>
-                {formatCurrency(cashflowData.cashflow.net_cashflow)}
+                <h2 style={{ margin: '0 0 8px 0', color: 'var(--text-secondary)', fontSize: '16px' }}>
+                  Net Cashflow
+                </h2>
+                <div style={{ 
+                  fontSize: '24px', 
+                  fontWeight: 'bold',
+                  color: getNetCashflowColor(cashflowData.cashflow.net_cashflow),
+                  marginBottom: '4px'
+                }}>
+                  {formatCurrency(cashflowData.cashflow.net_cashflow)}
+                </div>
+                <div style={{ 
+                  fontSize: '12px', 
+                  color: 'var(--text-secondary)' 
+                }}>
+                  {cashflowData.cashflow.net_cashflow >= 0 ? 'Positive Cashflow' : 'Negative Cashflow'}
+                </div>
               </div>
-              <div style={{ 
-                fontSize: '13px', 
-                color: 'var(--text-secondary)' 
-              }}>
-                {cashflowData.cashflow.net_cashflow >= 0 ? 'Positive Cashflow' : 'Negative Cashflow'}
-              </div>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+
               {/* Income Column */}
               <div style={{ 
                 padding: '12px', 
