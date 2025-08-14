@@ -48,12 +48,9 @@ check_dependencies() {
         exit 1
     fi
     
-    # Check PostgreSQL
-    if ! command -v psql &> /dev/null; then
-        print_warning "PostgreSQL client not found. Will use Docker for database."
-        USE_DOCKER_DB=true
-    else
-        USE_DOCKER_DB=false
+    # Check SQLite (not needed for SQLite, but keeping for compatibility)
+    if ! command -v sqlite3 &> /dev/null; then
+        print_warning "SQLite3 not found, but it's usually included with Python."
     fi
     
     print_success "Dependencies check completed"
@@ -80,7 +77,7 @@ create_env_file() {
     
     cat > .env.local << EOF
 # Local Development Environment Variables
-DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/cashflow
+DATABASE_URL=sqlite:///./cashflow.db
 SECRET_KEY=dev-secret-key-change-in-production
 DEBUG=true
 LOG_LEVEL=DEBUG
@@ -107,47 +104,14 @@ setup_node_env() {
     print_success "Node.js dependencies installed"
 }
 
-# Start PostgreSQL (local or Docker)
-start_database() {
-    print_status "Starting database..."
+# Setup SQLite database
+setup_database() {
+    print_status "Setting up SQLite database..."
     
-        if [ "$USE_DOCKER_DB" = true ]; then
-        # Use Docker for PostgreSQL
-        # Remove existing container if it exists
-        docker rm -f cashflow-postgres-dev 2>/dev/null || true
-        
-        docker run -d \
-            --name cashflow-postgres-dev \
-            -e POSTGRES_DB=cashflow \
-            -e POSTGRES_USER=postgres \
-            -e POSTGRES_PASSWORD=postgres \
-            -p 5432:5432 \
-            postgres:16-alpine
-        
-            print_success "PostgreSQL started in Docker"
-    
-    # Wait for PostgreSQL to be ready
-    print_status "Waiting for PostgreSQL to be ready..."
-    for i in {1..30}; do
-        if docker exec cashflow-postgres-dev pg_isready -U postgres &> /dev/null; then
-            print_success "PostgreSQL is ready"
-            break
-        fi
-        if [ $i -eq 30 ]; then
-            print_error "PostgreSQL failed to start within 30 seconds"
-            exit 1
-        fi
-        sleep 1
-    done
-else
-    # Check if PostgreSQL is running locally
-    if ! command -v pg_isready &> /dev/null || ! pg_isready -h localhost -p 5432 &> /dev/null; then
-        print_warning "PostgreSQL is not running locally. Please start PostgreSQL service."
-        print_status "You can start it with: brew services start postgresql (macOS) or sudo systemctl start postgresql (Linux)"
-        exit 1
-    fi
-    print_success "Using local PostgreSQL"
-fi
+    # SQLite database will be created automatically when the backend starts
+    # Just ensure the directory exists
+    touch cashflow.db
+    print_success "SQLite database setup completed"
 }
 
 # Start MailHog for email testing
@@ -174,13 +138,8 @@ start_backend() {
     
     # Environment variables are loaded from .env.local file
     
-    # Create database if it doesn't exist
-    print_status "Ensuring database exists..."
-    if [ "$USE_DOCKER_DB" = true ]; then
-        docker exec cashflow-postgres-dev psql -U postgres -c "CREATE DATABASE cashflow;" 2>/dev/null || true
-    else
-        psql -h localhost -U postgres -c "CREATE DATABASE cashflow;" 2>/dev/null || true
-    fi
+    # SQLite database will be created automatically by SQLAlchemy
+    print_status "SQLite database will be created automatically"
     
     # Start backend with auto-reload
     cd backend
@@ -226,9 +185,6 @@ create_pid_file() {
     echo "BACKEND_PID=$BACKEND_PID" > .dev-pids
     echo "FRONTEND_PID=$FRONTEND_PID" >> .dev-pids
     echo "MAILHOG_CONTAINER=cashflow-mailhog-dev" >> .dev-pids
-    if [ "$USE_DOCKER_DB" = true ]; then
-        echo "POSTGRES_CONTAINER=cashflow-postgres-dev" >> .dev-pids
-    fi
 }
 
 # Show status and URLs
@@ -240,7 +196,7 @@ show_status() {
     echo "📱 Frontend:     http://localhost:5173"
     echo "🔧 Backend API:  http://localhost:8000"
     echo "📧 MailHog:      http://localhost:8025"
-    echo "🗄️  Database:     localhost:5432"
+    echo "🗄️  Database:     SQLite (cashflow.db)"
     echo ""
     echo "🔍 Debug Features Enabled:"
     echo "   - Hot reload for frontend and backend"
@@ -273,9 +229,6 @@ cleanup() {
     
     # Stop Docker containers
     docker stop cashflow-mailhog-dev 2>/dev/null || true
-    if [ "$USE_DOCKER_DB" = true ]; then
-        docker stop cashflow-postgres-dev 2>/dev/null || true
-    fi
     
     # Remove PID file
     rm -f .dev-pids
@@ -294,7 +247,7 @@ main() {
     setup_python_env
     create_env_file
     setup_node_env
-    start_database
+    setup_database
     start_mailhog
     start_backend
     start_frontend
