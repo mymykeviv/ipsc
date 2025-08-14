@@ -186,8 +186,8 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
   const loadData = async () => {
     try {
       const [customersData, suppliersData, productsData] = await Promise.all([
-        apiListCustomers(),
-        apiListVendors(),
+        apiListCustomers('', true), // Include inactive customers
+        apiListVendors('', true),   // Include inactive vendors
         apiGetProducts()
       ])
       console.log('Loaded suppliers:', suppliersData)
