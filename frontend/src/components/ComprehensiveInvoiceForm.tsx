@@ -132,6 +132,10 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [supplierSearch, setSupplierSearch] = useState('')
+  const [showSupplierDropdown, setShowSupplierDropdown] = useState(false)
+  const [customerSearch, setCustomerSearch] = useState('')
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
   
   const [formData, setFormData] = useState<InvoiceFormData>({
     // Invoice Details
@@ -287,6 +291,20 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
     })
   }
 
+  // Filter suppliers based on search
+  const filteredSuppliers = suppliers.filter(supplier =>
+    supplier.name.toLowerCase().includes(supplierSearch.toLowerCase()) ||
+    supplier.gstin?.toLowerCase().includes(supplierSearch.toLowerCase()) ||
+    supplier.email?.toLowerCase().includes(supplierSearch.toLowerCase())
+  )
+
+  // Filter customers based on search
+  const filteredCustomers = customers.filter(customer =>
+    customer.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    customer.gstin?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    customer.email?.toLowerCase().includes(customerSearch.toLowerCase())
+  )
+
   const updateSupplierDetails = (supplierId: number) => {
     if (supplierId === 0) {
       // Clear supplier details when no supplier is selected
@@ -297,6 +315,8 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
         supplier_gstin: '',
         supplier_email: ''
       })
+      setSupplierSearch('')
+      setShowSupplierDropdown(false)
       return
     }
     
@@ -310,10 +330,39 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
         supplier_gstin: supplier.gstin || '',
         supplier_email: supplier.email || ''
       })
+      setSupplierSearch(supplier.name)
+      setShowSupplierDropdown(false)
     }
   }
 
+  const handleSupplierSearchChange = (value: string) => {
+    setSupplierSearch(value)
+    setShowSupplierDropdown(true)
+    if (!value) {
+      setShowSupplierDropdown(false)
+    }
+  }
+
+  const handleSupplierSelect = (supplier: Party) => {
+    updateSupplierDetails(supplier.id)
+  }
+
   const updateCustomerDetails = (customerId: number) => {
+    if (customerId === 0) {
+      // Clear customer details when no customer is selected
+      setFormData({
+        ...formData,
+        customer_id: null,
+        bill_to_address: '',
+        ship_to_address: '',
+        customer_gstin: '',
+        customer_email: ''
+      })
+      setCustomerSearch('')
+      setShowCustomerDropdown(false)
+      return
+    }
+    
     const customer = customers.find(c => c.id === customerId)
     if (customer) {
       const address = `${customer.billing_address_line1}${customer.billing_address_line2 ? ', ' + customer.billing_address_line2 : ''}, ${customer.billing_city}, ${customer.billing_state} - ${customer.billing_pincode}`
@@ -325,7 +374,21 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
         customer_gstin: customer.gstin || '',
         customer_email: customer.email || ''
       })
+      setCustomerSearch(customer.name)
+      setShowCustomerDropdown(false)
     }
+  }
+
+  const handleCustomerSearchChange = (value: string) => {
+    setCustomerSearch(value)
+    setShowCustomerDropdown(true)
+    if (!value) {
+      setShowCustomerDropdown(false)
+    }
+  }
+
+  const handleCustomerSelect = (customer: Party) => {
+    updateCustomerDetails(customer.id)
   }
 
   // Calculate totals with GST breakup
@@ -509,17 +572,109 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
           <div style={formStyles.formGroup}>
             <label style={formStyles.label}>Supplier Name *</label>
-            <select
-              value={formData.supplier_id || ''}
-              onChange={(e) => updateSupplierDetails(Number(e.target.value) || 0)}
-              required
-              style={formStyles.select}
-            >
-              <option value="">Select Supplier... ({suppliers.length} suppliers available)</option>
-              {suppliers.map(supplier => (
-                <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
-              ))}
-            </select>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                value={supplierSearch}
+                onChange={(e) => handleSupplierSearchChange(e.target.value)}
+                placeholder="Search suppliers by name, GSTIN, or email..."
+                required={!formData.supplier_id}
+                style={{
+                  ...formStyles.input,
+                  width: '100%',
+                  paddingRight: '30px'
+                }}
+                onFocus={() => setShowSupplierDropdown(true)}
+                onBlur={() => setTimeout(() => setShowSupplierDropdown(false), 200)}
+              />
+              {formData.supplier_id && (
+                <button
+                  type="button"
+                  onClick={() => updateSupplierDetails(0)}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#dc3545',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    padding: '0',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title="Clear selection"
+                >
+                  ×
+                </button>
+              )}
+              {showSupplierDropdown && filteredSuppliers.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: 'white',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  zIndex: 1000,
+                  maxHeight: '200px',
+                  overflowY: 'auto'
+                }}>
+                  {filteredSuppliers.map(supplier => (
+                    <div
+                      key={supplier.id}
+                      onClick={() => handleSupplierSelect(supplier)}
+                      style={{
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #f0f0f0',
+                        fontSize: '14px'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f8f9fa'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'white'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', color: '#333' }}>{supplier.name}</div>
+                      {supplier.gstin && (
+                        <div style={{ fontSize: '12px', color: '#666' }}>GSTIN: {supplier.gstin}</div>
+                      )}
+                      {supplier.email && (
+                        <div style={{ fontSize: '12px', color: '#666' }}>{supplier.email}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {showSupplierDropdown && filteredSuppliers.length === 0 && supplierSearch && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: 'white',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  zIndex: 1000,
+                  padding: '12px',
+                  textAlign: 'center',
+                  color: '#666',
+                  fontSize: '14px'
+                }}>
+                  No suppliers found matching "{supplierSearch}"
+                </div>
+              )}
+            </div>
           </div>
           <div style={formStyles.formGroup}>
             <label style={formStyles.label}>Supplier Address *</label>
@@ -624,17 +779,111 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
           <div>
             <label>Customer Name *</label>
-            <select
-              value={formData.customer_id || ''}
-              onChange={(e) => updateCustomerDetails(Number(e.target.value))}
-              required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-            >
-              <option value="">Select Customer...</option>
-              {customers.map(customer => (
-                <option key={customer.id} value={customer.id}>{customer.name}</option>
-              ))}
-            </select>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                value={customerSearch}
+                onChange={(e) => handleCustomerSearchChange(e.target.value)}
+                placeholder="Search customers by name, GSTIN, or email..."
+                required={!formData.customer_id}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  paddingRight: '30px',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius)'
+                }}
+                onFocus={() => setShowCustomerDropdown(true)}
+                onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
+              />
+              {formData.customer_id && (
+                <button
+                  type="button"
+                  onClick={() => updateCustomerDetails(0)}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#dc3545',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    padding: '0',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title="Clear selection"
+                >
+                  ×
+                </button>
+              )}
+              {showCustomerDropdown && filteredCustomers.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: 'white',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  zIndex: 1000,
+                  maxHeight: '200px',
+                  overflowY: 'auto'
+                }}>
+                  {filteredCustomers.map(customer => (
+                    <div
+                      key={customer.id}
+                      onClick={() => handleCustomerSelect(customer)}
+                      style={{
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #f0f0f0',
+                        fontSize: '14px'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f8f9fa'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'white'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', color: '#333' }}>{customer.name}</div>
+                      {customer.gstin && (
+                        <div style={{ fontSize: '12px', color: '#666' }}>GSTIN: {customer.gstin}</div>
+                      )}
+                      {customer.email && (
+                        <div style={{ fontSize: '12px', color: '#666' }}>{customer.email}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {showCustomerDropdown && filteredCustomers.length === 0 && customerSearch && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: 'white',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  zIndex: 1000,
+                  padding: '12px',
+                  textAlign: 'center',
+                  color: '#666',
+                  fontSize: '14px'
+                }}>
+                  No customers found matching "{customerSearch}"
+                </div>
+              )}
+            </div>
           </div>
           <div>
             <label>Bill To Address *</label>
