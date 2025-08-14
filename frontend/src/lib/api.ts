@@ -852,6 +852,57 @@ export async function apiEmailInvoice(id: number, email: string): Promise<void> 
   }
 }
 
+export async function apiGetInvoicePDF(id: number): Promise<Blob> {
+  const r = await fetch(`/api/invoices/${id}/pdf`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.blob()
+}
+
+export async function apiGetPurchasePDF(id: number): Promise<Blob> {
+  const r = await fetch(`/api/purchases/${id}/pdf`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.blob()
+}
+
+export async function apiEmailPurchase(id: number, email: string): Promise<void> {
+  const r = await fetch(`/api/purchases/${id}/email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
+    body: JSON.stringify({ to: email })
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+}
+
 export type StockRow = { 
   product_id: number; 
   sku: string; 

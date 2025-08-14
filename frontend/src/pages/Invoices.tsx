@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { apiListParties, apiGetProducts, apiCreateInvoice, apiUpdateInvoice, apiGetInvoice, apiDeleteInvoice, apiEmailInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, apiGetInvoices, apiUpdateInvoiceStatus, Party, Product, Payment, PaginationInfo, Invoice } from '../lib/api'
+import { apiListParties, apiGetProducts, apiCreateInvoice, apiUpdateInvoice, apiGetInvoice, apiDeleteInvoice, apiEmailInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, apiGetInvoices, apiUpdateInvoiceStatus, apiGetInvoicePDF, Party, Product, Payment, PaginationInfo, Invoice } from '../lib/api'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
@@ -130,31 +130,27 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
     }
   }
 
-
-
-  const handleSendEmail = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!currentInvoice || !emailForm.email_address) return
-    
+  const handlePrint = async (id: number) => {
     try {
-      setLoading(true)
-      await apiEmailInvoice(currentInvoice.id, emailForm.email_address)
-      navigate('/invoices')
+      const pdfBlob = await apiGetInvoicePDF(id)
+      const url = window.URL.createObjectURL(pdfBlob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `Invoice_${id}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
     } catch (err: any) {
       const errorMessage = handleApiError(err)
       setError(errorMessage)
-    } finally {
-      setLoading(false)
     }
   }
 
-  const handlePrint = async () => {
-    if (!currentInvoice) return
-    
+  const handleEmail = async (id: number, email: string) => {
     try {
-      // TODO: Implement actual PDF generation and printing
-      alert('PDF generation and printing functionality will be implemented here.')
-      navigate('/invoices')
+      await apiEmailInvoice(id, email)
+      alert('Invoice sent successfully!')
     } catch (err: any) {
       const errorMessage = handleApiError(err)
       setError(errorMessage)
@@ -506,7 +502,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
             <Button variant="secondary" onClick={() => navigate('/invoices')}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={handlePrint}>
+            <Button variant="primary" onClick={() => handlePrint(currentInvoice.id)}>
               Generate PDF & Print
             </Button>
           </div>
@@ -650,10 +646,17 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
                     </Button>
                     <Button 
                       variant="secondary"
-                      onClick={() => navigate(`/invoices/print/${invoice.id}`)}
+                      onClick={() => handlePrint(invoice.id)}
                       style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       Print
+                    </Button>
+                    <Button 
+                      variant="secondary"
+                      onClick={() => handleEmail(invoice.id, invoice.customer_email || '')}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
+                    >
+                      Email
                     </Button>
                     <Button 
                       variant="secondary"
@@ -661,20 +664,6 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
                       style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       Add Payment
-                    </Button>
-                    <Button 
-                      variant="secondary"
-                      onClick={() => navigate(`/invoices/email/${invoice.id}`)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                    >
-                      Email
-                    </Button>
-                    <Button 
-                      variant="secondary" 
-                      onClick={() => handleDelete(invoice.id)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                    >
-                      Delete
                     </Button>
                     {invoice.status === 'Draft' && (
                       <Button 
@@ -685,6 +674,13 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
                         Mark as Sent
                       </Button>
                     )}
+                    <Button 
+                      variant="secondary" 
+                      onClick={() => handleDelete(invoice.id)}
+                      style={{ fontSize: '14px', padding: '6px 12px' }}
+                    >
+                      Delete
+                    </Button>
                   </div>
                 </td>
               </tr>

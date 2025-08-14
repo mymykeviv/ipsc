@@ -11,10 +11,21 @@ from .models import Product, User, Party, CompanySettings, Invoice, InvoiceItem,
 from .audit import AuditService
 from .gst import money, split_gst
 from decimal import Decimal
-from .emailer import send_email
+from .emailer import send_email, create_invoice_email_template, create_purchase_email_template
 from fastapi import Query
 import json
 import calendar
+from io import BytesIO
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import inch, cm
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.colors import black, white, grey, darkblue
 
 
 # Indian States for GST Compliance
@@ -629,22 +640,196 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
     return inv
 
 
-from io import BytesIO
-from reportlab.pdfgen import canvas
-
-
 @api.get('/invoices/{invoice_id}/pdf')
 def invoice_pdf(invoice_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
     inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not inv:
-        raise HTTPException(status_code=404, detail='Not found')
+        raise HTTPException(status_code=404, detail='Invoice not found')
+    
+    # Get related data
+    company = db.query(CompanySettings).first()
+    customer = db.query(Party).filter(Party.id == inv.customer_id).first()
+    supplier = db.query(Party).filter(Party.id == inv.supplier_id).first()
+    items = db.query(InvoiceItem).filter(InvoiceItem.invoice_id == inv.id).all()
+    
+    # Create PDF buffer
     buf = BytesIO()
-    c = canvas.Canvas(buf)
-    c.drawString(50, 800, f"Invoice: {inv.invoice_no}")
-    c.drawString(50, 780, f"Taxable: {inv.taxable_value}  Total: {inv.grand_total}")
-    c.showPage()
-    c.save()
+    doc = SimpleDocTemplate(buf, pagesize=A4, rightMargin=1*cm, leftMargin=1*cm, topMargin=1*cm, bottomMargin=1*cm)
+    
+    # Define styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        textColor=darkblue,
+        alignment=TA_CENTER,
+        spaceAfter=20
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=12,
+        textColor=darkblue,
+        spaceAfter=6
+    )
+    
+    normal_style = ParagraphStyle(
+        'CustomNormal',
+        parent=styles['Normal'],
+        fontSize=10,
+        spaceAfter=3
+    )
+    
+    # Build PDF content
+    story = []
+    
+    # Header - Company Details
+    if company:
+        story.append(Paragraph(f"<b>{company.company_name}</b>", title_style))
+        story.append(Paragraph(f"GSTIN: {company.gstin}", normal_style))
+        story.append(Paragraph(f"Address: {company.address}", normal_style))
+        story.append(Paragraph(f"Phone: {company.phone} | Email: {company.email}", normal_style))
+    else:
+        story.append(Paragraph("<b>CASHFLOW</b>", title_style))
+        story.append(Paragraph("Financial Management System", normal_style))
+    
+    story.append(Spacer(1, 20))
+    
+    # Invoice Header
+    story.append(Paragraph(f"<b>TAX INVOICE</b>", heading_style))
+    
+    # Invoice Details Table
+    invoice_data = [
+        ['Invoice No:', inv.invoice_no, 'Date:', inv.date.strftime('%d/%m/%Y')],
+        ['Due Date:', inv.due_date.strftime('%d/%m/%Y'), 'Terms:', inv.terms],
+        ['Place of Supply:', inv.place_of_supply, 'State Code:', inv.place_of_supply_state_code]
+    ]
+    
+    if inv.eway_bill_number:
+        invoice_data.append(['E-way Bill No:', inv.eway_bill_number, '', ''])
+    
+    invoice_table = Table(invoice_data, colWidths=[2*cm, 6*cm, 2*cm, 6*cm])
+    invoice_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+    ]))
+    story.append(invoice_table)
+    story.append(Spacer(1, 15))
+    
+    # Customer and Supplier Details
+    details_data = []
+    
+    if customer:
+        details_data.append(['Bill To:', customer.name])
+        details_data.append(['', f"GSTIN: {customer.gstin}" if customer.gstin else "GSTIN: Not Available"])
+        details_data.append(['', customer.address])
+        if customer.email:
+            details_data.append(['', f"Email: {customer.email}"])
+        if customer.phone:
+            details_data.append(['', f"Phone: {customer.phone}"])
+    
+    if supplier:
+        details_data.append(['Ship From:', supplier.name])
+        details_data.append(['', f"GSTIN: {supplier.gstin}" if supplier.gstin else "GSTIN: Not Available"])
+        details_data.append(['', supplier.address])
+    
+    if details_data:
+        details_table = Table(details_data, colWidths=[2*cm, 14*cm])
+        details_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+            ('TOPPADDING', (0, 0), (-1, -1), 2),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ]))
+        story.append(details_table)
+        story.append(Spacer(1, 15))
+    
+    # Items Table
+    story.append(Paragraph("<b>Item Details</b>", heading_style))
+    
+    # Table headers
+    headers = ['S.No', 'Description', 'HSN', 'Qty', 'Rate', 'Amount', 'GST %', 'CGST', 'SGST', 'Total']
+    table_data = [headers]
+    
+    # Add items
+    for i, item in enumerate(items, 1):
+        product = db.query(Product).filter(Product.id == item.product_id).first()
+        description = product.name if product else item.description
+        
+        row = [
+            str(i),
+            description,
+            item.hsn_code or '',
+            str(item.qty),
+            f"₹{float(item.rate):.2f}",
+            f"₹{float(item.taxable_value):.2f}",
+            f"{item.gst_rate}%",
+            f"₹{float(item.cgst):.2f}",
+            f"₹{float(item.sgst):.2f}",
+            f"₹{float(item.amount):.2f}"
+        ]
+        table_data.append(row)
+    
+    # Create items table
+    items_table = Table(table_data, colWidths=[0.8*cm, 4*cm, 1.5*cm, 1*cm, 1.5*cm, 1.5*cm, 1*cm, 1.2*cm, 1.2*cm, 1.5*cm])
+    items_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('ALIGN', (1, 0), (1, -1), 'LEFT'),  # Description left-aligned
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),  # Header row
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+    ]))
+    story.append(items_table)
+    story.append(Spacer(1, 15))
+    
+    # Totals Table
+    totals_data = [
+        ['Subtotal:', f"₹{float(inv.taxable_value):.2f}"],
+        ['CGST:', f"₹{float(inv.cgst):.2f}"],
+        ['SGST:', f"₹{float(inv.sgst):.2f}"],
+        ['IGST:', f"₹{float(inv.igst):.2f}"],
+        ['Total:', f"₹{float(inv.grand_total):.2f}"]
+    ]
+    
+    totals_table = Table(totals_data, colWidths=[4*cm, 2*cm])
+    totals_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),  # Total row bold
+        ('FONTSIZE', (0, -1), (-1, -1), 12),  # Total row larger
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+    ]))
+    story.append(totals_table)
+    story.append(Spacer(1, 20))
+    
+    # Notes
+    if inv.notes:
+        story.append(Paragraph("<b>Notes:</b>", heading_style))
+        story.append(Paragraph(inv.notes, normal_style))
+        story.append(Spacer(1, 15))
+    
+    # Footer
+    story.append(Paragraph("Thank you for your business!", normal_style))
+    story.append(Paragraph("This is a computer generated invoice", normal_style))
+    
+    # Build PDF
+    doc.build(story)
     pdf = buf.getvalue()
+    buf.close()
+    
     return Response(content=pdf, media_type='application/pdf')
 
 
@@ -906,8 +1091,221 @@ def email_invoice(invoice_id: int, payload: EmailRequest, _: User = Depends(get_
     inv.status = "Sent"
     db.commit()
     
-    ok = send_email(payload.to, f"Invoice {inv.invoice_no}", f"Total: {inv.grand_total}")
-    return {"status": "queued" if ok else "disabled"}
+    # Get customer details
+    customer = db.query(Party).filter(Party.id == inv.customer_id).first()
+    customer_name = customer.name if customer else "Valued Customer"
+    
+    # Get company details
+    company = db.query(CompanySettings).first()
+    company_name = company.company_name if company else "CASHFLOW"
+    
+    # Generate PDF
+    try:
+        # Create PDF buffer
+        buf = BytesIO()
+        doc = SimpleDocTemplate(buf, pagesize=A4, rightMargin=1*cm, leftMargin=1*cm, topMargin=1*cm, bottomMargin=1*cm)
+        
+        # Define styles
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            textColor=darkblue,
+            alignment=TA_CENTER,
+            spaceAfter=20
+        )
+        
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=12,
+            textColor=darkblue,
+            spaceAfter=6
+        )
+        
+        normal_style = ParagraphStyle(
+            'CustomNormal',
+            parent=styles['Normal'],
+            fontSize=10,
+            spaceAfter=3
+        )
+        
+        # Build PDF content (same as invoice_pdf function)
+        story = []
+        
+        # Header - Company Details
+        if company:
+            story.append(Paragraph(f"<b>{company.company_name}</b>", title_style))
+            story.append(Paragraph(f"GSTIN: {company.gstin}", normal_style))
+            story.append(Paragraph(f"Address: {company.address}", normal_style))
+            story.append(Paragraph(f"Phone: {company.phone} | Email: {company.email}", normal_style))
+        else:
+            story.append(Paragraph("<b>CASHFLOW</b>", title_style))
+            story.append(Paragraph("Financial Management System", normal_style))
+        
+        story.append(Spacer(1, 20))
+        
+        # Invoice Header
+        story.append(Paragraph(f"<b>TAX INVOICE</b>", heading_style))
+        
+        # Invoice Details Table
+        invoice_data = [
+            ['Invoice No:', inv.invoice_no, 'Date:', inv.date.strftime('%d/%m/%Y')],
+            ['Due Date:', inv.due_date.strftime('%d/%m/%Y'), 'Terms:', inv.terms],
+            ['Place of Supply:', inv.place_of_supply, 'State Code:', inv.place_of_supply_state_code]
+        ]
+        
+        if inv.eway_bill_number:
+            invoice_data.append(['E-way Bill No:', inv.eway_bill_number, '', ''])
+        
+        invoice_table = Table(invoice_data, colWidths=[2*cm, 6*cm, 2*cm, 6*cm])
+        invoice_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ]))
+        story.append(invoice_table)
+        story.append(Spacer(1, 15))
+        
+        # Customer and Supplier Details
+        details_data = []
+        
+        if customer:
+            details_data.append(['Bill To:', customer.name])
+            details_data.append(['', f"GSTIN: {customer.gstin}" if customer.gstin else "GSTIN: Not Available"])
+            details_data.append(['', customer.address])
+            if customer.email:
+                details_data.append(['', f"Email: {customer.email}"])
+            if customer.phone:
+                details_data.append(['', f"Phone: {customer.phone}"])
+        
+        supplier = db.query(Party).filter(Party.id == inv.supplier_id).first()
+        if supplier:
+            details_data.append(['Ship From:', supplier.name])
+            details_data.append(['', f"GSTIN: {supplier.gstin}" if supplier.gstin else "GSTIN: Not Available"])
+            details_data.append(['', supplier.address])
+        
+        if details_data:
+            details_table = Table(details_data, colWidths=[2*cm, 14*cm])
+            details_table.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+                ('TOPPADDING', (0, 0), (-1, -1), 2),
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ]))
+            story.append(details_table)
+            story.append(Spacer(1, 15))
+        
+        # Items Table
+        story.append(Paragraph("<b>Item Details</b>", heading_style))
+        
+        # Table headers
+        headers = ['S.No', 'Description', 'HSN', 'Qty', 'Rate', 'Amount', 'GST %', 'CGST', 'SGST', 'Total']
+        table_data = [headers]
+        
+        # Add items
+        items = db.query(InvoiceItem).filter(InvoiceItem.invoice_id == inv.id).all()
+        for i, item in enumerate(items, 1):
+            product = db.query(Product).filter(Product.id == item.product_id).first()
+            description = product.name if product else item.description
+            
+            row = [
+                str(i),
+                description,
+                item.hsn_code or '',
+                str(item.qty),
+                f"₹{float(item.rate):.2f}",
+                f"₹{float(item.taxable_value):.2f}",
+                f"{item.gst_rate}%",
+                f"₹{float(item.cgst):.2f}",
+                f"₹{float(item.sgst):.2f}",
+                f"₹{float(item.amount):.2f}"
+            ]
+            table_data.append(row)
+        
+        # Create items table
+        items_table = Table(table_data, colWidths=[0.8*cm, 4*cm, 1.5*cm, 1*cm, 1.5*cm, 1.5*cm, 1*cm, 1.2*cm, 1.2*cm, 1.5*cm])
+        items_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),  # Description left-aligned
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),  # Header row
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ]))
+        story.append(items_table)
+        story.append(Spacer(1, 15))
+        
+        # Totals Table
+        totals_data = [
+            ['Subtotal:', f"₹{float(inv.taxable_value):.2f}"],
+            ['CGST:', f"₹{float(inv.cgst):.2f}"],
+            ['SGST:', f"₹{float(inv.sgst):.2f}"],
+            ['IGST:', f"₹{float(inv.igst):.2f}"],
+            ['Total:', f"₹{float(inv.grand_total):.2f}"]
+        ]
+        
+        totals_table = Table(totals_data, colWidths=[4*cm, 2*cm])
+        totals_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),  # Total row bold
+            ('FONTSIZE', (0, -1), (-1, -1), 12),  # Total row larger
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        story.append(totals_table)
+        story.append(Spacer(1, 20))
+        
+        # Notes
+        if inv.notes:
+            story.append(Paragraph("<b>Notes:</b>", heading_style))
+            story.append(Paragraph(inv.notes, normal_style))
+            story.append(Spacer(1, 15))
+        
+        # Footer
+        story.append(Paragraph("Thank you for your business!", normal_style))
+        story.append(Paragraph("This is a computer generated invoice", normal_style))
+        
+        # Build PDF
+        doc.build(story)
+        pdf_content = buf.getvalue()
+        buf.close()
+        
+        # Create email template
+        text_body, html_body = create_invoice_email_template(
+            invoice_no=inv.invoice_no,
+            customer_name=customer_name,
+            amount=float(inv.grand_total),
+            due_date=inv.due_date.strftime('%d/%m/%Y'),
+            company_name=company_name
+        )
+        
+        # Send email with PDF attachment
+        subject = f"Invoice {inv.invoice_no} - {company_name}"
+        filename = f"Invoice_{inv.invoice_no}.pdf"
+        
+        success = send_email(
+            to=payload.to,
+            subject=subject,
+            body=html_body,  # Use HTML version
+            pdf_attachment=pdf_content,
+            filename=filename
+        )
+        
+        return {"status": "sent" if success else "failed"}
+        
+    except Exception as e:
+        return {"status": "failed", "error": str(e)}
 
 
 # Audit Trail Endpoints
@@ -2812,4 +3210,402 @@ def get_cashflow_summary(
             "total_purchase_payments": 0.0  # TODO: Calculate from purchase payments
         }
     }
+
+
+@api.get('/purchases/{purchase_id}/pdf')
+def purchase_pdf(purchase_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    purchase = db.query(Purchase).filter(Purchase.id == purchase_id).first()
+    if not purchase:
+        raise HTTPException(status_code=404, detail='Purchase not found')
+    
+    # Get related data
+    company = db.query(CompanySettings).first()
+    vendor = db.query(Party).filter(Party.id == purchase.vendor_id).first()
+    items = db.query(PurchaseItem).filter(PurchaseItem.purchase_id == purchase.id).all()
+    
+    # Create PDF buffer
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, rightMargin=1*cm, leftMargin=1*cm, topMargin=1*cm, bottomMargin=1*cm)
+    
+    # Define styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        textColor=darkblue,
+        alignment=TA_CENTER,
+        spaceAfter=20
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=12,
+        textColor=darkblue,
+        spaceAfter=6
+    )
+    
+    normal_style = ParagraphStyle(
+        'CustomNormal',
+        parent=styles['Normal'],
+        fontSize=10,
+        spaceAfter=3
+    )
+    
+    # Build PDF content
+    story = []
+    
+    # Header - Company Details
+    if company:
+        story.append(Paragraph(f"<b>{company.company_name}</b>", title_style))
+        story.append(Paragraph(f"GSTIN: {company.gstin}", normal_style))
+        story.append(Paragraph(f"Address: {company.address}", normal_style))
+        story.append(Paragraph(f"Phone: {company.phone} | Email: {company.email}", normal_style))
+    else:
+        story.append(Paragraph("<b>CASHFLOW</b>", title_style))
+        story.append(Paragraph("Financial Management System", normal_style))
+    
+    story.append(Spacer(1, 20))
+    
+    # Purchase Header
+    story.append(Paragraph(f"<b>PURCHASE ORDER</b>", heading_style))
+    
+    # Purchase Details Table
+    purchase_data = [
+        ['Purchase No:', purchase.purchase_no, 'Date:', purchase.date.strftime('%d/%m/%Y')],
+        ['Due Date:', purchase.due_date.strftime('%d/%m/%Y'), 'Terms:', purchase.terms],
+        ['Place of Supply:', purchase.place_of_supply, 'State Code:', purchase.place_of_supply_state_code]
+    ]
+    
+    if purchase.eway_bill_number:
+        purchase_data.append(['E-way Bill No:', purchase.eway_bill_number, '', ''])
+    
+    purchase_table = Table(purchase_data, colWidths=[2*cm, 6*cm, 2*cm, 6*cm])
+    purchase_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+    ]))
+    story.append(purchase_table)
+    story.append(Spacer(1, 15))
+    
+    # Vendor Details
+    if vendor:
+        vendor_data = [
+            ['Vendor:', vendor.name],
+            ['', f"GSTIN: {vendor.gstin}" if vendor.gstin else "GSTIN: Not Available"],
+            ['', vendor.address],
+            ['', f"Email: {vendor.email}" if vendor.email else ""],
+            ['', f"Phone: {vendor.phone}" if vendor.phone else ""]
+        ]
+        
+        vendor_table = Table(vendor_data, colWidths=[2*cm, 14*cm])
+        vendor_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+            ('TOPPADDING', (0, 0), (-1, -1), 2),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ]))
+        story.append(vendor_table)
+        story.append(Spacer(1, 15))
+    
+    # Items Table
+    story.append(Paragraph("<b>Item Details</b>", heading_style))
+    
+    # Table headers
+    headers = ['S.No', 'Description', 'HSN', 'Qty', 'Rate', 'Amount', 'GST %', 'CGST', 'SGST', 'Total']
+    table_data = [headers]
+    
+    # Add items
+    for i, item in enumerate(items, 1):
+        product = db.query(Product).filter(Product.id == item.product_id).first()
+        description = product.name if product else item.description
+        
+        row = [
+            str(i),
+            description,
+            item.hsn_code or '',
+            str(item.qty),
+            f"₹{float(item.rate):.2f}",
+            f"₹{float(item.taxable_value):.2f}",
+            f"{item.gst_rate}%",
+            f"₹{float(item.cgst):.2f}",
+            f"₹{float(item.sgst):.2f}",
+            f"₹{float(item.amount):.2f}"
+        ]
+        table_data.append(row)
+    
+    # Create items table
+    items_table = Table(table_data, colWidths=[0.8*cm, 4*cm, 1.5*cm, 1*cm, 1.5*cm, 1.5*cm, 1*cm, 1.2*cm, 1.2*cm, 1.5*cm])
+    items_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('ALIGN', (1, 0), (1, -1), 'LEFT'),  # Description left-aligned
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),  # Header row
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+    ]))
+    story.append(items_table)
+    story.append(Spacer(1, 15))
+    
+    # Totals Table
+    totals_data = [
+        ['Subtotal:', f"₹{float(purchase.taxable_value):.2f}"],
+        ['CGST:', f"₹{float(purchase.cgst):.2f}"],
+        ['SGST:', f"₹{float(purchase.sgst):.2f}"],
+        ['IGST:', f"₹{float(purchase.igst):.2f}"],
+        ['Total:', f"₹{float(purchase.grand_total):.2f}"]
+    ]
+    
+    totals_table = Table(totals_data, colWidths=[4*cm, 2*cm])
+    totals_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),  # Total row bold
+        ('FONTSIZE', (0, -1), (-1, -1), 12),  # Total row larger
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+    ]))
+    story.append(totals_table)
+    story.append(Spacer(1, 20))
+    
+    # Notes
+    if purchase.notes:
+        story.append(Paragraph("<b>Notes:</b>", heading_style))
+        story.append(Paragraph(purchase.notes, normal_style))
+        story.append(Spacer(1, 15))
+    
+    # Footer
+    story.append(Paragraph("Thank you for your service!", normal_style))
+    story.append(Paragraph("This is a computer generated purchase order", normal_style))
+    
+    # Build PDF
+    doc.build(story)
+    pdf = buf.getvalue()
+    buf.close()
+    
+    return Response(content=pdf, media_type='application/pdf')
+
+
+@api.post('/purchases/{purchase_id}/email', status_code=202)
+def email_purchase(purchase_id: int, payload: EmailRequest, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    purchase = db.query(Purchase).filter(Purchase.id == purchase_id).first()
+    if not purchase:
+        raise HTTPException(status_code=404, detail='Purchase not found')
+    
+    # Get vendor details
+    vendor = db.query(Party).filter(Party.id == purchase.vendor_id).first()
+    vendor_name = vendor.name if vendor else "Valued Vendor"
+    
+    # Get company details
+    company = db.query(CompanySettings).first()
+    company_name = company.company_name if company else "CASHFLOW"
+    
+    # Generate PDF
+    try:
+        # Create PDF buffer
+        buf = BytesIO()
+        doc = SimpleDocTemplate(buf, pagesize=A4, rightMargin=1*cm, leftMargin=1*cm, topMargin=1*cm, bottomMargin=1*cm)
+        
+        # Define styles
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            textColor=darkblue,
+            alignment=TA_CENTER,
+            spaceAfter=20
+        )
+        
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=12,
+            textColor=darkblue,
+            spaceAfter=6
+        )
+        
+        normal_style = ParagraphStyle(
+            'CustomNormal',
+            parent=styles['Normal'],
+            fontSize=10,
+            spaceAfter=3
+        )
+        
+        # Build PDF content (same as purchase_pdf function)
+        story = []
+        
+        # Header - Company Details
+        if company:
+            story.append(Paragraph(f"<b>{company.company_name}</b>", title_style))
+            story.append(Paragraph(f"GSTIN: {company.gstin}", normal_style))
+            story.append(Paragraph(f"Address: {company.address}", normal_style))
+            story.append(Paragraph(f"Phone: {company.phone} | Email: {company.email}", normal_style))
+        else:
+            story.append(Paragraph("<b>CASHFLOW</b>", title_style))
+            story.append(Paragraph("Financial Management System", normal_style))
+        
+        story.append(Spacer(1, 20))
+        
+        # Purchase Header
+        story.append(Paragraph(f"<b>PURCHASE ORDER</b>", heading_style))
+        
+        # Purchase Details Table
+        purchase_data = [
+            ['Purchase No:', purchase.purchase_no, 'Date:', purchase.date.strftime('%d/%m/%Y')],
+            ['Due Date:', purchase.due_date.strftime('%d/%m/%Y'), 'Terms:', purchase.terms],
+            ['Place of Supply:', purchase.place_of_supply, 'State Code:', purchase.place_of_supply_state_code]
+        ]
+        
+        if purchase.eway_bill_number:
+            purchase_data.append(['E-way Bill No:', purchase.eway_bill_number, '', ''])
+        
+        purchase_table = Table(purchase_data, colWidths=[2*cm, 6*cm, 2*cm, 6*cm])
+        purchase_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ]))
+        story.append(purchase_table)
+        story.append(Spacer(1, 15))
+        
+        # Vendor Details
+        if vendor:
+            vendor_data = [
+                ['Vendor:', vendor.name],
+                ['', f"GSTIN: {vendor.gstin}" if vendor.gstin else "GSTIN: Not Available"],
+                ['', vendor.address],
+                ['', f"Email: {vendor.email}" if vendor.email else ""],
+                ['', f"Phone: {vendor.phone}" if vendor.phone else ""]
+            ]
+            
+            vendor_table = Table(vendor_data, colWidths=[2*cm, 14*cm])
+            vendor_table.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+                ('TOPPADDING', (0, 0), (-1, -1), 2),
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ]))
+            story.append(vendor_table)
+            story.append(Spacer(1, 15))
+        
+        # Items Table
+        story.append(Paragraph("<b>Item Details</b>", heading_style))
+        
+        # Table headers
+        headers = ['S.No', 'Description', 'HSN', 'Qty', 'Rate', 'Amount', 'GST %', 'CGST', 'SGST', 'Total']
+        table_data = [headers]
+        
+        # Add items
+        items = db.query(PurchaseItem).filter(PurchaseItem.purchase_id == purchase.id).all()
+        for i, item in enumerate(items, 1):
+            product = db.query(Product).filter(Product.id == item.product_id).first()
+            description = product.name if product else item.description
+            
+            row = [
+                str(i),
+                description,
+                item.hsn_code or '',
+                str(item.qty),
+                f"₹{float(item.rate):.2f}",
+                f"₹{float(item.taxable_value):.2f}",
+                f"{item.gst_rate}%",
+                f"₹{float(item.cgst):.2f}",
+                f"₹{float(item.sgst):.2f}",
+                f"₹{float(item.amount):.2f}"
+            ]
+            table_data.append(row)
+        
+        # Create items table
+        items_table = Table(table_data, colWidths=[0.8*cm, 4*cm, 1.5*cm, 1*cm, 1.5*cm, 1.5*cm, 1*cm, 1.2*cm, 1.2*cm, 1.5*cm])
+        items_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),  # Description left-aligned
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),  # Header row
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ]))
+        story.append(items_table)
+        story.append(Spacer(1, 15))
+        
+        # Totals Table
+        totals_data = [
+            ['Subtotal:', f"₹{float(purchase.taxable_value):.2f}"],
+            ['CGST:', f"₹{float(purchase.cgst):.2f}"],
+            ['SGST:', f"₹{float(purchase.sgst):.2f}"],
+            ['IGST:', f"₹{float(purchase.igst):.2f}"],
+            ['Total:', f"₹{float(purchase.grand_total):.2f}"]
+        ]
+        
+        totals_table = Table(totals_data, colWidths=[4*cm, 2*cm])
+        totals_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),  # Total row bold
+            ('FONTSIZE', (0, -1), (-1, -1), 12),  # Total row larger
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        story.append(totals_table)
+        story.append(Spacer(1, 20))
+        
+        # Notes
+        if purchase.notes:
+            story.append(Paragraph("<b>Notes:</b>", heading_style))
+            story.append(Paragraph(purchase.notes, normal_style))
+            story.append(Spacer(1, 15))
+        
+        # Footer
+        story.append(Paragraph("Thank you for your service!", normal_style))
+        story.append(Paragraph("This is a computer generated purchase order", normal_style))
+        
+        # Build PDF
+        doc.build(story)
+        pdf_content = buf.getvalue()
+        buf.close()
+        
+        # Create email template
+        text_body, html_body = create_purchase_email_template(
+            purchase_no=purchase.purchase_no,
+            vendor_name=vendor_name,
+            amount=float(purchase.grand_total),
+            due_date=purchase.due_date.strftime('%d/%m/%Y'),
+            company_name=company_name
+        )
+        
+        # Send email with PDF attachment
+        subject = f"Purchase Order {purchase.purchase_no} - {company_name}"
+        filename = f"PurchaseOrder_{purchase.purchase_no}.pdf"
+        
+        success = send_email(
+            to=payload.to,
+            subject=subject,
+            body=html_body,  # Use HTML version
+            pdf_attachment=pdf_content,
+            filename=filename
+        )
+        
+        return {"status": "sent" if success else "failed"}
+        
+    except Exception as e:
+        return {"status": "failed", "error": str(e)}
 
