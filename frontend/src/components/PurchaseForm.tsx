@@ -4,9 +4,14 @@ import { Button } from './Button'
 import { ErrorMessage } from './ErrorMessage'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
+// Invoice Terms for dropdown
+const INVOICE_TERMS = ['15 days', '30 days', '45 days', '60 days', '90 days', 'Due on Receipt', 'Immediate']
+
 interface PurchaseFormProps {
   onSuccess: () => void
   onCancel: () => void
+  purchaseId?: number
+  initialData?: any
 }
 
 interface PurchaseItem {
@@ -20,7 +25,7 @@ interface PurchaseItem {
   gst_rate: number
 }
 
-export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
+export function PurchaseForm({ onSuccess, onCancel, purchaseId, initialData }: PurchaseFormProps) {
   const [vendors, setVendors] = useState<Party[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
@@ -53,7 +58,23 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
 
   useEffect(() => {
     loadData()
-  }, [])
+    if (purchaseId && initialData) {
+      // Load existing purchase data for editing
+      setFormData({
+        vendor_id: initialData.vendor_id || 0,
+        date: initialData.date?.split('T')[0] || new Date().toISOString().split('T')[0],
+        due_date: initialData.due_date?.split('T')[0] || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        terms: initialData.terms || 'Due on Receipt',
+        reference_bill_number: initialData.reference_bill_number || '',
+        place_of_supply: initialData.place_of_supply || 'Karnataka',
+        place_of_supply_state_code: initialData.place_of_supply_state_code || '29',
+        bill_from_address: initialData.bill_from_address || '',
+        ship_from_address: initialData.ship_from_address || '',
+        notes: initialData.notes || '',
+        items: initialData.items || []
+      })
+    }
+  }, [purchaseId, initialData])
 
   const loadData = async () => {
     try {
@@ -126,6 +147,15 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
     }))
   }
 
+  const updateItem = (index: number, field: keyof PurchaseItem, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.map((item, i) => 
+        i === index ? { ...item, [field]: value } : item
+      )
+    }))
+  }
+
   const getSelectedProduct = () => {
     return products.find(p => p.id === currentItem.product_id)
   }
@@ -172,13 +202,15 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
             {/* Row 2: Terms (optional) | Due Date (optional) | Reference Bill Number (optional) */}
             <div style={formStyles.formGroup}>
               <label style={formStyles.label}>Terms (optional)</label>
-              <input
-                type="text"
+              <select
                 value={formData.terms}
                 onChange={(e) => setFormData(prev => ({ ...prev, terms: e.target.value }))}
-                placeholder="Enter payment terms"
-                style={formStyles.input}
-              />
+                style={formStyles.select}
+              >
+                {INVOICE_TERMS.map(term => (
+                  <option key={term} value={term}>{term}</option>
+                ))}
+              </select>
             </div>
             <div style={formStyles.formGroup}>
               <label style={formStyles.label}>Due Date (optional)</label>
@@ -233,121 +265,117 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
           </Button>
         </div>
         
-        {/* Add Item Form */}
-        <div style={{ display: 'grid', gap: '16px', marginBottom: '16px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: '16px', alignItems: 'end' }}>
-            <div>
-              <label style={formStyles.label}>Product</label>
-              <select
-                value={currentItem.product_id || ''}
-                onChange={(e) => {
-                  const productId = parseInt(e.target.value) || 0
-                  const product = products.find(p => p.id === productId)
-                  setCurrentItem(prev => ({
-                    ...prev,
-                    product_id: productId,
-                    rate: product?.purchase_price || 0,
-                    description: product?.name || '',
-                    hsn_code: product?.hsn || ''
-                  }))
-                }}
-                style={formStyles.select}
-              >
-                <option value="">Select Product</option>
-                {products.map(product => (
-                  <option key={product.id} value={product.id}>{product.name}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label style={formStyles.label}>Qty</label>
-              <input
-                type="number"
-                value={currentItem.qty || ''}
-                onChange={(e) => setCurrentItem(prev => ({ ...prev, qty: parseInt(e.target.value) || 0 }))}
-                min="1"
-                placeholder="Quantity"
-                style={formStyles.input}
-              />
-            </div>
-            
-            <div>
-              <label style={formStyles.label}>Rate</label>
-              <input
-                type="number"
-                step="0.01"
-                value={currentItem.rate || ''}
-                onChange={(e) => setCurrentItem(prev => ({ ...prev, rate: parseFloat(e.target.value) || 0 }))}
-                placeholder="Rate"
-                style={formStyles.input}
-              />
-            </div>
-            
-            <div>
-              <label style={formStyles.label}>GST %</label>
-              <input
-                type="number"
-                step="0.01"
-                value={currentItem.gst_rate || ''}
-                onChange={(e) => setCurrentItem(prev => ({ ...prev, gst_rate: parseFloat(e.target.value) || 0 }))}
-                placeholder="GST %"
-                style={formStyles.input}
-              />
-            </div>
-            
-            <Button
-              type="button"
-              onClick={addItem}
-              variant="primary"
-              style={{ fontSize: '12px', padding: '8px 12px' }}
-            >
-              Add
-            </Button>
-          </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f9f9f9' }}>
+                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid var(--border)' }}>Product</th>
+                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid var(--border)' }}>Qty</th>
+                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid var(--border)' }}>Rate</th>
+                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid var(--border)' }}>GST Rate</th>
+                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid var(--border)' }}>HSN Code</th>
+                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid var(--border)' }}>Amount</th>
+                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid var(--border)' }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {formData.items.map((item, index) => {
+                const product = products.find(p => p.id === item.product_id)
+                const subtotal = item.qty * item.rate
+                const gstAmount = subtotal * (item.gst_rate / 100)
+                const total = subtotal + gstAmount
+                
+                return (
+                  <tr key={index}>
+                    <td style={{ padding: '8px', border: '1px solid var(--border)' }}>
+                      <select
+                        value={item.product_id}
+                        onChange={(e) => updateItem(index, 'product_id', Number(e.target.value))}
+                        required
+                        style={{ width: '100%', padding: '4px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      >
+                        <option value={0}>Select Product...</option>
+                        {products.map(product => (
+                          <option key={product.id} value={product.id}>
+                            {product.name}
+                          </option>
+                        ))}
+                      </select>
+                      {product?.description && (
+                        <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                          {product.description}
+                        </div>
+                      )}
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid var(--border)' }}>
+                      <input
+                        type="number"
+                        value={item.qty}
+                        onChange={(e) => updateItem(index, 'qty', Number(e.target.value))}
+                        min={1}
+                        required
+                        style={{ width: '60px', padding: '4px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      />
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid var(--border)' }}>
+                      <input
+                        type="number"
+                        value={item.rate}
+                        onChange={(e) => updateItem(index, 'rate', Number(e.target.value))}
+                        min={0}
+                        step={0.01}
+                        required
+                        style={{ width: '80px', padding: '4px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      />
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid var(--border)' }}>
+                      <input
+                        type="number"
+                        value={item.gst_rate}
+                        onChange={(e) => updateItem(index, 'gst_rate', Number(e.target.value))}
+                        min={0}
+                        step={0.01}
+                        required
+                        style={{ width: '60px', padding: '4px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      />
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid var(--border)' }}>
+                      <input
+                        type="text"
+                        value={item.hsn_code}
+                        onChange={(e) => updateItem(index, 'hsn_code', e.target.value)}
+                        maxLength={10}
+                        required
+                        style={{ width: '80px', padding: '4px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                      />
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid var(--border)' }}>
+                      <input
+                        type="number"
+                        value={total.toFixed(2)}
+                        readOnly
+                        style={{ width: '80px', padding: '4px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9' }}
+                      />
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid var(--border)' }}>
+                      {formData.items.length > 1 && (
+                        <Button 
+                          type="button" 
+                          onClick={() => removeItem(index)} 
+                          variant="secondary"
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
 
-        {/* Items List */}
-        {formData.items.length > 0 && (
-          <div style={{ borderTop: '1px solid #ced4da', paddingTop: '8px' }}>
-            {formData.items.map((item, index) => {
-              const product = products.find(p => p.id === item.product_id)
-              const subtotal = item.qty * item.rate
-              const gstAmount = subtotal * (item.gst_rate / 100)
-              const total = subtotal + gstAmount
-              
-              return (
-                <div key={index} style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  padding: '4px 0',
-                  borderBottom: '1px solid #f0f0f0'
-                }}>
-                  <span style={{ fontSize: '12px', flex: 1 }}>{product?.name}</span>
-                  <span style={{ fontSize: '12px', width: '60px' }}>Qty: {item.qty}</span>
-                  <span style={{ fontSize: '12px', width: '80px' }}>₹{item.rate}</span>
-                  <span style={{ fontSize: '12px', width: '80px' }}>₹{total.toFixed(2)}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeItem(index)}
-                    style={{
-                      padding: '2px 6px',
-                      backgroundColor: '#dc3545',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '2px',
-                      cursor: 'pointer',
-                      fontSize: '10px'
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              )
-            })}
-          </div>
-        )}
+
       </div>
 
 

@@ -93,7 +93,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     unit: 'Pcs',
     supplier: '',
     description: '',
-    product_type: 'Goods',
+    product_type: 'tradable',
     category: '',
     
     // Price Details

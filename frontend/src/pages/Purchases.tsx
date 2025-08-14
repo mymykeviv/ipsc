@@ -170,6 +170,8 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
         <PurchaseForm 
           onSuccess={() => navigate('/purchases')}
           onCancel={() => navigate('/purchases')}
+          purchaseId={mode === 'edit' ? parseInt(id!) : undefined}
+          initialData={mode === 'edit' ? currentPurchase : undefined}
         />
       </div>
     )
