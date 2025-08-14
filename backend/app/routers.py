@@ -802,55 +802,63 @@ def delete_invoice(invoice_id: int, _: User = Depends(get_current_user), db: Ses
 
 
 # Payment Management Endpoints
-@api.post('/invoices/{invoice_id}/payments', response_model=PaymentOut)
+@api.post('/invoices/{invoice_id}/payments', status_code=201)
 def add_payment(invoice_id: int, payload: PaymentIn, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
     inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not inv:
-        raise HTTPException(status_code=400, detail='Invoice not found')
+        raise HTTPException(status_code=404, detail='Invoice not found')
     
-    # Validation
+    # Validate payment amount
     if payload.payment_amount <= 0:
         raise HTTPException(status_code=400, detail="Payment amount must be greater than 0")
     
-    if payload.payment_amount > float(inv.balance_amount):
-        raise HTTPException(status_code=400, detail="Payment amount cannot exceed balance amount")
+    outstanding_amount = float(inv.grand_total - inv.paid_amount)
+    if payload.payment_amount > outstanding_amount:
+        raise HTTPException(status_code=400, detail=f"Payment amount cannot exceed outstanding amount of ₹{outstanding_amount:.2f}")
     
-    if not payload.payment_method:
-        raise HTTPException(status_code=400, detail="Payment method is required")
-    
-    if len(payload.payment_method) > 50:
-        raise HTTPException(status_code=400, detail="Payment method must be 50 characters or less")
-    
-    if payload.reference_number and len(payload.reference_number) > 100:
-        raise HTTPException(status_code=400, detail="Reference number must be 100 characters or less")
-    
-    if payload.notes and len(payload.notes) > 200:
-        raise HTTPException(status_code=400, detail="Notes must be 200 characters or less")
-    
-    # Create payment record
-    payment = Payment(
-        invoice_id=invoice_id,
-        payment_date=datetime.fromisoformat(payload.payment_date.replace('Z', '+00:00')),
-        payment_amount=money(payload.payment_amount),
-        payment_method=payload.payment_method,
-        reference_number=payload.reference_number,
-        notes=payload.notes
-    )
-    db.add(payment)
-    
-    # Update invoice payment status
-    inv.paid_amount += money(payload.payment_amount)
-    inv.balance_amount = inv.grand_total - inv.paid_amount
-    
-    # Update invoice status based on payment
-    if inv.balance_amount == 0:
-        inv.status = "Paid"
-    elif inv.paid_amount > 0:
-        inv.status = "Partially Paid"
-    
-    db.commit()
-    db.refresh(payment)
-    return payment
+    try:
+        pay = Payment(
+            invoice_id=invoice_id, 
+            payment_amount=money(payload.payment_amount), 
+            payment_method=payload.payment_method, 
+            account_head=payload.account_head,
+            reference_number=payload.reference_number,
+            notes=payload.notes
+        )
+        db.add(pay)
+        
+        # Update invoice paid amount
+        inv.paid_amount += money(payload.payment_amount)
+        inv.balance_amount = inv.grand_total - inv.paid_amount
+        
+        # Update invoice status
+        if inv.balance_amount == 0:
+            inv.status = "Paid"
+        elif inv.paid_amount > 0:
+            inv.status = "Partially Paid"
+        
+        # Create cashflow transaction for the payment
+        customer = db.query(Party).filter(Party.id == inv.customer_id).first()
+        customer_name = customer.name if customer else "Unknown Customer"
+        
+        cashflow_transaction = CashflowTransaction(
+            transaction_date=datetime.utcnow(),
+            type="inflow",  # Invoice payment is an inflow
+            description=f"Payment for Invoice {inv.invoice_no} - {customer_name}",
+            reference_number=payload.reference_number,
+            payment_method=payload.payment_method,
+            amount=money(payload.payment_amount),
+            account_head=payload.account_head,
+            source_type="invoice_payment",
+            source_id=pay.id  # Link to the payment record
+        )
+        db.add(cashflow_transaction)
+        
+        db.commit()
+        return {"id": pay.id}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to process payment: {str(e)}")
 
 
 @api.get('/invoices/{invoice_id}/payments', response_model=list[PaymentOut])
@@ -859,8 +867,8 @@ def get_invoice_payments(invoice_id: int, _: User = Depends(get_current_user), d
     if not inv:
         raise HTTPException(status_code=404, detail='Invoice not found')
     
-    payments = db.query(Payment).filter(Payment.invoice_id == invoice_id).order_by(Payment.payment_date.desc()).all()
-    return payments
+    pays = db.query(Payment).filter(Payment.invoice_id == invoice_id).order_by(Payment.payment_date.desc()).all()
+    return pays
 
 
 @api.delete('/payments/{payment_id}')
@@ -2249,34 +2257,7 @@ class PurchasePaymentIn(BaseModel):
     notes: str | None = None
 
 
-@api.post('/invoices/{invoice_id}/payments', status_code=201)
-def add_payment(invoice_id: int, payload: PaymentIn, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
-    if not inv:
-        raise HTTPException(status_code=404, detail='Invoice not found')
-    
-    pay = Payment(
-        invoice_id=invoice_id, 
-        payment_amount=money(payload.amount), 
-        payment_method=payload.method, 
-        account_head=payload.account_head,
-        reference_number=payload.reference_number,
-        notes=payload.notes
-    )
-    db.add(pay)
-    
-    # Update invoice paid amount
-    inv.paid_amount += money(payload.amount)
-    inv.balance_amount = inv.grand_total - inv.paid_amount
-    
-    # Update invoice status
-    if inv.balance_amount == 0:
-        inv.status = "Paid"
-    elif inv.paid_amount > 0:
-        inv.status = "Partially Paid"
-    
-    db.commit()
-    return {"id": pay.id}
+
 
 
 @api.get('/invoices/{invoice_id}/payments')
@@ -2310,28 +2291,57 @@ def add_purchase_payment(purchase_id: int, payload: PurchasePaymentIn, _: User =
     if not purchase:
         raise HTTPException(status_code=404, detail='Purchase not found')
     
-    pay = PurchasePayment(
-        purchase_id=purchase_id, 
-        payment_amount=money(payload.amount), 
-        payment_method=payload.method, 
-        account_head=payload.account_head,
-        reference_number=payload.reference_number,
-        notes=payload.notes
-    )
-    db.add(pay)
+    # Validate payment amount
+    if payload.amount <= 0:
+        raise HTTPException(status_code=400, detail="Payment amount must be greater than 0")
     
-    # Update purchase paid amount
-    purchase.paid_amount += money(payload.amount)
-    purchase.balance_amount = purchase.grand_total - purchase.paid_amount
+    outstanding_amount = float(purchase.grand_total - purchase.paid_amount)
+    if payload.amount > outstanding_amount:
+        raise HTTPException(status_code=400, detail=f"Payment amount cannot exceed outstanding amount of ₹{outstanding_amount:.2f}")
     
-    # Update purchase status
-    if purchase.balance_amount == 0:
-        purchase.status = "Paid"
-    elif purchase.paid_amount > 0:
-        purchase.status = "Partially Paid"
-    
-    db.commit()
-    return {"id": pay.id}
+    try:
+        pay = PurchasePayment(
+            purchase_id=purchase_id, 
+            payment_amount=money(payload.amount), 
+            payment_method=payload.method, 
+            account_head=payload.account_head,
+            reference_number=payload.reference_number,
+            notes=payload.notes
+        )
+        db.add(pay)
+        
+        # Update purchase paid amount
+        purchase.paid_amount += money(payload.amount)
+        purchase.balance_amount = purchase.grand_total - purchase.paid_amount
+        
+        # Update purchase status
+        if purchase.balance_amount == 0:
+            purchase.status = "Paid"
+        elif purchase.paid_amount > 0:
+            purchase.status = "Partially Paid"
+        
+        # Create cashflow transaction for the payment
+        vendor = db.query(Party).filter(Party.id == purchase.vendor_id).first()
+        vendor_name = vendor.name if vendor else "Unknown Vendor"
+        
+        cashflow_transaction = CashflowTransaction(
+            transaction_date=datetime.utcnow(),
+            type="outflow",  # Payment is an outflow
+            description=f"Payment for Purchase {purchase.purchase_no} - {vendor_name}",
+            reference_number=payload.reference_number,
+            payment_method=payload.method,
+            amount=money(payload.amount),
+            account_head=payload.account_head,
+            source_type="purchase_payment",
+            source_id=pay.id  # Link to the payment record
+        )
+        db.add(cashflow_transaction)
+        
+        db.commit()
+        return {"id": pay.id}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to process payment: {str(e)}")
 
 
 @api.get('/purchases/{purchase_id}/payments')
