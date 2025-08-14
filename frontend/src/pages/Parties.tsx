@@ -668,11 +668,30 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
               minWidth: '200px'
             }}
           />
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+          <label style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px', 
+            fontSize: '14px', 
+            cursor: 'pointer',
+            padding: '4px 8px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            backgroundColor: showInactive ? '#e3f2fd' : '#fff'
+          }}>
             <input
               type="checkbox"
               checked={showInactive}
-              onChange={(e) => setShowInactive(e.target.checked)}
+              onChange={(e) => {
+                console.log('Checkbox clicked, new value:', e.target.checked)
+                setShowInactive(e.target.checked)
+              }}
+              style={{
+                width: '16px',
+                height: '16px',
+                cursor: 'pointer',
+                margin: '0'
+              }}
             />
             Show Inactive
           </label>
