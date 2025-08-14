@@ -1,0 +1,64 @@
+services:
+  # Database
+  db:
+    image: postgres:16-alpine
+    container_name: cashflow-db-prod
+    environment:
+      POSTGRES_DB: cashflow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - cashflow_db_data_prod:/var/lib/postgresql/data
+      - ./backups:/backups
+    networks:
+      - cashflow_network_prod
+    restart: unless-stopped
+
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: cashflow-backend:prod
+    container_name: cashflow-backend-prod
+    environment:
+      - DATABASE_URL=postgresql+psycopg://postgres:postgres@db:5432/cashflow
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - cashflow_network_prod
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+
+  # Frontend (Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    image: cashflow-frontend:prod
+    container_name: cashflow-frontend-prod
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - cashflow_network_prod
+    restart: unless-stopped
+
+volumes:
+  cashflow_db_data_prod:
+
+networks:
+  cashflow_network_prod:
+    name: cashflow_network_prod
+    driver: bridge

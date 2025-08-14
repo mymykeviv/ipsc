@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_url: str = "sqlite+pysqlite:///./ipsc.db"
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/cashflow"
     secret_key: str = "dev-secret"
     access_token_expire_minutes: int = 30
     smtp_host: str = "localhost"
@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     smtp_enabled: bool = False
 
     class Config:
-        env_file = ".env"
+        env_file = [".env", ".env.local"]
 
 
 settings = Settings()

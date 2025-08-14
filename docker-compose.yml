@@ -2,9 +2,9 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: ipsc
-      POSTGRES_PASSWORD: ipsc
-      POSTGRES_DB: ipsc
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cashflow
     ports:
       - "5432:5432"
     volumes:
@@ -15,7 +15,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgresql+psycopg://ipsc:ipsc@db:5432/ipsc
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/cashflow
     depends_on:
       - db
     ports:
