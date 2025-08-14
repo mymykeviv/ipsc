@@ -183,14 +183,23 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
     loadData()
   }, [])
 
+  useEffect(() => {
+    console.log('Suppliers state updated:', suppliers)
+    console.log('Suppliers count:', suppliers.length)
+  }, [suppliers])
+
   const loadData = async () => {
     try {
+      console.log('Starting to load data...')
       const [customersData, suppliersData, productsData] = await Promise.all([
         apiListCustomers('', true), // Include inactive customers
         apiListVendors('', true),   // Include inactive vendors
         apiGetProducts()
       ])
+      console.log('Loaded customers:', customersData)
       console.log('Loaded suppliers:', suppliersData)
+      console.log('Loaded products:', productsData)
+      console.log('Suppliers length:', suppliersData?.length || 0)
       setCustomers(customersData)
       setSuppliers(suppliersData)
       setProducts(productsData)
@@ -395,12 +404,12 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '100%' }}>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', maxWidth: '100%' }}>
       <ErrorMessage message={error} />
 
       {/* Invoice Details Section */}
-      <div style={{ marginBottom: '4px' }}>
-        <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '2px' }}>
+      <div>
+        <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '2px', fontSize: '1.5rem' }}>
           📄 Invoice Details
         </h3>
         <div style={formStyles.grid}>
@@ -493,11 +502,11 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
       </div>
 
       {/* Supplier Details Section */}
-      <div style={{ marginBottom: '4px' }}>
-        <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '2px' }}>
+      <div>
+        <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '2px', fontSize: '1.5rem' }}>
           Supplier Details
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '4px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
           <div style={formStyles.formGroup}>
             <label style={formStyles.label}>Supplier Name *</label>
             <select
@@ -506,7 +515,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
               required
               style={formStyles.select}
             >
-              <option value="">Select Supplier...</option>
+              <option value="">Select Supplier... ({suppliers.length} suppliers available)</option>
               {suppliers.map(supplier => (
                 <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
               ))}
@@ -548,11 +557,11 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
       </div>
 
       {/* GST Compliance Section */}
-      <div style={{ marginBottom: '4px' }}>
-        <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '2px' }}>
+      <div>
+        <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '2px', fontSize: '1.5rem' }}>
           GST Compliance
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '4px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
           <div>
             <label>Place of Supply *</label>
             <select
@@ -608,11 +617,11 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
       </div>
 
       {/* Customer Details Section */}
-      <div style={{ marginBottom: '4px' }}>
-        <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '2px' }}>
+      <div>
+        <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '2px', fontSize: '1.5rem' }}>
           Customer Details
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '4px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
           <div>
             <label>Customer Name *</label>
             <select
