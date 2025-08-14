@@ -45,6 +45,7 @@ interface ProductFormData {
   
   // Stock Details
   opening_stock: string
+  closing_stock: string
   
   // Other Details
   notes: string
@@ -103,6 +104,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     
     // Stock Details
     opening_stock: '',
+    closing_stock: '',
     
     // Other Details
     notes: ''
@@ -120,7 +122,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
 
   useEffect(() => {
     if (mode === 'manage') {
-      loadProducts()
+    loadProducts()
       loadVendors()
     } else if (mode === 'edit' && id) {
       loadProduct(parseInt(id))
@@ -168,7 +170,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           opening_stock: product.stock.toString(),
           notes: product.notes || ''
         })
-      } else {
+    } else {
         setError('Product not found')
       }
     } catch (error: any) {
@@ -302,14 +304,17 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         {error && <ErrorMessage message={error} />}
 
         <form onSubmit={mode === 'add' ? handleAddProduct : handleEditProduct} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {/* Product Details Section */}
-          <div style={{ marginBottom: '4px' }}>
-            <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '2px' }}>
-              Product Details
-            </h3>
-            <div style={formStyles.grid}>
-              {/* First Row: 4 columns */}
-              <div style={formStyles.grid4Col}>
+          
+          {/* Row 1: Product Details | Price Details */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+            
+            {/* Product Details Section */}
+            <div>
+              <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '2px' }}>
+                Product Details
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                {/* First Row */}
                 <div style={formStyles.formGroup}>
                   <label style={formStyles.label}>Product Name *</label>
                   <input
@@ -339,6 +344,8 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                     style={formStyles.input}
                   />
                 </div>
+                
+                {/* Second Row */}
                 <div style={formStyles.formGroup}>
                   <label style={formStyles.label}>Unit of Measure *</label>
                   <select
@@ -355,10 +362,6 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                     <option value="Set">Set</option>
                   </select>
                 </div>
-              </div>
-              
-              {/* Second Row: 4 columns */}
-              <div style={formStyles.grid4Col}>
                 <div style={formStyles.formGroup}>
                   <label style={formStyles.label}>Product Supplier</label>
                   <select
@@ -384,17 +387,18 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                     <option value="Services">Services</option>
                   </select>
                 </div>
+                
+                {/* Third Row */}
                 <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Product Category *</label>
+                  <label style={formStyles.label}>Product Category</label>
                   <input
                     type="text"
                     value={formData.category}
                     onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                     style={formStyles.input}
-                    required
                   />
                 </div>
-                <div style={formStyles.formGroup}>
+                <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
                   <label style={formStyles.label}>Product Description</label>
                   <textarea
                     value={formData.description}
@@ -405,16 +409,15 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Price Details Section */}
-          <div style={{ marginBottom: '4px' }}>
-            <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '2px' }}>
-              Price Details
-            </h3>
-            <div style={formStyles.grid}>
-              <div style={formStyles.grid4Col}>
-                <div style={formStyles.formGroup}>
+            {/* Price Details Section */}
+            <div>
+              <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '2px' }}>
+                Price Details
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                {/* First Row */}
+                <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
                   <label style={formStyles.label}>Purchase Price</label>
                   <input
                     type="number"
@@ -424,7 +427,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                     style={formStyles.input}
                   />
                 </div>
-                <div style={formStyles.formGroup}>
+                <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
                   <label style={formStyles.label}>Selling Price *</label>
                   <input
                     type="number"
@@ -435,7 +438,19 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                     required
                   />
                 </div>
-                <div style={formStyles.formGroup}>
+                
+                {/* Second Row */}
+                <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
+                  <label style={formStyles.label}>HSN Code *</label>
+                  <input
+                    type="text"
+                    value={formData.hsn_code}
+                    onChange={(e) => setFormData(prev => ({ ...prev, hsn_code: e.target.value }))}
+                    style={formStyles.input}
+                    required
+                  />
+                </div>
+                <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
                   <label style={formStyles.label}>GST Rate *</label>
                   <select
                     value={formData.gst_rate}
@@ -450,27 +465,19 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                     <option value="28">28%</option>
                   </select>
                 </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>HSN Code *</label>
-                  <input
-                    type="text"
-                    value={formData.hsn_code}
-                    onChange={(e) => setFormData(prev => ({ ...prev, hsn_code: e.target.value }))}
-                    style={formStyles.input}
-                    required
-                  />
-                </div>
               </div>
             </div>
           </div>
 
-          {/* Stock Details Section */}
-          <div style={{ marginBottom: '4px' }}>
-            <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '2px' }}>
-              Stock Details
-            </h3>
-            <div style={formStyles.grid}>
-              <div style={formStyles.grid2Col}>
+          {/* Row 2: Stock Details | Others */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+            
+            {/* Stock Details Section */}
+            <div>
+              <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '2px' }}>
+                Stock Details
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div style={formStyles.formGroup}>
                   <label style={formStyles.label}>Opening Stock</label>
                   <input
@@ -483,6 +490,27 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                   />
                 </div>
                 <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Closing Stock</label>
+                  <input
+                    type="number"
+                    step="1"
+                    value={formData.closing_stock || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, closing_stock: e.target.value }))}
+                    style={formStyles.input}
+                    placeholder="Enter closing stock quantity"
+                    readOnly
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Others Section */}
+            <div>
+              <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '2px' }}>
+                Others
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
                   <label style={formStyles.label}>Notes</label>
                   <textarea
                     value={formData.notes}
@@ -539,25 +567,25 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         const result = await apiAdjustStock(
           parseInt(selectedProductId),
           parseFloat(stockFormData.quantity),
-          stockFormData.adjustmentType,
-          stockFormData.date_of_receipt,
-          stockFormData.reference_bill_number || undefined,
-          stockFormData.supplier || undefined,
-          stockFormData.category || undefined,
-          stockFormData.notes || undefined
-        )
-        
+        stockFormData.adjustmentType,
+        stockFormData.date_of_receipt,
+        stockFormData.reference_bill_number || undefined,
+        stockFormData.supplier || undefined,
+        stockFormData.category || undefined,
+        stockFormData.notes || undefined
+      )
+      
         if (result.ok) {
           // Reset form and show success
-          setStockFormData({
-            quantity: '',
-            adjustmentType: 'add',
-            date_of_receipt: new Date().toISOString().split('T')[0],
-            reference_bill_number: '',
-            supplier: '',
-            category: '',
-            notes: ''
-          })
+      setStockFormData({
+        quantity: '',
+        adjustmentType: 'add',
+        date_of_receipt: new Date().toISOString().split('T')[0],
+        reference_bill_number: '',
+        supplier: '',
+        category: '',
+        notes: ''
+      })
           setSelectedProductId('')
           alert(`Stock adjusted successfully. New stock: ${result.new_stock}`)
         }
@@ -871,7 +899,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                     <tr style={{ backgroundColor: '#f8f9fa' }}>
                       <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e9ecef', fontSize: '14px', fontWeight: '600' }}>
                         Date
-                      </th>
+    </th>
                       <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e9ecef', fontSize: '14px', fontWeight: '600' }}>
                         Type
                       </th>
@@ -946,7 +974,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   // Filter and sort products
   const filteredProducts = products.filter(product => {
     const searchLower = searchTerm.toLowerCase()
-    return (
+  return (
       product.name.toLowerCase().includes(searchLower) ||
       (product.sku && product.sku.toLowerCase().includes(searchLower)) ||
       (product.category && product.category.toLowerCase().includes(searchLower)) ||
@@ -1035,23 +1063,23 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         borderBottom: '2px solid #e9ecef'
       }}>
         <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Manage Products</h1>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <Button variant="secondary" onClick={exportToCSV}>
-            Export CSV
-          </Button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <Button variant="secondary" onClick={exportToCSV}>
+              Export CSV
+            </Button>
           <Button variant="primary" onClick={() => navigate('/products/add')}>
-            Add Product
-          </Button>
+              Add Product
+            </Button>
+          </div>
         </div>
-      </div>
 
       <div style={{ marginBottom: '24px' }}>
-        <SearchBar
-          value={searchTerm}
-          onChange={setSearchTerm}
-          placeholder="Search products by name, SKU, category, description, or supplier..."
-        />
-      </div>
+          <SearchBar
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="Search products by name, SKU, category, description, or supplier..."
+          />
+        </div>
 
       <div style={{ 
         border: '1px solid #e9ecef', 
@@ -1073,8 +1101,8 @@ export function Products({ mode = 'manage' }: ProductsProps) {
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Actions</th>
             </tr>
           </thead>
-          <tbody>
-            {paginatedProducts.map(product => (
+                      <tbody>
+              {paginatedProducts.map(product => (
               <tr key={product.id} style={{ 
                 opacity: product.is_active ? 1 : 0.6,
                 borderBottom: '1px solid #e9ecef',
@@ -1151,15 +1179,15 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         }}>
           <div style={{ fontSize: '14px', color: '#495057' }}>
             Showing {startIndex + 1} to {Math.min(endIndex, sortedProducts.length)} of {sortedProducts.length} products
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <Button 
-              variant="secondary" 
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </Button>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Button 
+                variant="secondary" 
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
             <span style={{ 
               padding: '8px 12px', 
               display: 'flex', 
@@ -1168,21 +1196,21 @@ export function Products({ mode = 'manage' }: ProductsProps) {
               color: '#495057',
               fontWeight: '500'
             }}>
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button 
-              variant="secondary" 
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </Button>
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button 
+                variant="secondary" 
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {paginatedProducts.length === 0 && !loading && (
-        <div style={{ 
+        <div style={{
           textAlign: 'center', 
           padding: '40px', 
           color: '#6c757d',
@@ -1192,10 +1220,10 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         }}>
           <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
             No products found
-          </div>
+            </div>
           <div style={{ fontSize: '14px' }}>
             {searchTerm ? 'Try adjusting your search criteria' : 'Create your first product to get started'}
-          </div>
+              </div>
         </div>
       )}
 
@@ -1227,12 +1255,12 @@ export function Products({ mode = 'manage' }: ProductsProps) {
             {/* Stock adjustment form content */}
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
               <Button variant="secondary" onClick={() => setShowStockModal(false)}>
-                Cancel
-              </Button>
+                  Cancel
+                </Button>
               <Button variant="primary">
                 Apply Adjustment
-              </Button>
-            </div>
+                </Button>
+              </div>
           </div>
         </div>
       )}
@@ -1266,8 +1294,8 @@ export function Products({ mode = 'manage' }: ProductsProps) {
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
               <Button variant="secondary" onClick={() => setShowStockHistoryModal(false)}>
                 ← Back to Products
-              </Button>
-            </div>
+                </Button>
+              </div>
           </div>
         </div>
       )}
