@@ -2359,6 +2359,27 @@ def list_purchase_payments(purchase_id: int, _: User = Depends(get_current_user)
     }
 
 
+@api.patch('/purchases/{purchase_id}/status')
+def update_purchase_status(purchase_id: int, status: str, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    purchase = db.query(Purchase).filter(Purchase.id == purchase_id).first()
+    if not purchase:
+        raise HTTPException(status_code=404, detail='Purchase not found')
+    
+    valid_statuses = ["Draft", "Partially Paid", "Paid", "Cancelled"]
+    if status not in valid_statuses:
+        raise HTTPException(status_code=400, detail=f'Invalid status. Must be one of: {", ".join(valid_statuses)}')
+    
+    purchase.status = status
+    db.commit()
+    db.refresh(purchase)
+    
+    return {
+        "id": purchase.id,
+        "purchase_no": purchase.purchase_no,
+        "status": purchase.status
+    }
+
+
 class StockAdjustmentIn(BaseModel):
     product_id: int
     quantity: int

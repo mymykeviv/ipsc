@@ -816,6 +816,25 @@ export async function apiUpdateInvoiceStatus(id: number, status: string): Promis
   return r.json()
 }
 
+export async function apiUpdatePurchaseStatus(id: number, status: string): Promise<Purchase> {
+  const r = await fetch(`/api/purchases/${id}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
+    body: JSON.stringify({ status })
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
 export async function apiEmailInvoice(id: number, email: string): Promise<void> {
   const r = await fetch(`/api/invoices/${id}/email`, {
     method: 'POST',

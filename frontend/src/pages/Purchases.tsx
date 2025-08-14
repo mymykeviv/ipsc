@@ -7,6 +7,7 @@ import {
   apiListPurchases, 
   apiGetPurchase, 
   apiDeletePurchase,
+  apiUpdatePurchaseStatus,
   apiListParties, 
   apiGetProducts,
   Purchase,
@@ -15,6 +16,7 @@ import {
   PurchaseCreate
 } from '../lib/api'
 import { Button } from '../components/Button'
+import { StatusBadge } from '../components/StatusBadge'
 import { PurchaseForm } from '../components/PurchaseForm'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
@@ -98,19 +100,27 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
     }
   }
 
-  const handleDeletePurchase = async (id: number) => {
+  const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this purchase?')) return
-
+    
     try {
-      setLoading(true)
-      setError(null)
       await apiDeletePurchase(id)
       loadPurchases()
     } catch (err: any) {
       handleApiError(err)
       setError('Failed to delete purchase')
-    } finally {
-      setLoading(false)
+    }
+  }
+
+  const handleCancelPurchase = async (id: number) => {
+    if (!confirm('Are you sure you want to cancel this purchase?')) return
+    
+    try {
+      await apiUpdatePurchaseStatus(id, 'Cancelled')
+      loadPurchases()
+    } catch (err: any) {
+      handleApiError(err)
+      setError('Failed to cancel purchase')
     }
   }
 
@@ -271,9 +281,9 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
         >
           <option value="">All Status</option>
           <option value="Draft">Draft</option>
-            <option value="Pending">Pending</option>
+          <option value="Partially Paid">Partially Paid</option>
           <option value="Paid">Paid</option>
-            <option value="Overdue">Overdue</option>
+          <option value="Cancelled">Cancelled</option>
         </select>
         </div>
       </div>
@@ -321,16 +331,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
                   </span>
                 </td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
-                  <span style={{
-                    padding: '6px 12px', 
-                    borderRadius: '6px', 
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    backgroundColor: purchase.status === 'paid' ? '#d4edda' : '#fff3cd',
-                    color: purchase.status === 'paid' ? '#155724' : '#856404'
-                  }}>
-                    {purchase.status.charAt(0).toUpperCase() + purchase.status.slice(1)}
-                  </span>
+                  <StatusBadge status={purchase.status} />
                 </td>
                 <td style={{ padding: '12px' }}>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -348,13 +349,23 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
                     >
                       Add Payment
                     </Button>
-                    <Button 
-                      variant="secondary" 
-                      onClick={() => handleDeletePurchase(purchase.id)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                    >
-                      Delete
-                    </Button>
+                    {purchase.status === 'Cancelled' ? (
+                      <Button 
+                        variant="secondary" 
+                        onClick={() => handleDelete(purchase.id)}
+                        style={{ fontSize: '14px', padding: '6px 12px' }}
+                      >
+                        Delete
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="secondary" 
+                        onClick={() => handleCancelPurchase(purchase.id)}
+                        style={{ fontSize: '14px', padding: '6px 12px' }}
+                      >
+                        Cancel Purchase
+                      </Button>
+                    )}
                   </div>
                 </td>
               </tr>

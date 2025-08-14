@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { apiListParties, apiGetProducts, apiCreateInvoice, apiUpdateInvoice, apiGetInvoice, apiDeleteInvoice, apiEmailInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, apiGetInvoices, Party, Product, Payment, PaginationInfo, Invoice } from '../lib/api'
+import { apiListParties, apiGetProducts, apiCreateInvoice, apiUpdateInvoice, apiGetInvoice, apiDeleteInvoice, apiEmailInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, apiGetInvoices, apiUpdateInvoiceStatus, Party, Product, Payment, PaginationInfo, Invoice } from '../lib/api'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
+import { StatusBadge } from '../components/StatusBadge'
 import { ComprehensiveInvoiceForm } from '../components/ComprehensiveInvoiceForm'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
@@ -112,6 +113,16 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
     
     try {
       await apiDeleteInvoice(id)
+      loadInvoices()
+    } catch (err: any) {
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
+    }
+  }
+
+  const handleMarkAsSent = async (id: number) => {
+    try {
+      await apiUpdateInvoiceStatus(id, 'Sent')
       loadInvoices()
     } catch (err: any) {
       const errorMessage = handleApiError(err)
@@ -589,6 +600,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
             <option value="all">All Status</option>
             <option value="Draft">Draft</option>
             <option value="Sent">Sent</option>
+            <option value="Partial Payment">Partial Payment</option>
             <option value="Paid">Paid</option>
             <option value="Overdue">Overdue</option>
           </select>
@@ -625,16 +637,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{new Date(invoice.due_date).toLocaleDateString()}</td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>₹{invoice.grand_total.toFixed(2)}</td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
-                  <span style={{ 
-                    padding: '6px 12px', 
-                    borderRadius: '6px', 
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    backgroundColor: invoice.status === 'paid' ? '#d4edda' : '#fff3cd',
-                    color: invoice.status === 'paid' ? '#155724' : '#856404'
-                  }}>
-                    {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                  </span>
+                  <StatusBadge status={invoice.status} />
                 </td>
                 <td style={{ padding: '12px' }}>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -673,6 +676,15 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
                     >
                       Delete
                     </Button>
+                    {invoice.status === 'Draft' && (
+                      <Button 
+                        variant="primary" 
+                        onClick={() => handleMarkAsSent(invoice.id)}
+                        style={{ fontSize: '14px', padding: '6px 12px' }}
+                      >
+                        Mark as Sent
+                      </Button>
+                    )}
                   </div>
                 </td>
               </tr>
