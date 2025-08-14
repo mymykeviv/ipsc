@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from './AuthContext'
 import { Invoices } from '../pages/Invoices'
 import { Expenses } from '../pages/Expenses'
 import { Cashflow } from '../pages/Cashflow'
+import { Payments } from '../pages/Payments'
 
 import { Logo } from '../components/Logo'
 import { SessionTimer } from '../components/SessionTimer'
@@ -69,6 +70,12 @@ function Shell() {
       return !location.pathname.includes('/add') && 
              !location.pathname.includes('/edit') && 
              !location.pathname.includes('/payments')
+    }
+    if (path === '/payments/purchase/add' && location.pathname.startsWith('/payments/purchase/add')) {
+      return true
+    }
+    if (path === '/payments/invoice/add' && location.pathname.startsWith('/payments/invoice/add')) {
+      return true
     }
     if (path === '/products' && location.pathname.startsWith('/products')) {
       // Only highlight /products if we're not on a specific sub-path
@@ -167,7 +174,7 @@ function Shell() {
                 <Link className={`nav-link sub-link ${isActive('/invoices/payments') ? 'active' : ''}`} to="/invoices/payments">
                   Invoice Payments
                 </Link>
-                <Link className={`nav-link sub-link ${isActive('/invoices/payments/add') ? 'active' : ''}`} to="/invoices/payments/add">
+                <Link className={`nav-link sub-link ${isActive('/payments/invoice/add') ? 'active' : ''}`} to="/payments/invoice/add">
                   Add/Edit Invoice Payment
                 </Link>
               </>
@@ -194,7 +201,7 @@ function Shell() {
                 <Link className={`nav-link sub-link ${isActive('/purchases/payments') ? 'active' : ''}`} to="/purchases/payments">
                   Purchase Payments
                 </Link>
-                <Link className={`nav-link sub-link ${isActive('/purchases/payments/add') ? 'active' : ''}`} to="/purchases/payments/add">
+                <Link className={`nav-link sub-link ${isActive('/payments/purchase/add') ? 'active' : ''}`} to="/payments/purchase/add">
                   Add/Edit Purchase Payment
                 </Link>
               </>
@@ -331,6 +338,12 @@ function Shell() {
           <Route path="/purchases/edit/:id" element={<Purchases mode="edit" />} />
           <Route path="/purchases/payments" element={<Purchases mode="payments" />} />
           <Route path="/purchases/add-payment/:id" element={<Purchases mode="add-payment" />} />
+          
+          {/* Payment Routes */}
+          <Route path="/payments/purchase/add" element={<Payments mode="add" type="purchase" />} />
+          <Route path="/payments/purchase/add/:id" element={<Payments mode="add" type="purchase" />} />
+          <Route path="/payments/invoice/add" element={<Payments mode="add" type="invoice" />} />
+          <Route path="/payments/invoice/add/:id" element={<Payments mode="add" type="invoice" />} />
           
           {/* Customers Routes */}
           <Route path="/customers" element={<Parties type="customer" />} />

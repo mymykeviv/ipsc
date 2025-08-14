@@ -729,6 +729,26 @@ export async function apiGetInvoices(
   return r.json()
 }
 
+export async function apiListInvoices(search?: string, status?: string): Promise<Invoice[]> {
+  const params = new URLSearchParams()
+  if (search) params.append('search', search)
+  if (status) params.append('status', status)
+  
+  const url = `/api/invoices${params.toString() ? '?' + params.toString() : ''}`
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
 export async function apiGetInvoice(id: number): Promise<Invoice> {
   const r = await fetch(`/api/invoices/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
   
