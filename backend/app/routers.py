@@ -147,7 +147,7 @@ class ProductOut(BaseModel):
     category: str | None
     notes: str | None
     hsn: str | None
-    gst_rate: float
+    gst_rate: float | None
     is_active: bool
 
     class Config:
@@ -172,7 +172,7 @@ class ProductCreate(BaseModel):
     category: str | None = None
     notes: str | None = None
     hsn: str | None = None
-    gst_rate: float
+    gst_rate: float | None = None
 
 
 class ProductUpdate(BaseModel):

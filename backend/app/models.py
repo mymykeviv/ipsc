@@ -70,7 +70,7 @@ class Product(Base):
     category: Mapped[str | None] = mapped_column(String(100), nullable=True)  # max length 100
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
     hsn: Mapped[str | None] = mapped_column(String(10), nullable=True)
-    gst_rate: Mapped[float] = mapped_column(Float, nullable=False)
+    gst_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 

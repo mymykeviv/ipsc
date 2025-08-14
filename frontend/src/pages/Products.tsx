@@ -228,7 +228,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         category: formData.category,
         notes: formData.notes,
         hsn: formData.hsn_code,
-        gst_rate: parseFloat(formData.gst_rate)
+        gst_rate: formData.gst_rate ? parseFloat(formData.gst_rate) : null
       }
       
       await apiCreateProduct(payload)
@@ -262,7 +262,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         category: formData.category,
         notes: formData.notes,
         hsn: formData.hsn_code,
-        gst_rate: parseFloat(formData.gst_rate)
+        gst_rate: formData.gst_rate ? parseFloat(formData.gst_rate) : null
       }
       await apiUpdateProduct(currentProduct.id, payload)
       navigate('/products')
@@ -416,18 +416,19 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                 Price Details
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                {/* First Row */}
-                <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
-                  <label style={formStyles.label}>Purchase Price</label>
+                {/* First Row: Purchase Price (optional) | Selling Price * */}
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Purchase Price (optional)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={formData.purchase_price}
                     onChange={(e) => setFormData(prev => ({ ...prev, purchase_price: e.target.value }))}
                     style={formStyles.input}
+                    placeholder="Enter purchase price"
                   />
                 </div>
-                <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
+                <div style={formStyles.formGroup}>
                   <label style={formStyles.label}>Selling Price *</label>
                   <input
                     type="number"
@@ -436,28 +437,29 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                     onChange={(e) => setFormData(prev => ({ ...prev, sales_price: e.target.value }))}
                     style={formStyles.input}
                     required
+                    placeholder="Enter selling price"
                   />
                 </div>
                 
-                {/* Second Row */}
-                <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
-                  <label style={formStyles.label}>HSN Code *</label>
+                {/* Second Row: HSN Code (optional) | GST Rate (optional) */}
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>HSN Code (optional)</label>
                   <input
                     type="text"
                     value={formData.hsn_code}
                     onChange={(e) => setFormData(prev => ({ ...prev, hsn_code: e.target.value }))}
                     style={formStyles.input}
-                    required
+                    placeholder="Enter HSN code"
                   />
                 </div>
-                <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
-                  <label style={formStyles.label}>GST Rate *</label>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>GST Rate (optional)</label>
                   <select
                     value={formData.gst_rate}
                     onChange={(e) => setFormData(prev => ({ ...prev, gst_rate: e.target.value }))}
                     style={formStyles.select}
-                    required
                   >
+                    <option value="">Select GST Rate</option>
                     <option value="0">0%</option>
                     <option value="5">5%</option>
                     <option value="12">12%</option>
