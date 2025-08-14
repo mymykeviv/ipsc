@@ -31,6 +31,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
     date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     terms: 'Due on Receipt',
+    reference_bill_number: '',
     place_of_supply: 'Karnataka',
     place_of_supply_state_code: '29',
     bill_from_address: '',
@@ -133,72 +134,110 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
     <form onSubmit={handleSubmit}>
       <ErrorMessage message={error} />
 
-      {/* Purchase Information Section */}
-      <div style={formStyles.section}>
-        <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('basic') }}>
-          Purchase Information
-        </h3>
-        <div style={formStyles.grid2Col}>
-          <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>Vendor *</label>
-            <select
-              value={formData.vendor_id || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, vendor_id: parseInt(e.target.value) || 0 }))}
-              required
-              style={formStyles.select}
-            >
-              <option value="">Select Vendor</option>
-              {vendors.map(vendor => (
-                <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
-              ))}
-            </select>
+      {/* Row 1: Purchase Information | Additional Information */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+        
+        {/* Purchase Information Section */}
+        <div>
+          <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '2px', fontSize: '1.5rem' }}>
+            📋 Purchase Information
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            {/* Row 1: Vendor * | Purchase Date * */}
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Vendor *</label>
+              <select
+                value={formData.vendor_id || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, vendor_id: parseInt(e.target.value) || 0 }))}
+                required
+                style={formStyles.select}
+              >
+                <option value="">Select Vendor</option>
+                {vendors.map(vendor => (
+                  <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
+                ))}
+              </select>
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Purchase Date *</label>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                required
+                style={formStyles.input}
+              />
+            </div>
+            
+            {/* Row 2: Terms (optional) | Due Date (optional) | Reference Bill Number (optional) */}
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Terms (optional)</label>
+              <input
+                type="text"
+                value={formData.terms}
+                onChange={(e) => setFormData(prev => ({ ...prev, terms: e.target.value }))}
+                placeholder="Enter payment terms"
+                style={formStyles.input}
+              />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Due Date (optional)</label>
+              <input
+                type="date"
+                value={formData.due_date}
+                onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
+                style={formStyles.input}
+              />
+            </div>
+            <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
+              <label style={formStyles.label}>Reference Bill Number (optional)</label>
+              <input
+                type="text"
+                value={formData.reference_bill_number}
+                onChange={(e) => setFormData(prev => ({ ...prev, reference_bill_number: e.target.value }))}
+                placeholder="Enter reference bill number"
+                style={formStyles.input}
+              />
+            </div>
           </div>
+        </div>
 
-          <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>Purchase Date *</label>
-            <input
-              type="date"
-              value={formData.date}
-              onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-              required
-              style={formStyles.input}
-            />
-          </div>
-
-          <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>Due Date</label>
-            <input
-              type="date"
-              value={formData.due_date}
-              onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
-              style={formStyles.input}
-            />
-          </div>
-
-          <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>Terms</label>
-            <input
-              type="text"
-              value={formData.terms}
-              onChange={(e) => setFormData(prev => ({ ...prev, terms: e.target.value }))}
-              placeholder="Enter payment terms"
-              style={formStyles.input}
-            />
+        {/* Additional Information Section */}
+        <div>
+          <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '2px', fontSize: '1.5rem' }}>
+            📝 Additional Information
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Notes</label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Enter additional notes (optional)"
+                rows={3}
+                style={formStyles.textarea}
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Items Section */}
-      <div style={formStyles.section}>
-        <h3 style={{ ...formStyles.sectionHeader, borderBottomColor: getSectionHeaderColor('items') }}>
-          Purchase Items
-        </h3>
+      {/* Purchase Items Section */}
+      <div style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
+            📦 Purchase Items
+          </h3>
+          <Button type="button" onClick={addItem} variant="secondary">
+            Add Item
+          </Button>
+        </div>
         
         {/* Add Item Form */}
         <div style={{ display: 'grid', gap: '16px', marginBottom: '16px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: '16px', alignItems: 'end' }}>
             <div>
-              <label>Product</label>
+              <label style={formStyles.label}>Product</label>
               <select
                 value={currentItem.product_id || ''}
                 onChange={(e) => {
@@ -212,7 +251,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                     hsn_code: product?.hsn || ''
                   }))
                 }}
-                style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                style={formStyles.select}
               >
                 <option value="">Select Product</option>
                 {products.map(product => (
@@ -222,56 +261,49 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
             </div>
             
             <div>
-              <label>Qty</label>
+              <label style={formStyles.label}>Qty</label>
               <input
                 type="number"
                 value={currentItem.qty || ''}
                 onChange={(e) => setCurrentItem(prev => ({ ...prev, qty: parseInt(e.target.value) || 0 }))}
                 min="1"
                 placeholder="Quantity"
-                style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                style={formStyles.input}
               />
             </div>
             
             <div>
-              <label>Rate</label>
+              <label style={formStyles.label}>Rate</label>
               <input
                 type="number"
                 step="0.01"
                 value={currentItem.rate || ''}
                 onChange={(e) => setCurrentItem(prev => ({ ...prev, rate: parseFloat(e.target.value) || 0 }))}
                 placeholder="Rate"
-                style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                style={formStyles.input}
               />
             </div>
             
             <div>
-              <label>GST %</label>
+              <label style={formStyles.label}>GST %</label>
               <input
                 type="number"
                 step="0.01"
                 value={currentItem.gst_rate || ''}
                 onChange={(e) => setCurrentItem(prev => ({ ...prev, gst_rate: parseFloat(e.target.value) || 0 }))}
                 placeholder="GST %"
-                style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
+                style={formStyles.input}
               />
             </div>
             
-            <button
+            <Button
               type="button"
               onClick={addItem}
-              style={{
-                padding: '6px 12px',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px'
-              }}
+              variant="primary"
+              style={{ fontSize: '12px', padding: '8px 12px' }}
             >
               Add
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -318,24 +350,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
         )}
       </div>
 
-      {/* Notes Section */}
-      <div style={{ marginBottom: '24px' }}>
-        <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '8px' }}>
-          Additional Information
-        </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-          <div>
-            <label>Notes</label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              placeholder="Enter additional notes (optional)"
-              rows={3}
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-            />
-          </div>
-        </div>
-      </div>
+
 
       <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
         <Button type="button" variant="secondary" onClick={onCancel}>
