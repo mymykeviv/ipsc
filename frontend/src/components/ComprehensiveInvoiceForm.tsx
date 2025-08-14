@@ -127,15 +127,13 @@ function generateInvoiceNumber(): string {
 }
 
 export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveInvoiceFormProps) {
+  console.log('🔄 ComprehensiveInvoiceForm rendered - Searchable inputs enabled - VERSION 2.0')
   const [customers, setCustomers] = useState<Party[]>([])
   const [suppliers, setSuppliers] = useState<Party[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [supplierSearch, setSupplierSearch] = useState('')
-  const [showSupplierDropdown, setShowSupplierDropdown] = useState(false)
-  const [customerSearch, setCustomerSearch] = useState('')
-  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
+
   
   const [formData, setFormData] = useState<InvoiceFormData>({
     // Invoice Details
@@ -291,19 +289,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
     })
   }
 
-  // Filter suppliers based on search
-  const filteredSuppliers = suppliers.filter(supplier =>
-    supplier.name.toLowerCase().includes(supplierSearch.toLowerCase()) ||
-    supplier.gstin?.toLowerCase().includes(supplierSearch.toLowerCase()) ||
-    supplier.email?.toLowerCase().includes(supplierSearch.toLowerCase())
-  )
 
-  // Filter customers based on search
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    customer.gstin?.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    customer.email?.toLowerCase().includes(customerSearch.toLowerCase())
-  )
 
   const updateSupplierDetails = (supplierId: number) => {
     if (supplierId === 0) {
@@ -315,8 +301,6 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
         supplier_gstin: '',
         supplier_email: ''
       })
-      setSupplierSearch('')
-      setShowSupplierDropdown(false)
       return
     }
     
@@ -330,21 +314,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
         supplier_gstin: supplier.gstin || '',
         supplier_email: supplier.email || ''
       })
-      setSupplierSearch(supplier.name)
-      setShowSupplierDropdown(false)
     }
-  }
-
-  const handleSupplierSearchChange = (value: string) => {
-    setSupplierSearch(value)
-    setShowSupplierDropdown(true)
-    if (!value) {
-      setShowSupplierDropdown(false)
-    }
-  }
-
-  const handleSupplierSelect = (supplier: Party) => {
-    updateSupplierDetails(supplier.id)
   }
 
   const updateCustomerDetails = (customerId: number) => {
@@ -358,8 +328,6 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
         customer_gstin: '',
         customer_email: ''
       })
-      setCustomerSearch('')
-      setShowCustomerDropdown(false)
       return
     }
     
@@ -374,21 +342,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
         customer_gstin: customer.gstin || '',
         customer_email: customer.email || ''
       })
-      setCustomerSearch(customer.name)
-      setShowCustomerDropdown(false)
     }
-  }
-
-  const handleCustomerSearchChange = (value: string) => {
-    setCustomerSearch(value)
-    setShowCustomerDropdown(true)
-    if (!value) {
-      setShowCustomerDropdown(false)
-    }
-  }
-
-  const handleCustomerSelect = (customer: Party) => {
-    updateCustomerDetails(customer.id)
   }
 
   // Calculate totals with GST breakup
@@ -468,465 +422,311 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', maxWidth: '100%' }}>
+      <div style={{ 
+        padding: '8px 12px', 
+        marginBottom: '16px', 
+        backgroundColor: '#d4edda', 
+        border: '1px solid #c3e6cb', 
+        borderRadius: '4px', 
+        color: '#155724',
+        fontSize: '14px'
+      }}>
+        ✅ Enhanced Invoice Form Loaded - 2-Column Layout with Searchable Dropdowns
+      </div>
       <ErrorMessage message={error} />
 
-      {/* Invoice Details Section */}
-      <div>
-        <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '2px', fontSize: '1.5rem' }}>
-          📄 Invoice Details
-        </h3>
-        <div style={formStyles.grid}>
-          {/* First Row: 4 columns */}
-          <div style={formStyles.grid4Col}>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Invoice Number *</label>
-              <input
-                type="text"
-                value={formData.invoice_no}
-                onChange={(e) => setFormData({...formData, invoice_no: e.target.value})}
-                maxLength={16}
-                required
-                style={formStyles.input}
-              />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Invoice Date *</label>
-              <input
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData({...formData, date: e.target.value})}
-                required
-                style={formStyles.input}
-              />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Invoice Due Date *</label>
-              <input
-                type="date"
-                value={formData.due_date}
-                onChange={(e) => setFormData({...formData, due_date: e.target.value})}
-                required
-                style={formStyles.input}
-              />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Invoice Terms *</label>
-              <select
-                value={formData.terms}
-                onChange={(e) => updateDueDate(e.target.value)}
-                required
-                style={formStyles.select}
-              >
-                {INVOICE_TERMS.map(term => (
-                  <option key={term} value={term}>{term}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          
-          {/* Second Row: 3 columns */}
-          <div style={formStyles.grid3Col}>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Invoice Status</label>
-              <input
-                type="text"
-                value={formData.status}
-                readOnly
-                style={{ ...formStyles.input, backgroundColor: '#f9f9f9' }}
-              />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Invoice Type *</label>
-              <select
-                value={formData.invoice_type}
-                onChange={(e) => setFormData({...formData, invoice_type: e.target.value})}
-                required
-                style={formStyles.select}
-              >
-                {INVOICE_TYPES.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Invoice Currency</label>
-              <select
-                value={formData.currency}
-                onChange={(e) => setFormData({...formData, currency: e.target.value})}
-                style={formStyles.select}
-              >
-                {CURRENCIES.map(currency => (
-                  <option key={currency} value={currency}>{currency}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Supplier Details Section */}
-      <div>
-        <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '2px', fontSize: '1.5rem' }}>
-          Supplier Details
-        </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-          <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>Supplier Name *</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="text"
-                value={supplierSearch}
-                onChange={(e) => handleSupplierSearchChange(e.target.value)}
-                placeholder="Search suppliers by name, GSTIN, or email..."
-                required={!formData.supplier_id}
-                style={{
-                  ...formStyles.input,
-                  width: '100%',
-                  paddingRight: '30px'
-                }}
-                onFocus={() => setShowSupplierDropdown(true)}
-                onBlur={() => setTimeout(() => setShowSupplierDropdown(false), 200)}
-              />
-              {formData.supplier_id && (
-                <button
-                  type="button"
-                  onClick={() => updateSupplierDetails(0)}
-                  style={{
-                    position: 'absolute',
-                    right: '8px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: '#dc3545',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    padding: '0',
-                    width: '20px',
-                    height: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                  title="Clear selection"
+      {/* Row 1: Invoice Details | GST Compliance */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+        
+        {/* Invoice Details Section */}
+        <div>
+          <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '2px', fontSize: '1.5rem' }}>
+            📄 Invoice Details
+          </h3>
+          <div style={formStyles.grid}>
+            {/* First Row: 4 columns */}
+            <div style={formStyles.grid4Col}>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Invoice Number *</label>
+                <input
+                  type="text"
+                  value={formData.invoice_no}
+                  onChange={(e) => setFormData({...formData, invoice_no: e.target.value})}
+                  maxLength={16}
+                  required
+                  style={formStyles.input}
+                />
+              </div>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Invoice Date *</label>
+                <input
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => setFormData({...formData, date: e.target.value})}
+                  required
+                  style={formStyles.input}
+                />
+              </div>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Invoice Due Date *</label>
+                <input
+                  type="date"
+                  value={formData.due_date}
+                  onChange={(e) => setFormData({...formData, due_date: e.target.value})}
+                  required
+                  style={formStyles.input}
+                />
+              </div>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Invoice Terms *</label>
+                <select
+                  value={formData.terms}
+                  onChange={(e) => updateDueDate(e.target.value)}
+                  required
+                  style={formStyles.select}
                 >
-                  ×
-                </button>
-              )}
-              {showSupplierDropdown && filteredSuppliers.length > 0 && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  backgroundColor: 'white',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  zIndex: 1000,
-                  maxHeight: '200px',
-                  overflowY: 'auto'
-                }}>
-                  {filteredSuppliers.map(supplier => (
-                    <div
-                      key={supplier.id}
-                      onClick={() => handleSupplierSelect(supplier)}
-                      style={{
-                        padding: '8px 12px',
-                        cursor: 'pointer',
-                        borderBottom: '1px solid #f0f0f0',
-                        fontSize: '14px'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#f8f9fa'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'white'
-                      }}
-                    >
-                      <div style={{ fontWeight: 'bold', color: '#333' }}>{supplier.name}</div>
-                      {supplier.gstin && (
-                        <div style={{ fontSize: '12px', color: '#666' }}>GSTIN: {supplier.gstin}</div>
-                      )}
-                      {supplier.email && (
-                        <div style={{ fontSize: '12px', color: '#666' }}>{supplier.email}</div>
-                      )}
-                    </div>
+                  {INVOICE_TERMS.map(term => (
+                    <option key={term} value={term}>{term}</option>
                   ))}
-                </div>
-              )}
-              {showSupplierDropdown && filteredSuppliers.length === 0 && supplierSearch && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  backgroundColor: 'white',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  zIndex: 1000,
-                  padding: '12px',
-                  textAlign: 'center',
-                  color: '#666',
-                  fontSize: '14px'
-                }}>
-                  No suppliers found matching "{supplierSearch}"
-                </div>
-              )}
+                </select>
+              </div>
+            </div>
+            
+            {/* Second Row: 3 columns */}
+            <div style={formStyles.grid3Col}>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Invoice Status</label>
+                <input
+                  type="text"
+                  value={formData.status}
+                  readOnly
+                  style={{ ...formStyles.input, backgroundColor: '#f9f9f9' }}
+                />
+              </div>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Invoice Type *</label>
+                <select
+                  value={formData.invoice_type}
+                  onChange={(e) => setFormData({...formData, invoice_type: e.target.value})}
+                  required
+                  style={formStyles.select}
+                >
+                  {INVOICE_TYPES.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Invoice Currency</label>
+                <select
+                  value={formData.currency}
+                  onChange={(e) => setFormData({...formData, currency: e.target.value})}
+                  style={formStyles.select}
+                >
+                  {CURRENCIES.map(currency => (
+                    <option key={currency} value={currency}>{currency}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
-          <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>Supplier Address *</label>
-            <input
-              type="text"
-              value={formData.supplier_address}
-              onChange={(e) => setFormData({...formData, supplier_address: e.target.value})}
-              maxLength={200}
-              required
-              style={formStyles.input}
-            />
-          </div>
-          <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>Supplier GSTIN *</label>
-            <input
-              type="text"
-              value={formData.supplier_gstin}
-              onChange={(e) => setFormData({...formData, supplier_gstin: e.target.value})}
-              maxLength={15}
-              required
-              style={formStyles.input}
-            />
-          </div>
-          <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>Supplier Email</label>
-            <input
-              type="email"
-              value={formData.supplier_email}
-              onChange={(e) => setFormData({...formData, supplier_email: e.target.value})}
-              maxLength={100}
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-            />
-          </div>
         </div>
-      </div>
 
-      {/* GST Compliance Section */}
-      <div>
-        <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '2px', fontSize: '1.5rem' }}>
-          GST Compliance
-        </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-          <div>
-            <label>Place of Supply *</label>
-            <select
-              value={formData.place_of_supply}
-              onChange={(e) => {
-                const state = e.target.value
-                const stateCode = INDIAN_STATES[state as keyof typeof INDIAN_STATES] || ''
-                setFormData({
-                  ...formData, 
-                  place_of_supply: state,
-                  place_of_supply_state_code: stateCode
-                })
-              }}
-              required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-            >
-              {Object.keys(INDIAN_STATES).map(state => (
-                <option key={state} value={state}>
-                  {state} ({INDIAN_STATES[state as keyof typeof INDIAN_STATES]})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label>E-way Bill Number</label>
-            <input
-              type="text"
-              value={formData.eway_bill_number}
-              onChange={(e) => setFormData({...formData, eway_bill_number: e.target.value})}
-              maxLength={15}
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-            />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <input
-              type="checkbox"
-              checked={formData.reverse_charge}
-              onChange={(e) => setFormData({...formData, reverse_charge: e.target.checked})}
-              style={{ width: '16px', height: '16px' }}
-            />
-            <label>Reverse Charge</label>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <input
-              type="checkbox"
-              checked={formData.export_supply}
-              onChange={(e) => setFormData({...formData, export_supply: e.target.checked})}
-              style={{ width: '16px', height: '16px' }}
-            />
-            <label>Export Supply</label>
-          </div>
-        </div>
-      </div>
-
-      {/* Customer Details Section */}
-      <div>
-        <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '2px', fontSize: '1.5rem' }}>
-          Customer Details
-        </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-          <div>
-            <label>Customer Name *</label>
-            <div style={{ position: 'relative' }}>
+        {/* GST Compliance Section */}
+        <div>
+          <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '2px', fontSize: '1.5rem' }}>
+            🏛️ GST Compliance
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            {/* First Row */}
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Place of Supply *</label>
+              <select
+                value={formData.place_of_supply}
+                onChange={(e) => {
+                  const state = e.target.value
+                  const stateCode = INDIAN_STATES[state as keyof typeof INDIAN_STATES] || ''
+                  setFormData({
+                    ...formData, 
+                    place_of_supply: state,
+                    place_of_supply_state_code: stateCode
+                  })
+                }}
+                required
+                style={formStyles.select}
+              >
+                {Object.keys(INDIAN_STATES).map(state => (
+                  <option key={state} value={state}>
+                    {state} ({INDIAN_STATES[state as keyof typeof INDIAN_STATES]})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
+              <label style={formStyles.label}>E-way Bill Number</label>
               <input
                 type="text"
-                value={customerSearch}
-                onChange={(e) => handleCustomerSearchChange(e.target.value)}
-                placeholder="Search customers by name, GSTIN, or email..."
-                required={!formData.customer_id}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  paddingRight: '30px',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius)'
-                }}
-                onFocus={() => setShowCustomerDropdown(true)}
-                onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
+                value={formData.eway_bill_number}
+                onChange={(e) => setFormData({...formData, eway_bill_number: e.target.value})}
+                maxLength={15}
+                style={formStyles.input}
               />
-              {formData.customer_id && (
-                <button
-                  type="button"
-                  onClick={() => updateCustomerDetails(0)}
-                  style={{
-                    position: 'absolute',
-                    right: '8px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: '#dc3545',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    padding: '0',
-                    width: '20px',
-                    height: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                  title="Clear selection"
-                >
-                  ×
-                </button>
-              )}
-              {showCustomerDropdown && filteredCustomers.length > 0 && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  backgroundColor: 'white',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  zIndex: 1000,
-                  maxHeight: '200px',
-                  overflowY: 'auto'
-                }}>
-                  {filteredCustomers.map(customer => (
-                    <div
-                      key={customer.id}
-                      onClick={() => handleCustomerSelect(customer)}
-                      style={{
-                        padding: '8px 12px',
-                        cursor: 'pointer',
-                        borderBottom: '1px solid #f0f0f0',
-                        fontSize: '14px'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#f8f9fa'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'white'
-                      }}
-                    >
-                      <div style={{ fontWeight: 'bold', color: '#333' }}>{customer.name}</div>
-                      {customer.gstin && (
-                        <div style={{ fontSize: '12px', color: '#666' }}>GSTIN: {customer.gstin}</div>
-                      )}
-                      {customer.email && (
-                        <div style={{ fontSize: '12px', color: '#666' }}>{customer.email}</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {showCustomerDropdown && filteredCustomers.length === 0 && customerSearch && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  backgroundColor: 'white',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  zIndex: 1000,
-                  padding: '12px',
-                  textAlign: 'center',
-                  color: '#666',
-                  fontSize: '14px'
-                }}>
-                  No customers found matching "{customerSearch}"
-                </div>
-              )}
+            </div>
+            
+            {/* Second Row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input
+                type="checkbox"
+                checked={formData.export_supply}
+                onChange={(e) => setFormData({...formData, export_supply: e.target.checked})}
+                style={{ width: '16px', height: '16px' }}
+              />
+              <label>Export Supply</label>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input
+                type="checkbox"
+                checked={formData.reverse_charge}
+                onChange={(e) => setFormData({...formData, reverse_charge: e.target.checked})}
+                style={{ width: '16px', height: '16px' }}
+              />
+              <label>Reverse Charge</label>
             </div>
           </div>
-          <div>
-            <label>Bill To Address *</label>
-            <input
-              type="text"
-              value={formData.bill_to_address}
-              onChange={(e) => setFormData({...formData, bill_to_address: e.target.value})}
-              maxLength={200}
-              required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-            />
+        </div>
+      </div>
+
+      {/* Row 2: Supplier Details | Customer Details */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+        
+        {/* Supplier Details Section */}
+        <div>
+          <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '2px', fontSize: '1.5rem' }}>
+            🔍 Supplier Details (Searchable)
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            {/* First Row */}
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Supplier Name *</label>
+              <select
+                value={formData.supplier_id || ''}
+                onChange={(e) => updateSupplierDetails(Number(e.target.value) || 0)}
+                required
+                style={formStyles.select}
+              >
+                <option value="">🔍 Search Suppliers... ({suppliers.length} available)</option>
+                {suppliers.map(supplier => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name} {supplier.gstin ? `(${supplier.gstin})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
+              <label style={formStyles.label}>Supplier Address *</label>
+              <input
+                type="text"
+                value={formData.supplier_address}
+                onChange={(e) => setFormData({...formData, supplier_address: e.target.value})}
+                maxLength={200}
+                required
+                style={formStyles.input}
+              />
+            </div>
+            
+            {/* Second Row */}
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Supplier Email</label>
+              <input
+                type="email"
+                value={formData.supplier_email}
+                onChange={(e) => setFormData({...formData, supplier_email: e.target.value})}
+                maxLength={100}
+                style={formStyles.input}
+              />
+            </div>
+            <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
+              <label style={formStyles.label}>Supplier GSTIN *</label>
+              <input
+                type="text"
+                value={formData.supplier_gstin}
+                onChange={(e) => setFormData({...formData, supplier_gstin: e.target.value})}
+                maxLength={15}
+                required
+                style={formStyles.input}
+              />
+            </div>
           </div>
-          <div>
-            <label>Ship To Address *</label>
-            <input
-              type="text"
-              value={formData.ship_to_address}
-              onChange={(e) => setFormData({...formData, ship_to_address: e.target.value})}
-              maxLength={200}
-              required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-            />
-          </div>
-          <div>
-            <label>Customer GSTIN *</label>
-            <input
-              type="text"
-              value={formData.customer_gstin}
-              onChange={(e) => setFormData({...formData, customer_gstin: e.target.value})}
-              maxLength={15}
-              required
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-            />
-          </div>
-          <div>
-            <label>Customer Email</label>
-            <input
-              type="email"
-              value={formData.customer_email}
-              onChange={(e) => setFormData({...formData, customer_email: e.target.value})}
-              maxLength={100}
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-            />
+        </div>
+
+        {/* Customer Details Section */}
+        <div>
+          <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '2px', fontSize: '1.5rem' }}>
+            👤 Customer Details (Searchable)
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+            {/* First Row */}
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Customer Name *</label>
+              <select
+                value={formData.customer_id || ''}
+                onChange={(e) => updateCustomerDetails(Number(e.target.value))}
+                required
+                style={formStyles.select}
+              >
+                <option value="">👤 Search Customers... ({customers.length} available)</option>
+                {customers.map(customer => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name} {customer.gstin ? `(${customer.gstin})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Customer GSTIN *</label>
+              <input
+                type="text"
+                value={formData.customer_gstin}
+                onChange={(e) => setFormData({...formData, customer_gstin: e.target.value})}
+                maxLength={15}
+                required
+                style={formStyles.input}
+              />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Customer Email</label>
+              <input
+                type="email"
+                value={formData.customer_email}
+                onChange={(e) => setFormData({...formData, customer_email: e.target.value})}
+                maxLength={100}
+                style={formStyles.input}
+              />
+            </div>
+            
+            {/* Second Row */}
+            <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
+              <label style={formStyles.label}>Bill To Address *</label>
+              <input
+                type="text"
+                value={formData.bill_to_address}
+                onChange={(e) => setFormData({...formData, bill_to_address: e.target.value})}
+                maxLength={200}
+                required
+                style={formStyles.input}
+              />
+            </div>
+            <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
+              <label style={formStyles.label}>Ship To Address *</label>
+              <input
+                type="text"
+                value={formData.ship_to_address}
+                onChange={(e) => setFormData({...formData, ship_to_address: e.target.value})}
+                maxLength={200}
+                required
+                style={formStyles.input}
+              />
+            </div>
           </div>
         </div>
       </div>

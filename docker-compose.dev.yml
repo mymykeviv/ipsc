@@ -57,7 +57,7 @@ services:
       - backend
     networks:
       - cashflow_network
-    command: npm run dev -- --host
+    command: npm run dev -- --config vite.config.docker.ts --host
 
   # Email testing
   mailhog:
