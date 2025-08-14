@@ -42,6 +42,8 @@ export function PurchaseForm({ onSuccess, onCancel, purchaseId, initialData }: P
     bill_from_address: '',
     ship_from_address: '',
     notes: '',
+    reverse_charge: false,
+    export_supply: false,
     items: [] as PurchaseItem[]
   })
 
@@ -62,6 +64,8 @@ export function PurchaseForm({ onSuccess, onCancel, purchaseId, initialData }: P
         bill_from_address: initialData.bill_from_address || '',
         ship_from_address: initialData.ship_from_address || '',
         notes: initialData.notes || '',
+        reverse_charge: initialData.reverse_charge || false,
+        export_supply: initialData.export_supply || false,
         items: initialData.items || []
       })
     }
@@ -95,8 +99,8 @@ export function PurchaseForm({ onSuccess, onCancel, purchaseId, initialData }: P
         ...formData,
         vendor_id: formData.vendor_id,
         eway_bill_number: '',
-        reverse_charge: false,
-        export_supply: false,
+        reverse_charge: formData.reverse_charge,
+        export_supply: formData.export_supply,
         total_discount: 0
       })
       onSuccess()
@@ -224,8 +228,30 @@ export function PurchaseForm({ onSuccess, onCancel, purchaseId, initialData }: P
           <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '2px', fontSize: '1.5rem' }}>
             📝 Additional Information
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Export Supply</label>
+              <select
+                value={formData.export_supply ? 'Yes' : 'No'}
+                onChange={(e) => setFormData(prev => ({ ...prev, export_supply: e.target.value === 'Yes' }))}
+                style={formStyles.select}
+              >
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Reverse Charge</label>
+              <select
+                value={formData.reverse_charge ? 'Yes' : 'No'}
+                onChange={(e) => setFormData(prev => ({ ...prev, reverse_charge: e.target.value === 'Yes' }))}
+                style={formStyles.select}
+              >
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </div>
+            <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
               <label style={formStyles.label}>Notes</label>
               <textarea
                 value={formData.notes}

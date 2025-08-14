@@ -7,7 +7,7 @@ class Base(DeclarativeBase):
     pass
 
 
-engine = create_engine(settings.database_url, echo=False)
+engine = create_engine(settings.get_database_url(), echo=False)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 
@@ -21,5 +21,5 @@ def get_db():
 
 def get_db_url():
     """Get database URL for migrations"""
-    return settings.database_url
+    return settings.get_database_url()
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
-import { apiListPurchases, Purchase } from '../lib/api'
+import { apiListPurchases, apiListPurchasePayments, apiAddPurchasePayment, Purchase } from '../lib/api'
 import { Button } from '../components/Button'
 
 interface PurchasePayment {
@@ -49,30 +49,53 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
       setLoading(true)
       setError(null)
       
-      // Get all purchases and their payments
+      // Get all purchases
       const purchases = await apiListPurchases()
       const payments: PurchasePayment[] = []
       
-      // For now, we'll create mock data since we need to implement the backend API
-      // TODO: Replace with actual API call to get all purchase payments
-      purchases.forEach(purchase => {
-        // Mock payment data - replace with actual API call
-        if (purchase.grand_total > 0) {
-          payments.push({
-            id: purchase.id,
-            purchase_id: purchase.id,
-            purchase_no: purchase.purchase_no,
-            vendor_name: purchase.vendor_name,
-            payment_date: purchase.date,
-            amount: purchase.grand_total * 0.5, // Mock partial payment
-            method: 'Bank Transfer',
-            reference_number: `PAY-${purchase.id}`,
-            notes: 'Payment for purchase',
-            total_paid: purchase.grand_total * 0.5,
-            outstanding: purchase.grand_total * 0.5
+      // Get payments for each purchase
+      for (const purchase of purchases) {
+        try {
+          const paymentData = await apiListPurchasePayments(purchase.id)
+          
+          // Create payment records from the payment data
+          paymentData.payments.forEach(payment => {
+            payments.push({
+              id: payment.id,
+              purchase_id: purchase.id,
+              purchase_no: purchase.purchase_no,
+              vendor_name: purchase.vendor_name,
+              payment_date: payment.payment_date,
+              amount: payment.amount,
+              method: payment.method,
+              reference_number: payment.reference_number,
+              notes: payment.notes,
+              total_paid: paymentData.total_paid,
+              outstanding: paymentData.outstanding
+            })
           })
+          
+          // If no payments exist but purchase has outstanding amount, show as unpaid
+          if (paymentData.payments.length === 0 && purchase.grand_total > 0) {
+            payments.push({
+              id: purchase.id * -1, // Negative ID to indicate no payment record
+              purchase_id: purchase.id,
+              purchase_no: purchase.purchase_no,
+              vendor_name: purchase.vendor_name,
+              payment_date: purchase.date,
+              amount: 0,
+              method: 'Not Paid',
+              reference_number: null,
+              notes: 'No payments recorded',
+              total_paid: 0,
+              outstanding: purchase.grand_total
+            })
+          }
+        } catch (err: any) {
+          console.error(`Failed to load payments for purchase ${purchase.id}:`, err)
+          // Continue with other purchases even if one fails
         }
-      })
+      }
       
       setPurchasePayments(payments)
     } catch (err: any) {

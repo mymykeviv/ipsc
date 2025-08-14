@@ -668,54 +668,40 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
               minWidth: '200px'
             }}
           />
-          <label 
-            htmlFor="show-inactive-checkbox"
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px', 
-              fontSize: '14px', 
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+          <label
+            htmlFor="show-inactive-dropdown"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
               cursor: 'pointer',
-              padding: '4px 8px',
+              padding: '8px 12px',
               border: '1px solid #ddd',
               borderRadius: '4px',
               backgroundColor: showInactive ? '#e3f2fd' : '#fff',
               userSelect: 'none'
             }}
-            onClick={(e) => {
-              e.preventDefault()
-              console.log('Label clicked, current showInactive:', showInactive)
-              setShowInactive(!showInactive)
-            }}
           >
-            <input
-              id="show-inactive-checkbox"
-              type="checkbox"
-              checked={showInactive}
+            Show Inactive:
+            <select
+              id="show-inactive-dropdown"
+              value={showInactive ? 'Yes' : 'No'}
               onChange={(e) => {
-                console.log('Checkbox clicked, new value:', e.target.checked)
-                setShowInactive(e.target.checked)
-              }}
-              onClick={(e) => {
-                e.stopPropagation()
-                console.log('Checkbox clicked directly')
+                console.log('Dropdown changed, new value:', e.target.value)
+                setShowInactive(e.target.value === 'Yes')
               }}
               style={{
-                width: '16px',
-                height: '16px',
-                cursor: 'pointer',
-                margin: '0',
-                padding: '0',
+                padding: '4px 8px',
                 border: '1px solid #ccc',
-                borderRadius: '2px',
-                appearance: 'auto',
-                WebkitAppearance: 'auto',
-                MozAppearance: 'auto',
-                position: 'relative',
-                zIndex: 1
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer'
               }}
-            />
-            Show Inactive
+            >
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
           </label>
           <button
             type="button"
