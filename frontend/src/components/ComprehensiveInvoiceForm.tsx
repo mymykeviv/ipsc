@@ -422,17 +422,6 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', maxWidth: '100%' }}>
-      <div style={{ 
-        padding: '8px 12px', 
-        marginBottom: '16px', 
-        backgroundColor: '#d4edda', 
-        border: '1px solid #c3e6cb', 
-        borderRadius: '4px', 
-        color: '#155724',
-        fontSize: '14px'
-      }}>
-        ✅ Enhanced Invoice Form Loaded - 2-Column Layout with Searchable Dropdowns
-      </div>
       <ErrorMessage message={error} />
 
       {/* Row 1: Invoice Details | GST Compliance */}
@@ -443,91 +432,82 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
           <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '2px', fontSize: '1.5rem' }}>
             📄 Invoice Details
           </h3>
-          <div style={formStyles.grid}>
-            {/* First Row: 4 columns */}
-            <div style={formStyles.grid4Col}>
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Invoice Number *</label>
-                <input
-                  type="text"
-                  value={formData.invoice_no}
-                  onChange={(e) => setFormData({...formData, invoice_no: e.target.value})}
-                  maxLength={16}
-                  required
-                  style={formStyles.input}
-                />
-              </div>
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Invoice Date *</label>
-                <input
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({...formData, date: e.target.value})}
-                  required
-                  style={formStyles.input}
-                />
-              </div>
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Invoice Due Date *</label>
-                <input
-                  type="date"
-                  value={formData.due_date}
-                  onChange={(e) => setFormData({...formData, due_date: e.target.value})}
-                  required
-                  style={formStyles.input}
-                />
-              </div>
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Invoice Terms *</label>
-                <select
-                  value={formData.terms}
-                  onChange={(e) => updateDueDate(e.target.value)}
-                  required
-                  style={formStyles.select}
-                >
-                  {INVOICE_TERMS.map(term => (
-                    <option key={term} value={term}>{term}</option>
-                  ))}
-                </select>
-              </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            {/* Row 1: Invoice Number * | Invoice Date * */}
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Invoice Number *</label>
+              <input
+                type="text"
+                value={formData.invoice_no}
+                onChange={(e) => setFormData({...formData, invoice_no: e.target.value})}
+                maxLength={16}
+                required
+                style={formStyles.input}
+              />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Invoice Date *</label>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({...formData, date: e.target.value})}
+                required
+                style={formStyles.input}
+              />
             </div>
             
-            {/* Second Row: 3 columns */}
-            <div style={formStyles.grid3Col}>
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Invoice Status</label>
-                <input
-                  type="text"
-                  value={formData.status}
-                  readOnly
-                  style={{ ...formStyles.input, backgroundColor: '#f9f9f9' }}
-                />
-              </div>
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Invoice Type *</label>
-                <select
-                  value={formData.invoice_type}
-                  onChange={(e) => setFormData({...formData, invoice_type: e.target.value})}
-                  required
-                  style={formStyles.select}
-                >
-                  {INVOICE_TYPES.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Invoice Currency</label>
-                <select
-                  value={formData.currency}
-                  onChange={(e) => setFormData({...formData, currency: e.target.value})}
-                  style={formStyles.select}
-                >
-                  {CURRENCIES.map(currency => (
-                    <option key={currency} value={currency}>{currency}</option>
-                  ))}
-                </select>
-              </div>
+            {/* Row 2: Invoice Terms * | Invoice Due Date * */}
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Invoice Terms *</label>
+              <select
+                value={formData.terms}
+                onChange={(e) => updateDueDate(e.target.value)}
+                required
+                style={formStyles.select}
+              >
+                {INVOICE_TERMS.map(term => (
+                  <option key={term} value={term}>{term}</option>
+                ))}
+              </select>
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Invoice Due Date *</label>
+              <input
+                type="date"
+                value={formData.due_date}
+                onChange={(e) => setFormData({...formData, due_date: e.target.value})}
+                required
+                style={formStyles.input}
+              />
+            </div>
+            
+            {/* Row 3: Invoice Status (read-only) | Invoice Type (read-only) | Invoice Currency (read-only) */}
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Invoice Status</label>
+              <input
+                type="text"
+                value={formData.status}
+                readOnly
+                style={{ ...formStyles.input, backgroundColor: '#f9f9f9' }}
+              />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Invoice Type</label>
+              <input
+                type="text"
+                value={formData.invoice_type}
+                readOnly
+                style={{ ...formStyles.input, backgroundColor: '#f9f9f9' }}
+              />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Invoice Currency</label>
+              <input
+                type="text"
+                value={formData.currency}
+                readOnly
+                style={{ ...formStyles.input, backgroundColor: '#f9f9f9' }}
+              />
             </div>
           </div>
         </div>
@@ -573,24 +553,28 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
               />
             </div>
             
-            {/* Second Row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <input
-                type="checkbox"
-                checked={formData.export_supply}
-                onChange={(e) => setFormData({...formData, export_supply: e.target.checked})}
-                style={{ width: '16px', height: '16px' }}
-              />
-              <label>Export Supply</label>
+            {/* Second Row: Export Supply | Reverse Charge */}
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Export Supply</label>
+              <select
+                value={formData.export_supply ? 'Yes' : 'No'}
+                onChange={(e) => setFormData({...formData, export_supply: e.target.value === 'Yes'})}
+                style={formStyles.select}
+              >
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <input
-                type="checkbox"
-                checked={formData.reverse_charge}
-                onChange={(e) => setFormData({...formData, reverse_charge: e.target.checked})}
-                style={{ width: '16px', height: '16px' }}
-              />
-              <label>Reverse Charge</label>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Reverse Charge</label>
+              <select
+                value={formData.reverse_charge ? 'Yes' : 'No'}
+                onChange={(e) => setFormData({...formData, reverse_charge: e.target.value === 'Yes'})}
+                style={formStyles.select}
+              >
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
             </div>
           </div>
         </div>
@@ -605,7 +589,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
             🔍 Supplier Details (Searchable)
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            {/* First Row */}
+            {/* Row 1: Supplier Name * | Supplier GSTIN (optional) */}
             <div style={formStyles.formGroup}>
               <label style={formStyles.label}>Supplier Name *</label>
               <select
@@ -622,19 +606,18 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
                 ))}
               </select>
             </div>
-            <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
-              <label style={formStyles.label}>Supplier Address *</label>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Supplier GSTIN (optional)</label>
               <input
                 type="text"
-                value={formData.supplier_address}
-                onChange={(e) => setFormData({...formData, supplier_address: e.target.value})}
-                maxLength={200}
-                required
+                value={formData.supplier_gstin}
+                onChange={(e) => setFormData({...formData, supplier_gstin: e.target.value})}
+                maxLength={15}
                 style={formStyles.input}
               />
             </div>
             
-            {/* Second Row */}
+            {/* Row 2: Supplier Email */}
             <div style={formStyles.formGroup}>
               <label style={formStyles.label}>Supplier Email</label>
               <input
@@ -645,13 +628,15 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
                 style={formStyles.input}
               />
             </div>
+            
+            {/* Row 3: Supplier Address * */}
             <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
-              <label style={formStyles.label}>Supplier GSTIN *</label>
+              <label style={formStyles.label}>Supplier Address *</label>
               <input
                 type="text"
-                value={formData.supplier_gstin}
-                onChange={(e) => setFormData({...formData, supplier_gstin: e.target.value})}
-                maxLength={15}
+                value={formData.supplier_address}
+                onChange={(e) => setFormData({...formData, supplier_address: e.target.value})}
+                maxLength={200}
                 required
                 style={formStyles.input}
               />
@@ -664,8 +649,8 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
           <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '2px', fontSize: '1.5rem' }}>
             👤 Customer Details (Searchable)
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-            {/* First Row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            {/* Row 1: Customer Name * | Customer GSTIN (optional) */}
             <div style={formStyles.formGroup}>
               <label style={formStyles.label}>Customer Name *</label>
               <select
@@ -683,16 +668,17 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
               </select>
             </div>
             <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Customer GSTIN *</label>
+              <label style={formStyles.label}>Customer GSTIN (optional)</label>
               <input
                 type="text"
                 value={formData.customer_gstin}
                 onChange={(e) => setFormData({...formData, customer_gstin: e.target.value})}
                 maxLength={15}
-                required
                 style={formStyles.input}
               />
             </div>
+            
+            {/* Row 2: Customer Email */}
             <div style={formStyles.formGroup}>
               <label style={formStyles.label}>Customer Email</label>
               <input
@@ -704,9 +690,9 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
               />
             </div>
             
-            {/* Second Row */}
+            {/* Row 3: Customer Bill To Address * */}
             <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
-              <label style={formStyles.label}>Bill To Address *</label>
+              <label style={formStyles.label}>Customer Bill To Address *</label>
               <input
                 type="text"
                 value={formData.bill_to_address}
@@ -716,8 +702,10 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
                 style={formStyles.input}
               />
             </div>
+            
+            {/* Row 4: Customer Ship To Address * */}
             <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
-              <label style={formStyles.label}>Ship To Address *</label>
+              <label style={formStyles.label}>Customer Ship To Address *</label>
               <input
                 type="text"
                 value={formData.ship_to_address}
