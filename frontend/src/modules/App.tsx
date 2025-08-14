@@ -12,6 +12,7 @@ import { Invoices } from '../pages/Invoices'
 import { Expenses } from '../pages/Expenses'
 import { Cashflow } from '../pages/Cashflow'
 import { Payments } from '../pages/Payments'
+import { PurchasePayments } from '../pages/PurchasePayments'
 
 import { Logo } from '../components/Logo'
 import { SessionTimer } from '../components/SessionTimer'
@@ -198,7 +199,7 @@ function Shell() {
                 <Link className={`nav-link sub-link ${isActive('/purchases/add') ? 'active' : ''}`} to="/purchases/add">
                   Add/Edit Purchase
                 </Link>
-                <Link className={`nav-link sub-link ${isActive('/purchases/payments') ? 'active' : ''}`} to="/purchases/payments">
+                <Link className={`nav-link sub-link ${isActive('/payments/purchase/list') ? 'active' : ''}`} to="/payments/purchase/list">
                   Purchase Payments
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/payments/purchase/add') ? 'active' : ''}`} to="/payments/purchase/add">
@@ -328,7 +329,7 @@ function Shell() {
           <Route path="/invoices/add" element={<Invoices mode="add" />} />
           <Route path="/invoices/edit/:id" element={<Invoices mode="edit" />} />
           <Route path="/invoices/payments" element={<Invoices mode="payments" />} />
-          <Route path="/invoices/add-payment/:id" element={<Invoices mode="add-payment" />} />
+  
           <Route path="/invoices/email/:id" element={<Invoices mode="email" />} />
           <Route path="/invoices/print/:id" element={<Invoices mode="print" />} />
           
@@ -337,13 +338,14 @@ function Shell() {
           <Route path="/purchases/add" element={<Purchases mode="add" />} />
           <Route path="/purchases/edit/:id" element={<Purchases mode="edit" />} />
           <Route path="/purchases/payments" element={<Purchases mode="payments" />} />
-          <Route path="/purchases/add-payment/:id" element={<Purchases mode="add-payment" />} />
+  
           
-          {/* Payment Routes */}
-          <Route path="/payments/purchase/add" element={<Payments mode="add" type="purchase" />} />
-          <Route path="/payments/purchase/add/:id" element={<Payments mode="add" type="purchase" />} />
-          <Route path="/payments/invoice/add" element={<Payments mode="add" type="invoice" />} />
-          <Route path="/payments/invoice/add/:id" element={<Payments mode="add" type="invoice" />} />
+                      {/* Payment Routes */}
+            <Route path="/payments/purchase/add" element={<Payments mode="add" type="purchase" />} />
+            <Route path="/payments/purchase/add/:id" element={<Payments mode="add" type="purchase" />} />
+            <Route path="/payments/invoice/add" element={<Payments mode="add" type="invoice" />} />
+            <Route path="/payments/invoice/add/:id" element={<Payments mode="add" type="invoice" />} />
+            <Route path="/payments/purchase/list" element={<PurchasePayments mode="list" />} />
           
           {/* Customers Routes */}
           <Route path="/customers" element={<Parties type="customer" />} />

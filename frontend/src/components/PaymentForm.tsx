@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { apiListPurchases, apiListInvoices, Purchase, Invoice } from '../lib/api'
+import { apiListPurchases, apiListInvoices, apiAddPurchasePayment, apiAddPayment, Purchase, Invoice } from '../lib/api'
 import { Button } from './Button'
 import { ErrorMessage } from './ErrorMessage'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
@@ -148,13 +148,31 @@ export function PaymentForm({ onSuccess, onCancel, type, purchaseId, invoiceId }
       setLoading(true)
       setError(null)
       
-      // TODO: Implement actual payment API call
-      console.log('Payment data:', formData)
+      if (type === 'purchase' && formData.purchase_id) {
+        // Submit purchase payment
+        await apiAddPurchasePayment(formData.purchase_id, {
+          payment_date: formData.payment_date,
+          payment_amount: formData.payment_amount,
+          payment_method: formData.payment_method,
+          account_head: 'Purchase Payments',
+          reference_number: formData.reference_bill_number || undefined,
+          notes: formData.payment_notes || undefined
+        })
+      } else if (type === 'invoice' && formData.invoice_id) {
+        // Submit invoice payment
+        await apiAddPayment(formData.invoice_id, {
+          payment_date: formData.payment_date,
+          payment_amount: formData.payment_amount,
+          payment_method: formData.payment_method,
+          account_head: 'Invoice Payments',
+          reference_number: formData.reference_bill_number || undefined,
+          notes: formData.payment_notes || undefined
+        })
+      } else {
+        throw new Error('Invalid payment type or missing ID')
+      }
       
-      // For now, just simulate success
-      setTimeout(() => {
-        onSuccess()
-      }, 1000)
+      onSuccess()
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add payment')

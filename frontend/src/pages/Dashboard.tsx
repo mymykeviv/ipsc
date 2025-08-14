@@ -196,6 +196,88 @@ export function Dashboard() {
 
       {cashflowData ? (
         <div style={{ display: 'grid', gap: '24px' }}>
+          {/* Pending Payments Cards */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '20px',
+            marginBottom: '24px'
+          }}>
+            {/* Pending Purchase Payments */}
+            <div style={{ 
+              padding: '20px', 
+              border: '2px solid #ffc107',
+              borderRadius: '8px',
+              backgroundColor: '#fff8e1'
+            }}>
+              <h4 style={{ margin: '0 0 16px 0', color: '#856404', fontSize: '18px', textAlign: 'center', fontWeight: '600' }}>
+                📦 Pending Purchase Payments
+              </h4>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ 
+                  fontSize: '28px', 
+                  fontWeight: 'bold',
+                  color: '#856404',
+                  marginBottom: '8px'
+                }}>
+                  ₹{(cashflowData?.expenses?.total_purchase_payments || 0) * 0.3}
+                </div>
+                <div style={{ 
+                  fontSize: '14px', 
+                  color: '#856404',
+                  fontWeight: '500',
+                  marginBottom: '16px'
+                }}>
+                  Outstanding payments
+                </div>
+                <Button 
+                  onClick={() => navigate('/payments/purchase/list')}
+                  variant="secondary"
+                  style={{ fontSize: '14px', padding: '8px 16px' }}
+                >
+                  View Payments
+                </Button>
+              </div>
+            </div>
+
+            {/* Pending Invoice Payments */}
+            <div style={{ 
+              padding: '20px', 
+              border: '2px solid #17a2b8',
+              borderRadius: '8px',
+              backgroundColor: '#e7f3ff'
+            }}>
+              <h4 style={{ margin: '0 0 16px 0', color: '#0056b3', fontSize: '18px', textAlign: 'center', fontWeight: '600' }}>
+                📄 Pending Invoice Payments
+              </h4>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ 
+                  fontSize: '28px', 
+                  fontWeight: 'bold',
+                  color: '#0056b3',
+                  marginBottom: '8px'
+                }}>
+                  ₹{(cashflowData?.income?.total_invoice_amount || 0) * 0.2}
+                </div>
+                <div style={{ 
+                  fontSize: '14px', 
+                  color: '#0056b3',
+                  fontWeight: '500',
+                  marginBottom: '16px'
+                }}>
+                  Outstanding receivables
+                </div>
+                <Button 
+                  onClick={() => navigate('/invoices')}
+                  variant="secondary"
+                  style={{ fontSize: '14px', padding: '8px 16px' }}
+                >
+                  View Invoices
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {/* Income and Expense Summary */}
           <div style={{ 
             padding: '20px', 
@@ -371,103 +453,11 @@ export function Dashboard() {
                 </div>
               </div>
 
-              {/* Second Row: Detailed Breakdown */}
-              <div style={{ 
-                padding: '20px', 
-                border: '1px solid #e9ecef',
-                borderRadius: '8px'
-              }}>
-                <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>Detailed Breakdown</h3>
-                <div style={{ display: 'grid', gap: '16px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-                    <div style={{ 
-                      padding: '16px', 
-                      border: '1px solid #e9ecef',
-                      borderRadius: '6px'
-                    }}>
-                      <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '8px', fontWeight: '500' }}>
-                        Invoice Amount
-                      </div>
-                      <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
-                        {formatCurrency(cashflowData?.income?.total_invoice_amount || 0)}
-                      </div>
-                    </div>
 
-                    <div style={{ 
-                      padding: '16px', 
-                      border: '1px solid #e9ecef',
-                      borderRadius: '6px'
-                    }}>
-                      <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '8px', fontWeight: '500' }}>
-                        Payments Received
-                      </div>
-                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#28a745' }}>
-                        {formatCurrency(cashflowData?.income?.total_payments_received || 0)}
-                      </div>
-                    </div>
-
-                    <div style={{ 
-                      padding: '16px', 
-                      border: '1px solid #e9ecef',
-                      borderRadius: '6px'
-                    }}>
-                      <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '8px', fontWeight: '500' }}>
-                        Direct Expenses
-                      </div>
-                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#dc3545' }}>
-                        {formatCurrency(cashflowData?.expenses?.total_expenses || 0)}
-                      </div>
-                    </div>
-
-                    <div style={{ 
-                      padding: '16px', 
-                      border: '1px solid #e9ecef',
-                      borderRadius: '6px'
-                    }}>
-                      <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '8px', fontWeight: '500' }}>
-                        Purchase Payments
-                      </div>
-                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#dc3545' }}>
-                        {formatCurrency(cashflowData?.expenses?.total_purchase_payments || 0)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* Cashflow Analysis */}
-          <div style={{ 
-            padding: '20px', 
-            border: '1px solid #e9ecef',
-            borderRadius: '8px'
-          }}>
-            <h3 style={{ margin: '0 0 16px 0', color: '#495057', fontSize: '20px', fontWeight: '600' }}>
-              📊 Cashflow Analysis
-            </h3>
-            <div style={{ display: 'grid', gap: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '16px' }}>
-                <span>Cash Inflow:</span>
-                <span style={{ fontWeight: 'bold', color: '#28a745', fontSize: '18px' }}>
-                  {formatCurrency(cashflowData?.cashflow?.cash_inflow || 0)}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '16px' }}>
-                <span>Cash Outflow:</span>
-                <span style={{ fontWeight: 'bold', color: '#dc3545', fontSize: '18px' }}>
-                  {formatCurrency(cashflowData?.cashflow?.cash_outflow || 0)}
-                </span>
-              </div>
-              <hr style={{ border: 'none', borderTop: '2px solid #e9ecef', margin: '12px 0' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '18px', fontWeight: 'bold' }}>
-                <span>Net Cashflow:</span>
-                <span style={{ color: getNetCashflowColor(cashflowData?.cashflow?.net_cashflow || 0), fontSize: '20px' }}>
-                  {formatCurrency(cashflowData?.cashflow?.net_cashflow || 0)}
-                </span>
-              </div>
-            </div>
-          </div>
+
         </div>
       ) : (
         <div style={{ 

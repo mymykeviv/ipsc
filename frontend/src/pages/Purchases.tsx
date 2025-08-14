@@ -19,7 +19,7 @@ import { PurchaseForm } from '../components/PurchaseForm'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface PurchasesProps {
-  mode?: 'manage' | 'add' | 'edit' | 'payments' | 'add-payment'
+  mode?: 'manage' | 'add' | 'edit' | 'payments'
 }
 
 export function Purchases({ mode = 'manage' }: PurchasesProps) {
@@ -40,20 +40,12 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
   // Create error handler that will automatically log out on 401 errors
   const handleApiError = createApiErrorHandler(forceLogout)
 
-  // Form state for payment
-  const [paymentForm, setPaymentForm] = useState({
-    payment_amount: 0,
-    payment_date: new Date().toISOString().split('T')[0],
-    payment_method: 'Cash',
-    payment_notes: ''
-  })
+
 
   useEffect(() => {
     if (mode === 'manage') {
       loadPurchases()
     } else if (mode === 'edit' && id) {
-      loadPurchase(parseInt(id))
-    } else if (mode === 'add-payment' && id) {
       loadPurchase(parseInt(id))
     } else if (mode === 'add') {
       loadVendorsAndProducts()
@@ -82,14 +74,6 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
       const purchase = data.find(p => p.id === purchaseId)
       if (purchase) {
         setCurrentPurchase(purchase)
-        if (mode === 'add-payment') {
-          setPaymentForm({
-            payment_amount: purchase.grand_total,
-            payment_date: new Date().toISOString().split('T')[0],
-            payment_method: 'Cash',
-            payment_notes: ''
-          })
-        }
       } else {
         setError('Purchase not found')
       }
@@ -130,22 +114,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
     }
   }
 
-  const handleAddPayment = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!currentPurchase || paymentForm.payment_amount <= 0) return
-    
-    try {
-      setLoading(true)
-      // TODO: Implement purchase payment API
-      alert('Purchase payment functionality will be implemented here.')
-      navigate('/purchases')
-    } catch (err: any) {
-      handleApiError(err)
-      setError('Failed to add payment')
-    } finally {
-      setLoading(false)
-    }
-  }
+
 
   // Render different content based on mode
   if (mode === 'add' || mode === 'edit') {
@@ -210,188 +179,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
     )
   }
 
-  if (mode === 'add-payment') {
-    if (loading) {
-      return (
-        <div style={{ padding: '20px' }}>
-          <div>Loading...</div>
-        </div>
-      )
-    }
 
-    if (!currentPurchase) {
-      return (
-        <div style={{ padding: '20px' }}>
-          <div>Purchase not found</div>
-        </div>
-      )
-    }
-
-    return (
-      <div style={{ padding: '20px', maxWidth: '100%' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: '24px',
-          paddingBottom: '12px',
-          borderBottom: '2px solid #e9ecef'
-        }}>
-          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
-            Add Payment for Purchase {currentPurchase.purchase_no}
-          </h1>
-          <Button variant="secondary" onClick={() => navigate('/purchases')}>
-            ← Back to Purchases
-          </Button>
-        </div>
-
-        {error && (
-          <div style={{ 
-            padding: '12px 16px', 
-            marginBottom: '20px', 
-            backgroundColor: '#fee', 
-            border: '1px solid #fcc', 
-            borderRadius: '6px', 
-            color: '#c33',
-            fontSize: '14px'
-          }}>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleAddPayment} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* Purchase Details Section */}
-          <div style={formStyles.section}>
-            <h2 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('basic') }}>
-              📦 Purchase Details
-            </h2>
-            <div style={formStyles.grid}>
-              <div style={formStyles.grid2Col}>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Purchase Number</label>
-                  <input
-                    type="text"
-                    value={currentPurchase.purchase_no}
-                    disabled
-                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
-                  />
-                </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Vendor</label>
-                  <input
-                    type="text"
-                    value={currentPurchase.vendor_name}
-                    disabled
-                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
-                  />
-                </div>
-              </div>
-              <div style={formStyles.grid2Col}>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Purchase Amount</label>
-                  <input
-                    type="text"
-                    value={`₹${currentPurchase.grand_total.toFixed(2)}`}
-                    disabled
-                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
-                  />
-                </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Due Date</label>
-                  <input
-                    type="text"
-                    value={new Date(currentPurchase.due_date).toLocaleDateString()}
-                    disabled
-                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Payment Details Section */}
-          <div style={formStyles.section}>
-            <h2 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('payment') }}>
-              💰 Payment Details
-            </h2>
-            <div style={formStyles.grid}>
-              <div style={formStyles.grid2Col}>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Payment Amount *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max={currentPurchase.grand_total}
-                    value={paymentForm.payment_amount}
-                    onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_amount: Number(e.target.value) }))}
-                    style={formStyles.input}
-                    required
-                  />
-                </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Payment Date *</label>
-                  <input
-                    type="date"
-                    value={paymentForm.payment_date}
-                    onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_date: e.target.value }))}
-                    style={formStyles.input}
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Payment Method *</label>
-                <select
-                  value={paymentForm.payment_method}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_method: e.target.value }))}
-                  style={formStyles.select}
-                  required
-                >
-                  <option value="Cash">Cash</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="Cheque">Cheque</option>
-                  <option value="UPI">UPI</option>
-                  <option value="Credit Card">Credit Card</option>
-                  <option value="Debit Card">Debit Card</option>
-                </select>
-              </div>
-
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Payment Notes (Optional)</label>
-                <textarea
-                  value={paymentForm.payment_notes}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_notes: e.target.value }))}
-                  maxLength={200}
-                  rows={3}
-                  style={formStyles.textarea}
-                  placeholder="Enter payment notes (max 200 characters)"
-                />
-                <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
-                  {paymentForm.payment_notes.length}/200 characters
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Form Actions */}
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
-            <Button type="button" variant="secondary" onClick={() => navigate('/purchases')}>
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              variant="primary" 
-              disabled={loading || paymentForm.payment_amount <= 0 || paymentForm.payment_amount > currentPurchase.grand_total}
-            >
-              {loading ? 'Adding Payment...' : 'Add Payment'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    )
-  }
 
   // Manage Purchases Mode
   if (loading) {
@@ -504,6 +292,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Date</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Due Date</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Amount</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Amount Due</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Status</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Actions</th>
             </tr>
@@ -519,6 +308,18 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{new Date(purchase.date).toLocaleDateString()}</td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{new Date(purchase.due_date).toLocaleDateString()}</td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>₹{purchase.grand_total.toFixed(2)}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
+                  <span style={{
+                    padding: '4px 8px', 
+                    borderRadius: '4px', 
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    backgroundColor: purchase.grand_total > 0 ? '#fff3cd' : '#d4edda',
+                    color: purchase.grand_total > 0 ? '#856404' : '#155724'
+                  }}>
+                    ₹{purchase.grand_total.toFixed(2)}
+                  </span>
+                </td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
                   <span style={{
                     padding: '6px 12px', 
@@ -542,7 +343,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
                     </Button>
                     <Button 
                       variant="secondary"
-                      onClick={() => navigate(`/purchases/add-payment/${purchase.id}`)}
+                      onClick={() => navigate(`/payments/purchase/add/${purchase.id}`)}
                       style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       Add Payment

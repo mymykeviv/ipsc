@@ -17,12 +17,7 @@ interface Invoice {
   status: string
 }
 
-interface InvoicePaymentForm {
-  payment_amount: number
-  payment_date: string
-  payment_method: string
-  payment_notes: string
-}
+
 
 interface InvoiceEmailForm {
   email_address: string
@@ -31,7 +26,7 @@ interface InvoiceEmailForm {
 }
 
 interface InvoicesProps {
-  mode?: 'manage' | 'add' | 'edit' | 'payments' | 'add-payment' | 'edit-payment' | 'email' | 'print'
+  mode?: 'manage' | 'add' | 'edit' | 'payments' | 'edit-payment' | 'email' | 'print'
 }
 
 export function Invoices({ mode = 'manage' }: InvoicesProps) {
@@ -56,13 +51,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
-  // Form states for different modes
-  const [paymentForm, setPaymentForm] = useState<InvoicePaymentForm>({
-    payment_amount: 0,
-    payment_date: new Date().toISOString().split('T')[0],
-    payment_method: 'Cash',
-    payment_notes: ''
-  })
+
 
   const [emailForm, setEmailForm] = useState<InvoiceEmailForm>({
     email_address: '',
@@ -77,7 +66,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
       loadInvoice(parseInt(id))
     } else if (mode === 'payments' && id) {
       loadInvoice(parseInt(id))
-    } else if (mode === 'add-payment' && id) {
+
       loadInvoice(parseInt(id))
     } else if (mode === 'email' && id) {
       loadInvoice(parseInt(id))
@@ -110,14 +99,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
       if (invoice) {
         setCurrentInvoice(invoice)
         // Pre-populate forms based on mode
-        if (mode === 'add-payment') {
-          setPaymentForm({
-            payment_amount: invoice.grand_total,
-            payment_date: new Date().toISOString().split('T')[0],
-            payment_method: 'Cash',
-            payment_notes: ''
-          })
-        } else if (mode === 'email') {
+        if (mode === 'email') {
           setEmailForm({
             email_address: '',
             subject: `Invoice ${invoice.invoice_no}`,
@@ -147,28 +129,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
     }
   }
 
-  const handleAddPayment = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!currentInvoice || paymentForm.payment_amount <= 0) return
-    
-    try {
-      setLoading(true)
-      await apiAddPayment(currentInvoice.id, {
-        payment_amount: paymentForm.payment_amount,
-        payment_date: paymentForm.payment_date,
-        payment_method: paymentForm.payment_method,
-        account_head: 'Cash',
-        reference_number: `PAY-${Date.now()}`,
-        notes: paymentForm.payment_notes
-      })
-      navigate('/invoices')
-    } catch (err: any) {
-      const errorMessage = handleApiError(err)
-      setError(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
+
 
   const handleSendEmail = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -258,190 +219,9 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
         </div>
       </div>
     )
-  }
 
-  if (mode === 'add-payment') {
-    if (loading) {
-      return (
-        <div style={{ padding: '20px' }}>
-          <div>Loading...</div>
-        </div>
-      )
-    }
 
-    if (!currentInvoice) {
-      return (
-        <div style={{ padding: '20px' }}>
-          <div>Invoice not found</div>
-        </div>
-      )
-    }
 
-    return (
-      <div style={{ padding: '20px', maxWidth: '100%' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: '24px',
-          paddingBottom: '12px',
-          borderBottom: '2px solid #e9ecef'
-        }}>
-          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
-            Add Payment for Invoice {currentInvoice.invoice_no}
-          </h1>
-          <Button variant="secondary" onClick={() => navigate('/invoices')}>
-            ← Back to Invoices
-          </Button>
-        </div>
-
-        {error && (
-          <div style={{ 
-            padding: '12px 16px', 
-            marginBottom: '20px', 
-            backgroundColor: '#fee', 
-            border: '1px solid #fcc', 
-            borderRadius: '6px', 
-            color: '#c33',
-            fontSize: '14px'
-          }}>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleAddPayment} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* Invoice Details Section */}
-          <div style={formStyles.section}>
-            <h2 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('basic') }}>
-              📄 Invoice Details
-            </h2>
-            <div style={formStyles.grid}>
-              <div style={formStyles.grid2Col}>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Invoice Number</label>
-                  <input
-                    type="text"
-                    value={currentInvoice.invoice_no}
-                    disabled
-                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
-                  />
-                </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Customer</label>
-                  <input
-                    type="text"
-                    value={currentInvoice.customer_name}
-                    disabled
-                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
-                  />
-                </div>
-              </div>
-              <div style={formStyles.grid2Col}>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Invoice Amount</label>
-                  <input
-                    type="text"
-                    value={`₹${currentInvoice.grand_total.toFixed(2)}`}
-                    disabled
-                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
-                  />
-                </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Due Date</label>
-                  <input
-                    type="text"
-                    value={new Date(currentInvoice.due_date).toLocaleDateString()}
-                    disabled
-                    style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Payment Details Section */}
-          <div style={formStyles.section}>
-            <h2 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('payment') }}>
-              💰 Payment Details
-            </h2>
-            <div style={formStyles.grid}>
-              <div style={formStyles.grid2Col}>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Payment Amount *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max={currentInvoice.grand_total}
-                    value={paymentForm.payment_amount}
-                    onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_amount: Number(e.target.value) }))}
-                    style={formStyles.input}
-                    required
-                  />
-                </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Payment Date *</label>
-                  <input
-                    type="date"
-                    value={paymentForm.payment_date}
-                    onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_date: e.target.value }))}
-                    style={formStyles.input}
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Payment Method *</label>
-                <select
-                  value={paymentForm.payment_method}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_method: e.target.value }))}
-                  style={formStyles.select}
-                  required
-                >
-                  <option value="Cash">Cash</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="Cheque">Cheque</option>
-                  <option value="UPI">UPI</option>
-                  <option value="Credit Card">Credit Card</option>
-                  <option value="Debit Card">Debit Card</option>
-                </select>
-              </div>
-
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Payment Notes (Optional)</label>
-                <textarea
-                  value={paymentForm.payment_notes}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_notes: e.target.value }))}
-                  maxLength={200}
-                  rows={3}
-                  style={formStyles.textarea}
-                  placeholder="Enter payment notes (max 200 characters)"
-                />
-                <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
-                  {paymentForm.payment_notes.length}/200 characters
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Form Actions */}
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
-            <Button type="button" variant="secondary" onClick={() => navigate('/invoices')}>
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              variant="primary" 
-              disabled={loading || paymentForm.payment_amount <= 0 || paymentForm.payment_amount > currentInvoice.grand_total}
-            >
-              {loading ? 'Adding Payment...' : 'Add Payment'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    )
-  }
 
   if (mode === 'email') {
     if (loading) {
@@ -884,7 +664,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
                     </Button>
                     <Button 
                       variant="secondary"
-                      onClick={() => navigate(`/invoices/add-payment/${invoice.id}`)}
+                      onClick={() => navigate(`/payments/invoice/add/${invoice.id}`)}
                       style={{ fontSize: '14px', padding: '6px 12px' }}
                     >
                       Add Payment
@@ -974,5 +754,6 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
       )}
     </div>
   )
+}
 }
 
