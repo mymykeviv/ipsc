@@ -690,7 +690,13 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
                 width: '16px',
                 height: '16px',
                 cursor: 'pointer',
-                margin: '0'
+                margin: '0',
+                padding: '0',
+                border: '1px solid #ccc',
+                borderRadius: '2px',
+                appearance: 'auto',
+                WebkitAppearance: 'auto',
+                MozAppearance: 'auto'
               }}
             />
             Show Inactive
