@@ -2,9 +2,11 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_url: str = "sqlite:///./cashflow.db"
+    database_url: str = "sqlite:///backend/cashflow.db"
     secret_key: str = "dev-secret"
     access_token_expire_minutes: int = 30
+    debug: bool = False
+    log_level: str = "INFO"
     smtp_host: str = "localhost"
     smtp_port: int = 1025
     smtp_user: str | None = None
