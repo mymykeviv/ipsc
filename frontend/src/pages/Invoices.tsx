@@ -1,21 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { apiListParties, apiGetProducts, apiCreateInvoice, apiUpdateInvoice, apiGetInvoice, apiDeleteInvoice, apiEmailInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, apiGetInvoices, Party, Product, Payment, PaginationInfo } from '../lib/api'
+import { apiListParties, apiGetProducts, apiCreateInvoice, apiUpdateInvoice, apiGetInvoice, apiDeleteInvoice, apiEmailInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, apiGetInvoices, Party, Product, Payment, PaginationInfo, Invoice } from '../lib/api'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
 import { ComprehensiveInvoiceForm } from '../components/ComprehensiveInvoiceForm'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
-interface Invoice {
-  id: number
-  invoice_no: string
-  customer_name: string
-  date: string
-  due_date: string
-  grand_total: number
-  status: string
-}
+
 
 
 
@@ -65,8 +57,6 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
     } else if (mode === 'edit' && id) {
       loadInvoice(parseInt(id))
     } else if (mode === 'payments' && id) {
-      loadInvoice(parseInt(id))
-
       loadInvoice(parseInt(id))
     } else if (mode === 'email' && id) {
       loadInvoice(parseInt(id))
