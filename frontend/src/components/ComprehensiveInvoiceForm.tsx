@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { apiCreateInvoice, apiListParties, apiGetProducts, Party, Product } from '../lib/api'
+import { apiCreateInvoice, apiListCustomers, apiListVendors, apiGetProducts, Party, Product } from '../lib/api'
 import { Button } from './Button'
 import { ErrorMessage } from './ErrorMessage'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
@@ -186,14 +186,16 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
   const loadData = async () => {
     try {
       const [customersData, suppliersData, productsData] = await Promise.all([
-        apiListParties('customer'),
-        apiListParties('supplier'),
+        apiListCustomers(),
+        apiListVendors(),
         apiGetProducts()
       ])
+      console.log('Loaded suppliers:', suppliersData)
       setCustomers(customersData)
       setSuppliers(suppliersData)
       setProducts(productsData)
     } catch (err: any) {
+      console.error('Error loading data:', err)
       setError(err.message || 'Failed to load data')
     }
   }
@@ -277,6 +279,18 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
   }
 
   const updateSupplierDetails = (supplierId: number) => {
+    if (supplierId === 0) {
+      // Clear supplier details when no supplier is selected
+      setFormData({
+        ...formData,
+        supplier_id: null,
+        supplier_address: '',
+        supplier_gstin: '',
+        supplier_email: ''
+      })
+      return
+    }
+    
     const supplier = suppliers.find(s => s.id === supplierId)
     if (supplier) {
       const address = `${supplier.billing_address_line1}${supplier.billing_address_line2 ? ', ' + supplier.billing_address_line2 : ''}, ${supplier.billing_city}, ${supplier.billing_state} - ${supplier.billing_pincode}`
@@ -488,7 +502,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
             <label style={formStyles.label}>Supplier Name *</label>
             <select
               value={formData.supplier_id || ''}
-              onChange={(e) => updateSupplierDetails(Number(e.target.value))}
+              onChange={(e) => updateSupplierDetails(Number(e.target.value) || 0)}
               required
               style={formStyles.select}
             >
