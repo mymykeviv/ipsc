@@ -668,23 +668,37 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
               minWidth: '200px'
             }}
           />
-          <label style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '8px', 
-            fontSize: '14px', 
-            cursor: 'pointer',
-            padding: '4px 8px',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            backgroundColor: showInactive ? '#e3f2fd' : '#fff'
-          }}>
+          <label 
+            htmlFor="show-inactive-checkbox"
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              fontSize: '14px', 
+              cursor: 'pointer',
+              padding: '4px 8px',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              backgroundColor: showInactive ? '#e3f2fd' : '#fff',
+              userSelect: 'none'
+            }}
+            onClick={(e) => {
+              e.preventDefault()
+              console.log('Label clicked, current showInactive:', showInactive)
+              setShowInactive(!showInactive)
+            }}
+          >
             <input
+              id="show-inactive-checkbox"
               type="checkbox"
               checked={showInactive}
               onChange={(e) => {
                 console.log('Checkbox clicked, new value:', e.target.checked)
                 setShowInactive(e.target.checked)
+              }}
+              onClick={(e) => {
+                e.stopPropagation()
+                console.log('Checkbox clicked directly')
               }}
               style={{
                 width: '16px',
@@ -696,11 +710,32 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
                 borderRadius: '2px',
                 appearance: 'auto',
                 WebkitAppearance: 'auto',
-                MozAppearance: 'auto'
+                MozAppearance: 'auto',
+                position: 'relative',
+                zIndex: 1
               }}
             />
             Show Inactive
           </label>
+          <button
+            type="button"
+            onClick={() => {
+              console.log('Test button clicked, current showInactive:', showInactive)
+              setShowInactive(!showInactive)
+            }}
+            style={{
+              marginLeft: '10px',
+              padding: '4px 8px',
+              fontSize: '12px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Test Toggle ({showInactive ? 'ON' : 'OFF'})
+          </button>
         </div>
       </div>
 

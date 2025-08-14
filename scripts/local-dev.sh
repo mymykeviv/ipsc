@@ -98,6 +98,14 @@ EOF
 setup_node_env() {
     print_status "Setting up Node.js dependencies..."
     
+    # Clean up old compiled files first
+    print_status "Cleaning up old compiled files..."
+    find ./frontend -name "*.js" -not -path "./frontend/node_modules/*" -delete 2>/dev/null || true
+    find ./frontend -name "*.js.map" -not -path "./frontend/node_modules/*" -delete 2>/dev/null || true
+    find ./frontend -name "dist" -type d -exec rm -rf {} + 2>/dev/null || true
+    find ./frontend -name "build" -type d -exec rm -rf {} + 2>/dev/null || true
+    print_success "Old compiled files cleaned"
+    
     cd frontend
     npm install
     cd ..

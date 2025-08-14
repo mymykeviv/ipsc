@@ -13,7 +13,18 @@ export default defineConfig({
         rewrite: (path) => path,
       },
     },
+    // Force clear cache and use TypeScript files
+    force: true,
+    hmr: {
+      overlay: true,
+    },
   },
+  // Ensure TypeScript files are always used
+  esbuild: {
+    loader: 'tsx',
+  },
+  // Clear cache on startup
+  clearScreen: false,
   test: {
     environment: 'jsdom',
     setupFiles: './vitest.setup.ts',

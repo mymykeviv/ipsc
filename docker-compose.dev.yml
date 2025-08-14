@@ -42,22 +42,27 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: development
     image: cashflow-frontend:dev
     container_name: cashflow-frontend-dev
     environment:
       - VITE_API_URL=http://localhost:8000
       - VITE_DEBUG=true
       - VITE_LOG_LEVEL=debug
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
     ports:
       - "5173:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      - /app/dist
+      - /app/build
     depends_on:
       - backend
     networks:
       - cashflow_network
-    command: npm run dev -- --config vite.config.docker.ts --host
+    command: sh -c "find . -name '*.js' -not -path './node_modules/*' -type f -delete 2>/dev/null || true && npm run dev -- --config vite.config.docker.ts --host --force"
 
   # Email testing
   mailhog:

@@ -453,38 +453,38 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
         gap: '16px'
       }}>
         <div style={{ flex: 1 }}>
-          <input
-            type="text"
+        <input
+          type="text"
             placeholder="Search purchases by number or vendor..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
               width: '100%',
               padding: '10px 16px',
               border: '1px solid #ced4da',
               borderRadius: '6px',
-              fontSize: '14px'
-            }}
-          />
+            fontSize: '14px'
+          }}
+        />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          style={{
               padding: '10px 16px',
               border: '1px solid #ced4da',
               borderRadius: '6px',
               fontSize: '14px',
               backgroundColor: 'white'
-            }}
-          >
-            <option value="">All Status</option>
-            <option value="Draft">Draft</option>
+          }}
+        >
+          <option value="">All Status</option>
+          <option value="Draft">Draft</option>
             <option value="Pending">Pending</option>
-            <option value="Paid">Paid</option>
+          <option value="Paid">Paid</option>
             <option value="Overdue">Overdue</option>
-          </select>
+        </select>
         </div>
       </div>
 
@@ -518,7 +518,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{new Date(purchase.due_date).toLocaleDateString()}</td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>₹{purchase.grand_total.toFixed(2)}</td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
-                  <span style={{ 
+                  <span style={{
                     padding: '6px 12px', 
                     borderRadius: '6px', 
                     fontSize: '14px',
@@ -579,9 +579,9 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
             <Button 
               variant="secondary" 
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-            >
-              Previous
+            disabled={currentPage === 1}
+          >
+            Previous
             </Button>
             <span style={{ 
               padding: '8px 12px', 
@@ -591,21 +591,21 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
               color: '#495057',
               fontWeight: '500'
             }}>
-              Page {currentPage} of {totalPages}
-            </span>
+            Page {currentPage} of {totalPages}
+          </span>
             <Button 
               variant="secondary" 
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Next
+            disabled={currentPage === totalPages}
+          >
+            Next
             </Button>
           </div>
         </div>
       )}
 
       {paginatedPurchases.length === 0 && !loading && (
-        <div style={{ 
+        <div style={{
           textAlign: 'center', 
           padding: '40px', 
           color: '#6c757d',
@@ -615,7 +615,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
         }}>
           <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
             No purchases available
-          </div>
+            </div>
           <div style={{ fontSize: '14px' }}>
             Create your first purchase to get started
           </div>
