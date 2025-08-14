@@ -45,16 +45,7 @@ export function PurchaseForm({ onSuccess, onCancel, purchaseId, initialData }: P
     items: [] as PurchaseItem[]
   })
 
-  const [currentItem, setCurrentItem] = useState<PurchaseItem>({
-    product_id: 0,
-    qty: 1,
-    rate: 0,
-    description: '',
-    hsn_code: '',
-    discount: 0,
-    discount_type: 'Percentage',
-    gst_rate: 18
-  })
+
 
   useEffect(() => {
     loadData()
@@ -117,17 +108,8 @@ export function PurchaseForm({ onSuccess, onCancel, purchaseId, initialData }: P
   }
 
   const addItem = () => {
-    if (!currentItem.product_id || currentItem.qty <= 0 || currentItem.rate <= 0) {
-      setError('Please fill all item fields')
-      return
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      items: [...prev.items, { ...currentItem }]
-    }))
-    
-    setCurrentItem({
+    // Add a new empty item to the table
+    const newItem: PurchaseItem = {
       product_id: 0,
       qty: 1,
       rate: 0,
@@ -136,7 +118,12 @@ export function PurchaseForm({ onSuccess, onCancel, purchaseId, initialData }: P
       discount: 0,
       discount_type: 'Percentage',
       gst_rate: 18
-    })
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, newItem]
+    }))
     setError(null)
   }
 
@@ -156,9 +143,7 @@ export function PurchaseForm({ onSuccess, onCancel, purchaseId, initialData }: P
     }))
   }
 
-  const getSelectedProduct = () => {
-    return products.find(p => p.id === currentItem.product_id)
-  }
+
 
   return (
     <form onSubmit={handleSubmit}>
