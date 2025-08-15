@@ -372,88 +372,90 @@ export function Dashboard() {
             
             <div style={{ display: 'grid', gap: '20px' }}>
               {/* First Row: Net Cashflow, Income, Expenses */}
-              <div style={{ display: 'grid', gridTemplateColumns: '20% 40% 40%', gap: '20px' }}>
-                {/* Net Cashflow Section */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+                {/* Net Cashflow Section - Neutral Theme */}
                 <div style={{ 
-                  textAlign: 'center',
-                  padding: '20px',
-                  border: '2px solid #e9ecef',
-                  borderRadius: '8px'
+                  padding: '20px', 
+                  border: '2px solid #e2e3e5',
+                  borderRadius: '8px',
+                  backgroundColor: '#f8f9fa'
                 }}>
-                  <h2 style={{ margin: '0 0 12px 0', color: '#6c757d', fontSize: '18px', fontWeight: '600' }}>
-                    Net Cashflow
-                  </h2>
-                  <div style={{ 
-                    fontSize: '28px', 
-                    fontWeight: 'bold',
-                    color: getNetCashflowColor(cashflowData?.cashflow?.net_cashflow || 0),
-                    marginBottom: '8px'
-                  }}>
-                    {formatCurrency(cashflowData?.cashflow?.net_cashflow || 0)}
-                  </div>
-                  <div style={{ 
-                    fontSize: '14px', 
-                    color: '#6c757d',
-                    fontWeight: '500'
-                  }}>
-                    {(cashflowData?.cashflow?.net_cashflow || 0) >= 0 ? 'Positive Cashflow' : 'Negative Cashflow'}
+                  <h4 style={{ margin: '0 0 16px 0', color: '#383d41', fontSize: '18px', textAlign: 'center', fontWeight: '600' }}>
+                    📊 Net Cashflow
+                  </h4>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ 
+                      fontSize: '28px', 
+                      fontWeight: 'bold',
+                      color: getNetCashflowColor(cashflowData?.cashflow?.net_cashflow || 0),
+                      marginBottom: '8px'
+                    }}>
+                      {formatCurrency(cashflowData?.cashflow?.net_cashflow || 0)}
+                    </div>
+                    <div style={{ 
+                      fontSize: '14px', 
+                      color: '#383d41',
+                      fontWeight: '500'
+                    }}>
+                      {(cashflowData?.cashflow?.net_cashflow || 0) >= 0 ? 'Positive Cashflow' : 'Negative Cashflow'}
+                    </div>
                   </div>
                 </div>
 
-                {/* Income Column */}
+                {/* Income Column - Green Theme (like Pending Invoice Payments) */}
                 <div style={{ 
                   padding: '20px', 
-                  border: '2px solid #d4edda',
-                  borderRadius: '8px'
+                  border: '2px solid #c3e6cb',
+                  borderRadius: '8px',
+                  backgroundColor: '#d4edda'
                 }}>
                   <h4 style={{ margin: '0 0 16px 0', color: '#155724', fontSize: '18px', textAlign: 'center', fontWeight: '600' }}>
                     💰 Income
                   </h4>
                   <div style={{ display: 'grid', gap: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', color: '#155724' }}>
                       <span>Invoice Amount:</span>
                       <strong>{formatCurrency(cashflowData?.income?.total_invoice_amount || 0)}</strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', color: '#155724' }}>
                       <span>Payments Received:</span>
                       <strong>{formatCurrency(cashflowData?.income?.total_payments_received || 0)}</strong>
                     </div>
-                    <hr style={{ border: 'none', borderTop: '2px solid #d4edda', margin: '12px 0' }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold' }}>
+                    <hr style={{ border: 'none', borderTop: '2px solid #c3e6cb', margin: '12px 0' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold', color: '#155724' }}>
                       <span>Total Income:</span>
                       <span style={{ color: '#28a745' }}>{formatCurrency(cashflowData?.cashflow?.cash_inflow || 0)}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Expense Column */}
+                {/* Expense Column - Yellow/Orange Theme (like Pending Purchase Payments) */}
                 <div style={{ 
                   padding: '20px', 
-                  border: '2px solid #f8d7da',
-                  borderRadius: '8px'
+                  border: '2px solid #ffeaa7',
+                  borderRadius: '8px',
+                  backgroundColor: '#fff3cd'
                 }}>
-                  <h4 style={{ margin: '0 0 16px 0', color: '#721c24', fontSize: '18px', textAlign: 'center', fontWeight: '600' }}>
+                  <h4 style={{ margin: '0 0 16px 0', color: '#856404', fontSize: '18px', textAlign: 'center', fontWeight: '600' }}>
                     💸 Expenses
                   </h4>
                   <div style={{ display: 'grid', gap: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', color: '#856404' }}>
                       <span>Direct Expenses:</span>
                       <strong>{formatCurrency(cashflowData?.expenses?.total_expenses || 0)}</strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', color: '#856404' }}>
                       <span>Purchase Payments:</span>
                       <strong>{formatCurrency(cashflowData?.expenses?.total_purchase_payments || 0)}</strong>
                     </div>
-                    <hr style={{ border: 'none', borderTop: '2px solid #f8d7da', margin: '12px 0' }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold' }}>
+                    <hr style={{ border: 'none', borderTop: '2px solid #ffeaa7', margin: '12px 0' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold', color: '#856404' }}>
                       <span>Total Outflow:</span>
                       <span style={{ color: '#dc3545' }}>{formatCurrency(cashflowData?.cashflow?.cash_outflow || 0)}</span>
                     </div>
                   </div>
                 </div>
               </div>
-
-
             </div>
           </div>
 
