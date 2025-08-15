@@ -3616,3 +3616,26 @@ def email_purchase(purchase_id: int, payload: EmailRequest, _: User = Depends(ge
     except Exception as e:
         return {"status": "failed", "error": str(e)}
 
+
+# Company Settings
+@api.get('/company/settings')
+def get_company_settings(_: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    settings = db.query(CompanySettings).first()
+    if not settings:
+        raise HTTPException(status_code=404, detail='Company settings not found')
+    return settings
+
+@api.put('/company/settings')
+def update_company_settings(settings_data: dict, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    settings = db.query(CompanySettings).first()
+    if not settings:
+        raise HTTPException(status_code=404, detail='Company settings not found')
+    
+    for key, value in settings_data.items():
+        if hasattr(settings, key):
+            setattr(settings, key, value)
+    
+    db.commit()
+    db.refresh(settings)
+    return settings
+

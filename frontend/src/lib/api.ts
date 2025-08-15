@@ -1090,3 +1090,47 @@ export async function apiGetGstFilingReport(
   }
 }
 
+export type CompanySettings = {
+  id: number
+  name: string
+  gstin: string
+  state: string
+  state_code: string
+  invoice_series: string
+}
+
+export async function apiGetCompanySettings(): Promise<CompanySettings> {
+  const r = await fetch('/api/company/settings', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  return r.json()
+}
+
+export async function apiUpdateCompanySettings(settings: Partial<CompanySettings>): Promise<CompanySettings> {
+  const r = await fetch('/api/company/settings', {
+    method: 'PUT',
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('auth_token')}` 
+    },
+    body: JSON.stringify(settings)
+  })
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  return r.json()
+}
+

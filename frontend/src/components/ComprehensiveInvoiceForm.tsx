@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { apiCreateInvoice, apiListCustomers, apiListVendors, apiGetProducts, Party, Product } from '../lib/api'
+import { apiCreateInvoice, apiListCustomers, apiListVendors, apiGetProducts, apiGetCompanySettings, Party, Product, CompanySettings } from '../lib/api'
 import { Button } from './Button'
 import { ErrorMessage } from './ErrorMessage'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
@@ -132,6 +132,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
   const [customers, setCustomers] = useState<Party[]>([])
   const [suppliers, setSuppliers] = useState<Party[]>([])
   const [products, setProducts] = useState<Product[]>([])
+  const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -194,18 +195,21 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
   const loadData = async () => {
     try {
       console.log('Starting to load data...')
-      const [customersData, suppliersData, productsData] = await Promise.all([
+      const [customersData, suppliersData, productsData, companySettingsData] = await Promise.all([
         apiListCustomers('', true), // Include inactive customers
         apiListVendors('', true),   // Include inactive vendors
-        apiGetProducts()
+        apiGetProducts(),
+        apiGetCompanySettings()
       ])
       console.log('Loaded customers:', customersData)
       console.log('Loaded suppliers:', suppliersData)
       console.log('Loaded products:', productsData)
+      console.log('Loaded company settings:', companySettingsData)
       console.log('Suppliers length:', suppliersData?.length || 0)
       setCustomers(customersData)
       setSuppliers(suppliersData)
       setProducts(productsData)
+      setCompanySettings(companySettingsData)
     } catch (err: any) {
       console.error('Error loading data:', err)
       setError(err.message || 'Failed to load data')
@@ -392,7 +396,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
     try {
       await apiCreateInvoice({
         customer_id: formData.customer_id!,
-        supplier_id: formData.supplier_id!,
+        supplier_id: 1, // Use company settings (assuming company is supplier ID 1)
         invoice_no: formData.invoice_no,
         date: formData.date,
         terms: formData.terms,
@@ -588,59 +592,57 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
         {/* Supplier Details Section */}
         <div>
           <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '2px', fontSize: '1.5rem' }}>
-            🔍 Supplier Details (Searchable)
+            🏢 Company Details (Auto-filled)
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            {/* Row 1: Supplier Name * | Supplier GSTIN (optional) */}
+            {/* Row 1: Company Name * | Company GSTIN * */}
             <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Supplier Name *</label>
-              <select
-                value={formData.supplier_id || ''}
-                onChange={(e) => updateSupplierDetails(Number(e.target.value) || 0)}
-                required
-                style={formStyles.select}
-              >
-                <option value="">🔍 Search Suppliers... ({suppliers.length} available)</option>
-                {suppliers.map(supplier => (
-                  <option key={supplier.id} value={supplier.id}>
-                    {supplier.name} {supplier.gstin ? `(${supplier.gstin})` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Supplier GSTIN (optional)</label>
+              <label style={formStyles.label}>Company Name *</label>
               <input
                 type="text"
-                value={formData.supplier_gstin}
-                onChange={(e) => setFormData({...formData, supplier_gstin: e.target.value})}
-                maxLength={15}
-                style={formStyles.input}
+                value={companySettings?.name || ''}
+                disabled
+                style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
               />
             </div>
-            
-            {/* Row 2: Supplier Email */}
             <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Supplier Email</label>
+              <label style={formStyles.label}>Company GSTIN *</label>
               <input
-                type="email"
-                value={formData.supplier_email}
-                onChange={(e) => setFormData({...formData, supplier_email: e.target.value})}
-                maxLength={100}
-                style={formStyles.input}
+                type="text"
+                value={companySettings?.gstin || ''}
+                disabled
+                style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
               />
             </div>
             
-            {/* Row 3: Supplier Address * */}
+            {/* Row 2: Company State | Company State Code */}
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Company State</label>
+              <input
+                type="text"
+                value={companySettings?.state || ''}
+                disabled
+                style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
+              />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Company State Code</label>
+              <input
+                type="text"
+                value={companySettings?.state_code || ''}
+                disabled
+                style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
+              />
+            </div>
+            
+            {/* Row 3: Company Address (Auto-generated) */}
             <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
-              <label style={formStyles.label}>Supplier Address *</label>
+              <label style={formStyles.label}>Company Address *</label>
               <input
                 type="text"
-                value={formData.supplier_address}
-                onChange={(e) => setFormData({...formData, supplier_address: e.target.value})}
-                maxLength={200}
-                required
-                style={formStyles.input}
+                value={`${companySettings?.name || ''}, ${companySettings?.state || ''} - ${companySettings?.state_code || ''}`}
+                disabled
+                style={{ ...formStyles.input, backgroundColor: '#f8f9fa' }}
               />
             </div>
           </div>
