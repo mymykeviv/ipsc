@@ -200,8 +200,7 @@ export function Dashboard() {
           <div style={{ 
             display: 'grid', 
             gridTemplateColumns: '1fr 1fr', 
-            gap: '20px',
-            marginBottom: '24px'
+            gap: '20px'
           }}>
             {/* Pending Purchase Payments */}
             <div style={{ 
@@ -280,7 +279,6 @@ export function Dashboard() {
 
           {/* Income and Expense Summary */}
           <div style={{ 
-            padding: '20px', 
             borderBottom: '1px solid #e9ecef'
           }}>
             <div style={{ 
@@ -372,7 +370,7 @@ export function Dashboard() {
             
             <div style={{ display: 'grid', gap: '20px' }}>
               {/* First Row: Net Cashflow, Income, Expenses */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 2fr', gap: '20px' }}>
                 {/* Net Cashflow Section - Neutral Theme */}
                 <div style={{ 
                   padding: '20px', 
