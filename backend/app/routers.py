@@ -2601,11 +2601,13 @@ def get_cashflow_summary(
     total_expenses = float(sum([exp.total_amount for exp in expense_query.all()], 0))
     
     # Get purchase payments (expenses)
+    # Use date() for comparison to ignore time component
     purchase_payments_query = db.query(PurchasePayment).filter(
-        PurchasePayment.payment_date >= start_dt,
-        PurchasePayment.payment_date <= end_dt
+        func.date(PurchasePayment.payment_date) >= func.date(start_dt),
+        func.date(PurchasePayment.payment_date) <= func.date(end_dt)
     )
-    total_purchase_payments = float(sum([pp.payment_amount for pp in purchase_payments_query.all()], 0))
+    purchase_payments = purchase_payments_query.all()
+    total_purchase_payments = float(sum([pp.payment_amount for pp in purchase_payments], 0))
     
     # Get invoice payments (income)
     invoice_payments_query = db.query(Payment).filter(
@@ -3171,52 +3173,7 @@ def create_cashflow_transaction(
     return transaction
 
 
-@api.get('/cashflow/summary')
-def get_cashflow_summary(
-    start_date: str | None = None,
-    end_date: str | None = None,
-    _: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get cashflow summary for a date range"""
-    query = db.query(CashflowTransaction)
-    
-    if start_date:
-        query = query.filter(CashflowTransaction.transaction_date >= datetime.fromisoformat(start_date))
-    
-    if end_date:
-        query = query.filter(CashflowTransaction.transaction_date <= datetime.fromisoformat(end_date))
-    
-    # Calculate totals
-    inflow_total = query.filter(CashflowTransaction.type == 'inflow').with_entities(
-        func.sum(CashflowTransaction.amount)
-    ).scalar() or Decimal('0.00')
-    
-    outflow_total = query.filter(CashflowTransaction.type == 'outflow').with_entities(
-        func.sum(CashflowTransaction.amount)
-    ).scalar() or Decimal('0.00')
-    
-    net_cashflow = inflow_total - outflow_total
-    
-    return {
-        "period": {
-            "start_date": start_date,
-            "end_date": end_date
-        },
-        "cashflow": {
-            "cash_inflow": float(inflow_total),
-            "cash_outflow": float(outflow_total),
-            "net_cashflow": float(net_cashflow)
-        },
-        "income": {
-            "total_invoice_amount": 0.0,  # TODO: Calculate from invoices
-            "total_payments_received": float(inflow_total)
-        },
-        "expenses": {
-            "total_expenses": 0.0,  # TODO: Calculate from expenses
-            "total_purchase_payments": 0.0  # TODO: Calculate from purchase payments
-        }
-    }
+
 
 
 @api.get('/purchases/{purchase_id}/pdf')
