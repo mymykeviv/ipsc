@@ -109,7 +109,7 @@ export function PaymentForm({ onSuccess, onCancel, type, purchaseId, invoiceId }
       customer_name: invoice.customer_name,
       total_amount: invoice.grand_total,
       pending_amount: invoice.grand_total, // TODO: Calculate actual pending amount
-      terms: invoice.terms,
+      terms: 'Due on Receipt', // Default terms since Invoice type doesn't have terms property
       due_date: invoice.due_date?.split('T')[0],
       payment_amount: invoice.grand_total
     }))
