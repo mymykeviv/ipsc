@@ -33,10 +33,10 @@
 .w-12 { width: 3rem; }
 .h-12 { height: 3rem; }
 .mr-2 { margin-right: 0.5rem; }
-.text-xs { font-size: 0.875rem; }
-.text-sm { font-size: 1rem; }
-.text-lg { font-size: 1.25rem; }
-.text-2xl { font-size: 1.75rem; }
+.text-xs { font-size: 0.75rem; }
+.text-sm { font-size: 0.875rem; }
+.text-lg { font-size: 1.125rem; }
+.text-2xl { font-size: 1.5rem; }
 .font-bold { font-weight: 700; }
 .font-medium { font-weight: 500; }
 .leading-none { line-height: 1; }
@@ -63,8 +63,8 @@ body {
   color: var(--text); 
   background: var(--bg);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -96,17 +96,17 @@ a:hover { background: var(--panel); }
 }
 .brand {
   font-weight: 700;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--border);
-  font-size: 18px;
+  font-size: 16px;
   min-width: 0;
   overflow: hidden;
 }
 nav.nav {
   display: grid;
-  gap: 4px;
-  font-size: 16px;
+  gap: 3px;
+  font-size: 14px;
 }
 
 /* Navigation sections */
@@ -116,12 +116,12 @@ nav.nav {
 
 .nav-section-header {
   font-weight: 600;
-  font-size: 16px;
+  font-size: 14px;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 4px;
-  padding: 8px 12px;
+  margin-bottom: 3px;
+  padding: 6px 10px;
   border-left: 2px solid var(--primary);
   background: rgba(59, 130, 246, 0.05);
   transition: all 0.2s ease;
@@ -130,18 +130,18 @@ nav.nav {
 .nav-link {
   color: var(--text);
   text-decoration: none;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: var(--radius);
-  margin-bottom: 2px;
+  margin-bottom: 1px;
   transition: all 0.2s ease;
-  font-size: 15px;
+  font-size: 13px;
   display: flex;
   align-items: center;
 }
 
 .nav-link.sub-link {
-  padding-left: 24px;
-  font-size: 14px;
+  padding-left: 20px;
+  font-size: 12px;
   margin-bottom: 1px;
   border-left: 1px solid transparent;
 }

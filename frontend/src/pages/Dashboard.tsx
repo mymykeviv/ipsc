@@ -111,7 +111,7 @@ export function Dashboard() {
       }}>
         <h1 style={{ 
           margin: '0',
-          fontSize: '28px',
+          fontSize: '24px',
           fontWeight: '600',
           color: '#2c3e50'
         }}>
@@ -129,11 +129,11 @@ export function Dashboard() {
             onClick={() => navigate('/expenses/add')}
             variant="primary"
             style={{ 
-              padding: '10px 16px', 
-              fontSize: '14px',
+              padding: '8px 14px', 
+              fontSize: '13px',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '5px'
             }}
           >
             💰 Add Expense
@@ -142,11 +142,11 @@ export function Dashboard() {
             onClick={() => navigate('/invoices/add')}
             variant="primary"
             style={{ 
-              padding: '10px 16px', 
-              fontSize: '14px',
+              padding: '8px 14px', 
+              fontSize: '13px',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '5px'
             }}
           >
             📄 New Invoice
@@ -155,11 +155,11 @@ export function Dashboard() {
             onClick={() => navigate('/purchases/add')}
             variant="primary"
             style={{ 
-              padding: '10px 16px', 
-              fontSize: '14px',
+              padding: '8px 14px', 
+              fontSize: '13px',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '5px'
             }}
           >
             📦 New Purchase
@@ -168,11 +168,11 @@ export function Dashboard() {
             onClick={() => navigate('/products/add')}
             variant="primary"
             style={{ 
-              padding: '10px 16px', 
-              fontSize: '14px',
+              padding: '8px 14px', 
+              fontSize: '13px',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '5px'
             }}
           >
             🏷️ Add Product
@@ -209,30 +209,30 @@ export function Dashboard() {
               borderRadius: '8px',
               backgroundColor: '#fff8e1'
             }}>
-              <h4 style={{ margin: '0 0 16px 0', color: '#856404', fontSize: '18px', textAlign: 'center', fontWeight: '600' }}>
+              <h4 style={{ margin: '0 0 12px 0', color: '#856404', fontSize: '16px', textAlign: 'center', fontWeight: '600' }}>
                 📦 Pending Purchase Payments
               </h4>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ 
-                  fontSize: '28px', 
+                  fontSize: '24px', 
                   fontWeight: 'bold',
                   color: '#856404',
-                  marginBottom: '8px'
+                  marginBottom: '6px'
                 }}>
                   ₹{(cashflowData?.expenses?.total_purchase_payments || 0) * 0.3}
                 </div>
                 <div style={{ 
-                  fontSize: '14px', 
+                  fontSize: '12px', 
                   color: '#856404',
                   fontWeight: '500',
-                  marginBottom: '16px'
+                  marginBottom: '12px'
                 }}>
                   Outstanding payments
                 </div>
                 <Button 
                   onClick={() => navigate('/payments/purchase/list')}
                   variant="secondary"
-                  style={{ fontSize: '14px', padding: '8px 16px' }}
+                  style={{ fontSize: '12px', padding: '6px 12px' }}
                 >
                   View Payments
                 </Button>
@@ -246,30 +246,30 @@ export function Dashboard() {
               borderRadius: '8px',
               backgroundColor: '#e7f3ff'
             }}>
-              <h4 style={{ margin: '0 0 16px 0', color: '#0056b3', fontSize: '18px', textAlign: 'center', fontWeight: '600' }}>
+              <h4 style={{ margin: '0 0 12px 0', color: '#0056b3', fontSize: '16px', textAlign: 'center', fontWeight: '600' }}>
                 📄 Pending Invoice Payments
               </h4>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ 
-                  fontSize: '28px', 
+                  fontSize: '24px', 
                   fontWeight: 'bold',
                   color: '#0056b3',
-                  marginBottom: '8px'
+                  marginBottom: '6px'
                 }}>
                   ₹{(cashflowData?.income?.total_invoice_amount || 0) * 0.2}
                 </div>
                 <div style={{ 
-                  fontSize: '14px', 
+                  fontSize: '12px', 
                   color: '#0056b3',
                   fontWeight: '500',
-                  marginBottom: '16px'
+                  marginBottom: '12px'
                 }}>
                   Outstanding receivables
                 </div>
                 <Button 
                   onClick={() => navigate('/invoices')}
                   variant="secondary"
-                  style={{ fontSize: '14px', padding: '8px 16px' }}
+                  style={{ fontSize: '12px', padding: '6px 12px' }}
                 >
                   View Invoices
                 </Button>
@@ -287,18 +287,18 @@ export function Dashboard() {
               alignItems: 'center',
               marginBottom: '20px'
             }}>
-              <h3 style={{ margin: '0', color: '#495057', fontSize: '20px', fontWeight: '600' }}>
+              <h3 style={{ margin: '0', color: '#495057', fontSize: '18px', fontWeight: '600' }}>
                 📊 Income & Expenses Summary
               </h3>
               
               {/* Period Selector */}
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 <div style={{ 
-                  padding: '6px 12px',
+                  padding: '5px 10px',
                   backgroundColor: '#e7f3ff',
                   borderRadius: '6px',
                   border: '1px solid #b3d9ff',
-                  fontSize: '14px',
+                  fontSize: '12px',
                   fontWeight: '500',
                   color: '#0056b3'
                 }}>
@@ -308,10 +308,10 @@ export function Dashboard() {
                   value={periodType}
                   onChange={(e) => handlePeriodChange(e.target.value as 'month' | 'quarter' | 'year' | 'custom')}
                   style={{
-                    padding: '6px 12px',
+                    padding: '5px 10px',
                     border: '1px solid #ced4da',
                     borderRadius: '6px',
-                    fontSize: '14px',
+                    fontSize: '12px',
                     backgroundColor: 'white'
                   }}
                 >
@@ -328,22 +328,22 @@ export function Dashboard() {
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                       style={{
-                        padding: '6px 8px',
+                        padding: '5px 6px',
                         border: '1px solid #ced4da',
                         borderRadius: '6px',
-                        fontSize: '14px'
+                        fontSize: '12px'
                       }}
                     />
-                    <span style={{ fontSize: '12px' }}>to</span>
+                    <span style={{ fontSize: '11px' }}>to</span>
                     <input
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
                       style={{
-                        padding: '6px 8px',
+                        padding: '5px 6px',
                         border: '1px solid #ced4da',
                         borderRadius: '6px',
-                        fontSize: '14px'
+                        fontSize: '12px'
                       }}
                     />
                   </div>
@@ -353,13 +353,13 @@ export function Dashboard() {
                   onClick={loadCashflowData}
                   disabled={loading}
                   style={{
-                    padding: '6px 12px',
+                    padding: '5px 10px',
                     backgroundColor: '#007bff',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
                     cursor: loading ? 'not-allowed' : 'pointer',
-                    fontSize: '14px',
+                    fontSize: '12px',
                     opacity: loading ? 0.6 : 1
                   }}
                 >
@@ -378,20 +378,20 @@ export function Dashboard() {
                   borderRadius: '8px',
                   backgroundColor: '#f8f9fa'
                 }}>
-                  <h4 style={{ margin: '0 0 16px 0', color: '#383d41', fontSize: '18px', textAlign: 'center', fontWeight: '600' }}>
+                  <h4 style={{ margin: '0 0 12px 0', color: '#383d41', fontSize: '16px', textAlign: 'center', fontWeight: '600' }}>
                     📊 Net Cashflow
                   </h4>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ 
-                      fontSize: '28px', 
+                      fontSize: '24px', 
                       fontWeight: 'bold',
                       color: getNetCashflowColor(cashflowData?.cashflow?.net_cashflow || 0),
-                      marginBottom: '8px'
+                      marginBottom: '6px'
                     }}>
                       {formatCurrency(cashflowData?.cashflow?.net_cashflow || 0)}
                     </div>
                     <div style={{ 
-                      fontSize: '14px', 
+                      fontSize: '12px', 
                       color: '#383d41',
                       fontWeight: '500'
                     }}>
@@ -407,20 +407,20 @@ export function Dashboard() {
                   borderRadius: '8px',
                   backgroundColor: '#d4edda'
                 }}>
-                  <h4 style={{ margin: '0 0 16px 0', color: '#155724', fontSize: '18px', textAlign: 'center', fontWeight: '600' }}>
+                  <h4 style={{ margin: '0 0 12px 0', color: '#155724', fontSize: '16px', textAlign: 'center', fontWeight: '600' }}>
                     💰 Income
                   </h4>
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', color: '#155724' }}>
+                  <div style={{ display: 'grid', gap: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#155724' }}>
                       <span>Invoice Amount:</span>
                       <strong>{formatCurrency(cashflowData?.income?.total_invoice_amount || 0)}</strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', color: '#155724' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#155724' }}>
                       <span>Payments Received:</span>
                       <strong>{formatCurrency(cashflowData?.income?.total_payments_received || 0)}</strong>
                     </div>
-                    <hr style={{ border: 'none', borderTop: '2px solid #c3e6cb', margin: '12px 0' }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold', color: '#155724' }}>
+                    <hr style={{ border: 'none', borderTop: '2px solid #c3e6cb', margin: '10px 0' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 'bold', color: '#155724' }}>
                       <span>Total Income:</span>
                       <span style={{ color: '#28a745' }}>{formatCurrency(cashflowData?.cashflow?.cash_inflow || 0)}</span>
                     </div>
@@ -434,20 +434,20 @@ export function Dashboard() {
                   borderRadius: '8px',
                   backgroundColor: '#fff3cd'
                 }}>
-                  <h4 style={{ margin: '0 0 16px 0', color: '#856404', fontSize: '18px', textAlign: 'center', fontWeight: '600' }}>
+                  <h4 style={{ margin: '0 0 12px 0', color: '#856404', fontSize: '16px', textAlign: 'center', fontWeight: '600' }}>
                     💸 Expenses
                   </h4>
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', color: '#856404' }}>
+                  <div style={{ display: 'grid', gap: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#856404' }}>
                       <span>Direct Expenses:</span>
                       <strong>{formatCurrency(cashflowData?.expenses?.total_expenses || 0)}</strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', color: '#856404' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#856404' }}>
                       <span>Purchase Payments:</span>
                       <strong>{formatCurrency(cashflowData?.expenses?.total_purchase_payments || 0)}</strong>
                     </div>
-                    <hr style={{ border: 'none', borderTop: '2px solid #ffeaa7', margin: '12px 0' }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold', color: '#856404' }}>
+                    <hr style={{ border: 'none', borderTop: '2px solid #ffeaa7', margin: '10px 0' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 'bold', color: '#856404' }}>
                       <span>Total Outflow:</span>
                       <span style={{ color: '#dc3545' }}>{formatCurrency(cashflowData?.cashflow?.cash_outflow || 0)}</span>
                     </div>
