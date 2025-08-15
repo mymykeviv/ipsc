@@ -669,59 +669,60 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
             }}
           />
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-          <label
-            htmlFor="show-inactive-dropdown"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              padding: '8px 12px',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              backgroundColor: showInactive ? '#e3f2fd' : '#fff',
-              userSelect: 'none'
-            }}
-          >
-            Show Inactive:
-            <select
-              id="show-inactive-dropdown"
-              value={showInactive ? 'Yes' : 'No'}
-              onChange={(e) => {
-                console.log('Dropdown changed, new value:', e.target.value)
-                setShowInactive(e.target.value === 'Yes')
+            <label
+              htmlFor="show-inactive-dropdown"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                backgroundColor: showInactive ? '#e3f2fd' : '#fff',
+                userSelect: 'none'
+              }}
+            >
+              Show Inactive:
+              <select
+                id="show-inactive-dropdown"
+                value={showInactive ? 'Yes' : 'No'}
+                onChange={(e) => {
+                  console.log('Dropdown changed, new value:', e.target.value)
+                  setShowInactive(e.target.value === 'Yes')
+                }}
+                style={{
+                  padding: '4px 8px',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={() => {
+                console.log('Test button clicked, current showInactive:', showInactive)
+                setShowInactive(!showInactive)
               }}
               style={{
+                marginLeft: '10px',
                 padding: '4px 8px',
-                border: '1px solid #ccc',
+                fontSize: '12px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
                 borderRadius: '4px',
-                fontSize: '14px',
                 cursor: 'pointer'
               }}
             >
-              <option value="No">No</option>
-              <option value="Yes">Yes</option>
-            </select>
-          </label>
-          <button
-            type="button"
-            onClick={() => {
-              console.log('Test button clicked, current showInactive:', showInactive)
-              setShowInactive(!showInactive)
-            }}
-            style={{
-              marginLeft: '10px',
-              padding: '4px 8px',
-              fontSize: '12px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Test Toggle ({showInactive ? 'ON' : 'OFF'})
-          </button>
+              Test Toggle ({showInactive ? 'ON' : 'OFF'})
+            </button>
+          </div>
         </div>
       </div>
 
@@ -851,4 +852,6 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
     </div>
   )
 }
+
+export default Parties
 

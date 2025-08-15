@@ -3,7 +3,7 @@ import os
 
 
 class Settings(BaseSettings):
-    database_url: str = "sqlite:///backend/cashflow.db"
+    database_url: str = "sqlite:///cashflow.db"
     test_database_url: str = "sqlite:///:memory:"
     secret_key: str = "dev-secret"
     access_token_expire_minutes: int = 30
