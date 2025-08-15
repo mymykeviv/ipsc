@@ -1097,7 +1097,7 @@ def email_invoice(invoice_id: int, payload: EmailRequest, _: User = Depends(get_
     
     # Get company details
     company = db.query(CompanySettings).first()
-    company_name = company.company_name if company else "CASHFLOW"
+    company_name = company.name if company else "CASHFLOW"
     
     # Generate PDF
     try:
@@ -1136,10 +1136,9 @@ def email_invoice(invoice_id: int, payload: EmailRequest, _: User = Depends(get_
         
         # Header - Company Details
         if company:
-            story.append(Paragraph(f"<b>{company.company_name}</b>", title_style))
+            story.append(Paragraph(f"<b>{company.name}</b>", title_style))
             story.append(Paragraph(f"GSTIN: {company.gstin}", normal_style))
-            story.append(Paragraph(f"Address: {company.address}", normal_style))
-            story.append(Paragraph(f"Phone: {company.phone} | Email: {company.email}", normal_style))
+            story.append(Paragraph(f"State: {company.state} - {company.state_code}", normal_style))
         else:
             story.append(Paragraph("<b>CASHFLOW</b>", title_style))
             story.append(Paragraph("Financial Management System", normal_style))
@@ -3372,7 +3371,7 @@ def email_purchase(purchase_id: int, payload: EmailRequest, _: User = Depends(ge
     
     # Get company details
     company = db.query(CompanySettings).first()
-    company_name = company.company_name if company else "CASHFLOW"
+    company_name = company.name if company else "CASHFLOW"
     
     # Generate PDF
     try:
@@ -3411,10 +3410,9 @@ def email_purchase(purchase_id: int, payload: EmailRequest, _: User = Depends(ge
         
         # Header - Company Details
         if company:
-            story.append(Paragraph(f"<b>{company.company_name}</b>", title_style))
+            story.append(Paragraph(f"<b>{company.name}</b>", title_style))
             story.append(Paragraph(f"GSTIN: {company.gstin}", normal_style))
-            story.append(Paragraph(f"Address: {company.address}", normal_style))
-            story.append(Paragraph(f"Phone: {company.phone} | Email: {company.email}", normal_style))
+            story.append(Paragraph(f"State: {company.state} - {company.state_code}", normal_style))
         else:
             story.append(Paragraph("<b>CASHFLOW</b>", title_style))
             story.append(Paragraph("Financial Management System", normal_style))

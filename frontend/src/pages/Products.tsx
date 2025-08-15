@@ -166,9 +166,10 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           category: product.category || '',
           purchase_price: product.purchase_price?.toString() || '',
           sales_price: product.sales_price.toString(),
-          gst_rate: product.gst_rate.toString(),
+          gst_rate: product.gst_rate?.toString() || '18',
           hsn_code: product.hsn || '',
           opening_stock: product.stock.toString(),
+          closing_stock: product.stock.toString(),
           notes: product.notes || ''
         })
     } else {
@@ -207,6 +208,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       gst_rate: '18',
       hsn_code: '',
       opening_stock: '',
+      closing_stock: '',
       notes: ''
     })
     setError(null)
@@ -229,7 +231,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         category: formData.category,
         notes: formData.notes,
         hsn: formData.hsn_code,
-        gst_rate: formData.gst_rate ? parseFloat(formData.gst_rate) : null
+        gst_rate: formData.gst_rate && formData.gst_rate !== '' ? parseFloat(formData.gst_rate) : null
       }
       
       await apiCreateProduct(payload)
@@ -263,7 +265,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         category: formData.category,
         notes: formData.notes,
         hsn: formData.hsn_code,
-        gst_rate: formData.gst_rate ? parseFloat(formData.gst_rate) : null
+        gst_rate: formData.gst_rate && formData.gst_rate !== '' ? parseFloat(formData.gst_rate) : null
       }
       await apiUpdateProduct(currentProduct.id, payload)
       navigate('/products')
@@ -1294,16 +1296,16 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
       setStockLoading(true)
       setError(null)
       
-      const result = await apiAdjustStock(
-        parseInt(selectedProductId),
-        parseFloat(stockFormData.quantity),
-        stockFormData.adjustmentType,
-        stockFormData.date_of_receipt,
-        stockFormData.reference_bill_number || undefined,
-        stockFormData.supplier || undefined,
-        stockFormData.category || undefined,
-        stockFormData.notes || undefined
-      )
+              const result = await apiAdjustStock(
+          parseInt(selectedProductId),
+          parseInt(stockFormData.quantity),
+          stockFormData.adjustmentType,
+          stockFormData.date_of_receipt,
+          stockFormData.reference_bill_number || undefined,
+          stockFormData.supplier || undefined,
+          stockFormData.category || undefined,
+          stockFormData.notes || undefined
+        )
       
       if (result.ok) {
         // Reset form and show success

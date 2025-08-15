@@ -23,7 +23,7 @@ export type Product = {
   category: string | null
   notes: string | null
   hsn: string | null
-  gst_rate: number
+  gst_rate: number | null
   is_active: boolean
 }
 
