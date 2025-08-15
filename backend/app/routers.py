@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, validator
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 import re
@@ -3083,7 +3083,7 @@ class CashflowTransactionOut(BaseModel):
     class Config:
         from_attributes = True
 
-    @field_validator('transaction_date', 'created_at', 'updated_at', mode='before')
+    @validator('transaction_date', 'created_at', 'updated_at', pre=True)
     @classmethod
     def convert_datetime_to_string(cls, v):
         if isinstance(v, datetime):

@@ -7,6 +7,7 @@ import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 interface ComprehensiveInvoiceFormProps {
   onSuccess: () => void
   onCancel: () => void
+  initialData?: any
 }
 
 interface InvoiceItem {
