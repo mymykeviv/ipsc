@@ -215,18 +215,19 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
     const newItems = [...formData.items]
     newItems[index] = { ...newItems[index], [field]: value }
     
-    // Recalculate amounts
-    const item = newItems[index]
-    const product = products.find(p => p.id === item.product_id)
-    
-    if (product) {
-      item.rate = product.sales_price
-      item.gst_rate = product.gst_rate || 0
-      item.hsn_code = product.hsn || ''
-      item.description = product.description || ''
+    // Auto-fill product details when product is selected
+    if (field === 'product_id' && value > 0) {
+      const product = products.find(p => p.id === value)
+      if (product) {
+        newItems[index].rate = product.sales_price
+        newItems[index].gst_rate = product.gst_rate || 18
+        newItems[index].hsn_code = product.hsn || ''
+        newItems[index].description = product.name
+      }
     }
     
-    // Calculate amount
+    // Recalculate amounts
+    const item = newItems[index]
     const discountAmount = item.discount_type === 'Percentage' 
       ? (item.rate * item.qty * item.discount / 100)
       : item.discount
@@ -742,7 +743,6 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
                 <th style={{ padding: '8px', textAlign: 'left', border: '1px solid var(--border)' }}>GST Amount</th>
                 <th style={{ padding: '8px', textAlign: 'left', border: '1px solid var(--border)' }}>HSN Code</th>
                 <th style={{ padding: '8px', textAlign: 'left', border: '1px solid var(--border)' }}>Amount</th>
-                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid var(--border)' }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -848,17 +848,6 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
                         readOnly
                         style={{ width: '80px', padding: '4px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9' }}
                       />
-                    </td>
-                    <td style={{ padding: '8px', border: '1px solid var(--border)' }}>
-                      {formData.items.length > 1 && (
-                        <Button 
-                          type="button" 
-                          onClick={() => removeItem(index)} 
-                          variant="secondary"
-                        >
-                          Remove
-                        </Button>
-                      )}
                     </td>
                   </tr>
                 )
