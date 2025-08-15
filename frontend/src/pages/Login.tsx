@@ -125,10 +125,10 @@ export function Login() {
               marginTop: '8px'
             }}
             onMouseEnter={(e) => {
-              if (!loading) e.target.style.backgroundColor = '#2563eb'
+              if (!loading) (e.target as HTMLButtonElement).style.backgroundColor = '#2563eb'
             }}
             onMouseLeave={(e) => {
-              if (!loading) e.target.style.backgroundColor = '#3b82f6'
+              if (!loading) (e.target as HTMLButtonElement).style.backgroundColor = '#3b82f6'
             }}
           >
             {loading ? 'Signing in...' : 'Sign in'}
