@@ -544,104 +544,8 @@ export function Products({ mode = 'manage' }: ProductsProps) {
 
   // Stock Adjustment Mode
   if (mode === 'stock-adjustment') {
-    const [stockFormData, setStockFormData] = useState<StockFormData>({
-      quantity: '',
-      adjustmentType: 'add',
-      date_of_receipt: new Date().toISOString().split('T')[0],
-      reference_bill_number: '',
-      supplier: '',
-      category: '',
-      notes: ''
-    })
-    const [selectedProductId, setSelectedProductId] = useState<string>('')
-    const [stockLoading, setStockLoading] = useState(false)
-
-    const handleStockSubmit = async (e: React.FormEvent) => {
-      e.preventDefault()
-      if (!selectedProductId) {
-        setError('Please select a product')
-        return
-      }
-
-      try {
-        setStockLoading(true)
-        setError(null)
-        
-        const result = await apiAdjustStock(
-          parseInt(selectedProductId),
-          parseFloat(stockFormData.quantity),
-        stockFormData.adjustmentType,
-        stockFormData.date_of_receipt,
-        stockFormData.reference_bill_number || undefined,
-        stockFormData.supplier || undefined,
-        stockFormData.category || undefined,
-        stockFormData.notes || undefined
-      )
-      
-        if (result.ok) {
-          // Reset form and show success
-      setStockFormData({
-        quantity: '',
-        adjustmentType: 'add',
-        date_of_receipt: new Date().toISOString().split('T')[0],
-        reference_bill_number: '',
-        supplier: '',
-        category: '',
-        notes: ''
-      })
-          setSelectedProductId('')
-          alert(`Stock adjusted successfully. New stock: ${result.new_stock}`)
-        }
-      } catch (err) {
-        console.error('Failed to adjust stock:', err)
-        const errorMessage = handleApiError(err)
-        setError(errorMessage)
-      } finally {
-        setStockLoading(false)
-      }
-    }
-
-    const handleStockInputChange = (field: keyof StockFormData, value: string) => {
-      setStockFormData(prev => ({ ...prev, [field]: value }))
-    }
-
-    return (
-      <div style={{ padding: '20px', maxWidth: '100%' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: '24px',
-          paddingBottom: '12px',
-          borderBottom: '2px solid #e9ecef'
-        }}>
-          <h1 style={{ 
-            margin: '0',
-            fontSize: '28px',
-            fontWeight: '600',
-            color: '#2c3e50'
-          }}>
-            Stock Adjustment
-          </h1>
-          <Button 
-            onClick={() => navigate('/products')}
-            variant="secondary"
-            style={{ 
-              padding: '10px 16px', 
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            ← Back to Products
-          </Button>
-        </div>
-
-        {error && <ErrorMessage message={error} />}
-
-        <form onSubmit={handleStockSubmit} style={{ maxWidth: '800px' }}>
-          {/* Product Selection Section */}
+    return <StockAdjustmentForm onSuccess={() => navigate('/products')} onCancel={() => navigate('/products')} />
+  }
           <div style={formStyles.section}>
             <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('product') }}>
               Product Selection
@@ -1328,6 +1232,301 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+
+// Stock Adjustment Form Component
+interface StockAdjustmentFormProps {
+  onSuccess: () => void
+  onCancel: () => void
+}
+
+function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) {
+  const { forceLogout } = useAuth()
+  const handleApiError = createApiErrorHandler(forceLogout)
+  const [products, setProducts] = useState<Product[]>([])
+  const [vendors, setVendors] = useState<Party[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [stockFormData, setStockFormData] = useState<StockFormData>({
+    quantity: '',
+    adjustmentType: 'add',
+    date_of_receipt: new Date().toISOString().split('T')[0],
+    reference_bill_number: '',
+    supplier: '',
+    category: '',
+    notes: ''
+  })
+  const [selectedProductId, setSelectedProductId] = useState<string>('')
+  const [stockLoading, setStockLoading] = useState(false)
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      const [productsData, vendorsData] = await Promise.all([
+        apiGetProducts(),
+        apiListParties()
+      ])
+      setProducts(productsData)
+      setVendors(vendorsData.filter(party => party.type === 'vendor'))
+    } catch (err: any) {
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleStockSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedProductId) {
+      setError('Please select a product')
+      return
+    }
+
+    try {
+      setStockLoading(true)
+      setError(null)
+      
+      const result = await apiAdjustStock(
+        parseInt(selectedProductId),
+        parseFloat(stockFormData.quantity),
+        stockFormData.adjustmentType,
+        stockFormData.date_of_receipt,
+        stockFormData.reference_bill_number || undefined,
+        stockFormData.supplier || undefined,
+        stockFormData.category || undefined,
+        stockFormData.notes || undefined
+      )
+      
+      if (result.ok) {
+        // Reset form and show success
+        setStockFormData({
+          quantity: '',
+          adjustmentType: 'add',
+          date_of_receipt: new Date().toISOString().split('T')[0],
+          reference_bill_number: '',
+          supplier: '',
+          category: '',
+          notes: ''
+        })
+        setSelectedProductId('')
+        alert(`Stock adjusted successfully. New stock: ${result.new_stock}`)
+        onSuccess()
+      }
+    } catch (err: any) {
+      console.error('Failed to adjust stock:', err)
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
+    } finally {
+      setStockLoading(false)
+    }
+  }
+
+  const handleStockInputChange = (field: keyof StockFormData, value: string) => {
+    setStockFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  if (loading) {
+    return (
+      <div style={{ padding: '20px' }}>
+        <div>Loading...</div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ padding: '20px', maxWidth: '100%' }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '24px',
+        paddingBottom: '12px',
+        borderBottom: '2px solid #e9ecef'
+      }}>
+        <h1 style={{ 
+          margin: '0',
+          fontSize: '28px',
+          fontWeight: '600',
+          color: '#2c3e50'
+        }}>
+          Stock Adjustment
+        </h1>
+        <Button 
+          onClick={onCancel}
+          variant="secondary"
+          style={{ 
+            padding: '10px 16px', 
+            fontSize: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          ← Back to Products
+        </Button>
+      </div>
+
+      {error && <ErrorMessage message={error} />}
+
+      <form onSubmit={handleStockSubmit} style={{ maxWidth: '800px' }}>
+        {/* Product Selection Section */}
+        <div style={formStyles.section}>
+          <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('product') }}>
+            Product Selection
+          </h3>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Select Product *</label>
+            <select
+              value={selectedProductId}
+              onChange={(e) => setSelectedProductId(e.target.value)}
+              style={formStyles.select}
+              required
+            >
+              <option value="">Choose a product...</option>
+              {products.map(product => (
+                <option key={product.id} value={product.id}>
+                  {product.name} (Current Stock: {product.stock})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Adjustment Details Section */}
+        <div style={formStyles.section}>
+          <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('adjustment') }}>
+            Adjustment Details
+          </h3>
+          <div style={formStyles.grid2Col}>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Adjustment Type *</label>
+              <select
+                value={stockFormData.adjustmentType}
+                onChange={(e) => handleStockInputChange('adjustmentType', e.target.value as 'add' | 'reduce')}
+                style={formStyles.select}
+                required
+              >
+                <option value="add">Add Stock (Incoming)</option>
+                <option value="reduce">Reduce Stock (Outgoing)</option>
+              </select>
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Quantity *</label>
+              <input
+                type="number"
+                value={stockFormData.quantity}
+                onChange={(e) => handleStockInputChange('quantity', e.target.value)}
+                style={formStyles.input}
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
+          </div>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>
+              {stockFormData.adjustmentType === 'add' ? 'Date of Receipt' : 'Date of Issue'} *
+            </label>
+            <input
+              type="date"
+              value={stockFormData.date_of_receipt}
+              onChange={(e) => handleStockInputChange('date_of_receipt', e.target.value)}
+              style={formStyles.input}
+              required
+            />
+          </div>
+        </div>
+
+        {/* Reference Information Section (only for incoming stock) */}
+        {stockFormData.adjustmentType === 'add' && (
+          <div style={formStyles.section}>
+            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('reference') }}>
+              Reference Information
+            </h3>
+            <div style={formStyles.grid2Col}>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Reference Bill Number</label>
+                <input
+                  type="text"
+                  value={stockFormData.reference_bill_number}
+                  onChange={(e) => handleStockInputChange('reference_bill_number', e.target.value)}
+                  style={formStyles.input}
+                  placeholder="Enter bill/invoice number"
+                />
+              </div>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Supplier</label>
+                <select
+                  value={stockFormData.supplier}
+                  onChange={(e) => handleStockInputChange('supplier', e.target.value)}
+                  style={formStyles.select}
+                >
+                  <option value="">Select supplier...</option>
+                  {vendors.map(vendor => (
+                    <option key={vendor.id} value={vendor.name}>
+                      {vendor.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Category</label>
+              <input
+                type="text"
+                value={stockFormData.category}
+                onChange={(e) => handleStockInputChange('category', e.target.value)}
+                style={formStyles.input}
+                placeholder="Enter category"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Notes Section */}
+        <div style={formStyles.section}>
+          <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('notes') }}>
+            Additional Information
+          </h3>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Notes</label>
+            <textarea
+              value={stockFormData.notes}
+              onChange={(e) => handleStockInputChange('notes', e.target.value)}
+              style={formStyles.textarea}
+              rows={3}
+              placeholder="Additional notes about this stock adjustment..."
+            />
+          </div>
+        </div>
+
+        {/* Form Actions */}
+        <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', marginTop: '24px' }}>
+          <Button 
+            type="button" 
+            variant="secondary" 
+            onClick={onCancel}
+            disabled={stockLoading}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            variant="primary"
+            disabled={stockLoading}
+          >
+            {stockLoading ? 'Adjusting Stock...' : 'Adjust Stock'}
+          </Button>
+        </div>
+      </form>
     </div>
   )
 }
