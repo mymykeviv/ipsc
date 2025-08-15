@@ -139,12 +139,32 @@ export function PurchaseForm({ onSuccess, onCancel, purchaseId, initialData }: P
   }
 
   const updateItem = (index: number, field: keyof PurchaseItem, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      items: prev.items.map((item, i) => 
-        i === index ? { ...item, [field]: value } : item
-      )
-    }))
+    setFormData(prev => {
+      const updatedItems = prev.items.map((item, i) => {
+        if (i === index) {
+          const updatedItem = { ...item, [field]: value }
+          
+          // Auto-fill product details when product is selected
+          if (field === 'product_id' && value > 0) {
+            const selectedProduct = products.find(p => p.id === value)
+            if (selectedProduct) {
+              updatedItem.rate = selectedProduct.purchase_price || 0
+              updatedItem.gst_rate = selectedProduct.gst_rate || 18
+              updatedItem.hsn_code = selectedProduct.hsn || ''
+              updatedItem.description = selectedProduct.name
+            }
+          }
+          
+          return updatedItem
+        }
+        return item
+      })
+      
+      return {
+        ...prev,
+        items: updatedItems
+      }
+    })
   }
 
 
@@ -286,7 +306,6 @@ export function PurchaseForm({ onSuccess, onCancel, purchaseId, initialData }: P
                 <th style={{ padding: '8px', textAlign: 'left', border: '1px solid var(--border)' }}>GST Rate</th>
                 <th style={{ padding: '8px', textAlign: 'left', border: '1px solid var(--border)' }}>HSN Code</th>
                 <th style={{ padding: '8px', textAlign: 'left', border: '1px solid var(--border)' }}>Amount</th>
-                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid var(--border)' }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -368,23 +387,61 @@ export function PurchaseForm({ onSuccess, onCancel, purchaseId, initialData }: P
                         style={{ width: '80px', padding: '4px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', backgroundColor: '#f9f9f9' }}
                       />
                     </td>
-                    <td style={{ padding: '8px', border: '1px solid var(--border)' }}>
-                      {formData.items.length > 1 && (
-                        <Button 
-                          type="button" 
-                          onClick={() => removeItem(index)} 
-                          variant="secondary"
-                        >
-                          Remove
-                        </Button>
-                      )}
-                    </td>
                   </tr>
                 )
               })}
             </tbody>
           </table>
         </div>
+
+        {/* Purchase Summary */}
+        {formData.items.length > 0 && (
+          <div style={{ 
+            marginTop: '16px', 
+            padding: '16px', 
+            backgroundColor: '#f8f9fa', 
+            borderRadius: '8px', 
+            border: '1px solid #e9ecef' 
+          }}>
+            <h4 style={{ marginBottom: '12px', color: '#495057', fontSize: '16px' }}>📊 Purchase Summary</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ color: '#6c757d' }}>Subtotal:</span>
+                  <span style={{ fontWeight: '500' }}>
+                    ₹{formData.items.reduce((sum, item) => sum + (item.qty * item.rate), 0).toFixed(2)}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ color: '#6c757d' }}>GST Total:</span>
+                  <span style={{ fontWeight: '500' }}>
+                    ₹{formData.items.reduce((sum, item) => sum + (item.qty * item.rate * item.gst_rate / 100), 0).toFixed(2)}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #dee2e6', paddingTop: '8px' }}>
+                  <span style={{ color: '#495057', fontWeight: '600' }}>Grand Total:</span>
+                  <span style={{ color: '#007bff', fontWeight: '600', fontSize: '18px' }}>
+                    ₹{formData.items.reduce((sum, item) => {
+                      const subtotal = item.qty * item.rate
+                      const gstAmount = subtotal * (item.gst_rate / 100)
+                      return sum + subtotal + gstAmount
+                    }, 0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ color: '#6c757d' }}>Total Items:</span>
+                  <span style={{ fontWeight: '500' }}>{formData.items.length}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ color: '#6c757d' }}>Total Quantity:</span>
+                  <span style={{ fontWeight: '500' }}>{formData.items.reduce((sum, item) => sum + item.qty, 0)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
 
       </div>
