@@ -81,6 +81,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
   const [sortField, setSortField] = useState<keyof Product>('name')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [currentPage, setCurrentPage] = useState(1)
@@ -976,13 +977,19 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   // Filter and sort products
   const filteredProducts = products.filter(product => {
     const searchLower = searchTerm.toLowerCase()
-  return (
+    const matchesSearch = (
       product.name.toLowerCase().includes(searchLower) ||
       (product.sku && product.sku.toLowerCase().includes(searchLower)) ||
       (product.category && product.category.toLowerCase().includes(searchLower)) ||
       (product.description && product.description.toLowerCase().includes(searchLower)) ||
       (product.supplier && product.supplier.toLowerCase().includes(searchLower))
     )
+    
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'active' && product.is_active) ||
+      (statusFilter === 'inactive' && !product.is_active)
+    
+    return matchesSearch && matchesStatus
   })
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -1075,13 +1082,33 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           </div>
         </div>
 
-      <div style={{ marginBottom: '24px' }}>
+      <div style={{ marginBottom: '24px', display: 'flex', gap: '16px', alignItems: 'center' }}>
+        <div style={{ flex: 1 }}>
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
             placeholder="Search products by name, SKU, category, description, or supplier..."
           />
         </div>
+        <div style={{ minWidth: '200px' }}>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px 16px',
+              border: '1px solid #ced4da',
+              borderRadius: '6px',
+              fontSize: '14px',
+              backgroundColor: 'white'
+            }}
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
 
       <div style={{ 
         border: '1px solid #e9ecef', 

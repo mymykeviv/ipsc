@@ -12,7 +12,6 @@ export function SearchBar({ value, onChange, placeholder = "Search...", style }:
     <div style={{
       position: 'relative',
       width: '100%',
-      maxWidth: '400px',
       ...style
     }}>
       <input
