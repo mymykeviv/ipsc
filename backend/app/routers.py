@@ -1175,17 +1175,25 @@ def email_invoice(invoice_id: int, payload: EmailRequest, _: User = Depends(get_
         if customer:
             details_data.append(['Bill To:', customer.name])
             details_data.append(['', f"GSTIN: {customer.gstin}" if customer.gstin else "GSTIN: Not Available"])
-            details_data.append(['', customer.address])
+            customer_address = f"{customer.billing_address_line1}"
+            if customer.billing_address_line2:
+                customer_address += f", {customer.billing_address_line2}"
+            customer_address += f", {customer.billing_city}, {customer.billing_state} - {customer.billing_pincode or ''}"
+            details_data.append(['', customer_address])
             if customer.email:
                 details_data.append(['', f"Email: {customer.email}"])
-            if customer.phone:
-                details_data.append(['', f"Phone: {customer.phone}"])
+            if customer.contact_number:
+                details_data.append(['', f"Phone: {customer.contact_number}"])
         
         supplier = db.query(Party).filter(Party.id == inv.supplier_id).first()
         if supplier:
             details_data.append(['Ship From:', supplier.name])
             details_data.append(['', f"GSTIN: {supplier.gstin}" if supplier.gstin else "GSTIN: Not Available"])
-            details_data.append(['', supplier.address])
+            supplier_address = f"{supplier.billing_address_line1}"
+            if supplier.billing_address_line2:
+                supplier_address += f", {supplier.billing_address_line2}"
+            supplier_address += f", {supplier.billing_city}, {supplier.billing_state} - {supplier.billing_pincode or ''}"
+            details_data.append(['', supplier_address])
         
         if details_data:
             details_table = Table(details_data, colWidths=[2*cm, 14*cm])
@@ -3445,12 +3453,17 @@ def email_purchase(purchase_id: int, payload: EmailRequest, _: User = Depends(ge
         
         # Vendor Details
         if vendor:
+            vendor_address = f"{vendor.billing_address_line1}"
+            if vendor.billing_address_line2:
+                vendor_address += f", {vendor.billing_address_line2}"
+            vendor_address += f", {vendor.billing_city}, {vendor.billing_state} - {vendor.billing_pincode or ''}"
+            
             vendor_data = [
                 ['Vendor:', vendor.name],
                 ['', f"GSTIN: {vendor.gstin}" if vendor.gstin else "GSTIN: Not Available"],
-                ['', vendor.address],
+                ['', vendor_address],
                 ['', f"Email: {vendor.email}" if vendor.email else ""],
-                ['', f"Phone: {vendor.phone}" if vendor.phone else ""]
+                ['', f"Phone: {vendor.contact_number}" if vendor.contact_number else ""]
             ]
             
             vendor_table = Table(vendor_data, colWidths=[2*cm, 14*cm])
