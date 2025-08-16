@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **NEW**: CashflowService for consolidated financial data management
 - **NEW**: Comprehensive integration tests for cashflow functionality
 - **NEW**: Enhanced API endpoints for financial year summaries and expense history
+- **NEW**: Advanced Payment Tracking System with scheduling and reminders
+- **NEW**: Payment analytics and insights for collections and payments
+- **NEW**: Comprehensive payment status tracking (pending, overdue, paid)
 
 ### Changed
 - **Migration Structure**: Reorganized migrations into proper versions directory structure
@@ -31,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **FIXED**: Eliminated data redundancy in cashflow_transactions table
 - **FIXED**: Ensured backward compatibility for all existing frontend functionality
 - **FIXED**: Resolved SQL query issues in consolidated cashflow service
+- **FIXED**: Resolved datetime/date comparison issues in payment calculations
 
 ### Technical Improvements
 - **Migration Management**: Created proper initial schema migration and fixed revision chain

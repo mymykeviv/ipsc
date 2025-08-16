@@ -16,6 +16,7 @@ from .recurring_invoices import RecurringInvoiceService, generate_recurring_invo
 from .purchase_orders import PurchaseOrderService, convert_po_to_purchase
 from .cashflow_service import CashflowService
 from .payment_scheduler import PaymentScheduler, PaymentStatus, PaymentReminderType
+from .inventory_manager import InventoryManager, StockValuationMethod
 from decimal import Decimal
 from .emailer import send_email, create_invoice_email_template, create_purchase_email_template
 from fastapi import Query
@@ -4414,4 +4415,102 @@ def get_payment_analytics(
     
     analytics = scheduler.get_payment_analytics(start_date_obj, end_date_obj)
     return analytics
+
+
+# Inventory Management API Endpoints
+@api.get('/inventory/summary')
+def get_inventory_summary(
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get comprehensive inventory summary"""
+    manager = InventoryManager(db)
+    return manager.get_inventory_summary()
+
+
+@api.get('/inventory/low-stock-alerts')
+def get_low_stock_alerts(
+    threshold: int = Query(None, description="Custom threshold for low stock"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get low stock alerts"""
+    manager = InventoryManager(db)
+    return manager.get_low_stock_alerts(threshold)
+
+
+@api.get('/inventory/stock-movements')
+def get_stock_movements(
+    product_id: int = Query(None, description="Filter by product ID"),
+    start_date: str = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: str = Query(None, description="End date (YYYY-MM-DD)"),
+    movement_type: str = Query(None, description="Movement type: in, out, adjust"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get stock movement history"""
+    manager = InventoryManager(db)
+    
+    # Parse dates
+    start_date_obj = None
+    end_date_obj = None
+    if start_date:
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+    if end_date:
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d").date()
+    
+    return manager.get_stock_movements(
+        product_id=product_id,
+        start_date=start_date_obj,
+        end_date=end_date_obj,
+        movement_type=movement_type
+    )
+
+
+@api.get('/inventory/analytics')
+def get_inventory_analytics(
+    start_date: str = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: str = Query(None, description="End date (YYYY-MM-DD)"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get inventory analytics"""
+    manager = InventoryManager(db)
+    
+    # Parse dates
+    start_date_obj = None
+    end_date_obj = None
+    if start_date:
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+    if end_date:
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d").date()
+    
+    return manager.get_inventory_analytics(start_date_obj, end_date_obj)
+
+
+@api.get('/inventory/stock-value')
+def get_stock_value(
+    valuation_method: str = Query("fifo", description="Valuation method: fifo, lifo, average"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Calculate stock value using specified valuation method"""
+    manager = InventoryManager(db)
+    
+    try:
+        method = StockValuationMethod(valuation_method)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid valuation method")
+    
+    return manager.calculate_stock_value(method)
+
+
+@api.get('/inventory/aging-report')
+def get_stock_aging_report(
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get stock aging report"""
+    manager = InventoryManager(db)
+    return manager.get_stock_aging_report()
 
