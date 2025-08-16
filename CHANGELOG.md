@@ -5,6 +5,30 @@ All notable changes to CASHFLOW will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.41.0] - 2025-08-16
+
+### Added
+- **Comprehensive UX/UI Improvements**: Enhanced user experience across all application modules
+- **Dashboard Data Refresh**: Added manual refresh button and improved data loading for real-time updates
+- **Cashflow Transactions Refresh**: Added refresh functionality for cashflow transaction table
+- **Stock Movement Search & Pagination**: Added search functionality and pagination to stock movement history
+- **Reporting Menu Section**: Added comprehensive reporting navigation with all report types
+- **GST Toggle Dropdown**: Changed from checkbox to dropdown with GST/Non-GST/Exempted options
+- **UX/UI Testing Framework**: Comprehensive testing script with 100% success rate validation
+
+### Changed
+- **User Experience**: Improved data refresh mechanisms and navigation structure
+- **GST Management**: Enhanced GST status management with dropdown options
+- **Navigation**: Added dedicated Reporting section with organized report categories
+
+### Fixed
+- **Dashboard Summary**: Fixed data not updating with latest financial information
+- **Cashflow Transactions**: Fixed table not refreshing with new transaction data
+- **Stock Movement History**: Added missing search and pagination functionality
+- **Navigation Menu**: Added missing Reporting section with all report types
+- **GST Toggle**: Improved functionality with dropdown options
+- **Stock Movement API**: Fixed 500 error in stock movement endpoint
+
 ## [1.40.0] - 2025-08-16
 
 ### Added
