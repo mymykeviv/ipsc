@@ -172,7 +172,7 @@ function Shell() {
                 <Link className={`nav-link sub-link ${isActive('/invoices/add') ? 'active' : ''}`} to="/invoices/add">
                   Add/Edit Invoice
                 </Link>
-                <Link className={`nav-link sub-link ${isActive('/invoices/payments') ? 'active' : ''}`} to="/invoices/payments">
+                <Link className={`nav-link sub-link ${isActive('/payments/invoice/list') ? 'active' : ''}`} to="/payments/invoice/list">
                   Invoice Payments
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/payments/invoice/add') ? 'active' : ''}`} to="/payments/invoice/add">
@@ -330,8 +330,7 @@ function Shell() {
           <Route path="/invoices/edit/:id" element={<Invoices mode="edit" />} />
           <Route path="/invoices/payments" element={<Invoices mode="payments" />} />
   
-          <Route path="/invoices/email/:id" element={<Invoices mode="email" />} />
-          <Route path="/invoices/print/:id" element={<Invoices mode="print" />} />
+
           
           {/* Purchases Routes */}
           <Route path="/purchases" element={<Purchases />} />
@@ -346,6 +345,7 @@ function Shell() {
             <Route path="/payments/invoice/add" element={<Payments mode="add" type="invoice" />} />
             <Route path="/payments/invoice/add/:id" element={<Payments mode="add" type="invoice" />} />
             <Route path="/payments/purchase/list" element={<PurchasePayments mode="list" />} />
+            <Route path="/payments/invoice/list" element={<Payments mode="list" type="invoice" />} />
           
           {/* Customers Routes */}
           <Route path="/customers" element={<Parties type="customer" />} />

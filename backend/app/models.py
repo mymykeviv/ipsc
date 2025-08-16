@@ -27,6 +27,9 @@ class CompanySettings(Base):
     state: Mapped[str] = mapped_column(String(100), nullable=False)
     state_code: Mapped[str] = mapped_column(String(2), nullable=False)
     invoice_series: Mapped[str] = mapped_column(String(50), nullable=False)
+    # GST System Settings
+    gst_enabled_by_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    require_gstin_validation: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
 class Party(Base):
@@ -53,6 +56,7 @@ class Party(Base):
     shipping_pincode: Mapped[str | None] = mapped_column(String(10), nullable=True)
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    gst_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
 class Product(Base):

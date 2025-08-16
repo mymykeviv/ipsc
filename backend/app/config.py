@@ -9,12 +9,13 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     debug: bool = False
     log_level: str = "INFO"
-    smtp_host: str = "localhost"
+    smtp_host: str = "mailhog"
     smtp_port: int = 1025
     smtp_user: str | None = None
     smtp_password: str | None = None
     smtp_from: str = "no-reply@localhost"
-    smtp_enabled: bool = False
+    smtp_enabled: bool = True
+    smtp_use_tls: bool = False
 
     class Config:
         env_file = [".env", ".env.local"]

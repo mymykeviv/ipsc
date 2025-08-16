@@ -15,6 +15,7 @@ interface PartyFormData {
   email: string
   gstin: string
   gst_registration_status: string
+  gst_enabled: boolean
   billing_address_line1: string
   billing_address_line2: string
   billing_city: string
@@ -61,6 +62,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
     email: '',
     gstin: '',
     gst_registration_status: 'GST not registered',
+    gst_enabled: true,
     billing_address_line1: '',
     billing_address_line2: '',
     billing_city: '',
@@ -98,6 +100,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
           email: party.email || '',
           gstin: party.gstin || '',
           gst_registration_status: party.gst_registration_status,
+          gst_enabled: party.gst_enabled !== undefined ? party.gst_enabled : true,
           billing_address_line1: party.billing_address_line1 || '',
           billing_address_line2: party.billing_address_line2 || '',
           billing_city: party.billing_city || '',
@@ -162,6 +165,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
         email: formData.email || null,
         gstin: formData.gstin || null,
         gst_registration_status: formData.gst_registration_status,
+        gst_enabled: formData.gst_enabled,
         billing_address_line1: formData.billing_address_line1,
         billing_address_line2: formData.billing_address_line2 || null,
         billing_city: formData.billing_city,
@@ -205,8 +209,12 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
     }
   }
 
-  const handleInputChange = (field: keyof PartyFormData, value: string) => {
+  const handleInputChange = (field: keyof PartyFormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleCancel = () => {
+    navigate(`/${type === 'vendor' ? 'vendors' : 'customers'}`)
   }
 
   // Render form for add/edit modes
@@ -321,7 +329,21 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
             <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('shipping') }}>
               GST Information
             </h3>
-            <div style={formStyles.grid2Col}>
+            <div style={formStyles.grid3Col}>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>GST Enabled</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="checkbox"
+                    checked={formData.gst_enabled}
+                    onChange={(e) => handleInputChange('gst_enabled', e.target.checked)}
+                    style={{ width: '20px', height: '20px' }}
+                  />
+                  <span style={{ fontSize: '14px', color: '#666' }}>
+                    {formData.gst_enabled ? 'GST will be calculated' : 'No GST calculation'}
+                  </span>
+                </div>
+              </div>
               <div style={formStyles.formGroup}>
                 <label style={formStyles.label}>GSTIN</label>
                 <input
@@ -330,6 +352,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
                   onChange={(e) => handleInputChange('gstin', e.target.value)}
                   style={formStyles.input}
                   placeholder="22AAAAA0000A1Z5"
+                  disabled={!formData.gst_enabled}
                 />
               </div>
               <div style={formStyles.formGroup}>
@@ -338,6 +361,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
                   value={formData.gst_registration_status}
                   onChange={(e) => handleInputChange('gst_registration_status', e.target.value)}
                   style={formStyles.select}
+                  disabled={!formData.gst_enabled}
                 >
                   <option value="GST not registered">GST not registered</option>
                   <option value="GST registered">GST registered</option>
@@ -349,7 +373,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
 
           {/* Billing Address Section */}
           <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor(3) }}>
+            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('3') }}>
               Billing Address
             </h3>
             <div style={formStyles.formGroup}>
@@ -416,7 +440,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
 
           {/* Shipping Address Section */}
           <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor(4) }}>
+            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('4') }}>
               Shipping Address
             </h3>
             <div style={formStyles.formGroup}>
@@ -479,7 +503,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
 
           {/* Other Details Section */}
           <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor(5) }}>
+            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('5') }}>
               Other Details
             </h3>
             <div style={formStyles.formGroup}>
@@ -495,21 +519,18 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
           </div>
 
           {/* Form Actions */}
-          <div style={formStyles.formActions}>
-            <Button 
-              type="button" 
-              variant="secondary" 
-              onClick={() => navigate(`/${type === 'vendor' ? 'vendors' : 'customers'}`)}
-              disabled={loading}
-            >
+          <div style={{ 
+            display: 'flex', 
+            gap: '12px', 
+            justifyContent: 'flex-end', 
+            paddingTop: '16px',
+            borderTop: '1px solid #e5e7eb'
+          }}>
+            <Button type="button" variant="secondary" onClick={handleCancel}>
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              variant="primary"
-              disabled={loading}
-            >
-              {loading ? 'Saving...' : (mode === 'add' ? 'Add Party' : 'Update Party')}
+            <Button type="submit" variant="primary" disabled={loading}>
+              {loading ? 'Saving...' : (mode === 'add' ? 'Add' : 'Update')} {type === 'customer' ? 'Customer' : 'Vendor'}
             </Button>
           </div>
         </form>
@@ -805,7 +826,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
                       </Button>
                       <Button
                         onClick={() => handleToggleParty(party)}
-                        variant={party.is_active ? "danger" : "success"}
+                        variant={party.is_active ? "secondary" : "primary"}
                         style={{ padding: '6px 12px', fontSize: '12px' }}
                       >
                         {party.is_active ? 'Deactivate' : 'Activate'}

@@ -10,6 +10,7 @@ from .db import get_db
 from .models import Product, User, Party, CompanySettings, Invoice, InvoiceItem, StockLedgerEntry, Purchase, PurchaseItem, Payment, PurchasePayment, Expense, CashflowTransaction, AuditTrail
 from .audit import AuditService
 from .gst import money, split_gst
+from .gst_reports import generate_gstr1_report, generate_gstr3b_report
 from decimal import Decimal
 from .emailer import send_email, create_invoice_email_template, create_purchase_email_template
 from fastapi import Query
@@ -357,6 +358,7 @@ class PaymentIn(BaseModel):
     payment_date: str  # ISO date string
     payment_amount: float
     payment_method: str
+    account_head: str
     reference_number: str | None = None
     notes: str | None = None
 
@@ -537,6 +539,9 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
     
     intra = company and payload.place_of_supply == company.state
 
+    # Check if GST is enabled for the customer
+    gst_enabled = customer.gst_enabled if hasattr(customer, 'gst_enabled') else True
+
     taxable_total = money(0)
     discount_total = money(0)
     cgst_total = money(0)
@@ -591,8 +596,11 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
             line_total -= discount_amount
             discount_total += discount_amount
         
-        # Calculate GST
-        cgst, sgst, igst = split_gst(line_total, prod.gst_rate, bool(intra))
+        # Calculate GST only if enabled for customer
+        if gst_enabled and prod.gst_rate:
+            cgst, sgst, igst = split_gst(line_total, prod.gst_rate, bool(intra), gst_enabled)
+        else:
+            cgst, sgst, igst = money(0), money(0), money(0)
         
         # Use provided description and HSN code or fall back to product defaults
         description = it.description if it.description else prod.name
@@ -687,10 +695,9 @@ def invoice_pdf(invoice_id: int, _: User = Depends(get_current_user), db: Sessio
     
     # Header - Company Details
     if company:
-        story.append(Paragraph(f"<b>{company.company_name}</b>", title_style))
+        story.append(Paragraph(f"<b>{company.name}</b>", title_style))
         story.append(Paragraph(f"GSTIN: {company.gstin}", normal_style))
-        story.append(Paragraph(f"Address: {company.address}", normal_style))
-        story.append(Paragraph(f"Phone: {company.phone} | Email: {company.email}", normal_style))
+        story.append(Paragraph(f"State: {company.state} - {company.state_code}", normal_style))
     else:
         story.append(Paragraph("<b>CASHFLOW</b>", title_style))
         story.append(Paragraph("Financial Management System", normal_style))
@@ -727,16 +734,24 @@ def invoice_pdf(invoice_id: int, _: User = Depends(get_current_user), db: Sessio
     if customer:
         details_data.append(['Bill To:', customer.name])
         details_data.append(['', f"GSTIN: {customer.gstin}" if customer.gstin else "GSTIN: Not Available"])
-        details_data.append(['', customer.address])
+        customer_address = f"{customer.billing_address_line1}"
+        if customer.billing_address_line2:
+            customer_address += f", {customer.billing_address_line2}"
+        customer_address += f", {customer.billing_city}, {customer.billing_state} - {customer.billing_pincode or ''}"
+        details_data.append(['', customer_address])
         if customer.email:
             details_data.append(['', f"Email: {customer.email}"])
-        if customer.phone:
-            details_data.append(['', f"Phone: {customer.phone}"])
+        if customer.contact_number:
+            details_data.append(['', f"Phone: {customer.contact_number}"])
     
     if supplier:
         details_data.append(['Ship From:', supplier.name])
         details_data.append(['', f"GSTIN: {supplier.gstin}" if supplier.gstin else "GSTIN: Not Available"])
-        details_data.append(['', supplier.address])
+        supplier_address = f"{supplier.billing_address_line1}"
+        if supplier.billing_address_line2:
+            supplier_address += f", {supplier.billing_address_line2}"
+        supplier_address += f", {supplier.billing_city}, {supplier.billing_state} - {supplier.billing_pincode or ''}"
+        details_data.append(['', supplier_address])
     
     if details_data:
         details_table = Table(details_data, colWidths=[2*cm, 14*cm])
@@ -1593,6 +1608,91 @@ def gst_filing_report(
         return _generate_gstr3b_report(start_date, end_date, format, db)
     else:
         raise HTTPException(status_code=400, detail="Invalid report type. Use gstr1, gstr2, or gstr3b")
+
+
+@api.get('/reports/gstr1')
+def generate_gstr1_report_api(
+    start_date: str = Query(..., description="Start date in YYYY-MM-DD format"),
+    end_date: str = Query(..., description="End date in YYYY-MM-DD format"),
+    format: str = Query("json", description="json/csv"),
+    _: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    """Generate GSTR-1 report in GST portal format"""
+    result = generate_gstr1_report(db, start_date, end_date)
+    
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    
+    if format == "csv":
+        return Response(
+            content=result["csv_content"],
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=gstr1_{start_date}_to_{end_date}.csv"}
+        )
+    
+    return result
+
+
+@api.get('/reports/gstr3b')
+def generate_gstr3b_report_api(
+    start_date: str = Query(..., description="Start date in YYYY-MM-DD format"),
+    end_date: str = Query(..., description="End date in YYYY-MM-DD format"),
+    format: str = Query("json", description="json/csv"),
+    _: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    """Generate GSTR-3B report in GST portal format"""
+    result = generate_gstr3b_report(db, start_date, end_date)
+    
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    
+    if format == "csv":
+        return Response(
+            content=result["csv_content"],
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=gstr3b_{start_date}_to_{end_date}.csv"}
+        )
+    
+    return result
+
+
+@api.get('/reports/gst-validation')
+def validate_gst_data(
+    start_date: str = Query(..., description="Start date in YYYY-MM-DD format"),
+    end_date: str = Query(..., description="End date in YYYY-MM-DD format"),
+    _: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    """Validate GST data for report generation"""
+    from .gst_reports import GSTReportGenerator
+    from datetime import datetime
+    
+    try:
+        start_dt = datetime.strptime(start_date, "%Y-%m-%d").date()
+        end_dt = datetime.strptime(end_date, "%Y-%m-%d").date()
+        
+        generator = GSTReportGenerator(db)
+        
+        gstr1_errors = generator.validate_data_for_gstr1(start_dt, end_dt)
+        gstr3b_errors = generator.validate_data_for_gstr3b(start_dt, end_dt)
+        
+        return {
+            "success": True,
+            "gstr1_errors": gstr1_errors,
+            "gstr3b_errors": gstr3b_errors,
+            "gstr1_valid": len(gstr1_errors) == 0,
+            "gstr3b_valid": len(gstr3b_errors) == 0,
+            "period": f"{start_date} to {end_date}"
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to validate GST data"
+        }
 
 
 def _calculate_period_dates(period_type: str, period_value: str) -> tuple[str, str]:
@@ -2871,6 +2971,7 @@ class PartyOut(BaseModel):
     email: str | None
     gstin: str | None
     gst_registration_status: str
+    gst_enabled: bool  # New field for GST toggle
     billing_address_line1: str
     billing_address_line2: str | None
     billing_city: str
@@ -2898,6 +2999,7 @@ class PartyCreate(BaseModel):
     email: str | None = None
     gstin: str | None = None
     gst_registration_status: str = "GST not registered"
+    gst_enabled: bool = True  # New field for GST toggle
     billing_address_line1: str
     billing_address_line2: str | None = None
     billing_city: str
@@ -2911,6 +3013,14 @@ class PartyCreate(BaseModel):
     shipping_country: str | None = None
     shipping_pincode: str | None = None
     notes: str | None = None
+    
+    @validator('gstin')
+    def validate_gstin(cls, v, values):
+        if v and values.get('gst_enabled', True):
+            from .gst import validate_gstin
+            if not validate_gstin(v):
+                raise ValueError('Invalid GSTIN format')
+        return v
 
 
 class PartyUpdate(BaseModel):
@@ -2920,6 +3030,7 @@ class PartyUpdate(BaseModel):
     email: str | None = None
     gstin: str | None = None
     gst_registration_status: str | None = None
+    gst_enabled: bool | None = None  # New field for GST toggle
     billing_address_line1: str | None = None
     billing_address_line2: str | None = None
     billing_city: str | None = None
@@ -2933,6 +3044,14 @@ class PartyUpdate(BaseModel):
     shipping_country: str | None = None
     shipping_pincode: str | None = None
     notes: str | None = None
+    
+    @validator('gstin')
+    def validate_gstin(cls, v, values):
+        if v and values.get('gst_enabled', True):
+            from .gst import validate_gstin
+            if not validate_gstin(v):
+                raise ValueError('Invalid GSTIN format')
+        return v
 
 
 @api.get('/parties', response_model=list[PartyOut])
@@ -3032,11 +3151,19 @@ def list_vendors(
 @api.post('/parties', response_model=PartyOut, status_code=status.HTTP_201_CREATED)
 def create_party(payload: PartyCreate, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
     try:
+        # Validate GSTIN if GST is enabled
+        if payload.gst_enabled and payload.gstin:
+            from .gst import validate_gstin
+            if not validate_gstin(payload.gstin):
+                raise HTTPException(status_code=400, detail="Invalid GSTIN format")
+        
         party = Party(**payload.model_dump())
         db.add(party)
         db.commit()
         db.refresh(party)
         return party
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         print(f"Database error: {e}")
@@ -3050,12 +3177,20 @@ def update_party(party_id: int, payload: PartyUpdate, _: User = Depends(get_curr
         raise HTTPException(status_code=404, detail="Party not found")
     
     try:
+        # Validate GSTIN if GST is enabled
+        if payload.gst_enabled is not None and payload.gst_enabled and payload.gstin:
+            from .gst import validate_gstin
+            if not validate_gstin(payload.gstin):
+                raise HTTPException(status_code=400, detail="Invalid GSTIN format")
+        
         for field, value in payload.model_dump(exclude_unset=True).items():
             setattr(party, field, value)
         
         db.commit()
         db.refresh(party)
         return party
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         print(f"Database error: {e}")
@@ -3229,10 +3364,9 @@ def purchase_pdf(purchase_id: int, _: User = Depends(get_current_user), db: Sess
     
     # Header - Company Details
     if company:
-        story.append(Paragraph(f"<b>{company.company_name}</b>", title_style))
+        story.append(Paragraph(f"<b>{company.name}</b>", title_style))
         story.append(Paragraph(f"GSTIN: {company.gstin}", normal_style))
-        story.append(Paragraph(f"Address: {company.address}", normal_style))
-        story.append(Paragraph(f"Phone: {company.phone} | Email: {company.email}", normal_style))
+        story.append(Paragraph(f"State: {company.state} - {company.state_code}", normal_style))
     else:
         story.append(Paragraph("<b>CASHFLOW</b>", title_style))
         story.append(Paragraph("Financial Management System", normal_style))
@@ -3606,4 +3740,151 @@ def update_company_settings(settings_data: dict, _: User = Depends(get_current_u
     db.commit()
     db.refresh(settings)
     return settings
+
+
+# Stock Movement History Endpoints
+class StockMovementOut(BaseModel):
+    product_id: int
+    product_name: str
+    financial_year: str
+    opening_stock: float
+    incoming_stock: float
+    outgoing_stock: float
+    closing_stock: float
+
+    class Config:
+        from_attributes = True
+
+
+@api.get('/stock/movement-history', response_model=list[StockMovementOut])
+def get_stock_movement_history(
+    financial_year: str | None = None,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get stock movement history for all products by financial year"""
+    
+    # If no financial year specified, use current year
+    if not financial_year:
+        current_year = datetime.now().year
+        financial_year = f"{current_year}-{current_year + 1}"
+    
+    # Parse financial year (format: "2024-2025")
+    try:
+        start_year = int(financial_year.split('-')[0])
+        end_year = int(financial_year.split('-')[1])
+        fy_start_date = datetime(start_year, 4, 1)  # April 1st
+        fy_end_date = datetime(end_year, 3, 31)     # March 31st
+    except (ValueError, IndexError):
+        raise HTTPException(status_code=400, detail="Invalid financial year format. Use YYYY-YYYY")
+    
+    # Get all products
+    products = db.query(Product).all()
+    movements = []
+    
+    for product in products:
+        # Calculate opening stock (stock at the beginning of FY)
+        opening_stock = product.stock  # Current stock as base
+        
+        # Get all stock adjustments for this product in the financial year
+        stock_adjustments = db.query(StockLedgerEntry).filter(
+            StockLedgerEntry.product_id == product.id,
+            StockLedgerEntry.created_at >= fy_start_date,
+            StockLedgerEntry.created_at <= fy_end_date
+        ).all()
+        
+        # Calculate incoming and outgoing stock
+        incoming_stock = sum(
+            adj.qty for adj in stock_adjustments 
+            if adj.entry_type == 'in'
+        )
+        outgoing_stock = sum(
+            adj.qty for adj in stock_adjustments 
+            if adj.entry_type == 'out'
+        )
+        
+        # Calculate opening stock (current stock - net adjustments in FY)
+        net_adjustments = incoming_stock - outgoing_stock
+        opening_stock = product.stock - net_adjustments
+        
+        # Ensure opening stock is not negative
+        opening_stock = max(0, opening_stock)
+        
+        # Closing stock is current stock
+        closing_stock = product.stock
+        
+        movements.append(StockMovementOut(
+            product_id=product.id,
+            product_name=product.name,
+            financial_year=financial_year,
+            opening_stock=opening_stock,
+            incoming_stock=incoming_stock,
+            outgoing_stock=outgoing_stock,
+            closing_stock=closing_stock
+        ))
+    
+    return movements
+
+
+@api.get('/stock/movement-history/{product_id}', response_model=list[StockMovementOut])
+def get_product_stock_movement_history(
+    product_id: int,
+    from_year: int | None = None,
+    to_year: int | None = None,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get stock movement history for a specific product across multiple financial years"""
+    
+    # Check if product exists
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Set default year range if not provided
+    if not from_year:
+        from_year = datetime.now().year - 2  # Last 3 years
+    if not to_year:
+        to_year = datetime.now().year
+    
+    movements = []
+    
+    for year in range(from_year, to_year + 1):
+        financial_year = f"{year}-{year + 1}"
+        fy_start_date = datetime(year, 4, 1)  # April 1st
+        fy_end_date = datetime(year + 1, 3, 31)  # March 31st
+        
+        # Get stock adjustments for this product in the financial year
+        stock_adjustments = db.query(StockLedgerEntry).filter(
+            StockLedgerEntry.product_id == product_id,
+            StockLedgerEntry.created_at >= fy_start_date,
+            StockLedgerEntry.created_at <= fy_end_date
+        ).all()
+        
+        # Calculate incoming and outgoing stock
+        incoming_stock = sum(
+            adj.qty for adj in stock_adjustments 
+            if adj.entry_type == 'in'
+        )
+        outgoing_stock = sum(
+            adj.qty for adj in stock_adjustments 
+            if adj.entry_type == 'out'
+        )
+        
+        # For historical years, we need to calculate opening stock differently
+        # This is a simplified calculation - in a real system, you'd need to track opening balances
+        opening_stock = 0  # Placeholder - would need historical opening balance tracking
+        closing_stock = opening_stock + incoming_stock - outgoing_stock
+        
+        movements.append(StockMovementOut(
+            product_id=product.id,
+            product_name=product.name,
+            financial_year=financial_year,
+            opening_stock=opening_stock,
+            incoming_stock=incoming_stock,
+            outgoing_stock=outgoing_stock,
+            closing_stock=closing_stock
+        ))
+    
+    return movements
 

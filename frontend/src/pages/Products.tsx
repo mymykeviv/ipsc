@@ -5,7 +5,7 @@ import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
 import { SearchBar } from '../components/SearchBar'
 import { ErrorMessage } from '../components/ErrorMessage'
-import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAdjustStock, apiListParties, Party } from '../lib/api'
+import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAdjustStock, apiListParties, Party, apiGetStockMovementHistory, StockMovement } from '../lib/api'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface Product {
@@ -22,7 +22,7 @@ interface Product {
   category: string | null
   notes: string | null
   hsn: string | null
-  gst_rate: number
+  gst_rate: number | null
   is_active: boolean
 }
 
@@ -548,327 +548,10 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   if (mode === 'stock-adjustment') {
     return <StockAdjustmentForm onSuccess={() => navigate('/products')} onCancel={() => navigate('/products')} />
   }
-          <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('product') }}>
-              Product Selection
-            </h3>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Select Product *</label>
-              <select
-                value={selectedProductId}
-                onChange={(e) => setSelectedProductId(e.target.value)}
-                style={formStyles.select}
-                required
-              >
-                <option value="">Choose a product...</option>
-                {products.map(product => (
-                  <option key={product.id} value={product.id}>
-                    {product.name} (Current Stock: {product.stock})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Adjustment Details Section */}
-          <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('adjustment') }}>
-              Adjustment Details
-            </h3>
-            <div style={formStyles.grid2Col}>
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Adjustment Type *</label>
-                <select
-                  value={stockFormData.adjustmentType}
-                  onChange={(e) => handleStockInputChange('adjustmentType', e.target.value as 'add' | 'reduce')}
-                  style={formStyles.select}
-                  required
-                >
-                  <option value="add">Add Stock (Incoming)</option>
-                  <option value="reduce">Reduce Stock (Outgoing)</option>
-                </select>
-              </div>
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Quantity *</label>
-                <input
-                  type="number"
-                  value={stockFormData.quantity}
-                  onChange={(e) => handleStockInputChange('quantity', e.target.value)}
-                  style={formStyles.input}
-                  min="0"
-                  step="0.01"
-                  required
-                />
-              </div>
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>
-                {stockFormData.adjustmentType === 'add' ? 'Date of Receipt' : 'Date of Issue'} *
-              </label>
-              <input
-                type="date"
-                value={stockFormData.date_of_receipt}
-                onChange={(e) => handleStockInputChange('date_of_receipt', e.target.value)}
-                style={formStyles.input}
-                required
-              />
-            </div>
-          </div>
-
-          {/* Reference Information Section (only for incoming stock) */}
-          {stockFormData.adjustmentType === 'add' && (
-            <div style={formStyles.section}>
-                          <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('reference') }}>
-              Reference Information
-            </h3>
-              <div style={formStyles.grid2Col}>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Reference Bill Number</label>
-                  <input
-                    type="text"
-                    value={stockFormData.reference_bill_number}
-                    onChange={(e) => handleStockInputChange('reference_bill_number', e.target.value)}
-                    style={formStyles.input}
-                    placeholder="Enter bill/invoice number"
-                  />
-                </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Supplier</label>
-                  <select
-                    value={stockFormData.supplier}
-                    onChange={(e) => handleStockInputChange('supplier', e.target.value)}
-                    style={formStyles.select}
-                  >
-                    <option value="">Select supplier...</option>
-                    {vendors.map(vendor => (
-                      <option key={vendor.id} value={vendor.name}>
-                        {vendor.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Category</label>
-                <input
-                  type="text"
-                  value={stockFormData.category}
-                  onChange={(e) => handleStockInputChange('category', e.target.value)}
-                  style={formStyles.input}
-                  placeholder="Enter category"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Notes Section */}
-          <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('notes') }}>
-              Additional Information
-            </h3>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Notes</label>
-              <textarea
-                value={stockFormData.notes}
-                onChange={(e) => handleStockInputChange('notes', e.target.value)}
-                style={formStyles.textarea}
-                rows={3}
-                placeholder="Additional notes about this stock adjustment..."
-              />
-            </div>
-          </div>
-
-          {/* Form Actions */}
-          <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', marginTop: '24px' }}>
-            <Button 
-              type="button" 
-              variant="secondary" 
-              onClick={() => navigate('/products')}
-              disabled={stockLoading}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              variant="primary"
-              disabled={stockLoading}
-            >
-              {stockLoading ? 'Adjusting Stock...' : 'Adjust Stock'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    )
-  }
 
   // Stock History Mode
   if (mode === 'stock-history') {
-    const [selectedProductId, setSelectedProductId] = useState<string>('')
-    const [stockHistory, setStockHistory] = useState<any[]>([])
-    const [historyLoading, setHistoryLoading] = useState(false)
-
-    const loadStockHistory = async () => {
-      if (!selectedProductId) return
-      
-      try {
-        setHistoryLoading(true)
-        setError(null)
-        // TODO: Implement stock history API call
-        // For now, show a placeholder message
-        setStockHistory([])
-      } catch (err) {
-        console.error('Failed to load stock history:', err)
-        const errorMessage = handleApiError(err)
-        setError(errorMessage)
-      } finally {
-        setHistoryLoading(false)
-      }
-    }
-
-    useEffect(() => {
-      if (selectedProductId) {
-        loadStockHistory()
-      }
-    }, [selectedProductId])
-
-    return (
-      <div style={{ padding: '20px', maxWidth: '100%' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: '24px',
-          paddingBottom: '12px',
-          borderBottom: '2px solid #e9ecef'
-        }}>
-          <h1 style={{ 
-            margin: '0',
-            fontSize: '28px',
-            fontWeight: '600',
-            color: '#2c3e50'
-          }}>
-            Stock History
-          </h1>
-          <Button 
-            onClick={() => navigate('/products')}
-            variant="secondary"
-            style={{ 
-              padding: '10px 16px', 
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            ← Back to Products
-          </Button>
-        </div>
-
-        {error && <ErrorMessage message={error} />}
-
-        {/* Product Selection */}
-        <div style={{ marginBottom: '24px' }}>
-          <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>Select Product</label>
-            <select
-              value={selectedProductId}
-              onChange={(e) => setSelectedProductId(e.target.value)}
-              style={formStyles.select}
-            >
-              <option value="">Choose a product to view stock history...</option>
-              {products.map(product => (
-                <option key={product.id} value={product.id}>
-                  {product.name} (Current Stock: {product.stock})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Stock History Display */}
-        {selectedProductId && (
-          <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
-              Stock History
-            </h3>
-            
-            {historyLoading ? (
-              <div style={{ textAlign: 'center', padding: '40px' }}>
-                <div>Loading stock history...</div>
-              </div>
-            ) : stockHistory.length > 0 ? (
-              <div style={{ 
-                backgroundColor: '#fff',
-                border: '1px solid #e9ecef',
-                borderRadius: '8px',
-                overflow: 'hidden'
-              }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ backgroundColor: '#f8f9fa' }}>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e9ecef', fontSize: '14px', fontWeight: '600' }}>
-                        Date
-    </th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e9ecef', fontSize: '14px', fontWeight: '600' }}>
-                        Type
-                      </th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e9ecef', fontSize: '14px', fontWeight: '600' }}>
-                        Quantity
-                      </th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e9ecef', fontSize: '14px', fontWeight: '600' }}>
-                        Reference
-                      </th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e9ecef', fontSize: '14px', fontWeight: '600' }}>
-                        Notes
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stockHistory.map((entry, index) => (
-                      <tr key={index} style={{ borderBottom: '1px solid #f8f9fa' }}>
-                        <td style={{ padding: '12px', fontSize: '14px' }}>
-                          {entry.date}
-                        </td>
-                        <td style={{ padding: '12px', fontSize: '14px' }}>
-                          <span style={{
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                            fontWeight: '500',
-                            backgroundColor: entry.type === 'add' ? '#d4edda' : '#f8d7da',
-                            color: entry.type === 'add' ? '#155724' : '#721c24'
-                          }}>
-                            {entry.type === 'add' ? 'Incoming' : 'Outgoing'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px', fontSize: '14px' }}>
-                          {entry.quantity}
-                        </td>
-                        <td style={{ padding: '12px', fontSize: '14px' }}>
-                          {entry.reference || '-'}
-                        </td>
-                        <td style={{ padding: '12px', fontSize: '14px' }}>
-                          {entry.notes || '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div style={{ padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #e9ecef' }}>
-                <p style={{ color: '#6c757d', fontSize: '16px', textAlign: 'center' }}>
-                  No stock history available for this product.
-                </p>
-                <p style={{ color: '#6c757d', fontSize: '14px', textAlign: 'center', marginTop: '8px' }}>
-                  Stock history will be displayed here once stock adjustments are made.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    )
+    return <StockHistoryForm onSuccess={() => navigate('/products')} onCancel={() => navigate('/products')} />
   }
 
   // Manage Products Mode
@@ -1529,6 +1212,162 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
           </Button>
         </div>
       </form>
+    </div>
+  )
+}
+
+
+// Stock History Form Component
+interface StockHistoryFormProps {
+  onSuccess: () => void
+  onCancel: () => void
+}
+
+function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
+  const [stockHistory, setStockHistory] = useState<StockMovement[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [products, setProducts] = useState<Product[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const { forceLogout } = useAuth()
+  const handleApiError = createApiErrorHandler(forceLogout)
+
+  const loadProducts = async () => {
+    try {
+      const productsData = await apiGetProducts()
+      setProducts(productsData)
+    } catch (err) {
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
+    }
+  }
+
+  const loadStockHistory = async () => {
+    try {
+      setHistoryLoading(true)
+      setError(null)
+      const history = await apiGetStockMovementHistory()
+      setStockHistory(history)
+    } catch (err) {
+      console.error('Failed to load stock history:', err)
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadProducts()
+    loadStockHistory()
+  }, [])
+
+  return (
+    <div style={{ padding: '20px', maxWidth: '100%' }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '24px',
+        paddingBottom: '12px',
+        borderBottom: '2px solid #e9ecef'
+      }}>
+        <h1 style={{ 
+          margin: '0',
+          fontSize: '28px',
+          fontWeight: '600',
+          color: '#2c3e50'
+        }}>
+          Stock Movement History
+        </h1>
+        <Button 
+          onClick={onCancel}
+          variant="secondary"
+          style={{ 
+            padding: '10px 16px', 
+            fontSize: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          ← Back to Products
+        </Button>
+      </div>
+
+      {error && <ErrorMessage message={error} />}
+
+      {/* Stock Movement Table */}
+      <div style={{ 
+        border: '1px solid #e9ecef', 
+        borderRadius: '8px', 
+        overflow: 'hidden',
+        backgroundColor: 'white'
+      }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #e9ecef' }}>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Product</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Financial Year</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Opening Stock</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Incoming</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Outgoing</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Closing Stock</th>
+            </tr>
+          </thead>
+          <tbody>
+            {historyLoading ? (
+              <tr>
+                <td colSpan={6} style={{ padding: '20px', textAlign: 'center', color: '#6c757d' }}>
+                  Loading stock movement history...
+                </td>
+              </tr>
+            ) : stockHistory.length > 0 ? (
+              stockHistory.map((movement, index) => (
+                <tr key={index} style={{ 
+                  borderBottom: '1px solid #e9ecef',
+                  backgroundColor: 'white'
+                }}>
+                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{movement.product_name}</td>
+                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
+                    {movement.financial_year}
+                  </td>
+                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
+                    {movement.opening_stock.toFixed(2)}
+                  </td>
+                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef', color: '#28a745' }}>
+                    {movement.incoming_stock.toFixed(2)}
+                  </td>
+                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef', color: '#dc3545' }}>
+                    {movement.outgoing_stock.toFixed(2)}
+                  </td>
+                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef', fontWeight: '600' }}>
+                    {movement.closing_stock.toFixed(2)}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} style={{ padding: '20px', textAlign: 'center', color: '#6c757d' }}>
+                  No stock movement data available
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div style={{ 
+        marginTop: '20px', 
+        padding: '16px', 
+        backgroundColor: '#f8f9fa', 
+        borderRadius: '8px',
+        border: '1px solid #e9ecef'
+      }}>
+        <p style={{ color: '#6c757d', fontSize: '14px', margin: '0', textAlign: 'center' }}>
+          <strong>Note:</strong> Stock movement history shows the movement of stock for each financial year (April 1st to March 31st).
+          Opening stock, incoming, and outgoing calculations are based on stock adjustment records.
+        </p>
+      </div>
     </div>
   )
 }

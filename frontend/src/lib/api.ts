@@ -107,6 +107,7 @@ export type Party = {
   email: string | null
   gstin: string | null
   gst_registration_status: string
+  gst_enabled: boolean
   billing_address_line1: string
   billing_address_line2: string | null
   billing_city: string
@@ -952,6 +953,61 @@ export async function apiAdjustStock(
   return r.json()
 }
 
+export type StockMovement = {
+  product_id: number
+  product_name: string
+  financial_year: string
+  opening_stock: number
+  incoming_stock: number
+  outgoing_stock: number
+  closing_stock: number
+}
+
+export async function apiGetStockMovementHistory(financialYear?: string): Promise<StockMovement[]> {
+  const params = financialYear ? `?financial_year=${financialYear}` : ''
+  const r = await fetch(`/api/stock/movement-history${params}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiGetProductStockMovementHistory(
+  productId: number, 
+  fromYear?: number, 
+  toYear?: number
+): Promise<StockMovement[]> {
+  const params = new URLSearchParams()
+  if (fromYear) params.append('from_year', fromYear.toString())
+  if (toYear) params.append('to_year', toYear.toString())
+  
+  const queryString = params.toString()
+  const url = `/api/stock/movement-history/${productId}${queryString ? `?${queryString}` : ''}`
+  
+  const r = await fetch(url, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
 
 
 // Payment Management API Functions
@@ -989,6 +1045,33 @@ export async function apiGetInvoicePayments(invoiceId: number): Promise<Payment[
   }
   
   return r.json()
+}
+
+export async function apiGetAllInvoicePayments(): Promise<Payment[]> {
+  // First get all invoices, then get payments for each
+  const invoicesResponse = await fetch('/api/invoices', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!invoicesResponse.ok) {
+    throw new Error(`HTTP ${invoicesResponse.status}: ${invoicesResponse.statusText}`)
+  }
+  
+  const invoicesData = await invoicesResponse.json()
+  const allPayments: Payment[] = []
+  
+  // Get payments for each invoice
+  for (const invoice of invoicesData.invoices) {
+    try {
+      const payments = await apiGetInvoicePayments(invoice.id)
+      allPayments.push(...payments)
+    } catch (error) {
+      // Skip invoices with no payments or errors
+      console.warn(`Failed to get payments for invoice ${invoice.id}:`, error)
+    }
+  }
+  
+  return allPayments
 }
 
 export async function apiDeletePayment(paymentId: number): Promise<void> {
