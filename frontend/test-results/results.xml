@@ -1,0 +1,67 @@
+<testsuites id="" name="" tests="5" failures="0" skipped="0" errors="0" time="9.639025">
+<testsuite name="payment-form-debug.spec.ts" timestamp="2025-08-16T12:04:08.896Z" hostname="chromium" tests="1" failures="0" skipped="0" time="6.429" errors="0">
+<testcase name="Payment Form Debug › should capture console errors" classname="payment-form-debug.spec.ts" time="6.429">
+<system-out>
+<![CDATA[Console errors: [
+  [32m'Failed to load resource: the server responded with a status of 500 (Internal Server Error)'[39m,
+  [32m'Failed to load resource: the server responded with a status of 404 (Not Found)'[39m
+]
+App content visible: false
+Root content length: 0
+Root content preview: 
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="payment-form-debug.spec.ts" timestamp="2025-08-16T12:04:08.896Z" hostname="firefox" tests="1" failures="0" skipped="0" time="7.907" errors="0">
+<testcase name="Payment Form Debug › should capture console errors" classname="payment-form-debug.spec.ts" time="7.907">
+<system-out>
+<![CDATA[Console errors: []
+App content visible: true
+Root content length: 2890
+Root content preview: <div class="app-shell"><main class="content"><div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="payment-form-debug.spec.ts" timestamp="2025-08-16T12:04:08.896Z" hostname="webkit" tests="1" failures="0" skipped="0" time="6.838" errors="0">
+<testcase name="Payment Form Debug › should capture console errors" classname="payment-form-debug.spec.ts" time="6.838">
+<system-out>
+<![CDATA[Console errors: [
+  [32m'Failed to load resource: the server responded with a status of 500 (Internal Server Error)'[39m
+]
+App content visible: false
+Root content length: 0
+Root content preview: 
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="payment-form-debug.spec.ts" timestamp="2025-08-16T12:04:08.896Z" hostname="Mobile Chrome" tests="1" failures="0" skipped="0" time="6.456" errors="0">
+<testcase name="Payment Form Debug › should capture console errors" classname="payment-form-debug.spec.ts" time="6.456">
+<system-out>
+<![CDATA[Console errors: [
+  [32m'Failed to load resource: the server responded with a status of 500 (Internal Server Error)'[39m,
+  [32m'Failed to load resource: the server responded with a status of 404 (Not Found)'[39m
+]
+App content visible: false
+Root content length: 0
+Root content preview: 
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="payment-form-debug.spec.ts" timestamp="2025-08-16T12:04:08.896Z" hostname="Mobile Safari" tests="1" failures="0" skipped="0" time="6.802" errors="0">
+<testcase name="Payment Form Debug › should capture console errors" classname="payment-form-debug.spec.ts" time="6.802">
+<system-out>
+<![CDATA[Console errors: [
+  [32m'Failed to load resource: the server responded with a status of 500 (Internal Server Error)'[39m
+]
+App content visible: false
+Root content length: 0
+Root content preview: 
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

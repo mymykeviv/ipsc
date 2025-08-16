@@ -4,6 +4,10 @@
 
 The IPSC UI/UX Testing Framework is a comprehensive automated testing solution built with Playwright that covers all 22 stories, UI/UX issues, and end-to-end user journeys. This framework ensures that any changes to the application don't break the user experience.
 
+**MVP Browser Support**: Chrome and Firefox (Desktop only)
+**Mobile Support**: Not included in MVP
+**Responsive Design**: Not included in MVP
+
 ## Architecture
 
 ### Test Structure
@@ -31,9 +35,8 @@ frontend/
 1. **Story-Specific Tests**: Tests for each of the 22 GitHub issues
 2. **UI Fixes Tests**: Tests for all UI/UX improvements
 3. **Accessibility Tests**: WCAG compliance and keyboard navigation
-4. **Responsive Design Tests**: Mobile, tablet, and desktop viewports
-5. **Performance Tests**: Load times and efficiency
-6. **Cross-browser Tests**: Chrome, Firefox, Safari compatibility
+4. **Performance Tests**: Load times and efficiency
+5. **Cross-browser Tests**: Chrome and Firefox compatibility (MVP only)
 
 ## Setup
 
@@ -62,9 +65,9 @@ frontend/
    npm install
    ```
 
-4. **Install Playwright browsers**:
+4. **Install Playwright browsers (MVP: Chrome and Firefox only)**:
    ```bash
-   npx playwright install
+   npx playwright install --with-deps chromium firefox
    ```
 
 ## Running Tests
@@ -88,8 +91,8 @@ Run all UI/UX tests:
 # Run accessibility tests
 ./scripts/run-ui-ux-tests.sh accessibility
 
-# Run responsive design tests
-./scripts/run-ui-ux-tests.sh responsive
+# Run performance tests
+./scripts/run-ui-ux-tests.sh performance
 
 # Run performance tests
 ./scripts/run-ui-ux-tests.sh performance

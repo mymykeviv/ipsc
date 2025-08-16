@@ -89,8 +89,9 @@ docker compose logs -f [service-name]
 - **Framework**: React 18 with TypeScript
 - **Build Tool**: Vite
 - **Routing**: React Router DOM
-- **Testing**: Vitest with Testing Library
+- **Testing**: Vitest with Testing Library, Playwright for E2E
 - **Styling**: CSS Variables with utility classes
+- **Browser Support**: Chrome and Firefox (Desktop only - MVP)
 
 ### Database Schema
 - **Users & Roles**: RBAC system

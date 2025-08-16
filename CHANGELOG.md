@@ -15,11 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Reporting Menu Section**: Added comprehensive reporting navigation with all report types
 - **GST Toggle Dropdown**: Changed from checkbox to dropdown with GST/Non-GST/Exempted options
 - **UX/UI Testing Framework**: Comprehensive testing script with 100% success rate validation
+- **MVP Browser Support**: Limited to Chrome and Firefox (Desktop only) for streamlined development
 
 ### Changed
 - **User Experience**: Improved data refresh mechanisms and navigation structure
 - **GST Management**: Enhanced GST status management with dropdown options
 - **Navigation**: Added dedicated Reporting section with organized report categories
+- **Browser Support**: Simplified to Chrome and Firefox only for MVP development
+- **Testing Framework**: Removed mobile and responsive design testing for MVP focus
 
 ### Fixed
 - **Dashboard Summary**: Fixed data not updating with latest financial information

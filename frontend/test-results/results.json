@@ -1,0 +1,397 @@
+{
+  "config": {
+    "configFile": "/Users/vivekm/code/ipsc/frontend/playwright.config.ts",
+    "rootDir": "/Users/vivekm/code/ipsc/frontend/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 5
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "test-results/results.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/vivekm/code/ipsc/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 5
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/vivekm/code/ipsc/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/vivekm/code/ipsc/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 5
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/vivekm/code/ipsc/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/vivekm/code/ipsc/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 5
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/vivekm/code/ipsc/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/vivekm/code/ipsc/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 5
+        },
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "/Users/vivekm/code/ipsc/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/vivekm/code/ipsc/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 5
+        },
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "/Users/vivekm/code/ipsc/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.54.2",
+    "workers": 5,
+    "webServer": {
+      "command": "npm run dev",
+      "url": "http://localhost:5173",
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "payment-form-debug.spec.ts",
+      "file": "payment-form-debug.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Payment Form Debug",
+          "file": "payment-form-debug.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should capture console errors",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6429,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "Console errors: [\n  \u001b[32m'Failed to load resource: the server responded with a status of 500 (Internal Server Error)'\u001b[39m,\n  \u001b[32m'Failed to load resource: the server responded with a status of 404 (Not Found)'\u001b[39m\n]\n"
+                        },
+                        {
+                          "text": "App content visible: false\n"
+                        },
+                        {
+                          "text": "Root content length: 0\n"
+                        },
+                        {
+                          "text": "Root content preview: \n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T12:04:09.252Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "26edbb37234312805f6d-68a5937a57a16a64c95b",
+              "file": "payment-form-debug.spec.ts",
+              "line": 150,
+              "column": 3
+            },
+            {
+              "title": "should capture console errors",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 7907,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "Console errors: []\n"
+                        },
+                        {
+                          "text": "App content visible: true\n"
+                        },
+                        {
+                          "text": "Root content length: 2890\n"
+                        },
+                        {
+                          "text": "Root content preview: <div class=\"app-shell\"><main class=\"content\"><div style=\"display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T12:04:09.249Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "26edbb37234312805f6d-2a4cf3b18d210848a186",
+              "file": "payment-form-debug.spec.ts",
+              "line": 150,
+              "column": 3
+            },
+            {
+              "title": "should capture console errors",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 6838,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "Console errors: [\n  \u001b[32m'Failed to load resource: the server responded with a status of 500 (Internal Server Error)'\u001b[39m\n]\n"
+                        },
+                        {
+                          "text": "App content visible: false\n"
+                        },
+                        {
+                          "text": "Root content length: 0\n"
+                        },
+                        {
+                          "text": "Root content preview: \n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T12:04:09.266Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "26edbb37234312805f6d-336322bbc13eccf89fd4",
+              "file": "payment-form-debug.spec.ts",
+              "line": 150,
+              "column": 3
+            },
+            {
+              "title": "should capture console errors",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 6456,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "Console errors: [\n  \u001b[32m'Failed to load resource: the server responded with a status of 500 (Internal Server Error)'\u001b[39m,\n  \u001b[32m'Failed to load resource: the server responded with a status of 404 (Not Found)'\u001b[39m\n]\n"
+                        },
+                        {
+                          "text": "App content visible: false\n"
+                        },
+                        {
+                          "text": "Root content length: 0\n"
+                        },
+                        {
+                          "text": "Root content preview: \n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T12:04:09.256Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "26edbb37234312805f6d-874a93a0d650466e4b6c",
+              "file": "payment-form-debug.spec.ts",
+              "line": 150,
+              "column": 3
+            },
+            {
+              "title": "should capture console errors",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 6802,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "Console errors: [\n  \u001b[32m'Failed to load resource: the server responded with a status of 500 (Internal Server Error)'\u001b[39m\n]\n"
+                        },
+                        {
+                          "text": "App content visible: false\n"
+                        },
+                        {
+                          "text": "Root content length: 0\n"
+                        },
+                        {
+                          "text": "Root content preview: \n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T12:04:09.261Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "26edbb37234312805f6d-d5d3b1db51df5d2cd938",
+              "file": "payment-form-debug.spec.ts",
+              "line": 150,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-08-16T12:04:08.870Z",
+    "duration": 9639.025,
+    "expected": 5,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

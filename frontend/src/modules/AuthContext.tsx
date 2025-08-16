@@ -66,9 +66,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_exp')
-      // Redirect to login if session expired
+      // Only redirect to login if session expired and not already on login page
       if (window.location.pathname !== '/login') {
-        window.location.href = '/login'
+        // Use React Router navigation instead of window.location
+        // This will be handled by the Routes component
       }
     }
   }, [])
@@ -87,7 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('auth_token')
         localStorage.removeItem('auth_exp')
         // Redirect to login when session expires
-        window.location.href = '/login'
+        // Use React Router navigation instead of window.location
+        // This will be handled by the Routes component
       }, delay)
     }
   }, [token, expiresAt])

@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# Comprehensive UI/UX Testing Framework Runner
+# Comprehensive UI/UX Testing Framework Runner (MVP)
 # This script runs all UI/UX tests for the IPSC application
+# MVP Browser Support: Chrome and Firefox (Desktop only)
+# Mobile and Responsive Design: Not included in MVP
 
 set -e
 
@@ -85,9 +87,9 @@ install_dependencies() {
         return 1
     fi
     
-    # Install Playwright browsers
-    if npx playwright install; then
-        print_result 0 "Playwright browsers installed"
+    # Install Playwright browsers (MVP: Chrome and Firefox only)
+    if npx playwright install --with-deps chromium firefox; then
+        print_result 0 "Playwright browsers installed (Chrome and Firefox)"
     else
         print_result 1 "Failed to install Playwright browsers"
         return 1

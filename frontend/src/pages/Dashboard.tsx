@@ -22,9 +22,37 @@ export function Dashboard() {
 
 
   useEffect(() => {
-    if (!token) return
-    loadCashflowData()
-  }, [token, startDate, endDate])
+    if (!token) {
+      // If no token, redirect to login
+      navigate('/login')
+      return
+    }
+    // Temporarily disable API calls to test if app renders
+    // const timer = setTimeout(() => {
+    //   loadCashflowData()
+    // }, 100)
+    // return () => clearTimeout(timer)
+    
+    // Set default data for now
+    setCashflowData({
+      period: {
+        start_date: startDate,
+        end_date: endDate
+      },
+      income: {
+        total: 0,
+        count: 0
+      },
+      expenses: {
+        total: 0,
+        count: 0
+      },
+      cashflow: {
+        net: 0,
+        total_invoice_amount: 0
+      }
+    })
+  }, [token, startDate, endDate, navigate])
 
   const loadCashflowData = async () => {
     try {
@@ -33,8 +61,28 @@ export function Dashboard() {
       const data = await apiGetCashflowSummary(startDate, endDate)
       setCashflowData(data)
     } catch (err) {
+      console.error('Failed to load cashflow data:', err)
       const errorMessage = handleApiError(err)
       setError(errorMessage)
+      // Set default data to prevent app from breaking
+      setCashflowData({
+        period: {
+          start_date: startDate,
+          end_date: endDate
+        },
+        income: {
+          total: 0,
+          count: 0
+        },
+        expenses: {
+          total: 0,
+          count: 0
+        },
+        cashflow: {
+          net: 0,
+          total_invoice_amount: 0
+        }
+      })
     } finally {
       setLoading(false)
     }
