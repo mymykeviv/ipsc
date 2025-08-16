@@ -745,7 +745,8 @@ export async function apiListInvoices(search?: string, status?: string): Promise
     }
   }
   
-  return r.json()
+  const data = await r.json()
+  return data.invoices || []
 }
 
 export async function apiGetInvoice(id: number): Promise<Invoice> {
