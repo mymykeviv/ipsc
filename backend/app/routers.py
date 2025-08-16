@@ -15,6 +15,7 @@ from .currency import get_exchange_rate, get_supported_currencies, format_curren
 from .recurring_invoices import RecurringInvoiceService, generate_recurring_invoices
 from .purchase_orders import PurchaseOrderService, convert_po_to_purchase
 from .cashflow_service import CashflowService
+from .payment_scheduler import PaymentScheduler, PaymentStatus, PaymentReminderType
 from decimal import Decimal
 from .emailer import send_email, create_invoice_email_template, create_purchase_email_template
 from fastapi import Query
@@ -4331,4 +4332,86 @@ def convert_po_to_purchase_endpoint(
         "purchase_id": purchase.id,
         "purchase_no": purchase.purchase_no
     }
+
+
+# Payment Scheduler API Endpoints
+@api.get('/payment-schedule')
+def get_payment_schedule(
+    payment_type: str = Query("all", description="Type of payments: invoice, purchase, or all"),
+    status: str = Query(None, description="Payment status: pending, overdue, paid"),
+    start_date: str = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: str = Query(None, description="End date (YYYY-MM-DD)"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get payment schedule with filtering options"""
+    scheduler = PaymentScheduler(db)
+    
+    # Parse dates
+    start_date_obj = None
+    end_date_obj = None
+    if start_date:
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+    if end_date:
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d").date()
+    
+    # Parse status
+    status_enum = None
+    if status:
+        try:
+            status_enum = PaymentStatus(status)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid status value")
+    
+    schedule = scheduler.get_payment_schedule(
+        payment_type=payment_type,
+        status=status_enum,
+        start_date=start_date_obj,
+        end_date=end_date_obj
+    )
+    
+    return schedule
+
+
+@api.get('/payment-reminders')
+def get_payment_reminders(
+    reminder_type: str = Query(None, description="Reminder type: due_soon, overdue, critical"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get payment reminders based on due dates"""
+    scheduler = PaymentScheduler(db)
+    
+    # Parse reminder type
+    reminder_enum = None
+    if reminder_type:
+        try:
+            reminder_enum = PaymentReminderType(reminder_type)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid reminder type")
+    
+    reminders = scheduler.get_payment_reminders(reminder_enum)
+    return reminders
+
+
+@api.get('/payment-analytics')
+def get_payment_analytics(
+    start_date: str = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: str = Query(None, description="End date (YYYY-MM-DD)"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get payment analytics and insights"""
+    scheduler = PaymentScheduler(db)
+    
+    # Parse dates
+    start_date_obj = None
+    end_date_obj = None
+    if start_date:
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+    if end_date:
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d").date()
+    
+    analytics = scheduler.get_payment_analytics(start_date_obj, end_date_obj)
+    return analytics
 

@@ -5,8 +5,8 @@ import pytest
 from datetime import datetime, date
 from decimal import Decimal
 from sqlalchemy.orm import Session
-from backend.app.models import Payment, PurchasePayment, Expense, Invoice, Purchase, Party, Product
-from backend.app.cashflow_service import CashflowService
+from app.models import Payment, PurchasePayment, Expense, Invoice, Purchase, Party, Product
+from app.cashflow_service import CashflowService
 
 
 class TestCashflowIntegration:
