@@ -39,6 +39,7 @@ The IPSC application is a web-based, platform-agnostic system for digitizing and
 ### 2.3. Database
 - **PostgreSQL:** All transactional data (inventory, invoices, users, etc.)
 - **GST Configuration:** Company settings and party-level GST preferences
+- **Cashflow Data:** Consolidated from source tables (payments, purchase_payments, expenses)
 - **Elasticsearch (optional):** Reporting, analytics, audit logs
 
 ---
@@ -91,9 +92,11 @@ The IPSC application is a web-based, platform-agnostic system for digitizing and
 - `/backend/` — FastAPI app
 - `/backend/app/gst_reports.py` — GST report generation module
 - `/backend/app/gst.py` — GST calculation and validation utilities
+- `/backend/app/cashflow_service.py` — Consolidated cashflow data service
 - `/scripts/seed_test_data.py` — Comprehensive test data seeding
 - `/tests/backend/test_gst_reports.py` — GST reports test suite
 - `/tests/backend/test_gst_toggle.py` — GST toggle functionality tests
+- `/tests/backend/test_cashflow_integration.py` — Cashflow integration tests
 - `/db/` — DB migrations, seed data
 - `/tests/` — Automated tests
 - `/docker-compose.yml` — Local orchestration

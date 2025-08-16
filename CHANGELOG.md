@@ -12,22 +12,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Enhanced Purchase Order Management**: Added missing GST fields (utgst, cess, round_off) to Purchase and PurchaseItem models
 - **Improved Database Schema**: Added proper migration support for fresh deployments
 - **Fixed Type Conversion Issues**: Resolved float/Decimal type mismatches in purchase order calculations
+- **NEW**: CashflowService for consolidated financial data management
+- **NEW**: Comprehensive integration tests for cashflow functionality
+- **NEW**: Enhanced API endpoints for financial year summaries and expense history
 
 ### Changed
 - **Migration Structure**: Reorganized migrations into proper versions directory structure
 - **Database Schema**: Enhanced Purchase and PurchaseItem models with complete GST compliance fields
 - **Purchase Order Workflow**: Improved PO to Purchase conversion with proper GST calculations
+- **BREAKING**: Consolidated cashflow data from redundant table to source tables
+- **IMPROVED**: Cashflow API now provides better data consistency and performance
 
 ### Fixed
 - **Migration Chain**: Fixed broken Alembic migration references and dependencies
 - **Type Errors**: Resolved float/Decimal conversion issues in purchase order service
 - **Missing Dependencies**: Added requests library to requirements.txt
 - **Database Constraints**: Fixed missing required fields in Purchase model creation
+- **FIXED**: Eliminated data redundancy in cashflow_transactions table
+- **FIXED**: Ensured backward compatibility for all existing frontend functionality
+- **FIXED**: Resolved SQL query issues in consolidated cashflow service
 
 ### Technical Improvements
 - **Migration Management**: Created proper initial schema migration and fixed revision chain
 - **Code Quality**: Improved error handling and type safety in purchase order operations
 - **Deployment**: Ensured migrations work correctly in fresh deployments
+- **Data Architecture**: Eliminated redundant cashflow_transactions table for better data consistency
 
 ## [1.39.0] - 2024-01-15
 
