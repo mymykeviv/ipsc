@@ -5,6 +5,36 @@ All notable changes to CASHFLOW will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.39.0] - 2024-01-15
+
+### Added
+- **GST Toggle System Implementation**
+  - **Individual Party GST Control**: Added ability to enable/disable GST for individual customers/vendors
+  - **System-Wide GST Settings**: Added company-wide GST configuration options
+  - **GSTIN Validation**: Enhanced GSTIN format validation when GST is enabled
+  - **Conditional GST Calculations**: Invoice GST calculations now respect party GST settings
+  - **Database Schema Updates**: Added gst_enabled_by_default, require_gstin_validation to CompanySettings
+  - **Frontend UI Enhancement**: Added GST toggle checkbox in party creation/editing forms
+
+- **Enhanced GST Reports (GSTR-1 & GSTR-3B)**
+  - **GSTR-1 Report Generation**: Complete outward supplies report in exact GST portal format
+  - **GSTR-3B Report Generation**: Monthly summary report with comprehensive tax calculations
+  - **CSV Export Functionality**: Direct download of reports in GST portal-compatible format
+  - **Data Validation System**: Comprehensive validation for GST compliance before report generation
+  - **API Endpoints**: Added /api/reports/gstr1, /api/reports/gstr3b, /api/reports/gst-validation
+  - **Test Data Seeding**: Comprehensive test data with realistic GST-compliant information
+
+### Changed
+- **Party Management**: Enhanced party creation/editing with GST toggle functionality
+- **Invoice Processing**: GST calculations now conditional based on party GST settings
+- **Report Generation**: New GST-compliant report generation system
+- **Database Schema**: Updated with new GST-related fields and constraints
+
+### Fixed
+- **GST Compliance**: Ensured all GST calculations follow Indian GST law requirements
+- **Data Validation**: Improved validation for HSN codes and GSTIN formats
+- **Report Format**: Exact compliance with GST portal format requirements
+
 ## [1.6.9] - 2024-01-15
 
 ### Fixed

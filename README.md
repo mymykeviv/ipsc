@@ -4,7 +4,7 @@ A comprehensive manufacturing operations management system for Indian businesses
 
 ## Version Information
 
-- **Current Version**: 1.6.1
+- **Current Version**: 1.39.0
 - **Build Date**: 2024-01-15
 - **Backend**: FastAPI with PostgreSQL
 - **Frontend**: React with TypeScript
@@ -12,26 +12,31 @@ A comprehensive manufacturing operations management system for Indian businesses
 
 ## Features
 
-### ✅ Implemented (v1.6.1)
+### ✅ Implemented (v1.39.0)
 - **Dashboard**: Cashflow summary with quick action buttons for common tasks
 - **Product Management**: Complete CRUD with HSN/GST details
 - **Authentication**: JWT-based with role-based access control
 - **Stock Management**: Real-time stock tracking and adjustments
 - **GST Compliance**: Indian GST calculation and reporting
+- **GST Toggle System**: Enable/disable GST for individual parties and system-wide settings
+- **Enhanced GST Reports**: GSTR-1 and GSTR-3B reports in exact GST portal format
 - **Invoice Management**: Generate and email invoices with payment tracking
 - **Purchase Management**: Complete purchase system with GST compliance and payment tracking
 - **Expense Management**: Comprehensive expense tracking with categorization
 - **Cashflow Management**: Income vs expense analysis with date range filtering
 - **Payment Management**: Enhanced payment system with account heads and multiple payment methods
-- **Party Management**: Customer and vendor management with active/inactive filtering
+- **Party Management**: Customer and vendor management with GST toggle functionality
 - **Audit Trail**: Comprehensive logging of all user actions
-- **Reports**: GST summary reports (JSON/CSV)
+- **Reports**: GST summary reports (JSON/CSV) with portal-compatible export
 
 ### 🚧 In Progress
-- **Advanced Reports**: Stock valuation, profit analysis, cashflow forecasting
+- **Advanced Invoice Features**: Multi-currency support, recurring invoices
+- **Purchase Order Management**: Complete PO workflow
+- **Advanced Payment Tracking**: Payment scheduling and reminders
+- **Inventory Management**: Advanced stock management features
+- **Financial Reports**: Comprehensive P&L, balance sheet, cash flow reports
 - **Email Integration**: Automated invoice delivery and payment reminders
 - **Mobile App**: React Native mobile application
-- **Multi-currency Support**: Support for multiple currencies
 
 ## Quick Start
 
