@@ -1,5 +1,5 @@
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Dashboard } from '../pages/Dashboard'
 import { Products } from '../pages/Products'
 import { Purchases } from '../pages/Purchases'
@@ -48,6 +48,38 @@ function Shell() {
       return newState
     })
   }
+
+  // Auto-expand active section based on current location
+  useEffect(() => {
+    const path = location.pathname
+    const newState = { ...collapsedSections }
+    
+    // Determine which section should be active
+    if (path.startsWith('/products')) {
+      Object.keys(newState).forEach(key => newState[key] = true)
+      newState.products = false
+    } else if (path.startsWith('/invoices')) {
+      Object.keys(newState).forEach(key => newState[key] = true)
+      newState.invoices = false
+    } else if (path.startsWith('/purchases')) {
+      Object.keys(newState).forEach(key => newState[key] = true)
+      newState.purchases = false
+    } else if (path.startsWith('/customers') || path.startsWith('/vendors')) {
+      Object.keys(newState).forEach(key => newState[key] = true)
+      newState.customers = false
+    } else if (path.startsWith('/cashflow') || path.startsWith('/expenses')) {
+      Object.keys(newState).forEach(key => newState[key] = true)
+      newState.cashflow = false
+    } else if (path.startsWith('/reports')) {
+      Object.keys(newState).forEach(key => newState[key] = true)
+      newState.reporting = false
+    } else if (path.startsWith('/settings')) {
+      Object.keys(newState).forEach(key => newState[key] = true)
+      newState.settings = false
+    }
+    
+    setCollapsedSections(newState)
+  }, [location.pathname])
   
   // Helper function to check if a link is active
   const isActive = (path: string) => {
@@ -413,9 +445,19 @@ function Shell() {
           <Route path="/expenses/add" element={<Expenses mode="add" />} />
           <Route path="/expenses/edit/:id" element={<Expenses mode="edit" />} />
           
+          {/* Report Routes */}
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/reports/gst" element={<Reports section="gst" />} />
+          <Route path="/reports/cashflow" element={<Reports section="cashflow" />} />
+          <Route path="/reports/income" element={<Reports section="income" />} />
+          <Route path="/reports/expenses" element={<Reports section="expenses" />} />
+          <Route path="/reports/inventory" element={<Reports section="inventory" />} />
+          <Route path="/reports/purchases" element={<Reports section="purchases" />} />
+          <Route path="/reports/payments" element={<Reports section="payments" />} />
+          <Route path="/reports/financial" element={<Reports section="financial" />} />
+          
           {/* Legacy Routes for backward compatibility */}
           <Route path="/parties" element={<Parties />} />
-          <Route path="/reports" element={<Reports />} />
           
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

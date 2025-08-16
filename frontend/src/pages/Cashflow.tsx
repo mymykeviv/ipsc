@@ -13,6 +13,7 @@ export function Cashflow() {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState<'all' | 'inflow' | 'outflow'>('all')
+  const [dateFilter, setDateFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(25)
 
@@ -44,7 +45,46 @@ export function Cashflow() {
                          transaction.reference_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.payment_method.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesType = typeFilter === 'all' || transaction.type === typeFilter
-    return matchesSearch && matchesType
+    
+    // Date filtering
+    let matchesDate = true
+    if (dateFilter !== 'all') {
+      const transactionDate = new Date(transaction.date)
+      const today = new Date()
+      const yesterday = new Date(today)
+      yesterday.setDate(yesterday.getDate() - 1)
+      const lastWeek = new Date(today)
+      lastWeek.setDate(lastWeek.getDate() - 7)
+      const lastMonth = new Date(today)
+      lastMonth.setMonth(lastMonth.getMonth() - 1)
+      
+      switch (dateFilter) {
+        case 'today':
+          matchesDate = transactionDate.toDateString() === today.toDateString()
+          break
+        case 'yesterday':
+          matchesDate = transactionDate.toDateString() === yesterday.toDateString()
+          break
+        case 'last7days':
+          matchesDate = transactionDate >= lastWeek
+          break
+        case 'last30days':
+          matchesDate = transactionDate >= lastMonth
+          break
+        case 'thisMonth':
+          matchesDate = transactionDate.getMonth() === today.getMonth() && 
+                       transactionDate.getFullYear() === today.getFullYear()
+          break
+        case 'lastMonth':
+          const lastMonthDate = new Date(today)
+          lastMonthDate.setMonth(lastMonthDate.getMonth() - 1)
+          matchesDate = transactionDate.getMonth() === lastMonthDate.getMonth() && 
+                       transactionDate.getFullYear() === lastMonthDate.getFullYear()
+          break
+      }
+    }
+    
+    return matchesSearch && matchesType && matchesDate
   })
 
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage)
@@ -133,6 +173,25 @@ export function Cashflow() {
             <option value="all">All Transactions</option>
             <option value="inflow">Cash Inflow</option>
             <option value="outflow">Cash Outflow</option>
+          </select>
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            style={{
+              padding: '10px 16px',
+              border: '1px solid #ced4da',
+              borderRadius: '6px',
+              fontSize: '14px',
+              backgroundColor: 'white'
+            }}
+          >
+            <option value="all">All Dates</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="last7days">Last 7 Days</option>
+            <option value="last30days">Last 30 Days</option>
+            <option value="thisMonth">This Month</option>
+            <option value="lastMonth">Last Month</option>
           </select>
         </div>
       </div>

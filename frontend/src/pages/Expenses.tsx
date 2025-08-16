@@ -184,7 +184,7 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
         )}
 
         <ExpenseForm 
-          expenseId={mode === 'edit' ? currentExpense?.id : undefined}
+          expenseId={mode === 'edit' ? parseInt(id || '0') : undefined}
           onSuccess={() => navigate('/expenses')}
           onCancel={() => navigate('/expenses')}
         />

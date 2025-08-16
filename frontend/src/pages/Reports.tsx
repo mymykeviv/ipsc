@@ -5,7 +5,11 @@ import { Button } from '../components/Button'
 
 type Summary = { taxable_value: number; cgst: number; sgst: number; igst: number; grand_total: number; rate_breakup: { rate: number; taxable_value: number }[] }
 
-export function Reports() {
+interface ReportsProps {
+  section?: string
+}
+
+export function Reports({ section }: ReportsProps) {
   const { token } = useAuth()
   const [summary, setSummary] = useState<Summary | null>(null)
   const [gstReport, setGstReport] = useState<GstFilingReport | null>(null)

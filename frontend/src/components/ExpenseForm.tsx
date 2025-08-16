@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { apiCreateExpense, apiListParties, ExpenseCreate, Party } from '../lib/api'
+import { apiCreateExpense, apiGetExpense, apiUpdateExpense, apiListParties, ExpenseCreate, Party } from '../lib/api'
 import { Button } from './Button'
 import { ErrorMessage } from './ErrorMessage'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
@@ -10,7 +10,7 @@ interface ExpenseFormProps {
   onCancel: () => void
 }
 
-export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
+export function ExpenseForm({ expenseId, onSuccess, onCancel }: ExpenseFormProps) {
   const [vendors, setVendors] = useState<Party[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -55,7 +55,37 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
 
   useEffect(() => {
     loadVendors()
-  }, [])
+    if (expenseId) {
+      loadExpense()
+    }
+  }, [expenseId])
+
+  const loadExpense = async () => {
+    if (!expenseId) return
+    try {
+      setLoading(true)
+      setError(null)
+      const expenseData = await apiGetExpense(expenseId)
+      setFormData({
+        expense_date: expenseData.expense_date,
+        expense_type: expenseData.expense_type,
+        category: expenseData.category,
+        subcategory: expenseData.subcategory || '',
+        description: expenseData.description,
+        amount: expenseData.amount,
+        payment_method: expenseData.payment_method,
+        account_head: expenseData.account_head,
+        reference_number: expenseData.reference_number || '',
+        vendor_id: expenseData.vendor_id,
+        gst_rate: expenseData.gst_rate,
+        notes: expenseData.notes || ''
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load expense')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const loadVendors = async () => {
     try {
@@ -77,10 +107,14 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
     try {
       setLoading(true)
       setError(null)
-      await apiCreateExpense(formData)
+      if (expenseId) {
+        await apiUpdateExpense(expenseId, formData)
+      } else {
+        await apiCreateExpense(formData)
+      }
       onSuccess()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create expense')
+      setError(err instanceof Error ? err.message : `Failed to ${expenseId ? 'update' : 'create'} expense`)
     } finally {
       setLoading(false)
     }
@@ -306,7 +340,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
           Cancel
         </Button>
         <Button type="submit" variant="primary" disabled={loading}>
-          {loading ? 'Creating...' : 'Create Expense'}
+          {loading ? (expenseId ? 'Updating...' : 'Creating...') : (expenseId ? 'Update Expense' : 'Create Expense')}
         </Button>
       </div>
     </form>
