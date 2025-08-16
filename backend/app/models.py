@@ -201,6 +201,9 @@ class Purchase(Base):
     cgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     sgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     igst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    utgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)  # UTGST for Union Territories
+    cess: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)  # CESS amount
+    round_off: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)  # Round off amount
     grand_total: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     
     # Payment Tracking
@@ -230,6 +233,8 @@ class PurchaseItem(Base):
     cgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     sgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     igst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    utgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)  # UTGST for Union Territories
+    cess: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)  # CESS amount
     amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
 
 
@@ -354,5 +359,68 @@ class RecurringInvoice(Base):
     generation_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     due_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="Generated")  # Generated, Sent, Paid
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class PurchaseOrder(Base):
+    __tablename__ = "purchase_orders"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    vendor_id: Mapped[int] = mapped_column(ForeignKey("parties.id"), nullable=False)
+    po_number: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)
+    date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    expected_delivery_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    
+    # PO Details
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="Draft")  # Draft, Approved, Sent, Received, Closed, Cancelled
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="INR")
+    exchange_rate: Mapped[Numeric] = mapped_column(Numeric(10, 4), nullable=False, default=1.0)
+    terms: Mapped[str] = mapped_column(String(20), nullable=False, default="Net 30")
+    
+    # GST Compliance Fields
+    place_of_supply: Mapped[str] = mapped_column(String(100), nullable=False)
+    place_of_supply_state_code: Mapped[str] = mapped_column(String(10), nullable=False)
+    reverse_charge: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    
+    # Address Details
+    ship_from_address: Mapped[str] = mapped_column(String(200), nullable=False)
+    ship_to_address: Mapped[str] = mapped_column(String(200), nullable=False)
+    
+    # Amount Details
+    subtotal: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    total_discount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    cgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    sgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    igst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    utgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    cess: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    round_off: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    grand_total: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    
+    # Workflow Fields
+    approved_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    received_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    
+    # Additional Fields
+    notes: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class PurchaseOrderItem(Base):
+    __tablename__ = "purchase_order_items"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    purchase_order_id: Mapped[int] = mapped_column(ForeignKey("purchase_orders.id"), nullable=False)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
+    description: Mapped[str] = mapped_column(String(200), nullable=False)
+    hsn_code: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    qty: Mapped[float] = mapped_column(Float, nullable=False)
+    expected_rate: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    discount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    discount_type: Mapped[str] = mapped_column(String(20), nullable=False, default="Percentage")
+    gst_rate: Mapped[float] = mapped_column(Float, nullable=False)
+    amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 

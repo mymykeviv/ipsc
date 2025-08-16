@@ -7,6 +7,7 @@ passlib[bcrypt]==1.7.4
 python-jose==3.3.0
 reportlab==4.2.5
 psycopg[binary]==3.2.3
+requests==2.31.0
 
 # testing
 pytest==8.3.2

@@ -7,12 +7,13 @@ from datetime import datetime, timedelta
 
 from .auth import authenticate_user, create_access_token, get_current_user, require_role
 from .db import get_db
-from .models import Product, User, Party, CompanySettings, Invoice, InvoiceItem, StockLedgerEntry, Purchase, PurchaseItem, Payment, PurchasePayment, Expense, CashflowTransaction, AuditTrail, RecurringInvoiceTemplate, RecurringInvoiceTemplateItem, RecurringInvoice
+from .models import Product, User, Party, CompanySettings, Invoice, InvoiceItem, StockLedgerEntry, Purchase, PurchaseItem, Payment, PurchasePayment, Expense, CashflowTransaction, AuditTrail, RecurringInvoiceTemplate, RecurringInvoiceTemplateItem, RecurringInvoice, PurchaseOrder, PurchaseOrderItem
 from .audit import AuditService
 from .gst import money, split_gst
 from .gst_reports import generate_gstr1_report, generate_gstr3b_report
 from .currency import get_exchange_rate, get_supported_currencies, format_currency
 from .recurring_invoices import RecurringInvoiceService, generate_recurring_invoices
+from .purchase_orders import PurchaseOrderService, convert_po_to_purchase
 from decimal import Decimal
 from .emailer import send_email, create_invoice_email_template, create_purchase_email_template
 from fastapi import Query
@@ -3879,6 +3880,103 @@ class ExchangeRateResponse(BaseModel):
     last_updated: datetime
 
 
+# Purchase Order Management - Pydantic Models
+class PurchaseOrderItemCreate(BaseModel):
+    product_id: int
+    description: str
+    hsn_code: str | None = None
+    qty: float
+    expected_rate: Decimal
+    discount: Decimal = Decimal('0')
+    discount_type: str = "Percentage"
+    gst_rate: float
+
+    @validator('discount_type')
+    def validate_discount_type(cls, v):
+        if v not in ['Percentage', 'Fixed']:
+            raise ValueError('Discount type must be Percentage or Fixed')
+        return v
+
+
+class PurchaseOrderCreate(BaseModel):
+    vendor_id: int
+    po_number: str | None = None
+    date: str
+    expected_delivery_date: str
+    currency: str = "INR"
+    exchange_rate: Decimal = Decimal('1.0')
+    terms: str = "Net 30"
+    place_of_supply: str
+    place_of_supply_state_code: str
+    reverse_charge: bool = False
+    ship_from_address: str
+    ship_to_address: str
+    notes: str | None = None
+    items: list[PurchaseOrderItemCreate]
+
+    @validator('currency')
+    def validate_currency(cls, v):
+        supported_currencies = get_supported_currencies()
+        if v.upper() not in supported_currencies:
+            raise ValueError(f'Currency {v} is not supported')
+        return v.upper()
+
+
+class PurchaseOrderItemOut(BaseModel):
+    id: int
+    purchase_order_id: int
+    product_id: int
+    description: str
+    hsn_code: str | None
+    qty: float
+    expected_rate: Decimal
+    discount: Decimal
+    discount_type: str
+    gst_rate: float
+    amount: Decimal
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class PurchaseOrderOut(BaseModel):
+    id: int
+    vendor_id: int
+    po_number: str
+    date: datetime
+    expected_delivery_date: datetime
+    status: str
+    currency: str
+    exchange_rate: Decimal
+    terms: str
+    place_of_supply: str
+    place_of_supply_state_code: str
+    reverse_charge: bool
+    ship_from_address: str
+    ship_to_address: str
+    subtotal: Decimal
+    total_discount: Decimal
+    cgst: Decimal
+    sgst: Decimal
+    igst: Decimal
+    utgst: Decimal
+    cess: Decimal
+    round_off: Decimal
+    grand_total: Decimal
+    approved_by: int | None
+    approved_at: datetime | None
+    sent_at: datetime | None
+    received_at: datetime | None
+    closed_at: datetime | None
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 @api.get('/stock/movement-history', response_model=list[StockMovementOut])
 def get_stock_movement_history(
     financial_year: str | None = None,
@@ -4239,4 +4337,126 @@ def update_recurring_invoice_status(
         raise HTTPException(status_code=404, detail='Recurring invoice not found')
     
     return {"message": "Status updated successfully"}
+
+
+# Purchase Order Management - API Endpoints
+
+@api.post('/purchase-orders', response_model=PurchaseOrderOut, status_code=status.HTTP_201_CREATED)
+def create_purchase_order(
+    payload: PurchaseOrderCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new purchase order"""
+    # Validate vendor exists
+    vendor = db.query(Party).filter(Party.id == payload.vendor_id).first()
+    if not vendor:
+        raise HTTPException(status_code=400, detail='Invalid vendor')
+    
+    service = PurchaseOrderService(db)
+    
+    # Create PO data
+    po_data = {
+        'vendor_id': payload.vendor_id,
+        'po_number': payload.po_number,
+        'date': datetime.fromisoformat(payload.date.replace('Z', '+00:00')),
+        'expected_delivery_date': datetime.fromisoformat(payload.expected_delivery_date.replace('Z', '+00:00')),
+        'currency': payload.currency,
+        'exchange_rate': payload.exchange_rate,
+        'terms': payload.terms,
+        'place_of_supply': payload.place_of_supply,
+        'place_of_supply_state_code': payload.place_of_supply_state_code,
+        'reverse_charge': payload.reverse_charge,
+        'ship_from_address': payload.ship_from_address,
+        'ship_to_address': payload.ship_to_address,
+        'notes': payload.notes
+    }
+    
+    # Create purchase order
+    po = service.create_purchase_order(po_data)
+    
+    # Add items
+    for item_data in payload.items:
+        service.add_po_item(po.id, item_data.dict())
+    
+    # Refresh PO to get updated totals
+    db.refresh(po)
+    return po
+
+
+@api.get('/purchase-orders', response_model=list[PurchaseOrderOut])
+def get_purchase_orders(
+    status: str | None = None,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get purchase orders, optionally filtered by status"""
+    service = PurchaseOrderService(db)
+    purchase_orders = service.get_purchase_orders(status)
+    return purchase_orders
+
+
+@api.get('/purchase-orders/{po_id}', response_model=PurchaseOrderOut)
+def get_purchase_order(
+    po_id: int,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get a specific purchase order"""
+    service = PurchaseOrderService(db)
+    po = service.get_purchase_order(po_id)
+    if not po:
+        raise HTTPException(status_code=404, detail='Purchase order not found')
+    
+    return po
+
+
+@api.get('/purchase-orders/{po_id}/items', response_model=list[PurchaseOrderItemOut])
+def get_purchase_order_items(
+    po_id: int,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all items for a purchase order"""
+    service = PurchaseOrderService(db)
+    po = service.get_purchase_order(po_id)
+    if not po:
+        raise HTTPException(status_code=404, detail='Purchase order not found')
+    
+    items = service.get_po_items(po_id)
+    return items
+
+
+@api.put('/purchase-orders/{po_id}/status')
+def update_purchase_order_status(
+    po_id: int,
+    status: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update purchase order status"""
+    service = PurchaseOrderService(db)
+    success = service.update_po_status(po_id, status, current_user.id)
+    if not success:
+        raise HTTPException(status_code=400, detail='Invalid status transition or PO not found')
+    
+    return {"message": "Status updated successfully"}
+
+
+@api.post('/purchase-orders/{po_id}/convert-to-purchase')
+def convert_po_to_purchase_endpoint(
+    po_id: int,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Convert a purchase order to a purchase invoice"""
+    purchase = convert_po_to_purchase(db, po_id)
+    if not purchase:
+        raise HTTPException(status_code=400, detail='Cannot convert PO to purchase. PO must be approved.')
+    
+    return {
+        "message": "Purchase order converted to purchase successfully",
+        "purchase_id": purchase.id,
+        "purchase_no": purchase.purchase_no
+    }
 

@@ -1,8 +1,8 @@
-"""Enhance Invoice Model
+"""Enhance Invoice Model - Complete Migration
 
-Revision ID: enhance_invoice_model
-Revises: add_invoice_enhancements
-Create Date: 2024-01-15 10:00:00.000000
+Revision ID: 001_enhance_invoice_model
+Revises: 
+Create Date: 2024-01-15 12:00:00.000000
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'enhance_invoice_model'
-down_revision = 'add_invoice_enhancements'
+revision = '001_enhance_invoice_model'
+down_revision = '001_initial_schema'
 branch_labels = None
 depends_on = None
 
@@ -51,6 +51,9 @@ def upgrade():
     
     # Update hsn_code length constraint in invoice_items
     op.alter_column('invoice_items', 'hsn_code', type_=sa.String(length=10))
+    
+    # Update notes length constraint in invoices
+    op.alter_column('invoices', 'notes', type_=sa.String(length=200))
 
 
 def downgrade():
@@ -74,3 +77,6 @@ def downgrade():
     
     # Revert hsn_code length constraint
     op.alter_column('invoice_items', 'hsn_code', type_=sa.String(length=100))
+    
+    # Revert notes length constraint
+    op.alter_column('invoices', 'notes', type_=sa.String(length=500))

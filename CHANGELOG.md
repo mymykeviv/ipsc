@@ -5,6 +5,30 @@ All notable changes to CASHFLOW will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.40.0] - 2025-08-16
+
+### Added
+- **Systematic Migration Fixes**: Fixed broken Alembic migration chain and properly organized migration files
+- **Enhanced Purchase Order Management**: Added missing GST fields (utgst, cess, round_off) to Purchase and PurchaseItem models
+- **Improved Database Schema**: Added proper migration support for fresh deployments
+- **Fixed Type Conversion Issues**: Resolved float/Decimal type mismatches in purchase order calculations
+
+### Changed
+- **Migration Structure**: Reorganized migrations into proper versions directory structure
+- **Database Schema**: Enhanced Purchase and PurchaseItem models with complete GST compliance fields
+- **Purchase Order Workflow**: Improved PO to Purchase conversion with proper GST calculations
+
+### Fixed
+- **Migration Chain**: Fixed broken Alembic migration references and dependencies
+- **Type Errors**: Resolved float/Decimal conversion issues in purchase order service
+- **Missing Dependencies**: Added requests library to requirements.txt
+- **Database Constraints**: Fixed missing required fields in Purchase model creation
+
+### Technical Improvements
+- **Migration Management**: Created proper initial schema migration and fixed revision chain
+- **Code Quality**: Improved error handling and type safety in purchase order operations
+- **Deployment**: Ensured migrations work correctly in fresh deployments
+
 ## [1.39.0] - 2024-01-15
 
 ### Added

@@ -1,14 +1,8 @@
-# CASHFLOW - Financial Management System
+# IPSC - Indian Payment & Stock Control System
 
-A comprehensive manufacturing operations management system for Indian businesses with GST compliance.
+A comprehensive business management system designed for Indian businesses with GST compliance, inventory management, and financial tracking capabilities.
 
-## Version Information
-
-- **Current Version**: 1.39.0
-- **Build Date**: 2024-01-15
-- **Backend**: FastAPI with PostgreSQL
-- **Frontend**: React with TypeScript
-- **Database**: PostgreSQL with SQLAlchemy ORM
+**Current Version: 1.40.0**
 
 ## Features
 
