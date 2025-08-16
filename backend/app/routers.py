@@ -3,7 +3,7 @@ from pydantic import BaseModel, validator
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from .auth import authenticate_user, create_access_token, get_current_user, require_role
 from .db import get_db
@@ -17,6 +17,7 @@ from .purchase_orders import PurchaseOrderService, convert_po_to_purchase
 from .cashflow_service import CashflowService
 from .payment_scheduler import PaymentScheduler, PaymentStatus, PaymentReminderType
 from .inventory_manager import InventoryManager, StockValuationMethod
+from .financial_reports import FinancialReports, ReportType
 from decimal import Decimal
 from .emailer import send_email, create_invoice_email_template, create_purchase_email_template
 from fastapi import Query
@@ -4513,4 +4514,106 @@ def get_stock_aging_report(
     """Get stock aging report"""
     manager = InventoryManager(db)
     return manager.get_stock_aging_report()
+
+
+# Financial Reports API Endpoints
+@api.get('/financial-reports/profit-loss')
+def get_profit_loss_statement(
+    start_date: str = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: str = Query(None, description="End date (YYYY-MM-DD)"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate Profit & Loss Statement"""
+    reports = FinancialReports(db)
+    
+    # Parse dates
+    start_date_obj = None
+    end_date_obj = None
+    if start_date:
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+    if end_date:
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d").date()
+    
+    return reports.generate_profit_loss_statement(start_date_obj, end_date_obj)
+
+
+@api.get('/financial-reports/balance-sheet')
+def get_balance_sheet(
+    as_of_date: str = Query(None, description="As of date (YYYY-MM-DD)"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate Balance Sheet"""
+    reports = FinancialReports(db)
+    
+    # Parse date
+    as_of_date_obj = None
+    if as_of_date:
+        as_of_date_obj = datetime.strptime(as_of_date, "%Y-%m-%d").date()
+    
+    return reports.generate_balance_sheet(as_of_date_obj)
+
+
+@api.get('/financial-reports/cash-flow')
+def get_cash_flow_statement(
+    start_date: str = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: str = Query(None, description="End date (YYYY-MM-DD)"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate Cash Flow Statement"""
+    reports = FinancialReports(db)
+    
+    # Parse dates
+    start_date_obj = None
+    end_date_obj = None
+    if start_date:
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+    if end_date:
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d").date()
+    
+    return reports.generate_cash_flow_statement(start_date_obj, end_date_obj)
+
+
+@api.get('/financial-reports/summary')
+def get_financial_summary(
+    start_date: str = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: str = Query(None, description="End date (YYYY-MM-DD)"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get comprehensive financial summary"""
+    reports = FinancialReports(db)
+    
+    # Parse dates
+    start_date_obj = None
+    end_date_obj = None
+    if start_date:
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+    if end_date:
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d").date()
+    
+    # Generate all reports
+    pl_statement = reports.generate_profit_loss_statement(start_date_obj, end_date_obj)
+    balance_sheet = reports.generate_balance_sheet(end_date_obj if end_date_obj else date.today())
+    cash_flow = reports.generate_cash_flow_statement(start_date_obj, end_date_obj)
+    
+    return {
+        "period": {
+            "start_date": start_date_obj.isoformat() if start_date_obj else date.today().replace(day=1).isoformat(),
+            "end_date": end_date_obj.isoformat() if end_date_obj else date.today().isoformat()
+        },
+        "profit_loss": pl_statement,
+        "balance_sheet": balance_sheet,
+        "cash_flow": cash_flow,
+        "key_metrics": {
+            "revenue": pl_statement["revenue"]["total_revenue"],
+            "net_profit": pl_statement["net_profit_after_tax"],
+            "total_assets": balance_sheet["assets"]["total_assets"],
+            "total_liabilities": balance_sheet["liabilities"]["total_liabilities"],
+            "net_cash_flow": cash_flow["net_cash_flow"],
+            "cash_balance": cash_flow["cash_balances"]["closing_balance"]
+        }
+    }
 
