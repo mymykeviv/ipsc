@@ -139,11 +139,16 @@ class InventoryManager:
         
         result = []
         for movement in movements:
+            # Get product details
+            product = self.db.query(Product).filter(Product.id == movement.product_id).first()
+            product_name = product.name if product else f"Product {movement.product_id}"
+            product_sku = product.sku if product else ""
+            
             result.append({
                 "id": movement.id,
                 "product_id": movement.product_id,
-                "product_name": movement.product.name,
-                "product_sku": movement.product.sku,
+                "product_name": product_name,
+                "product_sku": product_sku,
                 "type": movement.entry_type,
                 "quantity": movement.qty,
                 "reference": movement.ref_type,

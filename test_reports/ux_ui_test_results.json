@@ -1,0 +1,68 @@
+[
+  {
+    "test": "Login",
+    "status": "PASS",
+    "details": "Successfully authenticated",
+    "timestamp": "2025-08-16T14:47:06.317867"
+  },
+  {
+    "test": "Dashboard Data Refresh",
+    "status": "PASS",
+    "details": "All required fields present. Net cashflow: -1415896.0",
+    "timestamp": "2025-08-16T14:47:06.323692"
+  },
+  {
+    "test": "Cashflow Transactions",
+    "status": "PASS",
+    "details": "Found 9 transactions",
+    "timestamp": "2025-08-16T14:47:06.331418"
+  },
+  {
+    "test": "Products Pagination",
+    "status": "PASS",
+    "details": "Found 12 products",
+    "timestamp": "2025-08-16T14:47:06.335129"
+  },
+  {
+    "test": "GST Toggle Dropdown - GST",
+    "status": "PASS",
+    "details": "Created party: Test GST Customer",
+    "timestamp": "2025-08-16T14:47:06.340480"
+  },
+  {
+    "test": "GST Toggle Dropdown - Non-GST",
+    "status": "PASS",
+    "details": "Created party: Test Non-GST Customer",
+    "timestamp": "2025-08-16T14:47:06.344081"
+  },
+  {
+    "test": "GST Toggle Dropdown - Non-GST",
+    "status": "PASS",
+    "details": "Created party: Test Exempted Customer",
+    "timestamp": "2025-08-16T14:47:06.346748"
+  },
+  {
+    "test": "Stock Movement Search",
+    "status": "PASS",
+    "details": "Found 5 stock movements",
+    "timestamp": "2025-08-16T14:47:06.349948"
+  },
+  {
+    "test": "GST Reports Endpoint",
+    "status": "PASS",
+    "details": "Endpoint accessible",
+    "timestamp": "2025-08-16T14:47:06.412142"
+  },
+  {
+    "test": "Financial Reports Endpoint",
+    "status": "PASS",
+    "details": "Financial reports accessible",
+    "timestamp": "2025-08-16T14:47:06.428578"
+  },
+  {
+    "test": "Frontend Accessibility",
+    "status": "PASS",
+    "details": "Frontend is accessible",
+    "timestamp": "2025-08-16T14:47:06.443156"
+  }
+]

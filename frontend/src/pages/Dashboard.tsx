@@ -40,6 +40,11 @@ export function Dashboard() {
     }
   }
 
+  // Add manual refresh function
+  const handleRefresh = () => {
+    loadCashflowData()
+  }
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -350,7 +355,7 @@ export function Dashboard() {
                 )}
                 
                 <button 
-                  onClick={loadCashflowData}
+                  onClick={handleRefresh}
                   disabled={loading}
                   style={{
                     padding: '5px 10px',

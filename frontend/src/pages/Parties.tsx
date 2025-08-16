@@ -15,7 +15,7 @@ interface PartyFormData {
   email: string
   gstin: string
   gst_registration_status: string
-  gst_enabled: boolean
+  gst_status: 'GST' | 'Non-GST' | 'Exempted'
   billing_address_line1: string
   billing_address_line2: string
   billing_city: string
@@ -62,7 +62,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
     email: '',
     gstin: '',
     gst_registration_status: 'GST not registered',
-    gst_enabled: true,
+    gst_status: 'GST',
     billing_address_line1: '',
     billing_address_line2: '',
     billing_city: '',
@@ -100,7 +100,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
           email: party.email || '',
           gstin: party.gstin || '',
           gst_registration_status: party.gst_registration_status,
-          gst_enabled: party.gst_enabled !== undefined ? party.gst_enabled : true,
+          gst_status: party.gst_enabled ? 'GST' : 'Non-GST',
           billing_address_line1: party.billing_address_line1 || '',
           billing_address_line2: party.billing_address_line2 || '',
           billing_city: party.billing_city || '',
@@ -165,7 +165,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
         email: formData.email || null,
         gstin: formData.gstin || null,
         gst_registration_status: formData.gst_registration_status,
-        gst_enabled: formData.gst_enabled,
+        gst_enabled: formData.gst_status === 'GST',
         billing_address_line1: formData.billing_address_line1,
         billing_address_line2: formData.billing_address_line2 || null,
         billing_city: formData.billing_city,
@@ -331,17 +331,21 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
             </h3>
             <div style={formStyles.grid3Col}>
               <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>GST Enabled</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <input
-                    type="checkbox"
-                    checked={formData.gst_enabled}
-                    onChange={(e) => handleInputChange('gst_enabled', e.target.checked)}
-                    style={{ width: '20px', height: '20px' }}
-                  />
-                  <span style={{ fontSize: '14px', color: '#666' }}>
-                    {formData.gst_enabled ? 'GST will be calculated' : 'No GST calculation'}
-                  </span>
+                <label style={formStyles.label}>GST Status *</label>
+                <select
+                  value={formData.gst_status}
+                  onChange={(e) => handleInputChange('gst_status', e.target.value as 'GST' | 'Non-GST' | 'Exempted')}
+                  style={formStyles.select}
+                  required
+                >
+                  <option value="GST">GST</option>
+                  <option value="Non-GST">Non-GST</option>
+                  <option value="Exempted">Exempted</option>
+                </select>
+                <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+                  {formData.gst_status === 'GST' ? 'GST will be calculated on invoices' : 
+                   formData.gst_status === 'Non-GST' ? 'No GST calculation for this party' :
+                   'GST exempted transactions'}
                 </div>
               </div>
               <div style={formStyles.formGroup}>
@@ -352,7 +356,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
                   onChange={(e) => handleInputChange('gstin', e.target.value)}
                   style={formStyles.input}
                   placeholder="22AAAAA0000A1Z5"
-                  disabled={!formData.gst_enabled}
+                  disabled={formData.gst_status !== 'GST'}
                 />
               </div>
               <div style={formStyles.formGroup}>
@@ -361,7 +365,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
                   value={formData.gst_registration_status}
                   onChange={(e) => handleInputChange('gst_registration_status', e.target.value)}
                   style={formStyles.select}
-                  disabled={!formData.gst_enabled}
+                  disabled={formData.gst_status !== 'GST'}
                 >
                   <option value="GST not registered">GST not registered</option>
                   <option value="GST registered">GST registered</option>

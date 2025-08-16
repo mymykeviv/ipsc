@@ -95,11 +95,13 @@ The IPSC application is a web-based, platform-agnostic system for digitizing and
 - `/backend/app/cashflow_service.py` — Consolidated cashflow data service
 - `/backend/app/payment_scheduler.py` — Advanced payment tracking and scheduling service
 - `/backend/app/inventory_manager.py` — Advanced inventory management and analytics service
+- `/backend/app/financial_reports.py` — Comprehensive financial reporting service
 - `/scripts/seed_test_data.py` — Comprehensive test data seeding
 - `/tests/backend/test_gst_reports.py` — GST reports test suite
 - `/tests/backend/test_gst_toggle.py` — GST toggle functionality tests
 - `/tests/backend/test_cashflow_integration.py` — Cashflow integration tests
 - `/tests/backend/test_payment_scheduler.py` — Payment scheduler functionality tests
+- `/tests/backend/test_financial_reports.py` — Financial reports functionality tests
 - `/db/` — DB migrations, seed data
 - `/tests/` — Automated tests
 - `/docker-compose.yml` — Local orchestration

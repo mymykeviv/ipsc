@@ -34,6 +34,11 @@ export function Cashflow() {
     }
   }
 
+  // Add manual refresh function
+  const handleRefresh = () => {
+    loadTransactions()
+  }
+
   const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.reference_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -74,6 +79,20 @@ export function Cashflow() {
         borderBottom: '2px solid #e9ecef'
       }}>
         <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Cashflow Transactions</h1>
+        <Button 
+          onClick={handleRefresh}
+          disabled={loading}
+          variant="secondary"
+          style={{ 
+            padding: '8px 16px',
+            fontSize: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          {loading ? '🔄 Refreshing...' : '🔄 Refresh'}
+        </Button>
       </div>
 
       {/* Search and Filters */}

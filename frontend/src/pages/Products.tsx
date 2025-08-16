@@ -1228,6 +1228,9 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
   const [historyLoading, setHistoryLoading] = useState(false)
   const [products, setProducts] = useState<Product[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [historySearchTerm, setHistorySearchTerm] = useState('')
+  const [historyCurrentPage, setHistoryCurrentPage] = useState(1)
+  const [historyItemsPerPage] = useState(10)
   const { forceLogout } = useAuth()
   const handleApiError = createApiErrorHandler(forceLogout)
 
@@ -1260,6 +1263,17 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
     loadProducts()
     loadStockHistory()
   }, [])
+
+  // Filter and paginate stock history
+  const filteredStockHistory = stockHistory.filter(movement => 
+    movement.product_name.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
+    movement.financial_year.toString().includes(historySearchTerm)
+  )
+
+  const historyTotalPages = Math.ceil(filteredStockHistory.length / historyItemsPerPage)
+  const historyStartIndex = (historyCurrentPage - 1) * historyItemsPerPage
+  const historyEndIndex = historyStartIndex + historyItemsPerPage
+  const paginatedStockHistory = filteredStockHistory.slice(historyStartIndex, historyEndIndex)
 
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
@@ -1296,6 +1310,15 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
 
       {error && <ErrorMessage message={error} />}
 
+      {/* Search Bar */}
+      <div style={{ marginBottom: '24px' }}>
+        <SearchBar
+          value={historySearchTerm}
+          onChange={setHistorySearchTerm}
+          placeholder="Search by product name or financial year..."
+        />
+      </div>
+
       {/* Stock Movement Table */}
       <div style={{ 
         border: '1px solid #e9ecef', 
@@ -1321,8 +1344,8 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
                   Loading stock movement history...
                 </td>
               </tr>
-            ) : stockHistory.length > 0 ? (
-              stockHistory.map((movement, index) => (
+            ) : paginatedStockHistory.length > 0 ? (
+              paginatedStockHistory.map((movement, index) => (
                 <tr key={index} style={{ 
                   borderBottom: '1px solid #e9ecef',
                   backgroundColor: 'white'
@@ -1355,6 +1378,50 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {historyTotalPages > 1 && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginTop: '24px', 
+          padding: '16px',
+          border: '1px solid #e9ecef',
+          borderRadius: '8px',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <div style={{ fontSize: '14px', color: '#495057' }}>
+            Showing {historyStartIndex + 1} to {Math.min(historyEndIndex, filteredStockHistory.length)} of {filteredStockHistory.length} movements
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Button 
+              variant="secondary" 
+              onClick={() => setHistoryCurrentPage(Math.max(1, historyCurrentPage - 1))}
+              disabled={historyCurrentPage === 1}
+            >
+              Previous
+            </Button>
+            <span style={{ 
+              padding: '8px 12px', 
+              display: 'flex', 
+              alignItems: 'center',
+              fontSize: '14px',
+              color: '#495057',
+              fontWeight: '500'
+            }}>
+              Page {historyCurrentPage} of {historyTotalPages}
+            </span>
+            <Button 
+              variant="secondary" 
+              onClick={() => setHistoryCurrentPage(Math.min(historyTotalPages, historyCurrentPage + 1))}
+              disabled={historyCurrentPage === historyTotalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div style={{ 
         marginTop: '20px', 

@@ -26,6 +26,7 @@ function Shell() {
     purchases: false,
     customers: false,
     cashflow: false,
+    reporting: false,
     settings: false
   })
 
@@ -255,6 +256,45 @@ function Shell() {
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/expenses/add') ? 'active' : ''}`} to="/expenses/add">
                   Add/Edit Expense
+                </Link>
+              </>
+            )}
+          </div>
+          
+          {/* Reporting Section */}
+          <div className="nav-section">
+            <div 
+              className="nav-section-header" 
+              onClick={() => toggleSection('reporting')}
+              style={{ cursor: 'pointer', userSelect: 'none' }}
+            >
+              📊 Reporting {collapsedSections.reporting ? '▼' : '▶'}
+            </div>
+            {!collapsedSections.reporting && (
+              <>
+                <Link className={`nav-link sub-link ${isActive('/reports/gst') ? 'active' : ''}`} to="/reports/gst">
+                  GST Reports (GSTR-1 & GSTR-3B)
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/reports/cashflow') ? 'active' : ''}`} to="/reports/cashflow">
+                  Cashflow Reports
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/reports/income') ? 'active' : ''}`} to="/reports/income">
+                  Income Reports
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/reports/expenses') ? 'active' : ''}`} to="/reports/expenses">
+                  Expense Reports
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/reports/inventory') ? 'active' : ''}`} to="/reports/inventory">
+                  Inventory Reports
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/reports/purchases') ? 'active' : ''}`} to="/reports/purchases">
+                  Purchase Reports
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/reports/payments') ? 'active' : ''}`} to="/reports/payments">
+                  Payment Reports
+                </Link>
+                <Link className={`nav-link sub-link ${isActive('/reports/financial') ? 'active' : ''}`} to="/reports/financial">
+                  Financial Reports (P&L, Balance Sheet)
                 </Link>
               </>
             )}
