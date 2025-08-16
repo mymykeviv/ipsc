@@ -102,6 +102,7 @@ class Invoice(Base):
     # Invoice Details
     invoice_type: Mapped[str] = mapped_column(String(20), nullable=False, default="Invoice")  # Invoice, Credit Note, Debit Note
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="INR")  # INR, USD, EUR, GBP, etc.
+    exchange_rate: Mapped[Numeric] = mapped_column(Numeric(10, 4), nullable=False, default=1.0)  # Exchange rate to INR
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="Draft")  # Draft, Sent, Paid, Overdue, Partially Paid
     
     # GST Compliance Fields
@@ -297,5 +298,61 @@ class AuditTrail(Base):
     new_values: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON of new values
     ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)  # IPv4 or IPv6
     user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class RecurringInvoiceTemplate(Base):
+    __tablename__ = "recurring_invoice_templates"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    customer_id: Mapped[int] = mapped_column(ForeignKey("parties.id"), nullable=False)
+    supplier_id: Mapped[int] = mapped_column(ForeignKey("parties.id"), nullable=False)
+    
+    # Recurrence Settings
+    recurrence_type: Mapped[str] = mapped_column(String(20), nullable=False)  # weekly, monthly, yearly
+    recurrence_interval: Mapped[int] = mapped_column(Integer, nullable=False, default=1)  # every X weeks/months/years
+    start_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    end_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)  # null for indefinite
+    next_generation_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    
+    # Invoice Settings
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="INR")
+    exchange_rate: Mapped[Numeric] = mapped_column(Numeric(10, 4), nullable=False, default=1.0)
+    terms: Mapped[str] = mapped_column(String(20), nullable=False, default="Due on Receipt")
+    place_of_supply: Mapped[str] = mapped_column(String(100), nullable=False)
+    place_of_supply_state_code: Mapped[str] = mapped_column(String(10), nullable=False)
+    bill_to_address: Mapped[str] = mapped_column(String(200), nullable=False)
+    ship_to_address: Mapped[str] = mapped_column(String(200), nullable=False)
+    notes: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    
+    # Status
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class RecurringInvoiceTemplateItem(Base):
+    __tablename__ = "recurring_invoice_template_items"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    template_id: Mapped[int] = mapped_column(ForeignKey("recurring_invoice_templates.id"), nullable=False)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
+    description: Mapped[str] = mapped_column(String(200), nullable=False)
+    hsn_code: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    qty: Mapped[float] = mapped_column(Float, nullable=False)
+    rate: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    discount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    discount_type: Mapped[str] = mapped_column(String(20), nullable=False, default="Percentage")
+    gst_rate: Mapped[float] = mapped_column(Float, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class RecurringInvoice(Base):
+    __tablename__ = "recurring_invoices"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    template_id: Mapped[int] = mapped_column(ForeignKey("recurring_invoice_templates.id"), nullable=False)
+    invoice_id: Mapped[int] = mapped_column(ForeignKey("invoices.id"), nullable=False)
+    generation_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    due_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="Generated")  # Generated, Sent, Paid
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 

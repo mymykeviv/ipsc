@@ -7,10 +7,12 @@ from datetime import datetime, timedelta
 
 from .auth import authenticate_user, create_access_token, get_current_user, require_role
 from .db import get_db
-from .models import Product, User, Party, CompanySettings, Invoice, InvoiceItem, StockLedgerEntry, Purchase, PurchaseItem, Payment, PurchasePayment, Expense, CashflowTransaction, AuditTrail
+from .models import Product, User, Party, CompanySettings, Invoice, InvoiceItem, StockLedgerEntry, Purchase, PurchaseItem, Payment, PurchasePayment, Expense, CashflowTransaction, AuditTrail, RecurringInvoiceTemplate, RecurringInvoiceTemplateItem, RecurringInvoice
 from .audit import AuditService
 from .gst import money, split_gst
 from .gst_reports import generate_gstr1_report, generate_gstr3b_report
+from .currency import get_exchange_rate, get_supported_currencies, format_currency
+from .recurring_invoices import RecurringInvoiceService, generate_recurring_invoices
 from decimal import Decimal
 from .emailer import send_email, create_invoice_email_template, create_purchase_email_template
 from fastapi import Query
@@ -390,6 +392,7 @@ class InvoiceOut(BaseModel):
     # Invoice Details
     invoice_type: str
     currency: str
+    exchange_rate: Decimal
     status: str
     
     # GST Compliance Fields
@@ -434,6 +437,7 @@ class InvoiceCreate(BaseModel):
     # Invoice Details
     invoice_type: str = "Invoice"
     currency: str = "INR"
+    exchange_rate: Decimal = Decimal('1.0')
     
     # GST Compliance Fields
     place_of_supply: str
@@ -559,6 +563,7 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
         terms=payload.terms,
         invoice_type=payload.invoice_type,
         currency=payload.currency,
+        exchange_rate=payload.exchange_rate if hasattr(payload, 'exchange_rate') else Decimal('1.0'),
         place_of_supply=payload.place_of_supply,
         place_of_supply_state_code=payload.place_of_supply_state_code,
         eway_bill_number=payload.eway_bill_number,
@@ -3756,6 +3761,124 @@ class StockMovementOut(BaseModel):
         from_attributes = True
 
 
+# Advanced Invoice Features - Pydantic Models
+class RecurringInvoiceTemplateCreate(BaseModel):
+    name: str
+    customer_id: int
+    supplier_id: int
+    recurrence_type: str  # weekly, monthly, yearly
+    recurrence_interval: int = 1
+    start_date: str
+    end_date: str | None = None
+    currency: str = "INR"
+    exchange_rate: Decimal = Decimal('1.0')
+    terms: str = "Due on Receipt"
+    place_of_supply: str
+    place_of_supply_state_code: str
+    bill_to_address: str
+    ship_to_address: str
+    notes: str | None = None
+
+    @validator('recurrence_type')
+    def validate_recurrence_type(cls, v):
+        if v not in ['weekly', 'monthly', 'yearly']:
+            raise ValueError('Recurrence type must be weekly, monthly, or yearly')
+        return v
+
+    @validator('currency')
+    def validate_currency(cls, v):
+        supported_currencies = get_supported_currencies()
+        if v.upper() not in supported_currencies:
+            raise ValueError(f'Currency {v} is not supported')
+        return v.upper()
+
+
+class RecurringInvoiceTemplateItemCreate(BaseModel):
+    product_id: int
+    description: str
+    hsn_code: str | None = None
+    qty: float
+    rate: Decimal
+    discount: Decimal = Decimal('0')
+    discount_type: str = "Percentage"
+    gst_rate: float
+
+    @validator('discount_type')
+    def validate_discount_type(cls, v):
+        if v not in ['Percentage', 'Fixed']:
+            raise ValueError('Discount type must be Percentage or Fixed')
+        return v
+
+
+class RecurringInvoiceTemplateOut(BaseModel):
+    id: int
+    name: str
+    customer_id: int
+    supplier_id: int
+    recurrence_type: str
+    recurrence_interval: int
+    start_date: datetime
+    end_date: datetime | None
+    next_generation_date: datetime
+    currency: str
+    exchange_rate: Decimal
+    terms: str
+    place_of_supply: str
+    place_of_supply_state_code: str
+    bill_to_address: str
+    ship_to_address: str
+    notes: str | None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class RecurringInvoiceTemplateItemOut(BaseModel):
+    id: int
+    template_id: int
+    product_id: int
+    description: str
+    hsn_code: str | None
+    qty: float
+    rate: Decimal
+    discount: Decimal
+    discount_type: str
+    gst_rate: float
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class RecurringInvoiceOut(BaseModel):
+    id: int
+    template_id: int
+    invoice_id: int
+    generation_date: datetime
+    due_date: datetime
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CurrencyInfo(BaseModel):
+    code: str
+    symbol: str
+    name: str
+
+
+class ExchangeRateResponse(BaseModel):
+    from_currency: str
+    to_currency: str
+    rate: float
+    last_updated: datetime
+
+
 @api.get('/stock/movement-history', response_model=list[StockMovementOut])
 def get_stock_movement_history(
     financial_year: str | None = None,
@@ -3887,4 +4010,233 @@ def get_product_stock_movement_history(
         ))
     
     return movements
+
+
+# Advanced Invoice Features - API Endpoints
+
+@api.get('/currencies', response_model=list[CurrencyInfo])
+def get_currencies(_: User = Depends(get_current_user)):
+    """Get list of supported currencies"""
+    supported_currencies = get_supported_currencies()
+    currencies = []
+    for code, info in supported_currencies.items():
+        currencies.append(CurrencyInfo(
+            code=code,
+            symbol=info['symbol'],
+            name=info['name']
+        ))
+    return currencies
+
+
+@api.get('/exchange-rate/{from_currency}/{to_currency}', response_model=ExchangeRateResponse)
+def get_exchange_rate_endpoint(
+    from_currency: str,
+    to_currency: str = "INR",
+    _: User = Depends(get_current_user)
+):
+    """Get exchange rate between two currencies"""
+    try:
+        rate = get_exchange_rate(from_currency.upper(), to_currency.upper())
+        return ExchangeRateResponse(
+            from_currency=from_currency.upper(),
+            to_currency=to_currency.upper(),
+            rate=rate,
+            last_updated=datetime.utcnow()
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@api.post('/recurring-invoice-templates', response_model=RecurringInvoiceTemplateOut, status_code=status.HTTP_201_CREATED)
+def create_recurring_invoice_template(
+    payload: RecurringInvoiceTemplateCreate,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new recurring invoice template"""
+    # Validate customer and supplier exist
+    customer = db.query(Party).filter(Party.id == payload.customer_id).first()
+    supplier = db.query(Party).filter(Party.id == payload.supplier_id).first()
+    
+    if not customer:
+        raise HTTPException(status_code=400, detail='Invalid customer')
+    if not supplier:
+        raise HTTPException(status_code=400, detail='Invalid supplier')
+    
+    # Calculate next generation date
+    start_date = datetime.fromisoformat(payload.start_date.replace('Z', '+00:00'))
+    next_generation_date = start_date
+    
+    template_data = payload.dict()
+    template_data['start_date'] = start_date
+    template_data['next_generation_date'] = next_generation_date
+    
+    if payload.end_date:
+        template_data['end_date'] = datetime.fromisoformat(payload.end_date.replace('Z', '+00:00'))
+    
+    service = RecurringInvoiceService(db)
+    template = service.create_template(template_data)
+    
+    return template
+
+
+@api.post('/recurring-invoice-templates/{template_id}/items', response_model=RecurringInvoiceTemplateItemOut, status_code=status.HTTP_201_CREATED)
+def add_recurring_invoice_template_item(
+    template_id: int,
+    payload: RecurringInvoiceTemplateItemCreate,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Add an item to a recurring invoice template"""
+    # Validate template exists
+    service = RecurringInvoiceService(db)
+    template = service.get_template_by_id(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail='Template not found')
+    
+    # Validate product exists
+    product = db.query(Product).filter(Product.id == payload.product_id).first()
+    if not product:
+        raise HTTPException(status_code=400, detail='Invalid product')
+    
+    item = service.add_template_item(template_id, payload.dict())
+    return item
+
+
+@api.get('/recurring-invoice-templates', response_model=list[RecurringInvoiceTemplateOut])
+def get_recurring_invoice_templates(
+    active_only: bool = True,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all recurring invoice templates"""
+    service = RecurringInvoiceService(db)
+    if active_only:
+        templates = service.get_active_templates()
+    else:
+        templates = db.query(RecurringInvoiceTemplate).all()
+    
+    return templates
+
+
+@api.get('/recurring-invoice-templates/{template_id}', response_model=RecurringInvoiceTemplateOut)
+def get_recurring_invoice_template(
+    template_id: int,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get a specific recurring invoice template"""
+    service = RecurringInvoiceService(db)
+    template = service.get_template_by_id(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail='Template not found')
+    
+    return template
+
+
+@api.get('/recurring-invoice-templates/{template_id}/items', response_model=list[RecurringInvoiceTemplateItemOut])
+def get_recurring_invoice_template_items(
+    template_id: int,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all items for a recurring invoice template"""
+    service = RecurringInvoiceService(db)
+    template = service.get_template_by_id(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail='Template not found')
+    
+    items = service.get_template_items(template_id)
+    return items
+
+
+@api.put('/recurring-invoice-templates/{template_id}', response_model=RecurringInvoiceTemplateOut)
+def update_recurring_invoice_template(
+    template_id: int,
+    payload: RecurringInvoiceTemplateCreate,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update a recurring invoice template"""
+    service = RecurringInvoiceService(db)
+    template = service.get_template_by_id(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail='Template not found')
+    
+    # Validate customer and supplier exist
+    customer = db.query(Party).filter(Party.id == payload.customer_id).first()
+    supplier = db.query(Party).filter(Party.id == payload.supplier_id).first()
+    
+    if not customer:
+        raise HTTPException(status_code=400, detail='Invalid customer')
+    if not supplier:
+        raise HTTPException(status_code=400, detail='Invalid supplier')
+    
+    update_data = payload.dict()
+    update_data['start_date'] = datetime.fromisoformat(payload.start_date.replace('Z', '+00:00'))
+    
+    if payload.end_date:
+        update_data['end_date'] = datetime.fromisoformat(payload.end_date.replace('Z', '+00:00'))
+    
+    updated_template = service.update_template(template_id, update_data)
+    return updated_template
+
+
+@api.delete('/recurring-invoice-templates/{template_id}')
+def deactivate_recurring_invoice_template(
+    template_id: int,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Deactivate a recurring invoice template"""
+    service = RecurringInvoiceService(db)
+    success = service.deactivate_template(template_id)
+    if not success:
+        raise HTTPException(status_code=404, detail='Template not found')
+    
+    return {"message": "Template deactivated successfully"}
+
+
+@api.post('/recurring-invoices/generate')
+def generate_recurring_invoices_endpoint(
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate invoices for all due recurring templates"""
+    try:
+        generated_invoices = generate_recurring_invoices(db)
+        return {
+            "message": f"Generated {len(generated_invoices)} invoices",
+            "generated_invoices": [invoice.invoice_no for invoice in generated_invoices]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating invoices: {str(e)}")
+
+
+@api.get('/recurring-invoices', response_model=list[RecurringInvoiceOut])
+def get_recurring_invoices(
+    template_id: int | None = None,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all recurring invoices, optionally filtered by template"""
+    service = RecurringInvoiceService(db)
+    recurring_invoices = service.get_recurring_invoices(template_id)
+    return recurring_invoices
+
+
+@api.put('/recurring-invoices/{recurring_invoice_id}/status')
+def update_recurring_invoice_status(
+    recurring_invoice_id: int,
+    status: str,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update status of a recurring invoice"""
+    service = RecurringInvoiceService(db)
+    success = service.update_recurring_invoice_status(recurring_invoice_id, status)
+    if not success:
+        raise HTTPException(status_code=404, detail='Recurring invoice not found')
+    
+    return {"message": "Status updated successfully"}
 
