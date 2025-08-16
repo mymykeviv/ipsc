@@ -6,12 +6,12 @@ from decimal import Decimal
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 
-from backend.app.models import (
+from app.models import (
     User, Party, Product, CompanySettings, 
     RecurringInvoiceTemplate, RecurringInvoiceTemplateItem, RecurringInvoice
 )
-from backend.app.currency import CurrencyManager, get_exchange_rate, convert_amount, format_currency
-from backend.app.recurring_invoices import RecurringInvoiceService
+from app.currency import CurrencyManager, get_exchange_rate, convert_amount, format_currency
+from app.recurring_invoices import RecurringInvoiceService
 
 
 class TestCurrencyManagement:
