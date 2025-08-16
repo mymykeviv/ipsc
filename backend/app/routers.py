@@ -7,13 +7,14 @@ from datetime import datetime, timedelta
 
 from .auth import authenticate_user, create_access_token, get_current_user, require_role
 from .db import get_db
-from .models import Product, User, Party, CompanySettings, Invoice, InvoiceItem, StockLedgerEntry, Purchase, PurchaseItem, Payment, PurchasePayment, Expense, CashflowTransaction, AuditTrail, RecurringInvoiceTemplate, RecurringInvoiceTemplateItem, RecurringInvoice, PurchaseOrder, PurchaseOrderItem
+from .models import Product, User, Party, CompanySettings, Invoice, InvoiceItem, StockLedgerEntry, Purchase, PurchaseItem, Payment, PurchasePayment, Expense, AuditTrail, RecurringInvoiceTemplate, RecurringInvoiceTemplateItem, RecurringInvoice, PurchaseOrder, PurchaseOrderItem
 from .audit import AuditService
 from .gst import money, split_gst
 from .gst_reports import generate_gstr1_report, generate_gstr3b_report
 from .currency import get_exchange_rate, get_supported_currencies, format_currency
 from .recurring_invoices import RecurringInvoiceService, generate_recurring_invoices
 from .purchase_orders import PurchaseOrderService, convert_po_to_purchase
+from .cashflow_service import CashflowService
 from decimal import Decimal
 from .emailer import send_email, create_invoice_email_template, create_purchase_email_template
 from fastapi import Query
@@ -1043,22 +1044,7 @@ def add_payment(invoice_id: int, payload: PaymentIn, _: User = Depends(get_curre
         elif inv.paid_amount > 0:
             inv.status = "Partially Paid"
         
-        # Create cashflow transaction for the payment
-        customer = db.query(Party).filter(Party.id == inv.customer_id).first()
-        customer_name = customer.name if customer else "Unknown Customer"
-        
-        cashflow_transaction = CashflowTransaction(
-            transaction_date=datetime.utcnow(),
-            type="inflow",  # Invoice payment is an inflow
-            description=f"Payment for Invoice {inv.invoice_no} - {customer_name}",
-            reference_number=payload.reference_number,
-            payment_method=payload.payment_method,
-            amount=money(payload.payment_amount),
-            account_head=payload.account_head,
-            source_type="invoice_payment",
-            source_id=pay.id  # Link to the payment record
-        )
-        db.add(cashflow_transaction)
+        # Cashflow transaction is now handled by the source table (Payment) directly
         
         db.commit()
         return {"id": pay.id}
@@ -2682,76 +2668,7 @@ def delete_expense(expense_id: int, _: User = Depends(get_current_user), db: Ses
     return {"message": "Expense deleted successfully"}
 
 
-# Cashflow Summary
-@api.get('/cashflow/summary')
-def get_cashflow_summary(
-    start_date: str | None = None,
-    end_date: str | None = None,
-    _: User = Depends(get_current_user), 
-    db: Session = Depends(get_db)
-):
-    # Set default date range if not provided (current month)
-    if not start_date:
-        start_date = datetime.now().replace(day=1).isoformat()
-    if not end_date:
-        end_date = datetime.now().isoformat()
-    
-    start_dt = datetime.fromisoformat(start_date)
-    end_dt = datetime.fromisoformat(end_date)
-    
-    # Get income from invoices
-    income_query = db.query(Invoice).filter(
-        Invoice.date >= start_dt,
-        Invoice.date <= end_dt
-    )
-    total_income = float(sum([inv.grand_total for inv in income_query.all()], 0))
-    
-    # Get expenses
-    expense_query = db.query(Expense).filter(
-        Expense.expense_date >= start_dt,
-        Expense.expense_date <= end_dt
-    )
-    total_expenses = float(sum([exp.total_amount for exp in expense_query.all()], 0))
-    
-    # Get purchase payments (expenses)
-    # Use date() for comparison to ignore time component
-    purchase_payments_query = db.query(PurchasePayment).filter(
-        func.date(PurchasePayment.payment_date) >= func.date(start_dt),
-        func.date(PurchasePayment.payment_date) <= func.date(end_dt)
-    )
-    purchase_payments = purchase_payments_query.all()
-    total_purchase_payments = float(sum([pp.payment_amount for pp in purchase_payments], 0))
-    
-    # Get invoice payments (income)
-    invoice_payments_query = db.query(Payment).filter(
-        Payment.payment_date >= start_dt,
-        Payment.payment_date <= end_dt
-    )
-    total_invoice_payments = float(sum([p.payment_amount for p in invoice_payments_query.all()], 0))
-    
-    # Calculate net cashflow
-    net_cashflow = total_invoice_payments - total_expenses - total_purchase_payments
-    
-    return {
-        "period": {
-            "start_date": start_date,
-            "end_date": end_date
-        },
-        "income": {
-            "total_invoice_amount": total_income,
-            "total_payments_received": total_invoice_payments
-        },
-        "expenses": {
-            "total_expenses": total_expenses,
-            "total_purchase_payments": total_purchase_payments,
-            "total_outflow": total_expenses + total_purchase_payments
-        },
-        "cashflow": {
-            "net_cashflow": net_cashflow,
-            "cash_inflow": total_invoice_payments,
-            "cash_outflow": total_expenses + total_purchase_payments
-        }
-    }
+# Cashflow Summary - Replaced by consolidated service
 
 
 class PaymentIn(BaseModel):
@@ -2833,22 +2750,7 @@ def add_purchase_payment(purchase_id: int, payload: PurchasePaymentIn, _: User =
         elif purchase.paid_amount > 0:
             purchase.status = "Partially Paid"
         
-        # Create cashflow transaction for the payment
-        vendor = db.query(Party).filter(Party.id == purchase.vendor_id).first()
-        vendor_name = vendor.name if vendor else "Unknown Vendor"
-        
-        cashflow_transaction = CashflowTransaction(
-            transaction_date=datetime.utcnow(),
-            type="outflow",  # Payment is an outflow
-            description=f"Payment for Purchase {purchase.purchase_no} - {vendor_name}",
-            reference_number=payload.reference_number,
-            payment_method=payload.method,
-            amount=money(payload.amount),
-            account_head=payload.account_head,
-            source_type="purchase_payment",
-            source_id=pay.id  # Link to the payment record
-        )
-        db.add(cashflow_transaction)
+        # Cashflow transaction is now handled by the source table (PurchasePayment) directly
         
         db.commit()
         return {"id": pay.id}
@@ -3215,45 +3117,24 @@ def toggle_party(party_id: int, _: User = Depends(get_current_user), db: Session
     return party
 
 
-# Cashflow Transaction Management
-class CashflowTransactionOut(BaseModel):
-    id: int
-    transaction_date: str
-    type: str
-    description: str
-    reference_number: str | None
-    payment_method: str
-    amount: float
-    account_head: str
-    source_type: str | None
-    source_id: int | None
-    created_at: str
-    updated_at: str
-
-    class Config:
-        from_attributes = True
-
-    @validator('transaction_date', 'created_at', 'updated_at', pre=True)
-    @classmethod
-    def convert_datetime_to_string(cls, v):
-        if isinstance(v, datetime):
-            return v.isoformat()
-        return v
+# Cashflow Management - Using consolidated service
+@api.get('/cashflow/summary')
+def get_cashflow_summary(
+    start_date: str | None = None,
+    end_date: str | None = None,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get cashflow summary for dashboard widgets"""
+    service = CashflowService(db)
+    
+    start_dt = datetime.fromisoformat(start_date).date() if start_date else None
+    end_dt = datetime.fromisoformat(end_date).date() if end_date else None
+    
+    return service.get_cashflow_summary(start_dt, end_dt)
 
 
-class CashflowTransactionCreate(BaseModel):
-    transaction_date: str
-    type: str  # inflow, outflow
-    description: str
-    reference_number: str | None = None
-    payment_method: str
-    amount: float
-    account_head: str
-    source_type: str | None = None
-    source_id: int | None = None
-
-
-@api.get('/cashflow/transactions', response_model=list[CashflowTransactionOut])
+@api.get('/cashflow/transactions')
 def get_cashflow_transactions(
     search: str | None = None,
     type_filter: str | None = None,
@@ -3264,61 +3145,52 @@ def get_cashflow_transactions(
     _: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get cashflow transactions with filtering and pagination"""
-    query = db.query(CashflowTransaction)
+    """Get consolidated cashflow transactions from all source tables"""
+    service = CashflowService(db)
     
-    # Apply filters
-    if search:
-        search_filter = (
-            CashflowTransaction.description.ilike(f"%{search}%") |
-            CashflowTransaction.reference_number.ilike(f"%{search}%") |
-            CashflowTransaction.payment_method.ilike(f"%{search}%")
-        )
-        query = query.filter(search_filter)
+    start_dt = datetime.fromisoformat(start_date).date() if start_date else None
+    end_dt = datetime.fromisoformat(end_date).date() if end_date else None
     
-    if type_filter and type_filter in ['inflow', 'outflow']:
-        query = query.filter(CashflowTransaction.type == type_filter)
-    
-    if start_date:
-        query = query.filter(CashflowTransaction.transaction_date >= datetime.fromisoformat(start_date))
-    
-    if end_date:
-        query = query.filter(CashflowTransaction.transaction_date <= datetime.fromisoformat(end_date))
-    
-    # Apply pagination
-    offset = (page - 1) * limit
-    transactions = query.order_by(CashflowTransaction.transaction_date.desc()).offset(offset).limit(limit).all()
-    
-    return transactions
+    return service.get_cashflow_transactions(
+        search=search,
+        type_filter=type_filter,
+        start_date=start_dt,
+        end_date=end_dt,
+        page=page,
+        limit=limit
+    )
 
 
-@api.post('/cashflow/transactions', response_model=CashflowTransactionOut, status_code=status.HTTP_201_CREATED)
-def create_cashflow_transaction(
-    payload: CashflowTransactionCreate,
+@api.get('/cashflow/pending-payments')
+def get_pending_payments(
     _: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Create a new cashflow transaction"""
-    if payload.type not in ['inflow', 'outflow']:
-        raise HTTPException(status_code=400, detail="Type must be 'inflow' or 'outflow'")
-    
-    transaction = CashflowTransaction(
-        transaction_date=datetime.fromisoformat(payload.transaction_date),
-        type=payload.type,
-        description=payload.description,
-        reference_number=payload.reference_number,
-        payment_method=payload.payment_method,
-        amount=money(payload.amount),
-        account_head=payload.account_head,
-        source_type=payload.source_type,
-        source_id=payload.source_id
-    )
-    
-    db.add(transaction)
-    db.commit()
-    db.refresh(transaction)
-    
-    return transaction
+    """Get pending payments for invoices and purchases"""
+    service = CashflowService(db)
+    return service.get_pending_payments()
+
+
+@api.get('/cashflow/financial-year/{financial_year}')
+def get_financial_year_summary(
+    financial_year: str,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get cashflow summary for a specific financial year (e.g., '2024-25')"""
+    service = CashflowService(db)
+    return service.get_financial_year_summary(financial_year)
+
+
+@api.get('/cashflow/expenses/{financial_year}')
+def get_expense_history_by_financial_year(
+    financial_year: str,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get expense history for a specific financial year"""
+    service = CashflowService(db)
+    return service.get_expense_history_by_financial_year(financial_year)
 
 
 

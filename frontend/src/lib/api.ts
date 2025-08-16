@@ -1107,7 +1107,7 @@ export type GstFilingReport = {
 }
 
 export type CashflowTransaction = {
-  id: number
+  id: string
   transaction_date: string
   type: 'inflow' | 'outflow'
   description: string
@@ -1115,8 +1115,19 @@ export type CashflowTransaction = {
   payment_method: string
   amount: number
   account_head: string
+  source_type: string
+  source_id: number
+  reference_document: string
+  party_name: string
   created_at: string
-  updated_at: string
+}
+
+export type CashflowTransactionsResponse = {
+  transactions: CashflowTransaction[]
+  total_count: number
+  page: number
+  limit: number
+  total_pages: number
 }
 
 export async function apiGetCashflowTransactions(): Promise<CashflowTransaction[]> {
@@ -1133,7 +1144,8 @@ export async function apiGetCashflowTransactions(): Promise<CashflowTransaction[
     }
   }
   
-  return r.json()
+  const response: CashflowTransactionsResponse = await r.json()
+  return response.transactions
 }
 
 export async function apiGetGstFilingReport(
