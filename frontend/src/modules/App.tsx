@@ -16,6 +16,8 @@ import { PurchasePayments } from '../pages/PurchasePayments'
 
 import { Logo } from '../components/Logo'
 import { SessionTimer } from '../components/SessionTimer'
+import { GlobalSearch } from '../components/GlobalSearch'
+import { Header } from '../components/Header'
 
 function Shell() {
   const { token, isAuthenticated, logout, expiresAt } = useAuth()
@@ -39,9 +41,7 @@ function Shell() {
     })
   }
 
-  // Auto-expand active section based on current location - DISABLED
-  // All sections remain collapsed by default after login
-  /*
+  // Auto-expand active section based on current location - ENABLED
   useEffect(() => {
     const path = location.pathname
     const newState = { ...collapsedSections }
@@ -72,7 +72,6 @@ function Shell() {
     
     setCollapsedSections(newState)
   }, [location.pathname])
-  */
   
   // Helper function to check if a link is active
   const isActive = (path: string) => {
@@ -144,6 +143,7 @@ function Shell() {
   // If authenticated, show full app with sidebar
   return (
     <div className="app-shell">
+      <Header onLogout={logout} />
       <aside className="sidebar">
         <div className="brand">
           <Logo size="large" />
