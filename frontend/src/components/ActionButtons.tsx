@@ -1,10 +1,10 @@
-import React from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Button } from './Button'
 
 interface ActionButton {
   label: string
   onClick: () => void
-  variant?: 'primary' | 'secondary' | 'danger'
+  variant?: 'primary' | 'secondary'
   icon?: string
   disabled?: boolean
   show?: boolean
@@ -25,100 +25,136 @@ export function ActionButtons({
   maxVisible = 3,
   showDropdown = true
 }: ActionButtonsProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   const allActions = [...primaryActions, ...secondaryActions, ...contextualActions]
   const visibleActions = allActions.slice(0, maxVisible)
   const dropdownActions = allActions.slice(maxVisible)
 
-  return (
-    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-      {/* Primary Actions */}
-      {primaryActions.map((action, index) => (
+  // If we have more than maxVisible actions, show kebab menu
+  if (allActions.length > maxVisible) {
+    return (
+      <div style={{ position: 'relative', display: 'inline-block' }} ref={dropdownRef}>
         <Button
-          key={`primary-${index}`}
-          variant={action.variant || 'primary'}
-          onClick={action.onClick}
-          disabled={action.disabled}
+          variant="secondary"
+          onClick={() => setIsOpen(!isOpen)}
           style={{ 
             fontSize: '12px', 
-            padding: '6px 10px',
+            padding: '6px 8px',
             display: 'flex',
             alignItems: 'center',
-            gap: '4px',
-            minWidth: 'auto'
-          }}
-        >
-          {action.icon && <span>{action.icon}</span>}
-          {action.label}
-        </Button>
-      ))}
-
-      {/* Secondary Actions */}
-      {secondaryActions.map((action, index) => (
-        <Button
-          key={`secondary-${index}`}
-          variant={action.variant || 'secondary'}
-          onClick={action.onClick}
-          disabled={action.disabled}
-          style={{ 
-            fontSize: '12px', 
-            padding: '6px 10px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            minWidth: 'auto'
-          }}
-        >
-          {action.icon && <span>{action.icon}</span>}
-          {action.label}
-        </Button>
-      ))}
-
-      {/* Contextual Actions */}
-      {contextualActions.map((action, index) => (
-        <Button
-          key={`contextual-${index}`}
-          variant={action.variant || 'secondary'}
-          onClick={action.onClick}
-          disabled={action.disabled}
-          style={{ 
-            fontSize: '12px', 
-            padding: '6px 10px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
+            justifyContent: 'center',
             minWidth: 'auto',
-            backgroundColor: action.variant === 'danger' ? '#dc3545' : undefined,
-            color: action.variant === 'danger' ? '#fff' : undefined
+            backgroundColor: '#ffffff',
+            border: '1px solid #dee2e6',
+            color: '#6c757d',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
           }}
         >
-          {action.icon && <span>{action.icon}</span>}
+          ⋯
+        </Button>
+        
+        {isOpen && (
+          <div style={{
+            position: 'absolute',
+            top: '100%',
+            right: '0',
+            zIndex: 1000,
+            backgroundColor: '#ffffff',
+            border: '1px solid #dee2e6',
+            borderRadius: '6px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            minWidth: '160px',
+            padding: '4px 0',
+            marginTop: '4px'
+          }}>
+            {allActions.map((action, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  action.onClick()
+                  setIsOpen(false)
+                }}
+                disabled={action.disabled}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  textAlign: 'left',
+                  fontSize: '13px',
+                  cursor: action.disabled ? 'not-allowed' : 'pointer',
+                  color: action.disabled ? '#adb5bd' : '#495057',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'background-color 0.2s ease',
+                  fontWeight: '400'
+                }}
+                onMouseEnter={(e) => {
+                  if (!action.disabled) {
+                    e.currentTarget.style.backgroundColor = '#f8f9fa'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+              >
+                {action.icon && <span style={{ fontSize: '14px', opacity: '0.7' }}>{action.icon}</span>}
+                {action.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // If we have few actions, show them as small buttons
+  return (
+    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
+      {allActions.map((action, index) => (
+        <Button
+          key={index}
+          variant={action.variant || 'secondary'}
+          onClick={action.onClick}
+          disabled={action.disabled}
+          style={{ 
+            fontSize: '11px', 
+            padding: '4px 8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '3px',
+            minWidth: 'auto',
+            backgroundColor: '#ffffff',
+            border: '1px solid #dee2e6',
+            color: '#6c757d',
+            borderRadius: '3px',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+            fontWeight: '400'
+          }}
+        >
+          {action.icon && <span style={{ fontSize: '12px', opacity: '0.7' }}>{action.icon}</span>}
           {action.label}
         </Button>
       ))}
-
-      {/* Dropdown for additional actions */}
-      {showDropdown && dropdownActions.length > 0 && (
-        <div style={{ position: 'relative', display: 'inline-block' }}>
-          <Button
-            variant="secondary"
-            style={{ 
-              fontSize: '12px', 
-              padding: '6px 10px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              minWidth: 'auto'
-            }}
-            onClick={() => {
-              // Toggle dropdown - this would need state management
-              console.log('Toggle dropdown')
-            }}
-          >
-            ⋯ More
-          </Button>
-          {/* Dropdown menu would be implemented here */}
-        </div>
-      )}
     </div>
   )
 }
@@ -133,11 +169,11 @@ export const ActionButtonSets = {
     onToggle: () => void
   }) => ({
     primaryActions: [
-      { label: 'Edit', onClick: actions.onEdit, icon: '✏️', variant: 'primary' as const }
+      { label: 'Edit', onClick: actions.onEdit, icon: '✏️', variant: 'secondary' as const }
     ],
     secondaryActions: [
-      { label: 'Stock', onClick: actions.onStock, icon: '📦', variant: 'secondary' as const },
-      { label: 'History', onClick: actions.onHistory, icon: '📊', variant: 'secondary' as const }
+      { label: 'Stock Adjustment', onClick: actions.onStock, icon: '📦', variant: 'secondary' as const },
+      { label: 'View History', onClick: actions.onHistory, icon: '📊', variant: 'secondary' as const }
     ],
     contextualActions: [
       { 
@@ -159,8 +195,8 @@ export const ActionButtonSets = {
     onDelete: () => void
   }) => ({
     primaryActions: [
-      { label: 'Edit', onClick: actions.onEdit, icon: '✏️', variant: 'primary' as const },
-      { label: 'Add Payment', onClick: actions.onPayment, icon: '💰', variant: 'primary' as const }
+      { label: 'Edit', onClick: actions.onEdit, icon: '✏️', variant: 'secondary' as const },
+      { label: 'Add Payment', onClick: actions.onPayment, icon: '💰', variant: 'secondary' as const }
     ],
     secondaryActions: [
       { label: 'Print', onClick: actions.onPrint, icon: '🖨️', variant: 'secondary' as const },
@@ -170,7 +206,7 @@ export const ActionButtonSets = {
       ...(item.status === 'Draft' ? [
         { label: 'Mark as Sent', onClick: actions.onMarkSent, icon: '📤', variant: 'secondary' as const }
       ] : []),
-      { label: 'Delete', onClick: actions.onDelete, icon: '🗑️', variant: 'danger' as const, show: item.status === 'Draft' }
+      { label: 'Delete', onClick: actions.onDelete, icon: '🗑️', variant: 'secondary' as const, show: item.status === 'Draft' }
     ]
   }),
 
@@ -182,12 +218,12 @@ export const ActionButtonSets = {
     onDelete: () => void
   }) => ({
     primaryActions: [
-      { label: 'Edit', onClick: actions.onEdit, icon: '✏️', variant: 'primary' as const },
-      { label: 'Add Payment', onClick: actions.onPayment, icon: '💰', variant: 'primary' as const }
+      { label: 'Edit', onClick: actions.onEdit, icon: '✏️', variant: 'secondary' as const },
+      { label: 'Add Payment', onClick: actions.onPayment, icon: '💰', variant: 'secondary' as const }
     ],
     contextualActions: [
       ...(item.status === 'Cancelled' ? [
-        { label: 'Delete', onClick: actions.onDelete, icon: '🗑️', variant: 'danger' as const }
+        { label: 'Delete', onClick: actions.onDelete, icon: '🗑️', variant: 'secondary' as const }
       ] : [
         { label: 'Cancel Purchase', onClick: actions.onCancel, icon: '❌', variant: 'secondary' as const }
       ])
@@ -200,10 +236,10 @@ export const ActionButtonSets = {
     onDelete: () => void
   }) => ({
     primaryActions: [
-      { label: 'Edit', onClick: actions.onEdit, icon: '✏️', variant: 'primary' as const }
+      { label: 'Edit', onClick: actions.onEdit, icon: '✏️', variant: 'secondary' as const }
     ],
     contextualActions: [
-      { label: 'Delete', onClick: actions.onDelete, icon: '🗑️', variant: 'danger' as const }
+      { label: 'Delete', onClick: actions.onDelete, icon: '🗑️', variant: 'secondary' as const }
     ]
   }),
 
@@ -213,7 +249,7 @@ export const ActionButtonSets = {
     onToggle: () => void
   }) => ({
     primaryActions: [
-      { label: 'Edit', onClick: actions.onEdit, icon: '✏️', variant: 'primary' as const }
+      { label: 'Edit', onClick: actions.onEdit, icon: '✏️', variant: 'secondary' as const }
     ],
     contextualActions: [
       { 

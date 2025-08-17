@@ -570,6 +570,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
                       onMarkSent: () => handleMarkAsSent(invoice.id),
                       onDelete: () => handleDelete(invoice.id)
                     })}
+                    maxVisible={1}
                   />
                 </td>
                   </tr>

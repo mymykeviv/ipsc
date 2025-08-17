@@ -1154,6 +1154,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                       onHistory: () => navigate(`/products/stock-history?product=${product.id}`),
                       onToggle: () => handleToggleProduct(product.id)
                     })}
+                    maxVisible={1}
                   />
                 </td>
               </tr>

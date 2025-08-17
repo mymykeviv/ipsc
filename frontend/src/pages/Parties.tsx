@@ -1194,6 +1194,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
                         onEdit: () => navigate(`/${party.type === 'vendor' ? 'vendors' : 'customers'}/edit/${party.id}`),
                         onToggle: () => handleToggleParty(party)
                       })}
+                      maxVisible={1}
                     />
                   </td>
                 </tr>

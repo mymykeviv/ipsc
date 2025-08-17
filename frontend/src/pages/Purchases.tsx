@@ -449,6 +449,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
                       onCancel: () => handleCancelPurchase(purchase.id),
                       onDelete: () => handleDelete(purchase.id)
                     })}
+                    maxVisible={1}
                   />
                 </td>
               </tr>

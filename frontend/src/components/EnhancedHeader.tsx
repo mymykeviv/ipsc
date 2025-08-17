@@ -118,12 +118,13 @@ export function EnhancedHeader({
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              backgroundColor: '#6c757d',
-              color: '#fff',
-              border: 'none',
+              backgroundColor: '#ffffff',
+              color: '#6c757d',
+              border: '1px solid #dee2e6',
               borderRadius: '6px',
               fontWeight: '500',
-              transition: 'background-color 0.2s ease'
+              transition: 'all 0.2s ease',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
             }}
           >
             {loading ? '🔄 Refreshing...' : '🔄 Refresh'}
@@ -142,12 +143,12 @@ export function EnhancedHeader({
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              backgroundColor: primaryAction.variant === 'secondary' ? '#17a2b8' : '#28a745',
-              color: '#fff',
-              border: 'none',
+              backgroundColor: '#007bff',
+              color: '#ffffff',
+              border: '1px solid #007bff',
               borderRadius: '6px',
               fontWeight: '600',
-              boxShadow: primaryAction.variant === 'secondary' ? '0 2px 4px rgba(23,162,184,0.3)' : '0 2px 4px rgba(40,167,69,0.3)',
+              boxShadow: '0 2px 4px rgba(0,123,255,0.3)',
               transition: 'all 0.2s ease'
             }}
           >
@@ -174,12 +175,13 @@ export function EnhancedHeader({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  backgroundColor: action.variant === 'primary' ? '#007bff' : '#ffc107',
-                  color: action.variant === 'primary' ? '#fff' : '#856404',
-                  border: 'none',
+                  backgroundColor: '#ffffff',
+                  color: '#6c757d',
+                  border: '1px solid #dee2e6',
                   borderRadius: '6px',
                   fontWeight: '500',
-                  transition: 'background-color 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                 }}
               >
                 {action.icon && <span>{action.icon}</span>}

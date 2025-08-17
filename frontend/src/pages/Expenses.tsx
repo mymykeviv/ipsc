@@ -433,6 +433,7 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
                       onEdit: () => navigate(`/expenses/edit/${expense.id}`),
                       onDelete: () => handleDeleteExpense(expense.id)
                     })}
+                    maxVisible={1}
                   />
                 </td>
               </tr>

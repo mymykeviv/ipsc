@@ -1,6 +1,6 @@
 {
-  "version": "1.47.0",
-  "build_date": "2025-08-17T17:00:00Z",
+  "version": "1.47.1",
+  "build_date": "2025-08-17T17:30:00Z",
   "changes": [
     "Comprehensive UX improvements for Parties page and navigation",
     "Renamed side menu 'Customers / Vendors' to 'Parties' for better clarity",
@@ -21,7 +21,11 @@
     "Created reusable EnhancedHeader component with predefined patterns",
     "Improved visual consistency across all screens",
     "Added icons and better styling to action buttons",
-    "Enhanced user experience with contextual information"
+    "Enhanced user experience with contextual information",
+    "Converted action buttons to kebab menu for cleaner interface",
+    "Implemented uniform professional color scheme across all buttons",
+    "Removed colorful buttons in favor of consistent neutral design",
+    "Enhanced visual consistency with professional appearance"
   ],
   "features": {
     "filter_system": "Enhanced with improved UX and bug fixes",
