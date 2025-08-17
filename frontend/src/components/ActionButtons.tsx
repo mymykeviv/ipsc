@@ -259,5 +259,16 @@ export const ActionButtonSets = {
         variant: 'secondary' as const 
       }
     ]
+  }),
+
+  // Purchase Payments pattern
+  purchasePayments: (item: any, actions: {
+    onViewPurchase: () => void
+    onAddPayment: () => void
+  }) => ({
+    primaryActions: [
+      { label: 'View Purchase', onClick: actions.onViewPurchase, icon: '👁️', variant: 'secondary' as const },
+      { label: 'Add Payment', onClick: actions.onAddPayment, icon: '💰', variant: 'secondary' as const }
+    ]
   })
 }

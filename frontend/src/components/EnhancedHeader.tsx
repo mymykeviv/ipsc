@@ -249,5 +249,14 @@ export const HeaderPatterns = {
     description: 'Manage your customers and vendors with comprehensive filtering and search capabilities',
     count,
     countLabel: 'Total'
+  }),
+
+  // Purchase Payments header
+  purchasePayments: (count: number) => ({
+    title: '💳 Purchase Payments',
+    breadcrumb: 'Purchase Payments',
+    description: 'Track and manage payments for vendor purchases with comprehensive filtering',
+    count,
+    countLabel: 'Payments'
   })
 }

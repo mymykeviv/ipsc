@@ -7,6 +7,8 @@ import { Button } from '../components/Button'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { DateFilter } from '../components/DateFilter'
+import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
+import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 
 interface PurchasePayment {
   id: number
@@ -160,19 +162,14 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
 
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '24px',
-        paddingBottom: '12px',
-        borderBottom: '2px solid #e9ecef'
-      }}>
-        <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Purchase Payments</h1>
-        <Button variant="primary" onClick={() => navigate('/payments/purchase/add')}>
-          Add Payment
-        </Button>
-      </div>
+      <EnhancedHeader
+        {...HeaderPatterns.purchasePayments(purchasePayments.length)}
+        primaryAction={{
+          label: 'Add Payment',
+          onClick: () => navigate('/payments/purchase/add'),
+          icon: '💰'
+        }}
+      />
 
       {error && (
         <div style={{ 
@@ -364,22 +361,13 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
                   </span>
                 </td>
                 <td style={{ padding: '12px' }}>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <Button 
-                      variant="secondary" 
-                      onClick={() => navigate(`/purchases/edit/${payment.purchase_id}`)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                    >
-                      View Purchase
-                    </Button>
-                    <Button 
-                      variant="secondary"
-                      onClick={() => navigate(`/payments/purchase/add/${payment.purchase_id}`)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                    >
-                      Add Payment
-                    </Button>
-                  </div>
+                  <ActionButtons
+                    {...ActionButtonSets.purchasePayments(payment, {
+                      onViewPurchase: () => navigate(`/purchases/edit/${payment.purchase_id}`),
+                      onAddPayment: () => navigate(`/payments/purchase/add/${payment.purchase_id}`)
+                    })}
+                    maxVisible={1}
+                  />
                 </td>
               </tr>
             ))}

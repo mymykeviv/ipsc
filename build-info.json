@@ -1,6 +1,6 @@
 {
-  "version": "1.47.1",
-  "build_date": "2025-08-17T17:30:00Z",
+  "version": "1.47.2",
+  "build_date": "2025-08-17T18:00:00Z",
   "changes": [
     "Comprehensive UX improvements for Parties page and navigation",
     "Renamed side menu 'Customers / Vendors' to 'Parties' for better clarity",
@@ -25,7 +25,10 @@
     "Converted action buttons to kebab menu for cleaner interface",
     "Implemented uniform professional color scheme across all buttons",
     "Removed colorful buttons in favor of consistent neutral design",
-    "Enhanced visual consistency with professional appearance"
+    "Enhanced visual consistency with professional appearance",
+    "Updated Purchase Payments screen with kebab menu and uniform styling",
+    "Added Purchase Payments patterns to ActionButtons and EnhancedHeader components",
+    "Completed uniform styling across all screens in the application"
   ],
   "features": {
     "filter_system": "Enhanced with improved UX and bug fixes",
