@@ -1,29 +1,14 @@
 {
-  "version": "1.37.2",
-  "build_date": "2025-01-14 16:30:00",
-  "git_commit": "6dcd3ef",
-  "deployment_date": "2025-01-14T16:30:00Z",
-  "services": {
-    "backend": "FastAPI v1.0.0",
-    "frontend": "React v1.0.0",
-    "database": "PostgreSQL 16",
-    "mailhog": "MailHog v1.0.1"
-  },
-  "changes": {
-    "critical_fixes": [
-      "Fixed purchase payment save functionality",
-      "Fixed invoice payment links",
-      "Improved test infrastructure"
-    ],
-    "test_coverage": [
-      "Added comprehensive purchase payment tests",
-      "Added comprehensive invoice payment tests",
-      "Created test runner with coverage reporting",
-      "Fixed test database configuration",
-      "Implemented comprehensive automated test suite",
-      "Created detailed manual testing scenarios",
-      "Added E2E workflow testing",
-      "Implemented business logic validation tests"
-    ]
-  }
+  "version": "1.44.0",
+  "buildDate": "2025-08-17T11:30:00Z",
+  "commitHash": "92d20a00",
+  "environment": "development",
+  "features": [
+    "Enhanced Filter System",
+    "4-Column Grid Layout",
+    "Quick Actions Always Visible",
+    "Stock Movement History Filters",
+    "Improved Accessibility",
+    "Compact Filter Design"
+  ]
 }
