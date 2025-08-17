@@ -1,19 +1,19 @@
 {
-  "version": "1.44.4",
-  "build_date": "2025-08-17T11:50:00Z",
+  "version": "1.44.5",
+  "build_date": "2025-08-17T11:55:00Z",
   "changes": [
-    "Fixed clear all filter button to prevent expanding filter section",
-    "Organized documentation into dedicated docs/ folder",
-    "Created comprehensive documentation index and structure",
-    "Fixed Products component add mode loading issue",
-    "Enhanced systematic change management implementation",
-    "Added comprehensive test coverage for filter fixes",
-    "Improved project organization and maintainability"
+    "Fixed Products component issues across all modes (manage, add, edit, stock-adjustment, stock-history)",
+    "Added proper useEffect handling for stock-adjustment and stock-history modes",
+    "Enhanced error handling and authentication checks in Products component",
+    "Added comprehensive debugging and logging for troubleshooting",
+    "Improved loading states and error messages for better user experience",
+    "Fixed async loading issues in all Products component modes"
   ],
   "features": {
     "filter_system": "Enhanced with improved UX and bug fixes",
     "documentation": "Comprehensive organization and structure",
     "testing": "Enhanced test coverage for all fixes",
-    "error_handling": "Robust error handling and user feedback"
+    "error_handling": "Robust error handling and user feedback",
+    "products_component": "Fixed all modes and improved reliability"
   }
 }

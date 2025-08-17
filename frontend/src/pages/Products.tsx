@@ -134,7 +134,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   })
 
   useEffect(() => {
-    console.log('Products useEffect triggered:', { mode, id, loading })
+    console.log('Products useEffect triggered:', { mode, id, loading, token: localStorage.getItem('auth_token') })
     if (mode === 'manage') {
       console.log('Loading products for manage mode')
       loadProducts()
@@ -149,6 +149,18 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       loadVendors().finally(() => {
         setLoading(false)
       })
+    } else if (mode === 'stock-adjustment') {
+      console.log('Setting up stock adjustment mode')
+      setLoading(true)
+      loadProducts()
+      loadVendors()
+      setLoading(false)
+    } else if (mode === 'stock-history') {
+      console.log('Setting up stock history mode')
+      setLoading(true)
+      loadProducts()
+      loadVendors()
+      setLoading(false)
     }
   }, [mode, id])
 
@@ -164,6 +176,16 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     try {
       console.log('loadProducts called')
       setLoading(true)
+      setError(null)
+      
+      // Check if user is authenticated
+      const token = localStorage.getItem('auth_token')
+      if (!token) {
+        console.error('No authentication token found')
+        setError('Authentication required. Please log in.')
+        setLoading(false)
+        return
+      }
       
       // Build filters object
       const filters: ProductFilters = {}
@@ -189,8 +211,8 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       setProducts(data)
     } catch (error: any) {
       console.error('Error loading products:', error)
-      handleApiError(error)
-      setError('Failed to load products')
+      const errorMessage = handleApiError(error)
+      setError(errorMessage)
     } finally {
       console.log('Setting loading to false')
       setLoading(false)
@@ -235,10 +257,18 @@ export function Products({ mode = 'manage' }: ProductsProps) {
 
   const loadVendors = async () => {
     try {
+      console.log('loadVendors called')
+      const token = localStorage.getItem('auth_token')
+      if (!token) {
+        console.error('No authentication token found for vendors')
+        return
+      }
       const data = await apiListParties()
       const vendorData = data.filter(party => party.type === 'vendor')
       setVendors(vendorData)
+      console.log('Vendors loaded:', vendorData)
     } catch (error: any) {
+      console.error('Error loading vendors:', error)
       handleApiError(error)
     }
   }
