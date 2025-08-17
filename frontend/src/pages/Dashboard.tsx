@@ -318,20 +318,25 @@ export function Dashboard() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Quick Actions */}
           <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+            display: 'flex', 
             gap: '16px',
-            maxWidth: '600px'
+            flexWrap: 'wrap',
+            marginBottom: '24px'
           }}>
             <Button 
               onClick={() => navigate('/invoices/add')}
               variant="primary"
               style={{ 
-                padding: '12px 16px', 
-                fontSize: '14px',
+                padding: '16px 24px', 
+                fontSize: '16px',
+                fontWeight: '500',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '12px',
+                minWidth: '180px',
+                justifyContent: 'center',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                transition: 'all 0.2s ease'
               }}
             >
               📄 New Invoice
@@ -340,11 +345,16 @@ export function Dashboard() {
               onClick={() => navigate('/purchases/add')}
               variant="primary"
               style={{ 
-                padding: '12px 16px', 
-                fontSize: '14px',
+                padding: '16px 24px', 
+                fontSize: '16px',
+                fontWeight: '500',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '12px',
+                minWidth: '180px',
+                justifyContent: 'center',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                transition: 'all 0.2s ease'
               }}
             >
               📦 New Purchase
@@ -353,11 +363,16 @@ export function Dashboard() {
               onClick={() => navigate('/products/add')}
               variant="primary"
               style={{ 
-                padding: '12px 16px', 
-                fontSize: '14px',
+                padding: '16px 24px', 
+                fontSize: '16px',
+                fontWeight: '500',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '12px',
+                minWidth: '180px',
+                justifyContent: 'center',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                transition: 'all 0.2s ease'
               }}
             >
               🏷️ Add Product
