@@ -79,133 +79,173 @@ export function DateFilter({ value, onChange, placeholder = 'Select date range',
       <div
         onClick={() => setIsCustomOpen(!isCustomOpen)}
         style={{
-          padding: '10px 16px',
+          padding: '6px 10px', // Reduced padding
           border: '1px solid #ced4da',
-          borderRadius: '6px',
+          borderRadius: '4px', // Reduced border radius
           backgroundColor: 'white',
           cursor: 'pointer',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          minWidth: '200px',
-          fontSize: '14px'
+          minWidth: '160px', // Reduced min width
+          fontSize: '12px', // Reduced font size
+          minHeight: '32px' // Reduced min height
         }}
       >
-        <span style={{ color: value === 'all' ? '#6c757d' : '#495057' }}>
+        <span style={{ 
+          color: value === 'all' ? '#6c757d' : '#495057',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          flex: 1
+        }}>
           {getDisplayValue()}
         </span>
-        <span style={{ color: '#6c757d' }}>▼</span>
+        <span style={{ 
+          color: '#6c757d',
+          fontSize: '10px', // Reduced font size
+          marginLeft: '8px'
+        }}>▼</span>
       </div>
 
       {isCustomOpen && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            backgroundColor: 'white',
-            border: '1px solid #ced4da',
-            borderRadius: '6px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            zIndex: 1000,
-            padding: '16px'
-          }}
-        >
+        <div style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          right: 0,
+          backgroundColor: 'white',
+          border: '1px solid #ced4da',
+          borderRadius: '4px', // Reduced border radius
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          zIndex: 1000,
+          marginTop: '2px' // Reduced margin
+        }}>
           {/* Preset Options */}
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '12px', fontWeight: '600', color: '#6c757d', marginBottom: '8px' }}>
-              Quick Select
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-              {presetOptions.map(option => (
-                <button
-                  key={option.value}
-                  onClick={() => handlePresetChange(option.value)}
-                  style={{
-                    padding: '6px 12px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px',
-                    backgroundColor: value === option.value ? '#007bff' : 'white',
-                    color: value === option.value ? 'white' : '#495057',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    textAlign: 'left'
-                  }}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
+          <div style={{ maxHeight: '150px', overflow: 'auto' }}> {/* Reduced max height */}
+            {presetOptions.map((option) => (
+              <div
+                key={option.value}
+                onClick={() => handlePresetChange(option.value)}
+                style={{
+                  padding: '4px 8px', // Reduced padding
+                  cursor: 'pointer',
+                  fontSize: '11px', // Reduced font size
+                  backgroundColor: value === option.value ? '#e3f2fd' : 'transparent',
+                  color: value === option.value ? '#1976d2' : '#495057',
+                  borderBottom: '1px solid #f8f9fa'
+                }}
+                onMouseEnter={(e) => {
+                  if (value !== option.value) {
+                    e.currentTarget.style.backgroundColor = '#f8f9fa'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (value !== option.value) {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                  }
+                }}
+              >
+                {option.label}
+              </div>
+            ))}
           </div>
 
-          {/* Custom Range */}
-          <div>
-            <div style={{ fontSize: '12px', fontWeight: '600', color: '#6c757d', marginBottom: '8px' }}>
-              Custom Range
-            </div>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-              <input
-                type="date"
-                value={customRange.from}
-                onChange={(e) => setCustomRange(prev => ({ ...prev, from: e.target.value }))}
-                style={{
-                  padding: '6px 8px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  flex: 1
-                }}
-                placeholder="From"
-              />
-              <input
-                type="date"
-                value={customRange.to}
-                onChange={(e) => setCustomRange(prev => ({ ...prev, to: e.target.value }))}
-                style={{
-                  padding: '6px 8px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  flex: 1
-                }}
-                placeholder="To"
-              />
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                onClick={handleCustomRangeApply}
-                disabled={!customRange.from || !customRange.to}
-                style={{
-                  padding: '6px 12px',
-                  border: 'none',
-                  borderRadius: '4px',
-                  backgroundColor: customRange.from && customRange.to ? '#28a745' : '#6c757d',
-                  color: 'white',
-                  cursor: customRange.from && customRange.to ? 'pointer' : 'not-allowed',
-                  fontSize: '12px',
-                  flex: 1
-                }}
-              >
-                Apply
-              </button>
-              <button
-                onClick={handleCustomRangeCancel}
-                style={{
-                  padding: '6px 12px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  backgroundColor: 'white',
+          {/* Custom Range Input */}
+          {isCustomOpen && (
+            <div style={{ 
+              padding: '8px', // Reduced padding
+              borderTop: '1px solid #e9ecef',
+              backgroundColor: '#f8f9fa'
+            }}>
+              <div style={{ marginBottom: '6px' }}> {/* Reduced margin */}
+                <label style={{ 
+                  fontSize: '10px', // Reduced font size
                   color: '#495057',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  flex: 1
-                }}
-              >
-                Cancel
-              </button>
+                  fontWeight: '500',
+                  display: 'block',
+                  marginBottom: '2px' // Reduced margin
+                }}>
+                  From Date:
+                </label>
+                <input
+                  type="date"
+                  value={customRange.from}
+                  onChange={(e) => setCustomRange(prev => ({ ...prev, from: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '3px 6px', // Reduced padding
+                    border: '1px solid #ced4da',
+                    borderRadius: '3px', // Reduced border radius
+                    fontSize: '11px', // Reduced font size
+                    outline: 'none'
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: '6px' }}> {/* Reduced margin */}
+                <label style={{ 
+                  fontSize: '10px', // Reduced font size
+                  color: '#495057',
+                  fontWeight: '500',
+                  display: 'block',
+                  marginBottom: '2px' // Reduced margin
+                }}>
+                  To Date:
+                </label>
+                <input
+                  type="date"
+                  value={customRange.to}
+                  onChange={(e) => setCustomRange(prev => ({ ...prev, to: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '3px 6px', // Reduced padding
+                    border: '1px solid #ced4da',
+                    borderRadius: '3px', // Reduced border radius
+                    fontSize: '11px', // Reduced font size
+                    outline: 'none'
+                  }}
+                />
+              </div>
+              <div style={{ 
+                display: 'flex', 
+                gap: '4px', // Reduced gap
+                marginTop: '6px' // Reduced margin
+              }}>
+                <button
+                  onClick={handleCustomRangeApply}
+                  disabled={!customRange.from || !customRange.to}
+                  style={{
+                    flex: 1,
+                    padding: '4px 8px', // Reduced padding
+                    border: '1px solid #007bff',
+                    borderRadius: '3px', // Reduced border radius
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    cursor: 'pointer',
+                    fontSize: '10px', // Reduced font size
+                    opacity: (!customRange.from || !customRange.to) ? 0.5 : 1
+                  }}
+                >
+                  Apply
+                </button>
+                <button
+                  onClick={handleCustomRangeCancel}
+                  style={{
+                    flex: 1,
+                    padding: '4px 8px', // Reduced padding
+                    border: '1px solid #ced4da',
+                    borderRadius: '3px', // Reduced border radius
+                    backgroundColor: 'white',
+                    color: '#495057',
+                    cursor: 'pointer',
+                    fontSize: '10px' // Reduced font size
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>

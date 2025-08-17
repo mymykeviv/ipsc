@@ -100,91 +100,114 @@ export function FilterDropdown({
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
         style={{
-          padding: '8px 12px',
+          padding: '6px 10px', // Reduced padding
           border: '1px solid #ced4da',
-          borderRadius: '4px',
+          borderRadius: '4px', // Reduced border radius
           backgroundColor: disabled ? '#f8f9fa' : 'white',
           cursor: disabled ? 'not-allowed' : 'pointer',
+          fontSize: '12px', // Reduced font size
+          color: disabled ? '#6c757d' : '#495057',
           display: 'flex',
-          justifyContent: 'space-between',
           alignItems: 'center',
-          minWidth: '160px',
-          fontSize: '13px',
-          opacity: disabled ? 0.6 : 1
+          justifyContent: 'space-between',
+          minHeight: '32px', // Reduced min height
+          transition: 'all 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+          if (!disabled) {
+            e.currentTarget.style.borderColor = '#adb5bd'
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!disabled) {
+            e.currentTarget.style.borderColor = '#ced4da'
+          }
         }}
       >
         <span style={{ 
-          color: (multiple ? (Array.isArray(value) && value.length === 0) : !value) ? '#6c757d' : '#495057' 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          whiteSpace: 'nowrap',
+          flex: 1
         }}>
           {getDisplayValue()}
         </span>
-        <span style={{ color: '#6c757d' }}>▼</span>
+        <span style={{ 
+          marginLeft: '8px', 
+          fontSize: '10px', // Reduced font size
+          color: '#6c757d',
+          transition: 'transform 0.2s ease',
+          transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+        }}>
+          ▼
+        </span>
       </div>
 
       {isOpen && !disabled && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            backgroundColor: 'white',
-            border: '1px solid #ced4da',
-            borderRadius: '6px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            zIndex: 1000,
-            maxHeight: '300px',
-            overflow: 'hidden'
-          }}
-        >
-          {/* Search Input */}
+        <div style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          right: 0,
+          backgroundColor: 'white',
+          border: '1px solid #ced4da',
+          borderRadius: '4px', // Reduced border radius
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          zIndex: 1000,
+          maxHeight: '200px', // Reduced max height
+          overflow: 'auto',
+          marginTop: '2px' // Reduced margin
+        }}>
           {searchable && (
-            <div style={{ padding: '12px', borderBottom: '1px solid #e9ecef' }}>
+            <div style={{ padding: '8px' }}> {/* Reduced padding */}
               <input
                 type="text"
-                placeholder="Search options..."
+                placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '8px 12px',
+                  padding: '4px 8px', // Reduced padding
                   border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '14px'
+                  borderRadius: '3px', // Reduced border radius
+                  fontSize: '11px', // Reduced font size
+                  outline: 'none'
                 }}
-                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setIsOpen(false)
+                  }
+                }}
               />
             </div>
           )}
 
-          {/* Options List */}
-          <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
-            {Object.entries(groupedOptions).map(([category, categoryOptions]) => (
+          <div style={{ maxHeight: '150px', overflow: 'auto' }}> {/* Reduced max height */}
+            {Object.entries(groupedOptions).map(([category, options]) => (
               <div key={category}>
                 {Object.keys(groupedOptions).length > 1 && (
                   <div style={{
-                    padding: '8px 12px',
+                    padding: '4px 8px', // Reduced padding
                     backgroundColor: '#f8f9fa',
-                    fontSize: '12px',
+                    fontSize: '10px', // Reduced font size
                     fontWeight: '600',
                     color: '#6c757d',
-                    borderBottom: '1px solid #e9ecef'
+                    borderBottom: '1px solid #dee2e6'
                   }}>
                     {category}
                   </div>
                 )}
-                {categoryOptions.map(option => (
+                {options.map((option) => (
                   <div
                     key={option.value}
                     onClick={() => handleOptionClick(option.value)}
                     style={{
-                      padding: '10px 12px',
+                      padding: '4px 8px', // Reduced padding
                       cursor: 'pointer',
-                      backgroundColor: isSelected(option.value) ? '#e3f2fd' : 'white',
-                      borderBottom: '1px solid #f8f9fa',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
+                      fontSize: '11px', // Reduced font size
+                      backgroundColor: isSelected(option.value) ? '#e3f2fd' : 'transparent',
+                      color: isSelected(option.value) ? '#1976d2' : '#495057',
+                      borderBottom: '1px solid #f8f9fa'
                     }}
                     onMouseEnter={(e) => {
                       if (!isSelected(option.value)) {
@@ -193,81 +216,16 @@ export function FilterDropdown({
                     }}
                     onMouseLeave={(e) => {
                       if (!isSelected(option.value)) {
-                        e.currentTarget.style.backgroundColor = 'white'
+                        e.currentTarget.style.backgroundColor = 'transparent'
                       }
                     }}
                   >
-                    {multiple && (
-                      <input
-                        type="checkbox"
-                        checked={isSelected(option.value)}
-                        readOnly
-                        style={{ margin: 0 }}
-                      />
-                    )}
-                    <span style={{ 
-                      color: isSelected(option.value) ? '#1976d2' : '#495057',
-                      fontWeight: isSelected(option.value) ? '500' : 'normal'
-                    }}>
-                      {option.label}
-                    </span>
+                    {option.label}
                   </div>
                 ))}
               </div>
             ))}
-            
-            {filteredOptions.length === 0 && (
-              <div style={{
-                padding: '20px 12px',
-                textAlign: 'center',
-                color: '#6c757d',
-                fontSize: '14px'
-              }}>
-                No options found
-              </div>
-            )}
           </div>
-
-          {/* Multiple Selection Actions */}
-          {multiple && (
-            <div style={{
-              padding: '12px',
-              borderTop: '1px solid #e9ecef',
-              display: 'flex',
-              gap: '8px'
-            }}>
-              <button
-                onClick={() => onChange([])}
-                style={{
-                  padding: '6px 12px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  backgroundColor: 'white',
-                  color: '#495057',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  flex: 1
-                }}
-              >
-                Clear All
-              </button>
-              <button
-                onClick={() => setIsOpen(false)}
-                style={{
-                  padding: '6px 12px',
-                  border: 'none',
-                  borderRadius: '4px',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  flex: 1
-                }}
-              >
-                Done
-              </button>
-            </div>
-          )}
         </div>
       )}
     </div>

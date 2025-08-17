@@ -33,7 +33,7 @@ export function EnhancedFilterBar({
   title = 'Advanced Filters',
   activeFiltersCount = 0,
   onToggleCollapse,
-  defaultCollapsed = false,
+  defaultCollapsed = false, // Changed to false to keep filters expanded by default
   showFilterCount = true,
   showQuickActions = false,
   quickActions = []
@@ -55,10 +55,10 @@ export function EnhancedFilterBar({
     <div 
       className={`enhanced-filter-bar ${className}`}
       style={{
-        marginBottom: '20px',
-        borderRadius: '8px',
+        marginBottom: '16px', // Reduced margin
+        borderRadius: '6px', // Reduced border radius
         overflow: 'hidden',
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)', // Reduced shadow
         border: '1px solid #e9ecef'
       }}
     >
@@ -71,7 +71,7 @@ export function EnhancedFilterBar({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '16px 20px',
+          padding: '12px 16px', // Reduced padding
           backgroundColor: isHovered ? '#e9ecef' : '#f8f9fa',
           cursor: 'pointer',
           transition: 'all 0.2s ease',
@@ -88,10 +88,10 @@ export function EnhancedFilterBar({
           }
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}> {/* Reduced gap */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}> {/* Reduced gap */}
             <span style={{ 
-              fontSize: '16px', 
+              fontSize: '14px', // Reduced font size
               fontWeight: '600', 
               color: '#495057' 
             }}>
@@ -99,13 +99,13 @@ export function EnhancedFilterBar({
             </span>
             {showFilterCount && activeFiltersCount > 0 && (
               <span style={{ 
-                fontSize: '12px',
+                fontSize: '11px', // Reduced font size
                 fontWeight: '500',
                 color: '#fff',
                 backgroundColor: '#007bff',
-                padding: '2px 8px',
-                borderRadius: '12px',
-                minWidth: '20px',
+                padding: '1px 6px', // Reduced padding
+                borderRadius: '10px', // Reduced border radius
+                minWidth: '16px', // Reduced min width
                 textAlign: 'center'
               }}>
                 {activeFiltersCount}
@@ -113,20 +113,20 @@ export function EnhancedFilterBar({
             )}
           </div>
           <span style={{ 
-            fontSize: '12px', 
+            fontSize: '11px', // Reduced font size
             color: '#6c757d',
             backgroundColor: '#dee2e6',
-            padding: '4px 10px',
-            borderRadius: '12px',
+            padding: '2px 8px', // Reduced padding
+            borderRadius: '10px', // Reduced border radius
             fontWeight: '500'
           }}>
             Filters
           </span>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {showQuickActions && !isCollapsed && (
-            <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}> {/* Reduced gap */}
+          {showQuickActions && (
+            <div style={{ display: 'flex', gap: '6px' }}> {/* Reduced gap - removed !isCollapsed condition */}
               {quickActions.map((action, index) => (
                 <button
                   key={index}
@@ -135,17 +135,17 @@ export function EnhancedFilterBar({
                     action.action()
                   }}
                   style={{
-                    padding: '6px 12px',
+                    padding: '4px 8px', // Reduced padding
                     border: '1px solid #ced4da',
                     borderRadius: '4px',
                     backgroundColor: 'white',
                     color: '#495057',
                     cursor: 'pointer',
-                    fontSize: '12px',
+                    fontSize: '11px', // Reduced font size
                     fontWeight: '500',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px',
+                    gap: '3px', // Reduced gap
                     transition: 'all 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
@@ -167,11 +167,11 @@ export function EnhancedFilterBar({
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: '8px',
+            gap: '6px', // Reduced gap
             transition: 'transform 0.3s ease',
             transform: isCollapsed ? 'rotate(0deg)' : 'rotate(180deg)'
           }}>
-            <span style={{ color: '#6c757d', fontSize: '14px' }}>
+            <span style={{ color: '#6c757d', fontSize: '12px' }}> {/* Reduced font size */}
               ▼
             </span>
           </div>
@@ -189,29 +189,29 @@ export function EnhancedFilterBar({
         }}
       >
         <div style={{ 
-          padding: '20px',
+          padding: '16px', // Reduced padding
           backgroundColor: 'white'
         }}>
-                         {/* Filter Content */}
-               <div style={{
-                 display: 'grid',
-                 gridTemplateColumns: 'repeat(4, 1fr)',
-                 gap: '12px',
-                 alignItems: 'start',
-                 marginBottom: '16px'
-               }}>
-                 {children}
-               </div>
+          {/* Filter Content */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)', // 4-column grid as requested
+            gap: '8px', // Reduced gap for more compact layout
+            alignItems: 'start',
+            marginBottom: '12px' // Reduced margin
+          }}>
+            {children}
+          </div>
           
           {/* Actions */}
           <div style={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',
-            paddingTop: '16px',
+            paddingTop: '12px', // Reduced padding
             borderTop: '1px solid #e9ecef'
           }}>
-            <div style={{ fontSize: '14px', color: '#6c757d' }}>
+            <div style={{ fontSize: '12px', color: '#6c757d' }}> {/* Reduced font size */}
               {activeFiltersCount > 0 ? `${activeFiltersCount} active filter${activeFiltersCount !== 1 ? 's' : ''}` : 'No filters applied'}
             </div>
             
@@ -219,13 +219,13 @@ export function EnhancedFilterBar({
               <button
                 onClick={handleClearAll}
                 style={{
-                  padding: '8px 16px',
+                  padding: '6px 12px', // Reduced padding
                   border: '1px solid #dc3545',
-                  borderRadius: '6px',
+                  borderRadius: '4px', // Reduced border radius
                   backgroundColor: 'white',
                   color: '#dc3545',
                   cursor: 'pointer',
-                  fontSize: '14px',
+                  fontSize: '12px', // Reduced font size
                   fontWeight: '500',
                   transition: 'all 0.2s ease'
                 }}

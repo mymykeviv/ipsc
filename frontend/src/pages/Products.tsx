@@ -1412,6 +1412,13 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
   const [historySearchTerm, setHistorySearchTerm] = useState('')
   const [historyCurrentPage, setHistoryCurrentPage] = useState(1)
   const [historyItemsPerPage] = useState(10)
+  
+  // New filter states for Stock Movement History
+  const [productFilter, setProductFilter] = useState('all')
+  const [financialYearFilter, setFinancialYearFilter] = useState('all')
+  const [entryTypeFilter, setEntryTypeFilter] = useState('all')
+  const [dateFilter, setDateFilter] = useState('all')
+  
   const { forceLogout } = useAuth()
   const handleApiError = createApiErrorHandler(forceLogout)
 
@@ -1445,16 +1452,34 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
     loadStockHistory()
   }, [])
 
-  // Filter and paginate stock history
-  const filteredStockHistory = stockHistory.filter(movement => 
-    movement.product_name.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
-    movement.financial_year.toString().includes(historySearchTerm)
-  )
+  // Filter and paginate stock history with enhanced filters
+  const filteredStockHistory = stockHistory.filter(movement => {
+    const matchesSearch = movement.product_name.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
+                         movement.financial_year.toString().includes(historySearchTerm)
+    
+    const matchesProduct = productFilter === 'all' || 
+                          movement.product_name === productFilter
+    
+    const matchesFinancialYear = financialYearFilter === 'all' || 
+                                 movement.financial_year.toString() === financialYearFilter
+    
+    const matchesEntryType = entryTypeFilter === 'all' || 
+                            (entryTypeFilter === 'incoming' && movement.incoming_stock > 0) ||
+                            (entryTypeFilter === 'outgoing' && movement.outgoing_stock > 0)
+    
+    return matchesSearch && matchesProduct && matchesFinancialYear && matchesEntryType
+  })
 
   const historyTotalPages = Math.ceil(filteredStockHistory.length / historyItemsPerPage)
   const historyStartIndex = (historyCurrentPage - 1) * historyItemsPerPage
   const historyEndIndex = historyStartIndex + historyItemsPerPage
   const paginatedStockHistory = filteredStockHistory.slice(historyStartIndex, historyEndIndex)
+
+  // Get unique financial years for filter
+  const financialYears = [...new Set(stockHistory.map(m => m.financial_year.toString()))].sort((a, b) => b.localeCompare(a))
+  
+  // Get unique product names for filter
+  const productNames = [...new Set(stockHistory.map(m => m.product_name))].sort()
 
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
@@ -1491,14 +1516,106 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
 
       {error && <ErrorMessage message={error} />}
 
-      {/* Search Bar */}
-      <div style={{ marginBottom: '24px' }}>
-        <SearchBar
-          value={historySearchTerm}
-          onChange={setHistorySearchTerm}
-          placeholder="Search by product name or financial year..."
+      {/* Enhanced Filter Bar for Stock Movement History */}
+      <EnhancedFilterBar 
+        title="Stock Movement Filters"
+        activeFiltersCount={
+          (historySearchTerm ? 1 : 0) +
+          (productFilter !== 'all' ? 1 : 0) +
+          (financialYearFilter !== 'all' ? 1 : 0) +
+          (entryTypeFilter !== 'all' ? 1 : 0) +
+          (dateFilter !== 'all' ? 1 : 0)
+        }
+        onClearAll={() => {
+          setHistorySearchTerm('')
+          setProductFilter('all')
+          setFinancialYearFilter('all')
+          setEntryTypeFilter('all')
+          setDateFilter('all')
+        }}
+        showQuickActions={true}
+        quickActions={[
+          {
+            label: 'Current FY',
+            action: () => {
+              const currentYear = new Date().getFullYear()
+              setFinancialYearFilter(`${currentYear}-${currentYear + 1}`)
+            },
+            icon: '📅'
+          },
+          {
+            label: 'Incoming Only',
+            action: () => setEntryTypeFilter('incoming'),
+            icon: '📥'
+          },
+          {
+            label: 'Outgoing Only',
+            action: () => setEntryTypeFilter('outgoing'),
+            icon: '📤'
+          }
+        ]}
+      >
+        {/* Search Bar */}
+        <div>
+          <label style={{ 
+            fontSize: '11px', 
+            color: '#495057', 
+            fontWeight: '500', 
+            display: 'block', 
+            marginBottom: '4px' 
+          }}>
+            Search
+          </label>
+          <input
+            type="text"
+            value={historySearchTerm}
+            onChange={(e) => setHistorySearchTerm(e.target.value)}
+            placeholder="Search by product name or financial year..."
+            style={{
+              width: '100%',
+              padding: '6px 10px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '12px',
+              outline: 'none'
+            }}
+          />
+        </div>
+
+        {/* Product Filter */}
+        <FilterDropdown
+          value={productFilter}
+          onChange={(value) => setProductFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+          options={[
+            { value: 'all', label: 'All Products' },
+            ...productNames.map(name => ({ value: name, label: name }))
+          ]}
+          placeholder="Select Product"
         />
-      </div>
+
+        {/* Financial Year Filter */}
+        <FilterDropdown
+          value={financialYearFilter}
+          onChange={(value) => setFinancialYearFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+          options={[
+            { value: 'all', label: 'All Financial Years' },
+            ...financialYears.map(year => ({ value: year, label: year }))
+          ]}
+          placeholder="Select Financial Year"
+        />
+
+        {/* Entry Type Filter */}
+        <FilterDropdown
+          value={entryTypeFilter}
+          onChange={(value) => setEntryTypeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+          options={[
+            { value: 'all', label: 'All Entries' },
+            { value: 'incoming', label: 'Incoming Stock' },
+            { value: 'outgoing', label: 'Outgoing Stock' }
+          ]}
+          placeholder="Select Entry Type"
+        />
+      </EnhancedFilterBar>
 
       {/* Stock Movement Table */}
       <div style={{ 
