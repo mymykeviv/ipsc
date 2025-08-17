@@ -1,0 +1,11 @@
+# Page snapshot
+
+```yaml
+- text: "[plugin:vite:react-babel] Cannot read properties of undefined (reading 'visitors') /Users/vivekm/code/ipsc/frontend/src/main.tsx at Scope.crawl (/Users/vivekm/code/ipsc/frontend/node_modules/@babel/traverse/lib/scope/index.js:696:52) at Scope.init (/Users/vivekm/code/ipsc/frontend/node_modules/@babel/traverse/lib/scope/index.js:675:12) at NodePath.setScope (/Users/vivekm/code/ipsc/frontend/node_modules/@babel/traverse/lib/path/context.js:126:53) at NodePath.setContext (/Users/vivekm/code/ipsc/frontend/node_modules/@babel/traverse/lib/path/context.js:138:12) at new File (/Users/vivekm/code/ipsc/frontend/node_modules/@babel/core/lib/transformation/file/file.js:88:8) at normalizeFile (/Users/vivekm/code/ipsc/frontend/node_modules/@babel/core/lib/transformation/normalize-file.js:98:10) at normalizeFile.next (<anonymous>) at run (/Users/vivekm/code/ipsc/frontend/node_modules/@babel/core/lib/transformation/index.js:22:50) at run.next (<anonymous>) at transform (/Users/vivekm/code/ipsc/frontend/node_modules/@babel/core/lib/transform.js:22:33) at transform.next (<anonymous>) at step (/Users/vivekm/code/ipsc/frontend/node_modules/gensync/index.js:261:32) at /Users/vivekm/code/ipsc/frontend/node_modules/gensync/index.js:273:13 at async.call.result.err.err (/Users/vivekm/code/ipsc/frontend/node_modules/gensync/index.js:223:11) at /Users/vivekm/code/ipsc/frontend/node_modules/gensync/index.js:189:28 at /Users/vivekm/code/ipsc/frontend/node_modules/@babel/core/lib/gensync-utils/async.js:67:7 at /Users/vivekm/code/ipsc/frontend/node_modules/gensync/index.js:113:33 at step (/Users/vivekm/code/ipsc/frontend/node_modules/gensync/index.js:287:14) at /Users/vivekm/code/ipsc/frontend/node_modules/gensync/index.js:273:13 at async.call.result.err.err (/Users/vivekm/code/ipsc/frontend/node_modules/gensync/index.js:223:11 Click outside, press Esc key, or fix the code to dismiss. You can also disable this overlay by setting"
+- code: server.hmr.overlay
+- text: to
+- code: "false"
+- text: in
+- code: vite.config.ts
+- text: .
+```

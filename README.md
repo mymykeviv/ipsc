@@ -1,8 +1,15 @@
-# IPSC - Indian Payment & Stock Control System
+# IPSC - Indian Payment & Stock Control
 
 A comprehensive business management system designed for Indian businesses with GST compliance, inventory management, and financial tracking capabilities.
 
-**Current Version: 1.41.0**
+## Current Version: 1.42.0
+
+**Latest Features:**
+- ✅ Comprehensive Filter System across all major screens
+- ✅ Advanced Date Range Filtering with preset options
+- ✅ Real-time Filter Updates and Data Refresh
+- ✅ Enhanced Products, Invoices, and Cashflow filtering
+- ✅ Reusable Filter Components for consistent UI
 
 ## Features
 

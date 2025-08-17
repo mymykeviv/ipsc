@@ -27,31 +27,9 @@ export function Dashboard() {
       navigate('/login')
       return
     }
-    // Temporarily disable API calls to test if app renders
-    // const timer = setTimeout(() => {
-    //   loadCashflowData()
-    // }, 100)
-    // return () => clearTimeout(timer)
     
-    // Set default data for now
-    setCashflowData({
-      period: {
-        start_date: startDate,
-        end_date: endDate
-      },
-      income: {
-        total: 0,
-        count: 0
-      },
-      expenses: {
-        total: 0,
-        count: 0
-      },
-      cashflow: {
-        net: 0,
-        total_invoice_amount: 0
-      }
-    })
+    // Load cashflow data when component mounts or when dates change
+    loadCashflowData()
   }, [token, startDate, endDate, navigate])
 
   const loadCashflowData = async () => {
@@ -71,16 +49,18 @@ export function Dashboard() {
           end_date: endDate
         },
         income: {
-          total: 0,
-          count: 0
+          total_invoice_amount: 0,
+          total_payments_received: 0
         },
         expenses: {
-          total: 0,
-          count: 0
+          total_expenses: 0,
+          total_purchase_payments: 0,
+          total_outflow: 0
         },
         cashflow: {
-          net: 0,
-          total_invoice_amount: 0
+          net_cashflow: 0,
+          cash_inflow: 0,
+          cash_outflow: 0
         }
       })
     } finally {
@@ -92,6 +72,13 @@ export function Dashboard() {
   const handleRefresh = () => {
     loadCashflowData()
   }
+
+  // Auto-refresh data when custom dates change
+  useEffect(() => {
+    if (periodType === 'custom' && token) {
+      loadCashflowData()
+    }
+  }, [startDate, endDate, periodType, token])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -140,6 +127,8 @@ export function Dashboard() {
       setStartDate(start.toISOString().split('T')[0])
       setEndDate(end.toISOString().split('T')[0])
     }
+    
+    // Data will be automatically refreshed via the useEffect that depends on startDate and endDate
   }
 
   if (loading && !cashflowData) {

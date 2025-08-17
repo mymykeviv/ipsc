@@ -27,8 +27,108 @@ export type Product = {
   is_active: boolean
 }
 
-export async function apiGetProducts(): Promise<Product[]> {
-  const r = await fetch('/api/products', {
+export interface ProductFilters {
+  search?: string
+  category?: string
+  item_type?: string
+  gst_rate?: number
+  supplier?: string
+  stock_level?: string
+  price_min?: number
+  price_max?: number
+  status?: string
+}
+
+export interface StockHistoryFilters {
+  search?: string
+  product_id?: number
+  entry_type?: string
+  reference_number?: string
+  quantity_min?: number
+  quantity_max?: number
+  date_from?: string
+  date_to?: string
+}
+
+export interface InvoicePaymentFilters {
+  search?: string
+  payment_status?: string
+  payment_method?: string
+  customer_id?: number
+  amount_min?: number
+  amount_max?: number
+  date_from?: string
+  date_to?: string
+}
+
+export interface InvoiceFilters {
+  search?: string
+  customer_id?: number
+  date_from?: string
+  date_to?: string
+  amount_min?: number
+  amount_max?: number
+  gst_type?: string
+  payment_status?: string
+}
+
+export interface PurchaseFilters {
+  search?: string
+  vendor_id?: number
+  amount_min?: number
+  amount_max?: number
+  payment_status?: string
+  place_of_supply?: string
+  date_from?: string
+  date_to?: string
+}
+
+export interface PurchasePaymentFilters {
+  search?: string
+  payment_status?: string
+  payment_method?: string
+  vendor_id?: number
+  amount_min?: number
+  amount_max?: number
+  date_from?: string
+  date_to?: string
+}
+
+export interface CashflowTransactionFilters {
+  search?: string
+  type_filter?: string
+  transaction_type?: string
+  payment_method?: string
+  account_head?: string
+  amount_min?: number
+  amount_max?: number
+  start_date?: string
+  end_date?: string
+}
+
+export interface ExpenseFilters {
+  search?: string
+  expense_type?: string
+  category?: string
+  payment_method?: string
+  amount_min?: number
+  amount_max?: number
+  date_from?: string
+  date_to?: string
+}
+
+export async function apiGetProducts(filters?: ProductFilters): Promise<Product[]> {
+  const params = new URLSearchParams()
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, value.toString())
+      }
+    })
+  }
+  
+  const url = `/api/products${params.toString() ? `?${params.toString()}` : ''}`
+  const r = await fetch(url, {
     headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
   })
   if (r.status === 401) throw new Error('unauthorized')

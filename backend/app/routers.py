@@ -174,8 +174,64 @@ class ProductOut(BaseModel):
 
 
 @api.get("/products", response_model=list[ProductOut])
-def list_products(_: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return db.query(Product).order_by(Product.id).all()
+def list_products(
+    search: str | None = None,
+    category: str | None = None,
+    item_type: str | None = None,
+    gst_rate: float | None = None,
+    supplier: str | None = None,
+    stock_level: str | None = None,
+    price_min: float | None = None,
+    price_max: float | None = None,
+    status: str | None = None,
+    _: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    query = db.query(Product)
+    
+    if search:
+        search_filter = (
+            Product.name.ilike(f"%{search}%") |
+            Product.description.ilike(f"%{search}%") |
+            Product.sku.ilike(f"%{search}%")
+        )
+        query = query.filter(search_filter)
+    
+    if category:
+        query = query.filter(Product.category == category)
+    
+    if item_type:
+        query = query.filter(Product.item_type == item_type)
+    
+    if gst_rate is not None:
+        query = query.filter(Product.gst_rate == gst_rate)
+    
+    if supplier:
+        query = query.filter(Product.supplier.ilike(f"%{supplier}%"))
+    
+    if stock_level:
+        if stock_level == 'low_stock':
+            query = query.filter(Product.stock < 10)
+        elif stock_level == 'out_of_stock':
+            query = query.filter(Product.stock == 0)
+        elif stock_level == 'in_stock':
+            query = query.filter(Product.stock > 0)
+    
+    if price_min is not None:
+        query = query.filter(Product.sales_price >= price_min)
+    
+    if price_max is not None:
+        query = query.filter(Product.sales_price <= price_max)
+    
+    if status:
+        if status == 'active':
+            query = query.filter(Product.is_active == True)
+        elif status == 'inactive':
+            query = query.filter(Product.is_active == False)
+    else:
+        query = query.filter(Product.is_active == True)
+    
+    return query.order_by(Product.id).all()
 
 
 class ProductCreate(BaseModel):
@@ -1056,6 +1112,76 @@ def add_payment(invoice_id: int, payload: PaymentIn, _: User = Depends(get_curre
         raise HTTPException(status_code=500, detail=f"Failed to process payment: {str(e)}")
 
 
+@api.get('/invoice-payments', response_model=list[PaymentOut])
+def list_invoice_payments(
+    search: str | None = None,
+    payment_status: str | None = None,
+    payment_method: str | None = None,
+    customer_id: int | None = None,
+    amount_min: float | None = None,
+    amount_max: float | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    _: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    """Get all invoice payments with filtering"""
+    query = db.query(Payment).join(Invoice, Payment.invoice_id == Invoice.id).join(Party, Invoice.customer_id == Party.id)
+    
+    if search:
+        search_filter = (
+            Payment.reference_number.ilike(f"%{search}%") |
+            Payment.notes.ilike(f"%{search}%") |
+            Party.name.ilike(f"%{search}%")
+        )
+        query = query.filter(search_filter)
+    
+    if payment_status:
+        if payment_status == 'paid':
+            query = query.filter(Payment.payment_amount > 0)
+        elif payment_status == 'pending':
+            query = query.filter(Payment.payment_amount == 0)
+    
+    if payment_method:
+        query = query.filter(Payment.payment_method == payment_method)
+    
+    if customer_id:
+        query = query.filter(Invoice.customer_id == customer_id)
+    
+    if amount_min is not None:
+        query = query.filter(Payment.payment_amount >= amount_min)
+    
+    if amount_max is not None:
+        query = query.filter(Payment.payment_amount <= amount_max)
+    
+    if date_from:
+        query = query.filter(Payment.payment_date >= datetime.fromisoformat(date_from))
+    
+    if date_to:
+        query = query.filter(Payment.payment_date <= datetime.fromisoformat(date_to))
+    
+    payments = query.order_by(Payment.payment_date.desc()).all()
+    
+    result = []
+    for payment in payments:
+        invoice = db.query(Invoice).filter(Invoice.id == payment.invoice_id).first()
+        customer = db.query(Party).filter(Party.id == invoice.customer_id).first() if invoice else None
+        
+        result.append(PaymentOut(
+            id=payment.id,
+            invoice_id=payment.invoice_id,
+            payment_amount=float(payment.payment_amount),
+            payment_method=payment.payment_method,
+            account_head=payment.account_head,
+            reference_number=payment.reference_number,
+            payment_date=payment.payment_date.isoformat(),
+            notes=payment.notes,
+            customer_name=customer.name if customer else "Unknown",
+            invoice_number=invoice.invoice_no if invoice else "Unknown"
+        ))
+    
+    return result
+
 @api.get('/invoices/{invoice_id}/payments', response_model=list[PaymentOut])
 def get_invoice_payments(invoice_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
     inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
@@ -1452,6 +1578,13 @@ class InvoiceListOut(BaseModel):
 def list_invoices(
     search: str | None = None,
     status: str | None = None,
+    customer_id: int | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    amount_min: float | None = None,
+    amount_max: float | None = None,
+    gst_type: str | None = None,
+    payment_status: str | None = None,
     page: int = 1,
     limit: int = 10,
     sort_field: str = 'date',
@@ -1476,6 +1609,43 @@ def list_invoices(
     
     if status:
         query = query.filter(Invoice.status == status)
+    
+    if customer_id:
+        query = query.filter(Invoice.customer_id == customer_id)
+    
+    if date_from:
+        query = query.filter(Invoice.date >= date_from)
+    
+    if date_to:
+        query = query.filter(Invoice.date <= date_to)
+    
+    if amount_min is not None:
+        query = query.filter(Invoice.grand_total >= amount_min)
+    
+    if amount_max is not None:
+        query = query.filter(Invoice.grand_total <= amount_max)
+    
+    if gst_type:
+        if gst_type == 'cgst_sgst':
+            query = query.filter(Invoice.igst == 0)
+        elif gst_type == 'igst':
+            query = query.filter(Invoice.igst > 0)
+    
+    if payment_status:
+        if payment_status == 'paid':
+            query = query.filter(Invoice.paid_amount >= Invoice.grand_total)
+        elif payment_status == 'partially_paid':
+            query = query.filter(
+                Invoice.paid_amount > 0,
+                Invoice.paid_amount < Invoice.grand_total
+            )
+        elif payment_status == 'unpaid':
+            query = query.filter(Invoice.paid_amount == 0)
+        elif payment_status == 'overdue':
+            query = query.filter(
+                Invoice.due_date < func.date(func.now()),
+                Invoice.paid_amount < Invoice.grand_total
+            )
     
     # Get total count for pagination
     total_count = query.count()
@@ -2345,6 +2515,13 @@ def create_purchase(payload: PurchaseCreate, _: User = Depends(get_current_user)
 def list_purchases(
     search: str | None = None,
     status: str | None = None,
+    vendor_id: int | None = None,
+    amount_min: float | None = None,
+    amount_max: float | None = None,
+    payment_status: str | None = None,
+    place_of_supply: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
     _: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
@@ -2359,6 +2536,40 @@ def list_purchases(
     
     if status:
         query = query.filter(Purchase.status == status)
+    
+    if vendor_id:
+        query = query.filter(Purchase.vendor_id == vendor_id)
+    
+    if amount_min is not None:
+        query = query.filter(Purchase.grand_total >= amount_min)
+    
+    if amount_max is not None:
+        query = query.filter(Purchase.grand_total <= amount_max)
+    
+    if payment_status:
+        if payment_status == 'paid':
+            query = query.filter(Purchase.paid_amount >= Purchase.grand_total)
+        elif payment_status == 'partially_paid':
+            query = query.filter(
+                Purchase.paid_amount > 0,
+                Purchase.paid_amount < Purchase.grand_total
+            )
+        elif payment_status == 'unpaid':
+            query = query.filter(Purchase.paid_amount == 0)
+        elif payment_status == 'overdue':
+            query = query.filter(
+                Purchase.due_date < func.date(func.now()),
+                Purchase.paid_amount < Purchase.grand_total
+            )
+    
+    if place_of_supply:
+        query = query.filter(Purchase.place_of_supply.ilike(f"%{place_of_supply}%"))
+    
+    if date_from:
+        query = query.filter(Purchase.date >= date_from)
+    
+    if date_to:
+        query = query.filter(Purchase.date <= date_to)
     
     purchases = query.order_by(Purchase.date.desc()).all()
     
@@ -2532,6 +2743,9 @@ def list_expenses(
     search: str | None = None,
     category: str | None = None,
     expense_type: str | None = None,
+    payment_method: str | None = None,
+    amount_min: float | None = None,
+    amount_max: float | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
     _: User = Depends(get_current_user), 
@@ -2551,6 +2765,15 @@ def list_expenses(
     
     if expense_type:
         query = query.filter(Expense.expense_type == expense_type)
+    
+    if payment_method:
+        query = query.filter(Expense.payment_method == payment_method)
+    
+    if amount_min is not None:
+        query = query.filter(Expense.total_amount >= amount_min)
+    
+    if amount_max is not None:
+        query = query.filter(Expense.total_amount <= amount_max)
     
     if start_date:
         query = query.filter(Expense.expense_date >= datetime.fromisoformat(start_date))
@@ -2761,6 +2984,76 @@ def add_purchase_payment(purchase_id: int, payload: PurchasePaymentIn, _: User =
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to process payment: {str(e)}")
 
+
+@api.get('/purchase-payments', response_model=list[PurchasePaymentOut])
+def list_all_purchase_payments(
+    search: str | None = None,
+    payment_status: str | None = None,
+    payment_method: str | None = None,
+    vendor_id: int | None = None,
+    amount_min: float | None = None,
+    amount_max: float | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    _: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    """Get all purchase payments with filtering"""
+    query = db.query(PurchasePayment).join(Purchase, PurchasePayment.purchase_id == Purchase.id).join(Party, Purchase.vendor_id == Party.id)
+    
+    if search:
+        search_filter = (
+            PurchasePayment.reference_number.ilike(f"%{search}%") |
+            PurchasePayment.notes.ilike(f"%{search}%") |
+            Party.name.ilike(f"%{search}%")
+        )
+        query = query.filter(search_filter)
+    
+    if payment_status:
+        if payment_status == 'paid':
+            query = query.filter(PurchasePayment.payment_amount > 0)
+        elif payment_status == 'pending':
+            query = query.filter(PurchasePayment.payment_amount == 0)
+    
+    if payment_method:
+        query = query.filter(PurchasePayment.payment_method == payment_method)
+    
+    if vendor_id:
+        query = query.filter(Purchase.vendor_id == vendor_id)
+    
+    if amount_min is not None:
+        query = query.filter(PurchasePayment.payment_amount >= amount_min)
+    
+    if amount_max is not None:
+        query = query.filter(PurchasePayment.payment_amount <= amount_max)
+    
+    if date_from:
+        query = query.filter(PurchasePayment.payment_date >= datetime.fromisoformat(date_from))
+    
+    if date_to:
+        query = query.filter(PurchasePayment.payment_date <= datetime.fromisoformat(date_to))
+    
+    payments = query.order_by(PurchasePayment.payment_date.desc()).all()
+    
+    result = []
+    for payment in payments:
+        purchase = db.query(Purchase).filter(Purchase.id == payment.purchase_id).first()
+        vendor = db.query(Party).filter(Party.id == purchase.vendor_id).first() if purchase else None
+        
+        result.append(PurchasePaymentOut(
+            id=payment.id,
+            purchase_id=payment.purchase_id,
+            payment_amount=float(payment.payment_amount),
+            payment_method=payment.payment_method,
+            account_head=payment.account_head,
+            reference_number=payment.reference_number,
+            payment_date=payment.payment_date.isoformat(),
+            notes=payment.notes,
+            vendor_name=vendor.name if vendor else "Unknown",
+            purchase_number=purchase.purchase_no if purchase else "Unknown"
+        ))
+    
+    return result
 
 @api.get('/purchases/{purchase_id}/payments')
 def list_purchase_payments(purchase_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -3141,6 +3434,11 @@ def get_cashflow_summary(
 def get_cashflow_transactions(
     search: str | None = None,
     type_filter: str | None = None,
+    transaction_type: str | None = None,
+    payment_method: str | None = None,
+    account_head: str | None = None,
+    amount_min: float | None = None,
+    amount_max: float | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
     page: int = 1,
@@ -3157,6 +3455,11 @@ def get_cashflow_transactions(
     return service.get_cashflow_transactions(
         search=search,
         type_filter=type_filter,
+        transaction_type=transaction_type,
+        payment_method=payment_method,
+        account_head=account_head,
+        amount_min=amount_min,
+        amount_max=amount_max,
         start_date=start_dt,
         end_date=end_dt,
         page=page,
@@ -3851,6 +4154,54 @@ class PurchaseOrderOut(BaseModel):
     class Config:
         from_attributes = True
 
+
+@api.get('/stock/history', response_model=list[StockLedgerEntry])
+def get_stock_history(
+    search: str | None = None,
+    product_id: int | None = None,
+    entry_type: str | None = None,
+    reference_number: str | None = None,
+    quantity_min: float | None = None,
+    quantity_max: float | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    _: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    """Get stock history with filtering"""
+    query = db.query(StockLedgerEntry).join(Product, StockLedgerEntry.product_id == Product.id)
+    
+    if search:
+        search_filter = (
+            StockLedgerEntry.reference_bill_number.ilike(f"%{search}%") |
+            StockLedgerEntry.notes.ilike(f"%{search}%") |
+            Product.name.ilike(f"%{search}%")
+        )
+        query = query.filter(search_filter)
+    
+    if product_id:
+        query = query.filter(StockLedgerEntry.product_id == product_id)
+    
+    if entry_type:
+        query = query.filter(StockLedgerEntry.entry_type == entry_type)
+    
+    if reference_number:
+        query = query.filter(StockLedgerEntry.reference_bill_number.ilike(f"%{reference_number}%"))
+    
+    if quantity_min is not None:
+        query = query.filter(StockLedgerEntry.qty >= quantity_min)
+    
+    if quantity_max is not None:
+        query = query.filter(StockLedgerEntry.qty <= quantity_max)
+    
+    if date_from:
+        query = query.filter(StockLedgerEntry.created_at >= datetime.fromisoformat(date_from))
+    
+    if date_to:
+        query = query.filter(StockLedgerEntry.created_at <= datetime.fromisoformat(date_to))
+    
+    entries = query.order_by(StockLedgerEntry.created_at.desc()).all()
+    return entries
 
 @api.get('/stock/movement-history', response_model=list[StockMovementOut])
 def get_stock_movement_history(

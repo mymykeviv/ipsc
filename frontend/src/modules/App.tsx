@@ -21,35 +21,27 @@ function Shell() {
   const { token, isAuthenticated, logout, expiresAt } = useAuth()
   const location = useLocation()
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
-    products: false,
-    invoices: false,
-    purchases: false,
-    customers: false,
-    cashflow: false,
-    reporting: false,
-    settings: false
+    products: true,
+    invoices: false, // Keep invoices section open by default
+    purchases: true,
+    customers: true,
+    cashflow: true,
+    reporting: true,
+    settings: true
   })
 
   const toggleSection = (section: string) => {
     setCollapsedSections(prev => {
       const newState = { ...prev }
-      // If the section is currently collapsed, open it and close all others
-      if (prev[section]) {
-        // Close all sections first
-        Object.keys(newState).forEach(key => {
-          newState[key] = true
-        })
-        // Then open the clicked section
-        newState[section] = false
-      } else {
-        // If the section is open, close it
-        newState[section] = true
-      }
+      // Simply toggle the clicked section
+      newState[section] = !prev[section]
       return newState
     })
   }
 
-  // Auto-expand active section based on current location
+  // Auto-expand active section based on current location - DISABLED
+  // All sections remain collapsed by default after login
+  /*
   useEffect(() => {
     const path = location.pathname
     const newState = { ...collapsedSections }
@@ -80,6 +72,7 @@ function Shell() {
     
     setCollapsedSections(newState)
   }, [location.pathname])
+  */
   
   // Helper function to check if a link is active
   const isActive = (path: string) => {

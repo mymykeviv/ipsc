@@ -27,7 +27,8 @@ export function Login() {
     
     try {
       await login(username, password)
-      // Success - navigate will happen automatically via AuthContext
+      // Navigate to dashboard after successful login
+      navigate('/')
     } catch (err) {
       setError('Invalid credentials. Please try again.')
     } finally {

@@ -8,6 +8,9 @@ import { StatusBadge } from '../components/StatusBadge'
 import { ComprehensiveInvoiceForm } from '../components/ComprehensiveInvoiceForm'
 import { PDFViewer } from '../components/PDFViewer'
 import { EmailFormModal } from '../components/EmailFormModal'
+import { DateFilter } from '../components/DateFilter'
+import { FilterDropdown } from '../components/FilterDropdown'
+import { FilterBar } from '../components/FilterBar'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface InvoicesProps {
@@ -40,6 +43,11 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [customerFilter, setCustomerFilter] = useState<string>('all')
+  const [amountRangeFilter, setAmountRangeFilter] = useState<string>('all')
+  const [gstTypeFilter, setGstTypeFilter] = useState<string>('all')
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('all')
+  const [dateFilter, setDateFilter] = useState<string>('all')
 
   useEffect(() => {
     if (mode === 'manage') {
@@ -53,10 +61,89 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
     }
   }, [mode, id])
 
+  // Reload invoices when filters change
+  useEffect(() => {
+    if (mode === 'manage') {
+      loadInvoices()
+    }
+  }, [searchTerm, statusFilter, customerFilter, amountRangeFilter, gstTypeFilter, paymentStatusFilter, dateFilter])
+
   const loadInvoices = async () => {
     try {
       setLoading(true)
-      const data = await apiGetInvoices(undefined, undefined, pagination.page, pagination.limit)
+      
+      // Build query parameters
+      const params = new URLSearchParams()
+      if (searchTerm) params.append('search', searchTerm)
+      if (statusFilter !== 'all') params.append('status', statusFilter)
+      if (customerFilter !== 'all') params.append('customer_id', customerFilter)
+      if (amountRangeFilter !== 'all') {
+        const [min, max] = amountRangeFilter.split('-')
+        if (min) params.append('amount_min', min)
+        if (max) params.append('amount_max', max)
+      }
+      if (gstTypeFilter !== 'all') params.append('gst_type', gstTypeFilter)
+      if (paymentStatusFilter !== 'all') params.append('payment_status', paymentStatusFilter)
+      if (dateFilter !== 'all') {
+        if (dateFilter.startsWith('custom:')) {
+          const [, from, to] = dateFilter.split(':')
+          params.append('date_from', from)
+          params.append('date_to', to)
+        } else {
+          // Handle preset date filters
+          const today = new Date()
+          let fromDate = ''
+          let toDate = ''
+          
+          switch (dateFilter) {
+            case 'today':
+              fromDate = toDate = today.toISOString().split('T')[0]
+              break
+            case 'yesterday':
+              const yesterday = new Date(today)
+              yesterday.setDate(yesterday.getDate() - 1)
+              fromDate = toDate = yesterday.toISOString().split('T')[0]
+              break
+            case 'last7days':
+              const lastWeek = new Date(today)
+              lastWeek.setDate(lastWeek.getDate() - 7)
+              fromDate = lastWeek.toISOString().split('T')[0]
+              toDate = today.toISOString().split('T')[0]
+              break
+            case 'last30days':
+              const lastMonth = new Date(today)
+              lastMonth.setDate(lastMonth.getDate() - 30)
+              fromDate = lastMonth.toISOString().split('T')[0]
+              toDate = today.toISOString().split('T')[0]
+              break
+            case 'thisMonth':
+              fromDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`
+              toDate = today.toISOString().split('T')[0]
+              break
+            case 'lastMonth':
+              const lastMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+              fromDate = lastMonthDate.toISOString().split('T')[0]
+              const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0)
+              toDate = lastMonthEnd.toISOString().split('T')[0]
+              break
+          }
+          
+          if (fromDate) params.append('date_from', fromDate)
+          if (toDate) params.append('date_to', toDate)
+        }
+      }
+      
+      params.append('page', pagination.page.toString())
+      params.append('limit', pagination.limit.toString())
+      
+      const url = `/api/invoices?${params.toString()}`
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      
+      if (!response.ok) throw new Error('Failed to load invoices')
+      
+      const data = await response.json()
       setInvoices(data.invoices)
       setPagination(data.pagination)
     } catch (err: any) {
@@ -244,44 +331,106 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
         </div>
       )}
 
-      {/* Search and Filters */}
-      <div style={{ marginBottom: '24px', display: 'flex', gap: '16px', alignItems: 'center' }}>
-        <div style={{ flex: 1 }}>
+      {/* Filter Options */}
+      <FilterBar onClearAll={() => {
+        setSearchTerm('')
+        setStatusFilter('all')
+        setCustomerFilter('all')
+        setAmountRangeFilter('all')
+        setGstTypeFilter('all')
+        setPaymentStatusFilter('all')
+        setDateFilter('all')
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Search:</span>
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search invoices by number or customer..."
+            placeholder="Search invoices..."
             style={{
-              width: '100%',
-              padding: '10px 16px',
+              padding: '8px 12px',
               border: '1px solid #ced4da',
-              borderRadius: '6px',
-              fontSize: '14px'
+              borderRadius: '4px',
+              fontSize: '14px',
+              minWidth: '200px'
             }}
           />
         </div>
-        <div style={{ minWidth: '200px' }}>
-          <select
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Status:</span>
+          <FilterDropdown
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px 16px',
-              border: '1px solid #ced4da',
-              borderRadius: '6px',
-              fontSize: '14px',
-              backgroundColor: 'white'
-            }}
-          >
-            <option value="all">All Status</option>
-            <option value="Draft">Draft</option>
-            <option value="Sent">Sent</option>
-            <option value="Partial Payment">Partial Payment</option>
-            <option value="Paid">Paid</option>
-          </select>
+            onChange={(value) => setStatusFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Status' },
+              { value: 'Draft', label: 'Draft' },
+              { value: 'Sent', label: 'Sent' },
+              { value: 'Partial Payment', label: 'Partial Payment' },
+              { value: 'Paid', label: 'Paid' },
+              { value: 'Overdue', label: 'Overdue' }
+            ]}
+            placeholder="Select status"
+          />
         </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Payment Status:</span>
+          <FilterDropdown
+            value={paymentStatusFilter}
+            onChange={(value) => setPaymentStatusFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Payment Status' },
+              { value: 'paid', label: 'Paid' },
+              { value: 'partially_paid', label: 'Partially Paid' },
+              { value: 'unpaid', label: 'Unpaid' },
+              { value: 'overdue', label: 'Overdue' }
+            ]}
+            placeholder="Select payment status"
+          />
         </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Amount Range:</span>
+          <FilterDropdown
+            value={amountRangeFilter}
+            onChange={(value) => setAmountRangeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Amounts' },
+              { value: '0-1000', label: '₹0 - ₹1,000' },
+              { value: '1000-5000', label: '₹1,000 - ₹5,000' },
+              { value: '5000-10000', label: '₹5,000 - ₹10,000' },
+              { value: '10000-50000', label: '₹10,000 - ₹50,000' },
+              { value: '50000-', label: '₹50,000+' }
+            ]}
+            placeholder="Select amount range"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>GST Type:</span>
+          <FilterDropdown
+            value={gstTypeFilter}
+            onChange={(value) => setGstTypeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All GST Types' },
+              { value: 'cgst_sgst', label: 'CGST + SGST' },
+              { value: 'igst', label: 'IGST' }
+            ]}
+            placeholder="Select GST type"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Date:</span>
+          <DateFilter
+            value={dateFilter}
+            onChange={setDateFilter}
+            placeholder="Select date range"
+          />
+        </div>
+      </FilterBar>
 
         {/* Invoices Table */}
       <div style={{ 

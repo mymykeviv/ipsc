@@ -5,6 +5,7 @@ import { Products } from './Products'
 import { MemoryRouter } from 'react-router-dom'
 import { AuthProvider } from '../modules/AuthContext'
 import * as api from '../lib/api'
+import type { Product } from '../lib/api'
 
 // Mock the API functions
 vi.mock('../lib/api', () => ({
@@ -76,6 +77,7 @@ const mockVendors = [
     shipping_country: null,
     shipping_pincode: null,
     notes: null,
+    gst_enabled: true,
     is_active: true
   },
   {
@@ -100,6 +102,7 @@ const mockVendors = [
     shipping_country: null,
     shipping_pincode: null,
     notes: null,
+    gst_enabled: true,
     is_active: true
   }
 ]
@@ -142,7 +145,7 @@ describe('Products Page', () => {
     })
 
     it('should show loading state initially', async () => {
-      vi.mocked(api.apiGetProducts).mockImplementation(() => new Promise(() => {}))
+      vi.mocked(api.apiGetProducts).mockImplementation(() => new Promise<Product[]>(() => {}))
       vi.mocked(api.apiListParties).mockResolvedValue(mockVendors)
 
       renderWithProviders(<Products mode="manage" />)

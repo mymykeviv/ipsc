@@ -5,7 +5,12 @@ import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
 import { SearchBar } from '../components/SearchBar'
 import { ErrorMessage } from '../components/ErrorMessage'
-import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAdjustStock, apiListParties, Party, apiGetStockMovementHistory, StockMovement } from '../lib/api'
+import { DateFilter } from '../components/DateFilter'
+import { FilterDropdown } from '../components/FilterDropdown'
+import { FilterBar } from '../components/FilterBar'
+import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
+import { EnhancedFilterDropdown } from '../components/EnhancedFilterDropdown'
+import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAdjustStock, apiListParties, Party, apiGetStockMovementHistory, StockMovement, ProductFilters } from '../lib/api'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface Product {
@@ -82,6 +87,13 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [itemTypeFilter, setItemTypeFilter] = useState<string>('all')
+  const [gstRateFilter, setGstRateFilter] = useState<string>('all')
+  const [stockLevelFilter, setStockLevelFilter] = useState<string>('all')
+  const [supplierFilter, setSupplierFilter] = useState<string>('all')
+  const [priceRangeFilter, setPriceRangeFilter] = useState<string>('all')
+  const [dateFilter, setDateFilter] = useState<string>('all')
   const [sortField, setSortField] = useState<keyof Product>('name')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [currentPage, setCurrentPage] = useState(1)
@@ -123,7 +135,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
 
   useEffect(() => {
     if (mode === 'manage') {
-    loadProducts()
+      loadProducts()
       loadVendors()
     } else if (mode === 'edit' && id) {
       loadProduct(parseInt(id))
@@ -134,10 +146,36 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     }
   }, [mode, id])
 
+  // Reload products when filters change
+  useEffect(() => {
+    if (mode === 'manage') {
+      loadProducts()
+    }
+  }, [searchTerm, categoryFilter, itemTypeFilter, gstRateFilter, stockLevelFilter, supplierFilter, priceRangeFilter, statusFilter])
+
   const loadProducts = async () => {
     try {
       setLoading(true)
-      const data = await apiGetProducts()
+      
+      // Build filters object
+      const filters: ProductFilters = {}
+      
+      if (searchTerm) filters.search = searchTerm
+      if (categoryFilter !== 'all') filters.category = categoryFilter
+      if (itemTypeFilter !== 'all') filters.item_type = itemTypeFilter
+      if (gstRateFilter !== 'all') filters.gst_rate = parseFloat(gstRateFilter)
+      if (supplierFilter !== 'all') filters.supplier = supplierFilter
+      if (stockLevelFilter !== 'all') filters.stock_level = stockLevelFilter
+      if (statusFilter !== 'all') filters.status = statusFilter
+      
+      // Handle price range filter
+      if (priceRangeFilter !== 'all') {
+        const [min, max] = priceRangeFilter.split('-')
+        if (min) filters.price_min = parseFloat(min)
+        if (max) filters.price_max = parseFloat(max)
+      }
+      
+      const data = await apiGetProducts(filters)
       setProducts(data)
     } catch (error: any) {
       handleApiError(error)
@@ -671,33 +709,162 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           </div>
         </div>
 
-      <div style={{ marginBottom: '24px', display: 'flex', gap: '16px', alignItems: 'center' }}>
-        <div style={{ flex: 1 }}>
+      {/* Enhanced Filter Options */}
+      <EnhancedFilterBar 
+        title="Product Filters"
+        activeFiltersCount={
+          (searchTerm ? 1 : 0) +
+          (statusFilter !== 'all' ? 1 : 0) +
+          (categoryFilter !== 'all' ? 1 : 0) +
+          (itemTypeFilter !== 'all' ? 1 : 0) +
+          (gstRateFilter !== 'all' ? 1 : 0) +
+          (stockLevelFilter !== 'all' ? 1 : 0) +
+          (supplierFilter !== 'all' ? 1 : 0) +
+          (priceRangeFilter !== 'all' ? 1 : 0) +
+          (dateFilter !== 'all' ? 1 : 0)
+        }
+        onClearAll={() => {
+          setSearchTerm('')
+          setStatusFilter('all')
+          setCategoryFilter('all')
+          setItemTypeFilter('all')
+          setGstRateFilter('all')
+          setStockLevelFilter('all')
+          setSupplierFilter('all')
+          setPriceRangeFilter('all')
+          setDateFilter('all')
+        }}
+        showQuickActions={true}
+        quickActions={[
+          {
+            label: 'Low Stock',
+            action: () => {
+              setStockLevelFilter('low_stock')
+            },
+            icon: '⚠️'
+          },
+          {
+            label: 'Active Only',
+            action: () => {
+              setStatusFilter('active')
+            },
+            icon: '✅'
+          }
+        ]}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Search:</span>
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
-            placeholder="Search products by name, SKU, category, description, or supplier..."
+            placeholder="Search products..."
           />
         </div>
-        <div style={{ minWidth: '200px' }}>
-          <select
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Status:</span>
+          <FilterDropdown
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px 16px',
-              border: '1px solid #ced4da',
-              borderRadius: '6px',
-              fontSize: '14px',
-              backgroundColor: 'white'
-            }}
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+            onChange={(value) => setStatusFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Status' },
+              { value: 'active', label: 'Active' },
+              { value: 'inactive', label: 'Inactive' }
+            ]}
+            placeholder="Select status"
+          />
         </div>
-      </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Category:</span>
+          <FilterDropdown
+            value={categoryFilter}
+            onChange={(value) => setCategoryFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Categories' },
+              { value: 'Electronics', label: 'Electronics' },
+              { value: 'Office Supplies', label: 'Office Supplies' },
+              { value: 'Raw Materials', label: 'Raw Materials' },
+              { value: 'Finished Goods', label: 'Finished Goods' },
+              { value: 'Consumables', label: 'Consumables' }
+            ]}
+            placeholder="Select category"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Item Type:</span>
+          <FilterDropdown
+            value={itemTypeFilter}
+            onChange={(value) => setItemTypeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Types' },
+              { value: 'tradable', label: 'Tradable' },
+              { value: 'consumable', label: 'Consumable' },
+              { value: 'manufactured', label: 'Manufactured' }
+            ]}
+            placeholder="Select type"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>GST Rate:</span>
+          <FilterDropdown
+            value={gstRateFilter}
+            onChange={(value) => setGstRateFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Rates' },
+              { value: '0', label: '0%' },
+              { value: '5', label: '5%' },
+              { value: '12', label: '12%' },
+              { value: '18', label: '18%' },
+              { value: '28', label: '28%' }
+            ]}
+            placeholder="Select GST rate"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Stock Level:</span>
+          <FilterDropdown
+            value={stockLevelFilter}
+            onChange={(value) => setStockLevelFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Levels' },
+              { value: 'low_stock', label: 'Low Stock (< 10)' },
+              { value: 'out_of_stock', label: 'Out of Stock' },
+              { value: 'in_stock', label: 'In Stock' }
+            ]}
+            placeholder="Select stock level"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Price Range:</span>
+          <FilterDropdown
+            value={priceRangeFilter}
+            onChange={(value) => setPriceRangeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Prices' },
+              { value: '0-100', label: '₹0 - ₹100' },
+              { value: '100-500', label: '₹100 - ₹500' },
+              { value: '500-1000', label: '₹500 - ₹1,000' },
+              { value: '1000-5000', label: '₹1,000 - ₹5,000' },
+              { value: '5000-', label: '₹5,000+' }
+            ]}
+            placeholder="Select price range"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Date:</span>
+          <DateFilter
+            value={dateFilter}
+            onChange={setDateFilter}
+            placeholder="Select date range"
+          />
+        </div>
+      </EnhancedFilterBar>
 
       <div style={{ 
         border: '1px solid #e9ecef', 

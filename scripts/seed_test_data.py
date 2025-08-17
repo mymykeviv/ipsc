@@ -17,10 +17,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
 
 from app.db import SessionLocal, engine
 from app.models import (
-    User, CompanySettings, Party, Product, Invoice, InvoiceItem,
-    Purchase, PurchaseItem, Payment, Expense, StockMovement
+    User, Role, CompanySettings, Party, Product, Invoice, InvoiceItem,
+    Purchase, PurchaseItem, Payment, Expense, StockLedgerEntry
 )
-from app.auth import get_password_hash
+from app.auth import pwd_context
 
 
 def create_test_data():
@@ -47,17 +47,22 @@ def create_test_data():
         
         # 2. Create Test Users
         print("👤 Creating test users...")
+        # Create admin role first
+        admin_role = Role(name="admin")
+        db.add(admin_role)
+        db.flush()
+        
         admin_user = User(
             username="admin",
-            hashed_password=get_password_hash("admin123"),
-            is_active=True
+            password_hash=pwd_context.hash("admin123"),
+            role_id=admin_role.id
         )
         db.add(admin_user)
         
         test_user = User(
             username="testuser",
-            hashed_password=get_password_hash("test123"),
-            is_active=True
+            password_hash=pwd_context.hash("test123"),
+            role_id=admin_role.id
         )
         db.add(test_user)
         db.flush()
@@ -173,8 +178,7 @@ def create_test_data():
                 "sales_price": 45000.00,
                 "purchase_price": 40000.00,
                 "unit": "PCS",
-                "min_stock": 10,
-                "current_stock": 25
+                "stock": 25
             },
             {
                 "name": "Mobile Phone",
@@ -184,8 +188,7 @@ def create_test_data():
                 "sales_price": 25000.00,
                 "purchase_price": 22000.00,
                 "unit": "PCS",
-                "min_stock": 20,
-                "current_stock": 50
+                "stock": 50
             },
             {
                 "name": "Wireless Headphones",
@@ -195,8 +198,7 @@ def create_test_data():
                 "sales_price": 5000.00,
                 "purchase_price": 4000.00,
                 "unit": "PCS",
-                "min_stock": 30,
-                "current_stock": 75
+                "stock": 75
             },
             {
                 "name": "USB Cable",
@@ -206,8 +208,7 @@ def create_test_data():
                 "sales_price": 500.00,
                 "purchase_price": 300.00,
                 "unit": "PCS",
-                "min_stock": 100,
-                "current_stock": 200
+                "stock": 200
             },
             {
                 "name": "Office Chair",
@@ -217,8 +218,7 @@ def create_test_data():
                 "sales_price": 8000.00,
                 "purchase_price": 6000.00,
                 "unit": "PCS",
-                "min_stock": 5,
-                "current_stock": 15
+                "stock": 15
             }
         ]
         

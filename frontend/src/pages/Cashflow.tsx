@@ -5,6 +5,9 @@ import {
   CashflowTransaction
 } from '../lib/api'
 import { Button } from '../components/Button'
+import { DateFilter } from '../components/DateFilter'
+import { FilterDropdown } from '../components/FilterDropdown'
+import { FilterBar } from '../components/FilterBar'
 
 export function Cashflow() {
   const { token } = useAuth()
@@ -13,6 +16,10 @@ export function Cashflow() {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState<'all' | 'inflow' | 'outflow'>('all')
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState<string>('all')
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>('all')
+  const [accountHeadFilter, setAccountHeadFilter] = useState<string>('all')
+  const [amountRangeFilter, setAmountRangeFilter] = useState<string>('all')
   const [dateFilter, setDateFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(25)
@@ -22,12 +29,91 @@ export function Cashflow() {
     loadTransactions()
   }, [token])
 
+  // Reload transactions when filters change
+  useEffect(() => {
+    if (token) {
+      loadTransactions()
+    }
+  }, [searchTerm, typeFilter, transactionTypeFilter, paymentMethodFilter, accountHeadFilter, amountRangeFilter, dateFilter, currentPage])
+
   const loadTransactions = async () => {
     try {
       setLoading(true)
       setError(null)
-      const data = await apiGetCashflowTransactions()
-      setTransactions(data)
+      
+      // Build query parameters
+      const params = new URLSearchParams()
+      if (searchTerm) params.append('search', searchTerm)
+      if (typeFilter !== 'all') params.append('type_filter', typeFilter)
+      if (transactionTypeFilter !== 'all') params.append('transaction_type', transactionTypeFilter)
+      if (paymentMethodFilter !== 'all') params.append('payment_method', paymentMethodFilter)
+      if (accountHeadFilter !== 'all') params.append('account_head', accountHeadFilter)
+      if (amountRangeFilter !== 'all') {
+        const [min, max] = amountRangeFilter.split('-')
+        if (min) params.append('amount_min', min)
+        if (max) params.append('amount_max', max)
+      }
+      if (dateFilter !== 'all') {
+        if (dateFilter.startsWith('custom:')) {
+          const [, from, to] = dateFilter.split(':')
+          params.append('start_date', from)
+          params.append('end_date', to)
+        } else {
+          // Handle preset date filters
+          const today = new Date()
+          let fromDate = ''
+          let toDate = ''
+          
+          switch (dateFilter) {
+            case 'today':
+              fromDate = toDate = today.toISOString().split('T')[0]
+              break
+            case 'yesterday':
+              const yesterday = new Date(today)
+              yesterday.setDate(yesterday.getDate() - 1)
+              fromDate = toDate = yesterday.toISOString().split('T')[0]
+              break
+            case 'last7days':
+              const lastWeek = new Date(today)
+              lastWeek.setDate(lastWeek.getDate() - 7)
+              fromDate = lastWeek.toISOString().split('T')[0]
+              toDate = today.toISOString().split('T')[0]
+              break
+            case 'last30days':
+              const lastMonth = new Date(today)
+              lastMonth.setDate(lastMonth.getDate() - 30)
+              fromDate = lastMonth.toISOString().split('T')[0]
+              toDate = today.toISOString().split('T')[0]
+              break
+            case 'thisMonth':
+              fromDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`
+              toDate = today.toISOString().split('T')[0]
+              break
+            case 'lastMonth':
+              const lastMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+              fromDate = lastMonthDate.toISOString().split('T')[0]
+              const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0)
+              toDate = lastMonthEnd.toISOString().split('T')[0]
+              break
+          }
+          
+          if (fromDate) params.append('start_date', fromDate)
+          if (toDate) params.append('end_date', toDate)
+        }
+      }
+      
+      params.append('page', currentPage.toString())
+      params.append('limit', itemsPerPage.toString())
+      
+      const url = `/api/cashflow/transactions?${params.toString()}`
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      
+      if (!response.ok) throw new Error('Failed to load transactions')
+      
+      const data = await response.json()
+      setTransactions(data.transactions || data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load transactions')
     } finally {
@@ -49,7 +135,7 @@ export function Cashflow() {
     // Date filtering
     let matchesDate = true
     if (dateFilter !== 'all') {
-      const transactionDate = new Date(transaction.date)
+      const transactionDate = new Date(transaction.transaction_date)
       const today = new Date()
       const yesterday = new Date(today)
       yesterday.setDate(yesterday.getDate() - 1)
@@ -135,66 +221,124 @@ export function Cashflow() {
         </Button>
       </div>
 
-      {/* Search and Filters */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '24px',
-        gap: '16px'
+      {/* Filter Options */}
+      <FilterBar onClearAll={() => {
+        setSearchTerm('')
+        setTypeFilter('all')
+        setTransactionTypeFilter('all')
+        setPaymentMethodFilter('all')
+        setAccountHeadFilter('all')
+        setAmountRangeFilter('all')
+        setDateFilter('all')
       }}>
-        <div style={{ flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Search:</span>
           <input
             type="text"
-            placeholder="Search transactions by description, reference, or payment method..."
+            placeholder="Search transactions..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
-              width: '100%',
-              padding: '10px 16px',
+              padding: '8px 12px',
               border: '1px solid #ced4da',
-              borderRadius: '6px',
-              fontSize: '14px'
+              borderRadius: '4px',
+              fontSize: '14px',
+              minWidth: '200px'
             }}
           />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <select
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Type:</span>
+          <FilterDropdown
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as 'all' | 'inflow' | 'outflow')}
-            style={{
-              padding: '10px 16px',
-              border: '1px solid #ced4da',
-              borderRadius: '6px',
-              fontSize: '14px',
-              backgroundColor: 'white'
+            onChange={(value) => {
+              const newValue = Array.isArray(value) ? value[0] || 'all' : value
+              setTypeFilter(newValue as 'all' | 'inflow' | 'outflow')
             }}
-          >
-            <option value="all">All Transactions</option>
-            <option value="inflow">Cash Inflow</option>
-            <option value="outflow">Cash Outflow</option>
-          </select>
-          <select
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            style={{
-              padding: '10px 16px',
-              border: '1px solid #ced4da',
-              borderRadius: '6px',
-              fontSize: '14px',
-              backgroundColor: 'white'
-            }}
-          >
-            <option value="all">All Dates</option>
-            <option value="today">Today</option>
-            <option value="yesterday">Yesterday</option>
-            <option value="last7days">Last 7 Days</option>
-            <option value="last30days">Last 30 Days</option>
-            <option value="thisMonth">This Month</option>
-            <option value="lastMonth">Last Month</option>
-          </select>
+            options={[
+              { value: 'all', label: 'All Transactions' },
+              { value: 'inflow', label: 'Cash Inflow' },
+              { value: 'outflow', label: 'Cash Outflow' }
+            ]}
+            placeholder="Select type"
+          />
         </div>
-      </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Transaction Type:</span>
+          <FilterDropdown
+            value={transactionTypeFilter}
+            onChange={(value) => setTransactionTypeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Types' },
+              { value: 'invoice_payment', label: 'Invoice Payment' },
+              { value: 'purchase_payment', label: 'Purchase Payment' },
+              { value: 'expense', label: 'Expense' },
+              { value: 'income', label: 'Income' }
+            ]}
+            placeholder="Select transaction type"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Payment Method:</span>
+          <FilterDropdown
+            value={paymentMethodFilter}
+            onChange={(value) => setPaymentMethodFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Methods' },
+              { value: 'Cash', label: 'Cash' },
+              { value: 'Bank Transfer', label: 'Bank Transfer' },
+              { value: 'Cheque', label: 'Cheque' },
+              { value: 'UPI', label: 'UPI' },
+              { value: 'Credit Card', label: 'Credit Card' }
+            ]}
+            placeholder="Select payment method"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Account Head:</span>
+          <FilterDropdown
+            value={accountHeadFilter}
+            onChange={(value) => setAccountHeadFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Accounts' },
+              { value: 'Cash', label: 'Cash' },
+              { value: 'Bank', label: 'Bank' },
+              { value: 'Funds', label: 'Funds' }
+            ]}
+            placeholder="Select account head"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Amount Range:</span>
+          <FilterDropdown
+            value={amountRangeFilter}
+            onChange={(value) => setAmountRangeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Amounts' },
+              { value: '0-1000', label: '₹0 - ₹1,000' },
+              { value: '1000-5000', label: '₹1,000 - ₹5,000' },
+              { value: '5000-10000', label: '₹5,000 - ₹10,000' },
+              { value: '10000-50000', label: '₹10,000 - ₹50,000' },
+              { value: '50000-', label: '₹50,000+' }
+            ]}
+            placeholder="Select amount range"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Date:</span>
+          <DateFilter
+            value={dateFilter}
+            onChange={setDateFilter}
+            placeholder="Select date range"
+          />
+        </div>
+      </FilterBar>
 
       {error && (
         <div style={{ 

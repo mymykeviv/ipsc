@@ -1,0 +1,121 @@
+# Page snapshot
+
+```yaml
+- complementary:
+  - text: CF CASHFLOW Financial Management System
+  - navigation:
+    - link "📊 Dashboard":
+      - /url: /
+    - text: 🏷️ Products ▶
+    - link "Manage Products":
+      - /url: /products
+    - link "Add/Edit Product":
+      - /url: /products/add
+    - link "Stock Adjustment":
+      - /url: /products/stock-adjustment
+    - link "Stock History":
+      - /url: /products/stock-history
+    - text: 📄 Invoices ▶
+    - link "Manage Invoices":
+      - /url: /invoices
+    - link "Add/Edit Invoice":
+      - /url: /invoices/add
+    - link "Invoice Payments":
+      - /url: /payments/invoice/list
+    - link "Add/Edit Invoice Payment":
+      - /url: /payments/invoice/add
+    - text: 📦 Purchases ▶
+    - link "Manage Purchases":
+      - /url: /purchases
+    - link "Add/Edit Purchase":
+      - /url: /purchases/add
+    - link "Purchase Payments":
+      - /url: /payments/purchase/list
+    - link "Add/Edit Purchase Payment":
+      - /url: /payments/purchase/add
+    - text: 👥 Customers / Vendors ▶
+    - link "Customers":
+      - /url: /customers
+    - link "Add/Edit Customer":
+      - /url: /customers/add
+    - link "Vendors":
+      - /url: /vendors
+    - link "Add/Edit Vendor":
+      - /url: /vendors/add
+    - text: 💰 Cashflow ▶
+    - link "View Cashflow Transactions":
+      - /url: /cashflow
+    - link "Manage Expenses":
+      - /url: /expenses
+    - link "Add/Edit Expense":
+      - /url: /expenses/add
+    - text: 📊 Reporting ▶
+    - link "GST Reports (GSTR-1 & GSTR-3B)":
+      - /url: /reports/gst
+    - link "Cashflow Reports":
+      - /url: /reports/cashflow
+    - link "Income Reports":
+      - /url: /reports/income
+    - link "Expense Reports":
+      - /url: /reports/expenses
+    - link "Inventory Reports":
+      - /url: /reports/inventory
+    - link "Purchase Reports":
+      - /url: /reports/purchases
+    - link "Payment Reports":
+      - /url: /reports/payments
+    - link "Financial Reports (P&L, Balance Sheet)":
+      - /url: /reports/financial
+    - text: ⚙️ Settings ▶
+    - link "Company Details":
+      - /url: /settings/company
+    - link "Tax Settings":
+      - /url: /settings/tax
+    - link "Users":
+      - /url: /settings/users
+    - link "Email Settings":
+      - /url: /settings/email
+    - link "Invoice Settings":
+      - /url: /settings/invoice
+    - img
+    - text: "Session: 29m 31s"
+    - button "Logout":
+      - img
+      - text: Logout
+- main:
+  - heading "Dashboard - Cashflow Summary" [level=1]
+  - button "💰 Add Expense"
+  - button "📄 New Invoice"
+  - button "📦 New Purchase"
+  - button "🏷️ Add Product"
+  - heading "📦 Pending Purchase Payments" [level=4]
+  - text: ₹0 Outstanding payments
+  - button "View Payments"
+  - heading "📄 Pending Invoice Payments" [level=4]
+  - text: ₹0 Outstanding receivables
+  - button "View Invoices"
+  - heading "📊 Income & Expenses Summary" [level=3]
+  - text: "Period: August 2025"
+  - combobox:
+    - option "This Month" [selected]
+    - option "This Quarter"
+    - option "This Year"
+    - option "Custom Range"
+  - button "🔄"
+  - heading "📊 Net Cashflow" [level=4]
+  - text: ₹0.00 Positive Cashflow
+  - heading "💰 Income" [level=4]
+  - text: "Invoice Amount:"
+  - strong: ₹0.00
+  - text: "Payments Received:"
+  - strong: ₹0.00
+  - separator
+  - text: "Total Income: ₹0.00"
+  - heading "💸 Expenses" [level=4]
+  - text: "Direct Expenses:"
+  - strong: ₹0.00
+  - text: "Purchase Payments:"
+  - strong: ₹0.00
+  - separator
+  - text: "Total Outflow: ₹0.00"
+```

@@ -76,7 +76,7 @@ export function ExpenseForm({ expenseId, onSuccess, onCancel }: ExpenseFormProps
         payment_method: expenseData.payment_method,
         account_head: expenseData.account_head,
         reference_number: expenseData.reference_number || '',
-        vendor_id: expenseData.vendor_id,
+        vendor_id: expenseData.vendor_id || undefined,
         gst_rate: expenseData.gst_rate,
         notes: expenseData.notes || ''
       })
