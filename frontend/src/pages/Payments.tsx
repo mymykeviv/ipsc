@@ -5,6 +5,9 @@ import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
 import { PaymentForm } from '../components/PaymentForm'
 import { apiGetInvoicePayments, Payment, apiGetAllInvoicePayments } from '../lib/api'
+import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
+import { FilterDropdown } from '../components/FilterDropdown'
+import { DateFilter } from '../components/DateFilter'
 
 interface PaymentsProps {
   mode?: 'add' | 'edit' | 'list'
@@ -17,8 +20,16 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
   const { forceLogout } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [payments, setPayments] = useState<Payment[]>([])
+  const [filteredPayments, setFilteredPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(false)
   const [invoices, setInvoices] = useState<any[]>([])
+  
+  // Filter states
+  const [invoiceNumberFilter, setInvoiceNumberFilter] = useState('all')
+  const [paymentAmountFilter, setPaymentAmountFilter] = useState('all')
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState('all')
+  const [financialYearFilter, setFinancialYearFilter] = useState('all')
+  const [dateFilter, setDateFilter] = useState('all')
 
   // Create error handler that will automatically log out on 401 errors
   const handleApiError = createApiErrorHandler(forceLogout)
@@ -43,6 +54,7 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
       
       const data = await apiGetAllInvoicePayments()
       setPayments(data)
+      setFilteredPayments(data)
     } catch (err: any) {
       const errorMessage = handleApiError(err)
       setError(errorMessage)
@@ -50,6 +62,50 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
       setLoading(false)
     }
   }
+
+  // Filter payments based on selected filters
+  useEffect(() => {
+    let filtered = payments
+
+    if (invoiceNumberFilter !== 'all') {
+      const invoice = invoices.find(inv => inv.invoice_no === invoiceNumberFilter)
+      if (invoice) {
+        filtered = filtered.filter(payment => payment.invoice_id === invoice.id)
+      }
+    }
+
+    if (paymentAmountFilter !== 'all') {
+      const [min, max] = paymentAmountFilter.split('-').map(Number)
+      filtered = filtered.filter(payment => {
+        if (max) {
+          return payment.payment_amount >= min && payment.payment_amount <= max
+        } else {
+          return payment.payment_amount >= min
+        }
+      })
+    }
+
+    if (paymentMethodFilter !== 'all') {
+      filtered = filtered.filter(payment => 
+        payment.payment_method.toLowerCase() === paymentMethodFilter.toLowerCase()
+      )
+    }
+
+    if (financialYearFilter !== 'all') {
+      filtered = filtered.filter(payment => {
+        const paymentYear = new Date(payment.payment_date).getFullYear()
+        const [startYear] = financialYearFilter.split('-').map(Number)
+        return paymentYear === startYear
+      })
+    }
+
+    if (dateFilter !== 'all') {
+      // Handle date filtering logic here
+      // This would need to be implemented based on the DateFilter component
+    }
+
+    setFilteredPayments(filtered)
+  }, [payments, invoices, invoiceNumberFilter, paymentAmountFilter, paymentMethodFilter, financialYearFilter, dateFilter])
 
   const getInvoiceNumber = (invoiceId: number) => {
     const invoice = invoices.find(inv => inv.id === invoiceId)
@@ -106,11 +162,122 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
           </div>
         )}
 
+        {/* Enhanced Filter Options */}
+        <EnhancedFilterBar 
+          title="Invoice Payment Filters"
+          activeFiltersCount={
+            (invoiceNumberFilter !== 'all' ? 1 : 0) +
+            (paymentAmountFilter !== 'all' ? 1 : 0) +
+            (paymentMethodFilter !== 'all' ? 1 : 0) +
+            (financialYearFilter !== 'all' ? 1 : 0) +
+            (dateFilter !== 'all' ? 1 : 0)
+          }
+          onClearAll={() => {
+            setInvoiceNumberFilter('all')
+            setPaymentAmountFilter('all')
+            setPaymentMethodFilter('all')
+            setFinancialYearFilter('all')
+            setDateFilter('all')
+          }}
+          showQuickActions={true}
+          quickActions={[
+            {
+              label: 'Current FY',
+              action: () => {
+                const currentYear = new Date().getFullYear()
+                setFinancialYearFilter(`${currentYear}-${currentYear + 1}`)
+              },
+              icon: '📅'
+            },
+            {
+              label: 'Cash Payment',
+              action: () => {
+                setPaymentMethodFilter('Cash')
+              },
+              icon: '💰'
+            }
+          ]}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Invoice Number</span>
+            <FilterDropdown
+              value={invoiceNumberFilter}
+              onChange={(value) => setInvoiceNumberFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+              options={[
+                { value: 'all', label: 'All Invoices' },
+                ...invoices.map(invoice => ({ 
+                  value: invoice.invoice_no, 
+                  label: invoice.invoice_no 
+                }))
+              ]}
+              placeholder="Select invoice"
+            />
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Payment Amount</span>
+            <FilterDropdown
+              value={paymentAmountFilter}
+              onChange={(value) => setPaymentAmountFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+              options={[
+                { value: 'all', label: 'All Amounts' },
+                { value: '0-1000', label: '₹0 - ₹1,000' },
+                { value: '1000-5000', label: '₹1,000 - ₹5,000' },
+                { value: '5000-10000', label: '₹5,000 - ₹10,000' },
+                { value: '10000-50000', label: '₹10,000 - ₹50,000' },
+                { value: '50000-', label: '₹50,000+' }
+              ]}
+              placeholder="Select amount range"
+            />
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Payment Method</span>
+            <FilterDropdown
+              value={paymentMethodFilter}
+              onChange={(value) => setPaymentMethodFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+              options={[
+                { value: 'all', label: 'All Methods' },
+                { value: 'Cash', label: 'Cash' },
+                { value: 'Bank Transfer', label: 'Bank Transfer' },
+                { value: 'Cheque', label: 'Cheque' },
+                { value: 'UPI', label: 'UPI' },
+                { value: 'Credit Card', label: 'Credit Card' }
+              ]}
+              placeholder="Select payment method"
+            />
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Financial Year</span>
+            <FilterDropdown
+              value={financialYearFilter}
+              onChange={(value) => setFinancialYearFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+              options={[
+                { value: 'all', label: 'All Years' },
+                { value: '2023-2024', label: '2023-2024' },
+                { value: '2024-2025', label: '2024-2025' },
+                { value: '2025-2026', label: '2025-2026' }
+              ]}
+              placeholder="Select financial year"
+            />
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
+            <DateFilter
+              value={dateFilter}
+              onChange={setDateFilter}
+              placeholder="Select date range"
+            />
+          </div>
+        </EnhancedFilterBar>
+
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px' }}>
             <div>Loading payments...</div>
           </div>
-        ) : payments.length === 0 ? (
+        ) : filteredPayments.length === 0 ? (
           <div style={{ 
             textAlign: 'center', 
             padding: '40px', 
@@ -122,9 +289,9 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
             <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
               No invoice payments found
             </div>
-            <div style={{ fontSize: '14px' }}>
-              Add your first invoice payment to get started
-            </div>
+                          <div style={{ fontSize: '14px' }}>
+                {payments.length === 0 ? 'Add your first invoice payment to get started' : 'No payments match the selected filters'}
+              </div>
           </div>
         ) : (
           <div style={{ 
@@ -145,7 +312,7 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
                 </tr>
               </thead>
               <tbody>
-                {payments.map(payment => (
+                {filteredPayments.map(payment => (
                   <tr key={payment.id} style={{ 
                     borderBottom: '1px solid #e9ecef',
                     backgroundColor: 'white'

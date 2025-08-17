@@ -7,7 +7,7 @@ import {
 import { Button } from '../components/Button'
 import { DateFilter } from '../components/DateFilter'
 import { FilterDropdown } from '../components/FilterDropdown'
-import { FilterBar } from '../components/FilterBar'
+import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 
 export function Cashflow() {
   const { token } = useAuth()
@@ -221,18 +221,48 @@ export function Cashflow() {
         </Button>
       </div>
 
-      {/* Filter Options */}
-      <FilterBar onClearAll={() => {
-        setSearchTerm('')
-        setTypeFilter('all')
-        setTransactionTypeFilter('all')
-        setPaymentMethodFilter('all')
-        setAccountHeadFilter('all')
-        setAmountRangeFilter('all')
-        setDateFilter('all')
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Search:</span>
+      {/* Enhanced Filter Options */}
+      <EnhancedFilterBar 
+        title="Cashflow Transaction Filters"
+        activeFiltersCount={
+          (searchTerm ? 1 : 0) +
+          (typeFilter !== 'all' ? 1 : 0) +
+          (transactionTypeFilter !== 'all' ? 1 : 0) +
+          (paymentMethodFilter !== 'all' ? 1 : 0) +
+          (accountHeadFilter !== 'all' ? 1 : 0) +
+          (amountRangeFilter !== 'all' ? 1 : 0) +
+          (dateFilter !== 'all' ? 1 : 0)
+        }
+        onClearAll={() => {
+          setSearchTerm('')
+          setTypeFilter('all')
+          setTransactionTypeFilter('all')
+          setPaymentMethodFilter('all')
+          setAccountHeadFilter('all')
+          setAmountRangeFilter('all')
+          setDateFilter('all')
+        }}
+        showQuickActions={true}
+        quickActions={[
+          {
+            label: 'Current FY',
+            action: () => {
+              const currentYear = new Date().getFullYear()
+              setDateFilter(`custom:${currentYear}-04-01:${currentYear + 1}-03-31`)
+            },
+            icon: '📅'
+          },
+          {
+            label: 'Cash Only',
+            action: () => {
+              setPaymentMethodFilter('Cash')
+            },
+            icon: '💰'
+          }
+        ]}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Search</span>
           <input
             type="text"
             placeholder="Search transactions..."
@@ -242,14 +272,14 @@ export function Cashflow() {
               padding: '8px 12px',
               border: '1px solid #ced4da',
               borderRadius: '4px',
-              fontSize: '14px',
-              minWidth: '200px'
+              fontSize: '13px',
+              minWidth: '160px'
             }}
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Type:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Type</span>
           <FilterDropdown
             value={typeFilter}
             onChange={(value) => {
@@ -265,8 +295,8 @@ export function Cashflow() {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Transaction Type:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Transaction Type</span>
           <FilterDropdown
             value={transactionTypeFilter}
             onChange={(value) => setTransactionTypeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
@@ -281,8 +311,8 @@ export function Cashflow() {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Payment Method:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Payment Method</span>
           <FilterDropdown
             value={paymentMethodFilter}
             onChange={(value) => setPaymentMethodFilter(Array.isArray(value) ? value[0] || 'all' : value)}
@@ -298,8 +328,8 @@ export function Cashflow() {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Account Head:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Account Head</span>
           <FilterDropdown
             value={accountHeadFilter}
             onChange={(value) => setAccountHeadFilter(Array.isArray(value) ? value[0] || 'all' : value)}
@@ -313,8 +343,8 @@ export function Cashflow() {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Amount Range:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Amount Range</span>
           <FilterDropdown
             value={amountRangeFilter}
             onChange={(value) => setAmountRangeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
@@ -330,15 +360,15 @@ export function Cashflow() {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Date:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
           <DateFilter
             value={dateFilter}
             onChange={setDateFilter}
             placeholder="Select date range"
           />
         </div>
-      </FilterBar>
+      </EnhancedFilterBar>
 
       {error && (
         <div style={{ 

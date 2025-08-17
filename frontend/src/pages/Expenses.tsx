@@ -14,6 +14,9 @@ import {
 } from '../lib/api'
 import { Button } from '../components/Button'
 import { ExpenseForm } from '../components/ExpenseForm'
+import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
+import { FilterDropdown } from '../components/FilterDropdown'
+import { DateFilter } from '../components/DateFilter'
 
 interface ExpensesProps {
   mode?: 'manage' | 'add' | 'edit'
@@ -28,8 +31,12 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('')
-  const [expenseTypeFilter, setExpenseTypeFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [expenseTypeFilter, setExpenseTypeFilter] = useState('all')
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState('all')
+  const [amountRangeFilter, setAmountRangeFilter] = useState('all')
+  const [financialYearFilter, setFinancialYearFilter] = useState('all')
+  const [dateFilter, setDateFilter] = useState('all')
   const [currentExpense, setCurrentExpense] = useState<Expense | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
@@ -128,12 +135,34 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
   }
 
   const filteredExpenses = expenses.filter(expense => {
-    const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         expense.expense_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         expense.category.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = !categoryFilter || expense.category === categoryFilter
-    const matchesType = !expenseTypeFilter || expense.expense_type === expenseTypeFilter
-    return matchesSearch && matchesCategory && matchesType
+    const matchesSearch = !searchTerm || 
+      expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      expense.expense_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      expense.category.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const matchesCategory = categoryFilter === 'all' || expense.category === categoryFilter
+    
+    const matchesType = expenseTypeFilter === 'all' || expense.expense_type === expenseTypeFilter
+    
+    const matchesPaymentMethod = paymentMethodFilter === 'all' || 
+      expense.payment_method.toLowerCase() === paymentMethodFilter.toLowerCase()
+    
+    const matchesAmountRange = amountRangeFilter === 'all' || (() => {
+      const [min, max] = amountRangeFilter.split('-').map(Number)
+      if (max) {
+        return expense.amount >= min && expense.amount <= max
+      } else {
+        return expense.amount >= min
+      }
+    })()
+    
+    const matchesFinancialYear = financialYearFilter === 'all' || (() => {
+      const expenseYear = new Date(expense.expense_date).getFullYear()
+      const [startYear] = financialYearFilter.split('-').map(Number)
+      return expenseYear === startYear
+    })()
+    
+    return matchesSearch && matchesCategory && matchesType && matchesPaymentMethod && matchesAmountRange && matchesFinancialYear
   })
 
   const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage)
@@ -209,64 +238,152 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
         </Button>
       </div>
 
-      {/* Search and Filters */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '24px',
-        gap: '16px'
-      }}>
-        <div style={{ flex: 1 }}>
+      {/* Enhanced Filter Options */}
+      <EnhancedFilterBar 
+        title="Expense Filters"
+        activeFiltersCount={
+          (searchTerm ? 1 : 0) +
+          (categoryFilter !== 'all' ? 1 : 0) +
+          (expenseTypeFilter !== 'all' ? 1 : 0) +
+          (paymentMethodFilter !== 'all' ? 1 : 0) +
+          (amountRangeFilter !== 'all' ? 1 : 0) +
+          (financialYearFilter !== 'all' ? 1 : 0) +
+          (dateFilter !== 'all' ? 1 : 0)
+        }
+        onClearAll={() => {
+          setSearchTerm('')
+          setCategoryFilter('all')
+          setExpenseTypeFilter('all')
+          setPaymentMethodFilter('all')
+          setAmountRangeFilter('all')
+          setFinancialYearFilter('all')
+          setDateFilter('all')
+        }}
+        showQuickActions={true}
+        quickActions={[
+          {
+            label: 'Current FY',
+            action: () => {
+              const currentYear = new Date().getFullYear()
+              setFinancialYearFilter(`${currentYear}-${currentYear + 1}`)
+            },
+            icon: '📅'
+          },
+          {
+            label: 'Cash Payment',
+            action: () => {
+              setPaymentMethodFilter('Cash')
+            },
+            icon: '💰'
+          }
+        ]}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Search</span>
           <input
             type="text"
             placeholder="Search expenses by description, type, or category..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
-              width: '100%',
-              padding: '10px 16px',
+              padding: '8px 12px',
               border: '1px solid #ced4da',
-              borderRadius: '6px',
-              fontSize: '14px'
+              borderRadius: '4px',
+              fontSize: '13px',
+              minWidth: '160px'
             }}
           />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <select
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Category</span>
+          <FilterDropdown
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            style={{
-              padding: '10px 16px',
-              border: '1px solid #ced4da',
-              borderRadius: '6px',
-              fontSize: '14px',
-              backgroundColor: 'white'
-            }}
-          >
-            <option value="">All Categories</option>
-            {expenseCategories.map(cat => (
-              <option key={cat.value} value={cat.value}>{cat.label}</option>
-            ))}
-          </select>
-          <select
-            value={expenseTypeFilter}
-            onChange={(e) => setExpenseTypeFilter(e.target.value)}
-            style={{
-              padding: '10px 16px',
-              border: '1px solid #ced4da',
-              borderRadius: '6px',
-              fontSize: '14px',
-              backgroundColor: 'white'
-            }}
-          >
-            <option value="">All Types</option>
-            {expenseTypes.map(type => (
-              <option key={type.value} value={type.value}>{type.label}</option>
-            ))}
-          </select>
+            onChange={(value) => setCategoryFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Categories' },
+              ...expenseCategories.map(cat => ({ 
+                value: cat.value, 
+                label: cat.label 
+              }))
+            ]}
+            placeholder="Select category"
+          />
         </div>
-      </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Expense Type</span>
+          <FilterDropdown
+            value={expenseTypeFilter}
+            onChange={(value) => setExpenseTypeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Types' },
+              ...expenseTypes.map(type => ({ 
+                value: type.value, 
+                label: type.label 
+              }))
+            ]}
+            placeholder="Select expense type"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Payment Method</span>
+          <FilterDropdown
+            value={paymentMethodFilter}
+            onChange={(value) => setPaymentMethodFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Methods' },
+              ...paymentMethods.map(method => ({ 
+                value: method, 
+                label: method 
+              }))
+            ]}
+            placeholder="Select payment method"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Amount Range</span>
+          <FilterDropdown
+            value={amountRangeFilter}
+            onChange={(value) => setAmountRangeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Amounts' },
+              { value: '0-1000', label: '₹0 - ₹1,000' },
+              { value: '1000-5000', label: '₹1,000 - ₹5,000' },
+              { value: '5000-10000', label: '₹5,000 - ₹10,000' },
+              { value: '10000-50000', label: '₹10,000 - ₹50,000' },
+              { value: '50000-', label: '₹50,000+' }
+            ]}
+            placeholder="Select amount range"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Financial Year</span>
+          <FilterDropdown
+            value={financialYearFilter}
+            onChange={(value) => setFinancialYearFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Years' },
+              { value: '2023-2024', label: '2023-2024' },
+              { value: '2024-2025', label: '2024-2025' },
+              { value: '2025-2026', label: '2025-2026' }
+            ]}
+            placeholder="Select financial year"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
+          <DateFilter
+            value={dateFilter}
+            onChange={setDateFilter}
+            placeholder="Select date range"
+          />
+        </div>
+      </EnhancedFilterBar>
 
       {error && (
         <div style={{ 

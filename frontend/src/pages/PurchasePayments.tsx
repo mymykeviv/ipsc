@@ -4,6 +4,9 @@ import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
 import { apiListPurchases, apiListPurchasePayments, apiAddPurchasePayment, Purchase } from '../lib/api'
 import { Button } from '../components/Button'
+import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
+import { FilterDropdown } from '../components/FilterDropdown'
+import { DateFilter } from '../components/DateFilter'
 
 interface PurchasePayment {
   id: number
@@ -30,8 +33,11 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [vendorFilter, setVendorFilter] = useState('')
-  const [dateFilter, setDateFilter] = useState('')
+  const [vendorFilter, setVendorFilter] = useState('all')
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState('all')
+  const [amountRangeFilter, setAmountRangeFilter] = useState('all')
+  const [financialYearFilter, setFinancialYearFilter] = useState('all')
+  const [dateFilter, setDateFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
 
@@ -108,12 +114,34 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
 
   // Filter payments
   const filteredPayments = purchasePayments.filter(payment => {
-    const matchesSearch = payment.purchase_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.vendor_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.reference_number?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesVendor = !vendorFilter || payment.vendor_name === vendorFilter
-    const matchesDate = !dateFilter || payment.payment_date.startsWith(dateFilter)
-    return matchesSearch && matchesVendor && matchesDate
+    const matchesSearch = !searchTerm || 
+      payment.purchase_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.vendor_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.reference_number?.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const matchesVendor = vendorFilter === 'all' || payment.vendor_name === vendorFilter
+    
+    const matchesPaymentMethod = paymentMethodFilter === 'all' || 
+      payment.method.toLowerCase() === paymentMethodFilter.toLowerCase()
+    
+    const matchesAmountRange = amountRangeFilter === 'all' || (() => {
+      const [min, max] = amountRangeFilter.split('-').map(Number)
+      if (max) {
+        return payment.amount >= min && payment.amount <= max
+      } else {
+        return payment.amount >= min
+      }
+    })()
+    
+    const matchesFinancialYear = financialYearFilter === 'all' || (() => {
+      const paymentYear = new Date(payment.payment_date).getFullYear()
+      const [startYear] = financialYearFilter.split('-').map(Number)
+      return paymentYear === startYear
+    })()
+    
+    const matchesDate = dateFilter === 'all' || payment.payment_date.startsWith(dateFilter)
+    
+    return matchesSearch && matchesVendor && matchesPaymentMethod && matchesAmountRange && matchesFinancialYear && matchesDate
   })
 
   // Sort by payment date (latest first)
@@ -160,59 +188,135 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
         </div>
       )}
 
-      {/* Search and Filters */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '24px',
-        gap: '16px'
-      }}>
-        <div style={{ flex: 1 }}>
+      {/* Enhanced Filter Options */}
+      <EnhancedFilterBar 
+        title="Purchase Payment Filters"
+        activeFiltersCount={
+          (searchTerm ? 1 : 0) +
+          (vendorFilter !== 'all' ? 1 : 0) +
+          (paymentMethodFilter !== 'all' ? 1 : 0) +
+          (amountRangeFilter !== 'all' ? 1 : 0) +
+          (financialYearFilter !== 'all' ? 1 : 0) +
+          (dateFilter !== 'all' ? 1 : 0)
+        }
+        onClearAll={() => {
+          setSearchTerm('')
+          setVendorFilter('all')
+          setPaymentMethodFilter('all')
+          setAmountRangeFilter('all')
+          setFinancialYearFilter('all')
+          setDateFilter('all')
+        }}
+        showQuickActions={true}
+        quickActions={[
+          {
+            label: 'Current FY',
+            action: () => {
+              const currentYear = new Date().getFullYear()
+              setFinancialYearFilter(`${currentYear}-${currentYear + 1}`)
+            },
+            icon: '📅'
+          },
+          {
+            label: 'Cash Payment',
+            action: () => {
+              setPaymentMethodFilter('Cash')
+            },
+            icon: '💰'
+          }
+        ]}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Search</span>
           <input
             type="text"
             placeholder="Search by purchase number, vendor, or reference..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
-              width: '100%',
-              padding: '10px 16px',
+              padding: '8px 12px',
               border: '1px solid #ced4da',
-              borderRadius: '6px',
-              fontSize: '14px'
+              borderRadius: '4px',
+              fontSize: '13px',
+              minWidth: '160px'
             }}
           />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <select
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Vendor</span>
+          <FilterDropdown
             value={vendorFilter}
-            onChange={(e) => setVendorFilter(e.target.value)}
-            style={{
-              padding: '10px 16px',
-              border: '1px solid #ced4da',
-              borderRadius: '6px',
-              fontSize: '14px',
-              backgroundColor: 'white'
-            }}
-          >
-            <option value="">All Vendors</option>
-            {vendors.map(vendor => (
-              <option key={vendor} value={vendor}>{vendor}</option>
-            ))}
-          </select>
-          <input
-            type="date"
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            style={{
-              padding: '10px 16px',
-              border: '1px solid #ced4da',
-              borderRadius: '6px',
-              fontSize: '14px'
-            }}
+            onChange={(value) => setVendorFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Vendors' },
+              ...vendors.map(vendor => ({ 
+                value: vendor, 
+                label: vendor 
+              }))
+            ]}
+            placeholder="Select vendor"
           />
         </div>
-      </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Payment Method</span>
+          <FilterDropdown
+            value={paymentMethodFilter}
+            onChange={(value) => setPaymentMethodFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Methods' },
+              { value: 'Cash', label: 'Cash' },
+              { value: 'Bank Transfer', label: 'Bank Transfer' },
+              { value: 'Cheque', label: 'Cheque' },
+              { value: 'UPI', label: 'UPI' },
+              { value: 'Credit Card', label: 'Credit Card' }
+            ]}
+            placeholder="Select payment method"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Amount Range</span>
+          <FilterDropdown
+            value={amountRangeFilter}
+            onChange={(value) => setAmountRangeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Amounts' },
+              { value: '0-1000', label: '₹0 - ₹1,000' },
+              { value: '1000-5000', label: '₹1,000 - ₹5,000' },
+              { value: '5000-10000', label: '₹5,000 - ₹10,000' },
+              { value: '10000-50000', label: '₹10,000 - ₹50,000' },
+              { value: '50000-', label: '₹50,000+' }
+            ]}
+            placeholder="Select amount range"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Financial Year</span>
+          <FilterDropdown
+            value={financialYearFilter}
+            onChange={(value) => setFinancialYearFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Years' },
+              { value: '2023-2024', label: '2023-2024' },
+              { value: '2024-2025', label: '2024-2025' },
+              { value: '2025-2026', label: '2025-2026' }
+            ]}
+            placeholder="Select financial year"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
+          <DateFilter
+            value={dateFilter}
+            onChange={setDateFilter}
+            placeholder="Select date range"
+          />
+        </div>
+      </EnhancedFilterBar>
 
       <div style={{ 
         border: '1px solid #e9ecef', 

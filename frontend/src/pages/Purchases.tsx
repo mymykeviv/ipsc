@@ -19,6 +19,9 @@ import { Button } from '../components/Button'
 import { StatusBadge } from '../components/StatusBadge'
 import { PurchaseForm } from '../components/PurchaseForm'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
+import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
+import { FilterDropdown } from '../components/FilterDropdown'
+import { DateFilter } from '../components/DateFilter'
 
 interface PurchasesProps {
   mode?: 'manage' | 'add' | 'edit' | 'payments'
@@ -35,7 +38,11 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [vendorFilter, setVendorFilter] = useState('all')
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('all')
+  const [amountRangeFilter, setAmountRangeFilter] = useState('all')
+  const [dateFilter, setDateFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
 
@@ -202,10 +209,29 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
 
   // Filter purchases
   const filteredPurchases = purchases.filter(purchase => {
-    const matchesSearch = purchase.purchase_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         purchase.vendor_name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = !statusFilter || purchase.status === statusFilter
-    return matchesSearch && matchesStatus
+    const matchesSearch = !searchTerm || 
+      purchase.purchase_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      purchase.vendor_name.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const matchesStatus = statusFilter === 'all' || purchase.status === statusFilter
+    
+    const matchesVendor = vendorFilter === 'all' || purchase.vendor_name === vendorFilter
+    
+    const matchesPaymentStatus = paymentStatusFilter === 'all' || 
+      (paymentStatusFilter === 'paid' && purchase.balance_amount === 0) ||
+      (paymentStatusFilter === 'partially_paid' && purchase.balance_amount > 0 && purchase.balance_amount < purchase.grand_total) ||
+      (paymentStatusFilter === 'unpaid' && purchase.balance_amount === purchase.grand_total)
+    
+    const matchesAmountRange = amountRangeFilter === 'all' || (() => {
+      const [min, max] = amountRangeFilter.split('-').map(Number)
+      if (max) {
+        return purchase.grand_total >= min && purchase.grand_total <= max
+      } else {
+        return purchase.grand_total >= min
+      }
+    })()
+    
+    return matchesSearch && matchesStatus && matchesVendor && matchesPaymentStatus && matchesAmountRange
   })
 
   // Pagination
@@ -244,49 +270,134 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
         </div>
       )}
 
-      {/* Search and Filters */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '24px',
-        gap: '16px'
-      }}>
-        <div style={{ flex: 1 }}>
-        <input
-          type="text"
+      {/* Enhanced Filter Options */}
+      <EnhancedFilterBar 
+        title="Purchase Filters"
+        activeFiltersCount={
+          (searchTerm ? 1 : 0) +
+          (statusFilter !== 'all' ? 1 : 0) +
+          (vendorFilter !== 'all' ? 1 : 0) +
+          (paymentStatusFilter !== 'all' ? 1 : 0) +
+          (amountRangeFilter !== 'all' ? 1 : 0) +
+          (dateFilter !== 'all' ? 1 : 0)
+        }
+        onClearAll={() => {
+          setSearchTerm('')
+          setStatusFilter('all')
+          setVendorFilter('all')
+          setPaymentStatusFilter('all')
+          setAmountRangeFilter('all')
+          setDateFilter('all')
+        }}
+        showQuickActions={true}
+        quickActions={[
+          {
+            label: 'Current FY',
+            action: () => {
+              const currentYear = new Date().getFullYear()
+              setDateFilter(`custom:${currentYear}-04-01:${currentYear + 1}-03-31`)
+            },
+            icon: '📅'
+          },
+          {
+            label: 'Due Payment',
+            action: () => {
+              setPaymentStatusFilter('unpaid')
+            },
+            icon: '💰'
+          }
+        ]}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Search</span>
+          <input
+            type="text"
             placeholder="Search purchases by number or vendor..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-              width: '100%',
-              padding: '10px 16px',
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              padding: '8px 12px',
               border: '1px solid #ced4da',
-              borderRadius: '6px',
-            fontSize: '14px'
-          }}
-        />
+              borderRadius: '4px',
+              fontSize: '13px',
+              minWidth: '160px'
+            }}
+          />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          style={{
-              padding: '10px 16px',
-              border: '1px solid #ced4da',
-              borderRadius: '6px',
-              fontSize: '14px',
-              backgroundColor: 'white'
-          }}
-        >
-          <option value="">All Status</option>
-          <option value="Draft">Draft</option>
-          <option value="Partially Paid">Partially Paid</option>
-          <option value="Paid">Paid</option>
-          <option value="Cancelled">Cancelled</option>
-        </select>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Status</span>
+          <FilterDropdown
+            value={statusFilter}
+            onChange={(value) => setStatusFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Status' },
+              { value: 'Draft', label: 'Draft' },
+              { value: 'Partially Paid', label: 'Partially Paid' },
+              { value: 'Paid', label: 'Paid' },
+              { value: 'Cancelled', label: 'Cancelled' }
+            ]}
+            placeholder="Select status"
+          />
         </div>
-      </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Vendor</span>
+          <FilterDropdown
+            value={vendorFilter}
+            onChange={(value) => setVendorFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Vendors' },
+              ...vendors.map(vendor => ({ 
+                value: vendor.name, 
+                label: vendor.name 
+              }))
+            ]}
+            placeholder="Select vendor"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Payment Status</span>
+          <FilterDropdown
+            value={paymentStatusFilter}
+            onChange={(value) => setPaymentStatusFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Payment Status' },
+              { value: 'paid', label: 'Paid' },
+              { value: 'partially_paid', label: 'Partially Paid' },
+              { value: 'unpaid', label: 'Unpaid' }
+            ]}
+            placeholder="Select payment status"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Amount Range</span>
+          <FilterDropdown
+            value={amountRangeFilter}
+            onChange={(value) => setAmountRangeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Amounts' },
+              { value: '0-1000', label: '₹0 - ₹1,000' },
+              { value: '1000-5000', label: '₹1,000 - ₹5,000' },
+              { value: '5000-10000', label: '₹5,000 - ₹10,000' },
+              { value: '10000-50000', label: '₹10,000 - ₹50,000' },
+              { value: '50000-', label: '₹50,000+' }
+            ]}
+            placeholder="Select amount range"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
+          <DateFilter
+            value={dateFilter}
+            onChange={setDateFilter}
+            placeholder="Select date range"
+          />
+        </div>
+      </EnhancedFilterBar>
 
       <div style={{ 
         border: '1px solid #e9ecef', 
