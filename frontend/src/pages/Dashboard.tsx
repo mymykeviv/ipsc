@@ -316,68 +316,7 @@ export function Dashboard() {
 
       {cashflowData ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* Quick Actions */}
-          <div style={{ 
-            display: 'flex', 
-            gap: '16px',
-            flexWrap: 'wrap',
-            marginBottom: '24px'
-          }}>
-            <Button 
-              onClick={() => navigate('/invoices/add')}
-              variant="primary"
-              style={{ 
-                padding: '16px 24px', 
-                fontSize: '16px',
-                fontWeight: '500',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                minWidth: '180px',
-                justifyContent: 'center',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              📄 New Invoice
-            </Button>
-            <Button 
-              onClick={() => navigate('/purchases/add')}
-              variant="primary"
-              style={{ 
-                padding: '16px 24px', 
-                fontSize: '16px',
-                fontWeight: '500',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                minWidth: '180px',
-                justifyContent: 'center',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              📦 New Purchase
-            </Button>
-            <Button 
-              onClick={() => navigate('/products/add')}
-              variant="primary"
-              style={{ 
-                padding: '16px 24px', 
-                fontSize: '16px',
-                fontWeight: '500',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                minWidth: '180px',
-                justifyContent: 'center',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              🏷️ Add Product
-            </Button>
-          </div>
+
 
           {/* Cashflow Summary - Full Width */}
           <div style={{ 
@@ -459,13 +398,42 @@ export function Dashboard() {
                 }}>
                   Outstanding payments
                 </div>
-                <Button 
-                  onClick={() => navigate('/payments/purchase/list')}
-                  variant="secondary"
-                  style={{ fontSize: '12px', padding: '6px 12px' }}
-                >
-                  View Payments
-                </Button>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <Button 
+                    onClick={() => navigate('/purchases/add')}
+                    variant="primary"
+                    style={{ 
+                      fontSize: '12px', 
+                      padding: '6px 12px',
+                      backgroundColor: '#007bff',
+                      color: 'white',
+                      fontWeight: '600',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                  >
+                    📦 New Purchase
+                  </Button>
+                  <Button 
+                    onClick={() => navigate('/payments/purchase/list')}
+                    variant="secondary"
+                    style={{ 
+                      fontSize: '12px', 
+                      padding: '6px 12px',
+                      backgroundColor: '#6c757d',
+                      color: 'white',
+                      fontWeight: '500',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                  >
+                    View Payments
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -496,13 +464,42 @@ export function Dashboard() {
                 }}>
                   Outstanding payments
                 </div>
-                <Button 
-                  onClick={() => navigate('/payments/invoice/list')}
-                  variant="secondary"
-                  style={{ fontSize: '12px', padding: '6px 12px' }}
-                >
-                  View Payments
-                </Button>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <Button 
+                    onClick={() => navigate('/invoices/add')}
+                    variant="primary"
+                    style={{ 
+                      fontSize: '12px', 
+                      padding: '6px 12px',
+                      backgroundColor: '#007bff',
+                      color: 'white',
+                      fontWeight: '600',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                  >
+                    📄 New Invoice
+                  </Button>
+                  <Button 
+                    onClick={() => navigate('/payments/invoice/list')}
+                    variant="secondary"
+                    style={{ 
+                      fontSize: '12px', 
+                      padding: '6px 12px',
+                      backgroundColor: '#6c757d',
+                      color: 'white',
+                      fontWeight: '500',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                  >
+                    View Payments
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -522,9 +519,28 @@ export function Dashboard() {
                 backgroundColor: 'white',
                 height: 'fit-content'
               }}>
-                <h4 style={{ margin: '0 0 16px 0', color: '#495057', fontSize: '18px', fontWeight: '600' }}>
-                  🏆 Top Selling Items
-                </h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h4 style={{ margin: '0', color: '#495057', fontSize: '18px', fontWeight: '600' }}>
+                    🏆 Top Selling Items
+                  </h4>
+                  <Button 
+                    onClick={() => navigate('/products/add')}
+                    variant="primary"
+                    style={{ 
+                      fontSize: '12px', 
+                      padding: '6px 12px',
+                      backgroundColor: '#007bff',
+                      color: 'white',
+                      fontWeight: '600',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                  >
+                    🏷️ Add Product
+                  </Button>
+                </div>
                 <div style={{ display: 'grid', gap: '12px' }}>
                   {analyticsData.topSellingItems.map((item, index) => (
                     <div key={index} style={{ 
@@ -557,9 +573,28 @@ export function Dashboard() {
                 backgroundColor: '#fff8e1',
                 height: 'fit-content'
               }}>
-                <h4 style={{ margin: '0 0 16px 0', color: '#856404', fontSize: '18px', fontWeight: '600' }}>
-                  ⚠️ Low Stock Alerts
-                </h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h4 style={{ margin: '0', color: '#856404', fontSize: '18px', fontWeight: '600' }}>
+                    ⚠️ Low Stock Alerts
+                  </h4>
+                  <Button 
+                    onClick={() => navigate('/products')}
+                    variant="primary"
+                    style={{ 
+                      fontSize: '12px', 
+                      padding: '6px 12px',
+                      backgroundColor: '#ffc107',
+                      color: '#856404',
+                      fontWeight: '600',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                  >
+                    📦 Manage Products
+                  </Button>
+                </div>
                 <div style={{ display: 'grid', gap: '12px' }}>
                   {analyticsData.lowStockItems.map((item, index) => (
                     <div key={index} style={{ 
@@ -596,9 +631,28 @@ export function Dashboard() {
                 backgroundColor: '#e7f3ff',
                 height: 'fit-content'
               }}>
-                <h4 style={{ margin: '0 0 16px 0', color: '#0056b3', fontSize: '18px', fontWeight: '600' }}>
-                  👥 Top Customers
-                </h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h4 style={{ margin: '0', color: '#0056b3', fontSize: '18px', fontWeight: '600' }}>
+                    👥 Top Customers
+                  </h4>
+                  <Button 
+                    onClick={() => navigate('/customers')}
+                    variant="primary"
+                    style={{ 
+                      fontSize: '12px', 
+                      padding: '6px 12px',
+                      backgroundColor: '#17a2b8',
+                      color: 'white',
+                      fontWeight: '600',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                  >
+                    👤 Manage Customers
+                  </Button>
+                </div>
                 <div style={{ display: 'grid', gap: '12px' }}>
                   {analyticsData.customerInsights.map((customer, index) => (
                     <div key={index} style={{ 
@@ -631,9 +685,28 @@ export function Dashboard() {
                 backgroundColor: '#f8f5ff',
                 height: 'fit-content'
               }}>
-                <h4 style={{ margin: '0 0 16px 0', color: '#6f42c1', fontSize: '18px', fontWeight: '600' }}>
-                  🏛️ GST Insights (Last 3 Months)
-                </h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h4 style={{ margin: '0', color: '#6f42c1', fontSize: '18px', fontWeight: '600' }}>
+                    🏛️ GST Insights (Last 3 Months)
+                  </h4>
+                  <Button 
+                    onClick={() => navigate('/invoices')}
+                    variant="primary"
+                    style={{ 
+                      fontSize: '12px', 
+                      padding: '6px 12px',
+                      backgroundColor: '#6f42c1',
+                      color: 'white',
+                      fontWeight: '600',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                  >
+                    📊 View Reports
+                  </Button>
+                </div>
                 <div style={{ display: 'grid', gap: '12px' }}>
                   {analyticsData.gstInsights.map((gst, index) => (
                     <div key={index} style={{ 

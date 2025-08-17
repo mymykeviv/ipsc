@@ -1,13 +1,17 @@
 {
-  "version": "1.45.6",
-  "build_date": "2025-08-17T15:00:00Z",
+  "version": "1.45.7",
+  "build_date": "2025-08-17T15:30:00Z",
   "changes": [
-    "Fixed Quick Action buttons layout issues on Dashboard",
-    "Improved button styling and visual hierarchy",
-    "Enhanced responsive design for Quick Action buttons",
-    "Fixed button alignment and spacing issues",
-    "Improved user experience with better button design",
-    "Enhanced dashboard layout consistency"
+    "Implemented contextual quick action buttons in all Dashboard widgets",
+    "Moved New Invoice button to Pending Invoice Payments widget",
+    "Moved New Purchase button to Pending Purchase Payments widget",
+    "Added Add Product button to Top Selling Items widget",
+    "Added Manage Products button to Low Stock Alerts widget",
+    "Added Manage Customers button to Top Customers widget",
+    "Added View Reports button to GST Insights widget",
+    "Removed generic Quick Actions section for better UX",
+    "Enhanced widget-specific action buttons with contextual styling",
+    "Improved dashboard information architecture and user flow"
   ],
   "features": {
     "filter_system": "Enhanced with improved UX and bug fixes",
@@ -19,7 +23,8 @@
     "parties_filtering": "Comprehensive filtering system for customers and vendors",
     "layout_fixes": "Fixed SessionTimer and header layout issues",
     "app_layout": "Improved app shell structure and component positioning",
-    "dashboard_buttons": "Enhanced Quick Action buttons layout and styling"
+    "dashboard_buttons": "Enhanced Quick Action buttons layout and styling",
+    "contextual_actions": "Implemented widget-specific quick action buttons"
   },
   "mvp_status": {
     "completion": "100%",
@@ -42,7 +47,8 @@
     "parties": "Comprehensive filtering system with quick and advanced filters",
     "layout": "Fixed SessionTimer and header layout issues",
     "app_structure": "Improved component hierarchy and positioning",
-    "quick_actions": "Enhanced button layout and visual design"
+    "quick_actions": "Enhanced button layout and visual design",
+    "contextual_actions": "Widget-specific action buttons for better UX"
   },
   "dashboard_improvements": {
     "layout": "2-column grid layout for analytics widgets",
@@ -50,7 +56,8 @@
     "responsive": "Enhanced responsive design for all screen sizes",
     "spacing": "Improved widget spacing and visual hierarchy",
     "performance": "Optimized layout performance and rendering",
-    "quick_actions": "Improved button layout and styling for better UX"
+    "quick_actions": "Improved button layout and styling for better UX",
+    "contextual_actions": "Widget-specific action buttons with contextual styling"
   },
   "parties_filtering": {
     "quick_filters": "All, Active, GST, Non-GST, Recent, Outstanding",
@@ -69,6 +76,17 @@
     "error_prevention": "Enhanced error handling for component props",
     "header_positioning": "Fixed header position within main content area",
     "app_structure": "Improved component hierarchy and layout organization",
-    "quick_actions": "Fixed Quick Action buttons layout and styling issues"
+    "quick_actions": "Fixed Quick Action buttons layout and styling issues",
+    "contextual_actions": "Implemented widget-specific action buttons with proper styling"
+  },
+  "contextual_actions": {
+    "pending_purchase_payments": "New Purchase button with View Payments",
+    "pending_invoice_payments": "New Invoice button with View Payments",
+    "top_selling_items": "Add Product button in widget header",
+    "low_stock_alerts": "Manage Products button with contextual styling",
+    "top_customers": "Manage Customers button with contextual styling",
+    "gst_insights": "View Reports button for comprehensive reporting",
+    "design_consistency": "Consistent button styling across all widgets",
+    "user_flow": "Improved user journey with contextual actions"
   }
 }
