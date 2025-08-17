@@ -133,6 +133,93 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     notes: ''
   })
 
+  // Enhanced Product Mapping Features
+  const [productCategories, setProductCategories] = useState<string[]>([])
+  const [productTags, setProductTags] = useState<string[]>([])
+  const [intelligentSuggestions, setIntelligentSuggestions] = useState<{
+    category: string
+    hsnCode: string
+    gstRate: number
+    unit: string
+  } | null>(null)
+
+  // Intelligent product mapping based on name analysis
+  const analyzeProductName = (productName: string) => {
+    const name = productName.toLowerCase()
+    
+    // Category mapping based on keywords
+    let suggestedCategory = ''
+    let suggestedHsnCode = ''
+    let suggestedGstRate = 18
+    let suggestedUnit = 'Pcs'
+
+    if (name.includes('motor') || name.includes('engine') || name.includes('pump')) {
+      suggestedCategory = 'Machinery & Equipment'
+      suggestedHsnCode = '8501'
+      suggestedGstRate = 18
+      suggestedUnit = 'Nos'
+    } else if (name.includes('bearing') || name.includes('valve') || name.includes('pipe')) {
+      suggestedCategory = 'Mechanical Parts'
+      suggestedHsnCode = '8482'
+      suggestedGstRate = 18
+      suggestedUnit = 'Pcs'
+    } else if (name.includes('steel') || name.includes('iron') || name.includes('metal')) {
+      suggestedCategory = 'Raw Materials'
+      suggestedHsnCode = '7208'
+      suggestedGstRate = 18
+      suggestedUnit = 'Kg'
+    } else if (name.includes('oil') || name.includes('lubricant') || name.includes('grease')) {
+      suggestedCategory = 'Consumables'
+      suggestedHsnCode = '2710'
+      suggestedGstRate = 18
+      suggestedUnit = 'Ltr'
+    } else if (name.includes('tool') || name.includes('cutter') || name.includes('drill')) {
+      suggestedCategory = 'Tools & Equipment'
+      suggestedHsnCode = '8207'
+      suggestedGstRate = 18
+      suggestedUnit = 'Pcs'
+    } else if (name.includes('wire') || name.includes('cable') || name.includes('connector')) {
+      suggestedCategory = 'Electrical Components'
+      suggestedHsnCode = '8544'
+      suggestedGstRate = 18
+      suggestedUnit = 'Mtr'
+    }
+
+    return {
+      category: suggestedCategory,
+      hsnCode: suggestedHsnCode,
+      gstRate: suggestedGstRate,
+      unit: suggestedUnit
+    }
+  }
+
+  // Apply intelligent suggestions
+  const applyIntelligentSuggestions = () => {
+    if (intelligentSuggestions) {
+      setFormData(prev => ({
+        ...prev,
+        category: intelligentSuggestions.category,
+        hsn_code: intelligentSuggestions.hsnCode,
+        gst_rate: intelligentSuggestions.gstRate.toString(),
+        unit: intelligentSuggestions.unit
+      }))
+      setIntelligentSuggestions(null)
+    }
+  }
+
+  // Enhanced form data change handler with intelligent suggestions
+  const handleFormDataChange = (field: keyof ProductFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+    
+    // Trigger intelligent analysis when product name changes
+    if (field === 'name' && value.length > 3) {
+      const suggestions = analyzeProductName(value)
+      if (suggestions.category) {
+        setIntelligentSuggestions(suggestions)
+      }
+    }
+  }
+
   useEffect(() => {
     console.log('Products useEffect triggered:', { mode, id, loading, token: localStorage.getItem('auth_token') })
     if (mode === 'manage') {
@@ -410,6 +497,37 @@ export function Products({ mode = 'manage' }: ProductsProps) {
               <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '2px' }}>
                 Product Details
               </h3>
+              
+              {/* Intelligent Suggestions */}
+              {intelligentSuggestions && (
+                <div style={{
+                  padding: '12px 16px',
+                  backgroundColor: '#e7f3ff',
+                  border: '1px solid #17a2b8',
+                  borderRadius: '6px',
+                  marginBottom: '16px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <h4 style={{ margin: '0', fontSize: '14px', color: '#0056b3', fontWeight: '600' }}>
+                      🤖 Intelligent Suggestions
+                    </h4>
+                    <Button
+                      onClick={applyIntelligentSuggestions}
+                      variant="primary"
+                      style={{ fontSize: '11px', padding: '4px 8px' }}
+                    >
+                      Apply All
+                    </Button>
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#0056b3' }}>
+                    <div>Category: {intelligentSuggestions.category}</div>
+                    <div>HSN Code: {intelligentSuggestions.hsnCode}</div>
+                    <div>GST Rate: {intelligentSuggestions.gstRate}%</div>
+                    <div>Unit: {intelligentSuggestions.unit}</div>
+                  </div>
+                </div>
+              )}
+              
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                 {/* First Row */}
                 <div style={formStyles.formGroup}>
@@ -417,7 +535,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    onChange={(e) => handleFormDataChange('name', e.target.value)}
                     style={formStyles.input}
                     required
                   />
