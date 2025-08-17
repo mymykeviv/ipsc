@@ -75,7 +75,7 @@ interface ProductsProps {
 export function Products({ mode = 'manage' }: ProductsProps) {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { forceLogout } = useAuth()
+  const { token, forceLogout } = useAuth()
   const [products, setProducts] = useState<Product[]>([])
   const [vendors, setVendors] = useState<Party[]>([])
   const [loading, setLoading] = useState(true)
@@ -223,7 +223,13 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   }
 
   useEffect(() => {
-    console.log('Products useEffect triggered:', { mode, id, loading, token: localStorage.getItem('auth_token') })
+    if (!token) {
+      // If no token, redirect to login
+      navigate('/login')
+      return
+    }
+    
+    console.log('Products useEffect triggered:', { mode, id, loading, token })
     if (mode === 'manage') {
       console.log('Loading products for manage mode')
       loadProducts()
@@ -249,9 +255,11 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       setLoading(true)
       loadProducts()
       loadVendors()
+      // Load stock history data
+      loadStockHistory()
       setLoading(false)
     }
-  }, [mode, id])
+  }, [mode, id, token, navigate])
 
   // Reload products when filters change
   useEffect(() => {
@@ -266,15 +274,6 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       console.log('loadProducts called')
       setLoading(true)
       setError(null)
-      
-      // Check if user is authenticated
-      const token = localStorage.getItem('auth_token')
-      if (!token) {
-        console.error('No authentication token found')
-        setError('Authentication required. Please log in.')
-        setLoading(false)
-        return
-      }
       
       // Build filters object
       const filters: ProductFilters = {}
@@ -347,17 +346,25 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   const loadVendors = async () => {
     try {
       console.log('loadVendors called')
-      const token = localStorage.getItem('auth_token')
-      if (!token) {
-        console.error('No authentication token found for vendors')
-        return
-      }
       const data = await apiListParties()
       const vendorData = data.filter(party => party.type === 'vendor')
       setVendors(vendorData)
       console.log('Vendors loaded:', vendorData)
     } catch (error: any) {
       console.error('Error loading vendors:', error)
+      handleApiError(error)
+    }
+  }
+
+  const loadStockHistory = async () => {
+    try {
+      console.log('loadStockHistory called')
+      const history = await apiGetStockMovementHistory()
+      console.log('Stock history loaded:', history)
+      // Note: This function is called from stock history mode
+      // The actual state management is handled in the StockHistoryForm component
+    } catch (error: any) {
+      console.error('Error loading stock history:', error)
       handleApiError(error)
     }
   }
@@ -387,19 +394,32 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     e.preventDefault()
     setLoading(true)
     try {
+      // Validate required fields
+      if (!formData.name.trim()) {
+        setError('Product name is required')
+        setLoading(false)
+        return
+      }
+      
+      if (!formData.sales_price || parseFloat(formData.sales_price) <= 0) {
+        setError('Sales price must be greater than 0')
+        setLoading(false)
+        return
+      }
+      
       const payload = {
-        name: formData.name,
-        description: formData.description,
+        name: formData.name.trim(),
+        description: formData.description.trim() || null,
         item_type: formData.product_type,
         sales_price: parseFloat(formData.sales_price),
-        purchase_price: formData.purchase_price ? parseFloat(formData.purchase_price) : null,
-        stock: parseFloat(formData.opening_stock),
-        sku: formData.sku,
+        purchase_price: formData.purchase_price && parseFloat(formData.purchase_price) > 0 ? parseFloat(formData.purchase_price) : null,
+        stock: parseInt(formData.opening_stock) || 0,
+        sku: formData.sku.trim() || null,
         unit: formData.unit,
-        supplier: formData.supplier,
-        category: formData.category,
-        notes: formData.notes,
-        hsn: formData.hsn_code,
+        supplier: formData.supplier.trim() || null,
+        category: formData.category.trim() || null,
+        notes: formData.notes.trim() || null,
+        hsn: formData.hsn_code.trim() || null,
         gst_rate: formData.gst_rate && formData.gst_rate !== '' ? parseFloat(formData.gst_rate) : null
       }
       
@@ -1383,7 +1403,10 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
         })
         setSelectedProductId('')
         alert(`Stock adjusted successfully. New stock: ${result.new_stock}`)
-        onSuccess()
+        // Reload stock history to show the new entry
+        if (typeof onSuccess === 'function') {
+          onSuccess()
+        }
       }
     } catch (err: any) {
       console.error('Failed to adjust stock:', err)
@@ -1620,11 +1643,23 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
   
   const { forceLogout } = useAuth()
   const handleApiError = createApiErrorHandler(forceLogout)
+  
+  // Get URL parameters to set initial product filter
+  const urlParams = new URLSearchParams(window.location.search)
+  const productIdParam = urlParams.get('product')
 
   const loadProducts = async () => {
     try {
       const productsData = await apiGetProducts()
       setProducts(productsData)
+      
+      // Set product filter based on URL parameter
+      if (productIdParam) {
+        const selectedProduct = productsData.find(p => p.id.toString() === productIdParam)
+        if (selectedProduct) {
+          setProductFilter(selectedProduct.name)
+        }
+      }
     } catch (err) {
       const errorMessage = handleApiError(err)
       setError(errorMessage)

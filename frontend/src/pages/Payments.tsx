@@ -17,7 +17,7 @@ interface PaymentsProps {
 export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { forceLogout } = useAuth()
+  const { token, forceLogout } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [payments, setPayments] = useState<Payment[]>([])
   const [filteredPayments, setFilteredPayments] = useState<Payment[]>([])
@@ -35,17 +35,23 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
   const handleApiError = createApiErrorHandler(forceLogout)
 
   useEffect(() => {
+    if (!token) {
+      // If no token, redirect to login
+      navigate('/login')
+      return
+    }
+    
     if (mode === 'list' && type === 'invoice') {
       loadInvoicePayments()
     }
-  }, [mode, type])
+  }, [mode, type, token, navigate])
 
   const loadInvoicePayments = async () => {
     try {
       setLoading(true)
       // First load invoices to get invoice numbers
       const invoicesResponse = await fetch('/api/invoices', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+        headers: { Authorization: `Bearer ${token}` }
       })
       if (invoicesResponse.ok) {
         const invoicesData = await invoicesResponse.json()
@@ -297,7 +303,7 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
           <div style={{ 
             border: '1px solid #e9ecef', 
             borderRadius: '8px', 
-            overflow: 'hidden',
+            overflow: 'visible',
             backgroundColor: 'white'
           }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>

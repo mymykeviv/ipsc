@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { vi, describe, test, expect } from 'vitest'
 import { Products } from '../../pages/Products'
 import { BrowserRouter } from 'react-router-dom'
+import '@testing-library/jest-dom'
 
 // Mock the API functions
 vi.mock('../../lib/api', () => ({
@@ -18,6 +19,7 @@ vi.mock('../../lib/api', () => ({
 // Mock the AuthContext
 vi.mock('../../modules/AuthContext', () => ({
   useAuth: () => ({
+    token: 'mock-token',
     forceLogout: vi.fn()
   })
 }))
@@ -36,7 +38,7 @@ describe('Products Component', () => {
     )
     
     // Should show loading initially
-    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    expect(screen.getByText('Loading products...')).toBeInTheDocument()
   })
 
   test('should render add mode', () => {
@@ -47,7 +49,7 @@ describe('Products Component', () => {
     )
     
     // Should show the add product form
-    expect(screen.getByText('Add Product')).toBeInTheDocument()
+    expect(screen.getByText('Add New Product')).toBeInTheDocument()
   })
 
   test('should render edit mode', () => {
@@ -58,6 +60,6 @@ describe('Products Component', () => {
     )
     
     // Should show loading initially
-    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    expect(screen.getByText('Loading product data...')).toBeInTheDocument()
   })
 })
