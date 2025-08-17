@@ -1,20 +1,19 @@
 {
-  "version": "1.44.3",
-  "buildDate": "2025-08-17T13:00:00Z",
-  "commitHash": "42313a02",
-  "environment": "development",
-  "features": [
-    "Enhanced Filter System",
-    "4-Column Grid Layout",
-    "Quick Actions Always Visible",
-    "Stock Movement History Filters",
-    "Improved Accessibility",
-    "Compact Filter Design",
-    "Fixed Dropdown Clipping",
-    "Filter Feedback Fixes",
-    "Collapsed by Default",
-    "Header Clear Button",
-    "Dashboard Quick Links Fix",
-    "Enhanced Error Handling"
-  ]
+  "version": "1.44.4",
+  "build_date": "2025-08-17T11:50:00Z",
+  "changes": [
+    "Fixed clear all filter button to prevent expanding filter section",
+    "Organized documentation into dedicated docs/ folder",
+    "Created comprehensive documentation index and structure",
+    "Fixed Products component add mode loading issue",
+    "Enhanced systematic change management implementation",
+    "Added comprehensive test coverage for filter fixes",
+    "Improved project organization and maintainability"
+  ],
+  "features": {
+    "filter_system": "Enhanced with improved UX and bug fixes",
+    "documentation": "Comprehensive organization and structure",
+    "testing": "Enhanced test coverage for all fixes",
+    "error_handling": "Robust error handling and user feedback"
+  }
 }

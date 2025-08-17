@@ -47,7 +47,8 @@ export function EnhancedFilterBar({
     onToggleCollapse?.(newCollapsed)
   }
 
-  const handleClearAll = () => {
+  const handleClearAll = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent expanding filter section when clearing
     onClearAll?.()
   }
 

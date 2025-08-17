@@ -1,8 +1,9 @@
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, test, expect, beforeEach } from 'vitest'
 import { Dashboard } from '../../pages/Dashboard'
 import { BrowserRouter } from 'react-router-dom'
+import { AuthProvider } from '../../modules/AuthContext'
 
 // Mock the API functions
 vi.mock('../../lib/api', () => ({
@@ -66,16 +67,23 @@ describe('Dashboard Quick Links', () => {
     expect(screen.getByText('🏷️ Add Product')).toBeInTheDocument()
   })
 
-  test('should navigate to add product when Add Product button is clicked', () => {
+  test('should navigate to add product page when Add Product button is clicked', async () => {
     render(
-      <BrowserRouter>
+      <AuthProvider>
         <Dashboard />
-      </BrowserRouter>
+      </AuthProvider>
     )
     
+    // Wait for the component to load
+    await waitFor(() => {
+      expect(screen.getByText('🏷️ Add Product')).toBeInTheDocument()
+    })
+    
+    // Click the Add Product button
     const addProductButton = screen.getByText('🏷️ Add Product')
     fireEvent.click(addProductButton)
     
+    // Verify navigation was called with correct path
     expect(mockNavigate).toHaveBeenCalledWith('/products/add')
   })
 

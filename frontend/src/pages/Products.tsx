@@ -145,8 +145,10 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       loadVendors()
     } else if (mode === 'add') {
       console.log('Setting up add mode')
-      loadVendors()
-      setLoading(false)
+      setLoading(true)
+      loadVendors().finally(() => {
+        setLoading(false)
+      })
     }
   }, [mode, id])
 
@@ -249,7 +251,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       unit: 'Pcs',
       supplier: '',
       description: '',
-      product_type: 'Goods',
+      product_type: 'tradable',
       category: '',
       purchase_price: '',
       sales_price: '',

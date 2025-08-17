@@ -298,4 +298,33 @@ describe('EnhancedFilterBar', () => {
       expect(toggleButton).toHaveStyle({ transition: 'all 0.2s ease' })
     })
   })
+
+  test('should not expand filter section when clear all button is clicked', () => {
+    const mockOnClearAll = vi.fn()
+    const mockOnToggleCollapse = vi.fn()
+    
+    render(
+      <EnhancedFilterBar 
+        {...defaultProps} 
+        onClearAll={mockOnClearAll}
+        onToggleCollapse={mockOnToggleCollapse}
+        activeFiltersCount={2}
+        defaultCollapsed={true}
+      />
+    )
+    
+    // Verify filter is collapsed initially
+    expect(screen.queryByText('Filter Content')).not.toBeInTheDocument()
+    
+    // Click clear all button
+    const clearButton = screen.getByText('Clear All')
+    fireEvent.click(clearButton)
+    
+    // Verify onClearAll was called
+    expect(mockOnClearAll).toHaveBeenCalledTimes(1)
+    
+    // Verify filter section is still collapsed (onToggleCollapse should NOT be called)
+    expect(mockOnToggleCollapse).not.toHaveBeenCalled()
+    expect(screen.queryByText('Filter Content')).not.toBeInTheDocument()
+  })
 })

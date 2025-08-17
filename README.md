@@ -2,44 +2,16 @@
 
 A comprehensive business management system designed for Indian businesses with GST compliance, inventory management, and financial tracking capabilities.
 
-## Current Version: 1.42.0
+## 🚀 Current Version: 1.44.3
 
 **Latest Features:**
-- ✅ Comprehensive Filter System across all major screens
-- ✅ Advanced Date Range Filtering with preset options
-- ✅ Real-time Filter Updates and Data Refresh
-- ✅ Enhanced Products, Invoices, and Cashflow filtering
-- ✅ Reusable Filter Components for consistent UI
+- ✅ Enhanced Filter System with improved UX
+- ✅ Fixed Dashboard Quick Links functionality
+- ✅ Comprehensive Error Handling and Loading States
+- ✅ Organized Documentation Structure
+- ✅ Systematic Change Management Implementation
 
-## Features
-
-### ✅ Implemented (v1.39.0)
-- **Dashboard**: Cashflow summary with quick action buttons for common tasks
-- **Product Management**: Complete CRUD with HSN/GST details
-- **Authentication**: JWT-based with role-based access control
-- **Stock Management**: Real-time stock tracking and adjustments
-- **GST Compliance**: Indian GST calculation and reporting
-- **GST Toggle System**: Enable/disable GST for individual parties and system-wide settings
-- **Enhanced GST Reports**: GSTR-1 and GSTR-3B reports in exact GST portal format
-- **Invoice Management**: Generate and email invoices with payment tracking
-- **Purchase Management**: Complete purchase system with GST compliance and payment tracking
-- **Expense Management**: Comprehensive expense tracking with categorization
-- **Cashflow Management**: Income vs expense analysis with date range filtering
-- **Payment Management**: Enhanced payment system with account heads and multiple payment methods
-- **Party Management**: Customer and vendor management with GST toggle functionality
-- **Audit Trail**: Comprehensive logging of all user actions
-- **Reports**: GST summary reports (JSON/CSV) with portal-compatible export
-
-### 🚧 In Progress
-- **Advanced Invoice Features**: Multi-currency support, recurring invoices
-- **Purchase Order Management**: Complete PO workflow
-- **Advanced Payment Tracking**: Payment scheduling and reminders
-- **Inventory Management**: Advanced stock management features
-- **Financial Reports**: Comprehensive P&L, balance sheet, cash flow reports
-- **Email Integration**: Automated invoice delivery and payment reminders
-- **Mobile App**: React Native mobile application
-
-## Quick Start
+## 📋 Quick Start
 
 ### Prerequisites
 - Docker and Docker Compose
@@ -83,7 +55,7 @@ npm test
 docker compose logs -f [service-name]
 ```
 
-## Architecture
+## 🏗️ Architecture
 
 ### Backend (FastAPI)
 - **Framework**: FastAPI with async support
@@ -98,41 +70,83 @@ docker compose logs -f [service-name]
 - **Routing**: React Router DOM
 - **Testing**: Vitest with Testing Library, Playwright for E2E
 - **Styling**: CSS Variables with utility classes
-- **Browser Support**: Chrome and Firefox (Desktop only - MVP)
 
-### Database Schema
-- **Users & Roles**: RBAC system
-- **Products**: Complete product catalog with HSN/GST
-- **Parties**: Customers and vendors
-- **Transactions**: Invoices, purchases, payments
-- **Stock**: Real-time stock ledger
-- **Settings**: Company and system configuration
+## 📚 Documentation
 
-## API Endpoints
+**📁 [View Complete Documentation](./docs/)**
 
-### Authentication
-- `POST /api/auth/login` - User login
+Our documentation is now organized in a dedicated `docs/` folder for better structure and navigation:
 
-### Products
-- `GET /api/products` - List products
-- `POST /api/products` - Create product
-- `PUT /api/products/{id}` - Update product
-- `PATCH /api/products/{id}/toggle` - Toggle product status
+### Quick Navigation
+- **[Getting Started](./docs/README.md)** - Project overview and setup
+- **[Architecture](./docs/ARCHITECTURE.md)** - System design and patterns
+- **[Development Guide](./docs/DEV_PLAN.md)** - Development workflow
+- **[Testing Guide](./docs/TEST_RUNNING_GUIDE.md)** - How to run tests
+- **[Deployment](./docs/DEPLOYMENT.md)** - Deployment instructions
+- **[Changelog](./docs/CHANGELOG.md)** - Version history and changes
 
-### Stock
-- `GET /api/stock/summary` - Stock summary
-- `POST /api/stock/adjust` - Manual stock adjustment
+### Documentation Categories
+- **🚀 Getting Started** - Setup and quick start guides
+- **📋 Requirements & Planning** - Project requirements and roadmap
+- **🔧 Development & Testing** - Development workflow and testing
+- **📊 Test Reports & Results** - Comprehensive test documentation
+- **🎯 Feature Documentation** - Specific feature implementations
+- **🐛 Issue Reports & Fixes** - Bug fixes and problem resolution
+- **📝 Change Management** - Version history and change tracking
 
-### Invoices
-- `GET /api/invoices` - List invoices
-- `POST /api/invoices` - Create invoice
-- `GET /api/invoices/{id}/pdf` - Download PDF
+## 🎯 Key Features
 
-### Reports
-- `GET /api/reports/gst-summary` - GST summary (JSON)
-- `GET /api/reports/gst-summary.csv` - GST summary (CSV)
+### ✅ Implemented (v1.44.3)
+- **Dashboard**: Cashflow summary with working quick action buttons
+- **Product Management**: Complete CRUD with enhanced error handling
+- **Authentication**: JWT-based with role-based access control
+- **Stock Management**: Real-time stock tracking and adjustments
+- **GST Compliance**: Indian GST calculation and reporting
+- **Enhanced Filter System**: Advanced filtering across all screens
+- **Invoice Management**: Generate and email invoices with payment tracking
+- **Purchase Management**: Complete purchase system with GST compliance
+- **Expense Management**: Comprehensive expense tracking with categorization
+- **Cashflow Management**: Income vs expense analysis with date range filtering
+- **Payment Management**: Enhanced payment system with multiple methods
+- **Party Management**: Customer and vendor management with GST toggle
+- **Audit Trail**: Comprehensive logging of all user actions
+- **Reports**: GST summary reports with portal-compatible export
 
-## Deployment
+### 🚧 In Progress
+- **Advanced Invoice Features**: Multi-currency support, recurring invoices
+- **Purchase Order Management**: Complete PO workflow
+- **Advanced Payment Tracking**: Payment scheduling and reminders
+- **Inventory Management**: Advanced stock management features
+- **Financial Reports**: Comprehensive P&L, balance sheet, cash flow reports
+- **Email Integration**: Automated invoice delivery and payment reminders
+- **Mobile App**: React Native mobile application
+
+## 🔧 Development
+
+### Code Organization
+```
+ipsc/
+├── backend/           # FastAPI backend
+├── frontend/          # React frontend
+├── docs/             # 📁 Organized documentation
+├── tests/            # Test files
+├── scripts/          # Deployment and utility scripts
+└── docker-compose.yml
+```
+
+### Testing Strategy
+- **Backend**: Pytest with comprehensive API testing
+- **Frontend**: Vitest with component and integration testing
+- **E2E**: Playwright for end-to-end testing
+- **Quality**: Automated quality checks and manual testing
+
+### Quality Assurance
+- **Systematic Change Management**: Impact analysis and backward compatibility
+- **Comprehensive Testing**: Unit, integration, and E2E test coverage
+- **Documentation Standards**: Clear documentation with every change
+- **Error Handling**: Robust error handling and user feedback
+
+## 🚀 Deployment
 
 ### Production Deployment
 ```bash
@@ -151,30 +165,19 @@ docker compose logs -f
 - Frontend version: Check browser console on load
 - Database migrations: Automatic on startup
 
-## Testing
-
-### Backend Tests
-```bash
-# Run all tests
-python -m pytest tests/backend/ -v
-
-# Run specific test
-python -m pytest tests/backend/test_products.py -v
-```
-
-### Frontend Tests
-```bash
-cd frontend
-npm test
-```
-
-## Contributing
+## 🤝 Contributing
 
 1. Follow TDD approach
 2. Write tests before implementation
 3. Ensure all tests pass before committing
 4. Update version numbers for releases
+5. Follow systematic change management practices
+6. Update documentation with every change
 
-## License
+## 📄 License
 
 Private - All rights reserved
+
+---
+
+**📚 [View Complete Documentation](./docs/) | 📋 [View Changelog](./docs/CHANGELOG.md) | 🐛 [Report Issues](https://github.com/your-repo/issues)**
