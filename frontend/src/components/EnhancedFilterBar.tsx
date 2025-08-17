@@ -33,7 +33,7 @@ export function EnhancedFilterBar({
   title = 'Advanced Filters',
   activeFiltersCount = 0,
   onToggleCollapse,
-  defaultCollapsed = false, // Changed to false to keep filters expanded by default
+  defaultCollapsed = true, // Changed to true - filter sections collapsed by default
   showFilterCount = true,
   showQuickActions = false,
   quickActions = []
@@ -49,6 +49,11 @@ export function EnhancedFilterBar({
 
   const handleClearAll = () => {
     onClearAll?.()
+  }
+
+  const handleQuickAction = (action: () => void, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent opening dropdown when collapsed
+    action()
   }
 
   return (
@@ -131,10 +136,7 @@ export function EnhancedFilterBar({
               {quickActions.map((action, index) => (
                 <button
                   key={index}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    action.action()
-                  }}
+                  onClick={(e) => handleQuickAction(action.action, e)}
                   style={{
                     padding: '4px 8px', // Reduced padding
                     border: '1px solid #ced4da',
@@ -163,6 +165,38 @@ export function EnhancedFilterBar({
                 </button>
               ))}
             </div>
+          )}
+          
+          {/* Clear All Filters Button - Moved to header */}
+          {showClearAll && onClearAll && (
+            <button
+              onClick={handleClearAll}
+              disabled={activeFiltersCount === 0}
+              style={{
+                padding: '4px 8px', // Reduced padding
+                border: '1px solid #ced4da',
+                borderRadius: '4px',
+                backgroundColor: activeFiltersCount > 0 ? '#dc3545' : '#f8f9fa',
+                color: activeFiltersCount > 0 ? 'white' : '#6c757d',
+                cursor: activeFiltersCount > 0 ? 'pointer' : 'not-allowed',
+                fontSize: '11px', // Reduced font size
+                fontWeight: '500',
+                transition: 'all 0.2s ease',
+                opacity: activeFiltersCount > 0 ? 1 : 0.6
+              }}
+              onMouseEnter={(e) => {
+                if (activeFiltersCount > 0) {
+                  e.currentTarget.style.backgroundColor = '#c82333'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeFiltersCount > 0) {
+                  e.currentTarget.style.backgroundColor = '#dc3545'
+                }
+              }}
+            >
+              Clear All
+            </button>
           )}
           
           <div style={{ 
@@ -211,32 +245,7 @@ export function EnhancedFilterBar({
               {activeFiltersCount > 0 ? `${activeFiltersCount} active filter${activeFiltersCount !== 1 ? 's' : ''}` : 'No filters applied'}
             </div>
             
-            {showClearAll && onClearAll && activeFiltersCount > 0 && (
-              <button
-                onClick={handleClearAll}
-                style={{
-                  padding: '6px 12px', // Reduced padding
-                  border: '1px solid #dc3545',
-                  borderRadius: '4px', // Reduced border radius
-                  backgroundColor: 'white',
-                  color: '#dc3545',
-                  cursor: 'pointer',
-                  fontSize: '12px', // Reduced font size
-                  fontWeight: '500',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#dc3545'
-                  e.currentTarget.style.color = 'white'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white'
-                  e.currentTarget.style.color = '#dc3545'
-                }}
-              >
-                Clear All Filters
-              </button>
-            )}
+            {/* Removed Clear All Filters button from bottom - now in header */}
           </div>
         </div>
       )}

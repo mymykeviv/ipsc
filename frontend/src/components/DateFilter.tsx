@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 interface DateFilterProps {
   value: string
@@ -33,6 +33,18 @@ export function DateFilter({ value, onChange, placeholder = 'Select date range',
     from: '',
     to: ''
   })
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsCustomOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   useEffect(() => {
     if (value === 'custom') {
@@ -78,7 +90,7 @@ export function DateFilter({ value, onChange, placeholder = 'Select date range',
     <div className={`date-filter ${className}`} style={{ 
       position: 'relative',
       zIndex: 9999 // Ensure the dropdown container has high z-index
-    }}>
+    }} ref={dropdownRef}>
       <div
         onClick={() => setIsCustomOpen(!isCustomOpen)}
         style={{

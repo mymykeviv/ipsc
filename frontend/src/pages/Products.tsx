@@ -737,7 +737,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         showQuickActions={true}
         quickActions={[
           {
-            label: 'Low Stock',
+            label: 'Low Stock (<10)',
             action: () => {
               setStockLevelFilter('low_stock')
             },
@@ -749,21 +749,8 @@ export function Products({ mode = 'manage' }: ProductsProps) {
               setStatusFilter('active')
             },
             icon: '✅'
-          },
-          {
-            label: 'Electronics',
-            action: () => {
-              setCategoryFilter('Electronics')
-            },
-            icon: '📱'
-          },
-          {
-            label: 'High GST',
-            action: () => {
-              setGstRateFilter('18')
-            },
-            icon: '💰'
           }
+          // Removed Electronics and High GST quick filters as requested
         ]}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -1556,16 +1543,8 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
         ]}
       >
         {/* Search Bar */}
-        <div>
-          <label style={{ 
-            fontSize: '11px', 
-            color: '#495057', 
-            fontWeight: '500', 
-            display: 'block', 
-            marginBottom: '4px' 
-          }}>
-            Search
-          </label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Search</span>
           <input
             type="text"
             value={historySearchTerm}
@@ -1577,7 +1556,8 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
               border: '1px solid #ced4da',
               borderRadius: '4px',
               fontSize: '12px',
-              outline: 'none'
+              outline: 'none',
+              minHeight: '32px' // Match other filter components height
             }}
           />
         </div>
@@ -1614,6 +1594,13 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
             { value: 'outgoing', label: 'Outgoing Stock' }
           ]}
           placeholder="Select Entry Type"
+        />
+
+        {/* Date Filter */}
+        <DateFilter
+          value={dateFilter}
+          onChange={setDateFilter}
+          placeholder="Select date range"
         />
       </EnhancedFilterBar>
 
