@@ -3,6 +3,7 @@ import { useAuth } from '../modules/AuthContext'
 import { apiAdjustStock, apiGetStockSummary, StockRow } from '../lib/api'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
+import { formStyles } from '../utils/formStyles'
 
 interface StockAdjustmentForm {
   productId: number | ''
@@ -189,106 +190,146 @@ export function Stock() {
 
             <form onSubmit={handleStockAdjustment}>
               {/* Stock Adjustment Details Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '8px' }}>
-                  Stock Adjustment Details
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div>
-                  <label>Product *</label>
-                  <select
-                    value={adjustmentForm.productId}
-                    onChange={(e) => setAdjustmentForm({...adjustmentForm, productId: e.target.value ? Number(e.target.value) : ''})}
-                    required
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  >
-                    <option value="">Select Product</option>
-                    {rows.map(r => <option key={r.product_id} value={r.product_id}>{r.sku} - {r.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label>Adjustment Type *</label>
-                  <select
-                    value={adjustmentForm.adjustmentType}
-                    onChange={(e) => setAdjustmentForm({...adjustmentForm, adjustmentType: e.target.value as 'add' | 'reduce'})}
-                    required
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  >
-                    <option value="add">Add Stock</option>
-                    <option value="reduce">Reduce Stock</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Quantity *</label>
-                  <input
-                    type="number"
-                    value={adjustmentForm.quantity}
-                    onChange={(e) => setAdjustmentForm({...adjustmentForm, quantity: e.target.value})}
-                    required
-                    min="0"
-                    max="999999"
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  />
-                </div>
-                <div>
-                  <label>Date of Adjustment *</label>
-                  <input
-                    type="date"
-                    value={adjustmentForm.dateOfAdjustment}
-                    onChange={(e) => setAdjustmentForm({...adjustmentForm, dateOfAdjustment: e.target.value})}
-                    required
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  />
-                </div>
-                <div>
-                  <label>Reference Bill Number</label>
-                  <input
-                    type="text"
-                    value={adjustmentForm.referenceBillNumber}
-                    onChange={(e) => setAdjustmentForm({...adjustmentForm, referenceBillNumber: e.target.value})}
-                    maxLength={10}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  />
-                </div>
-                <div>
-                  <label>Supplier</label>
-                  <input
-                    type="text"
-                    value={adjustmentForm.supplier}
-                    onChange={(e) => setAdjustmentForm({...adjustmentForm, supplier: e.target.value})}
-                    maxLength={50}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  />
-                </div>
-                <div>
-                  <label>Category</label>
-                  <input
-                    type="text"
-                    value={adjustmentForm.category}
-                    onChange={(e) => setAdjustmentForm({...adjustmentForm, category: e.target.value})}
-                    maxLength={50}
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                  />
-                </div>
+              <div style={formStyles.section}>
+                <div style={{
+                  border: '1px solid #dee2e6',
+                  borderRadius: '6px',
+                  overflow: 'hidden'
+                }}>
+                  <h3 style={{ 
+                    margin: '0',
+                    backgroundColor: '#007bff',
+                    color: '#ffffff',
+                    padding: '12px 16px',
+                    borderRadius: '6px 6px 0 0',
+                    fontSize: '16px',
+                    fontWeight: '600'
+                  }}>
+                    📦 Stock Adjustment Details
+                  </h3>
+                  <div style={{
+                    padding: '16px',
+                    backgroundColor: '#ffffff'
+                  }}>
+                    <div style={formStyles.grid2Col}>
+                      <div style={formStyles.formGroup}>
+                        <label style={formStyles.label}>Product <span style={{ color: '#dc2626' }}>*</span></label>
+                        <select
+                          value={adjustmentForm.productId}
+                          onChange={(e) => setAdjustmentForm({...adjustmentForm, productId: e.target.value ? Number(e.target.value) : ''})}
+                          required
+                          style={formStyles.select}
+                        >
+                          <option value="">Select Product</option>
+                          {rows.map(r => <option key={r.product_id} value={r.product_id}>{r.sku} - {r.name}</option>)}
+                        </select>
+                      </div>
+                      <div style={formStyles.formGroup}>
+                        <label style={formStyles.label}>Adjustment Type <span style={{ color: '#dc2626' }}>*</span></label>
+                        <select
+                          value={adjustmentForm.adjustmentType}
+                          onChange={(e) => setAdjustmentForm({...adjustmentForm, adjustmentType: e.target.value as 'add' | 'reduce'})}
+                          required
+                          style={formStyles.select}
+                        >
+                          <option value="add">Add Stock</option>
+                          <option value="reduce">Reduce Stock</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div style={formStyles.grid2Col}>
+                      <div style={formStyles.formGroup}>
+                        <label style={formStyles.label}>Quantity <span style={{ color: '#dc2626' }}>*</span></label>
+                        <input
+                          type="number"
+                          value={adjustmentForm.quantity}
+                          onChange={(e) => setAdjustmentForm({...adjustmentForm, quantity: e.target.value})}
+                          required
+                          min="0"
+                          max="999999"
+                          style={formStyles.input}
+                        />
+                      </div>
+                      <div style={formStyles.formGroup}>
+                        <label style={formStyles.label}>Date of Adjustment <span style={{ color: '#dc2626' }}>*</span></label>
+                        <input
+                          type="date"
+                          value={adjustmentForm.dateOfAdjustment}
+                          onChange={(e) => setAdjustmentForm({...adjustmentForm, dateOfAdjustment: e.target.value})}
+                          required
+                          style={formStyles.input}
+                        />
+                      </div>
+                    </div>
+                    <div style={formStyles.grid2Col}>
+                      <div style={formStyles.formGroup}>
+                        <label style={formStyles.label}>Reference Bill Number</label>
+                        <input
+                          type="text"
+                          value={adjustmentForm.referenceBillNumber}
+                          onChange={(e) => setAdjustmentForm({...adjustmentForm, referenceBillNumber: e.target.value})}
+                          maxLength={10}
+                          style={formStyles.input}
+                        />
+                      </div>
+                      <div style={formStyles.formGroup}>
+                        <label style={formStyles.label}>Supplier</label>
+                        <input
+                          type="text"
+                          value={adjustmentForm.supplier}
+                          onChange={(e) => setAdjustmentForm({...adjustmentForm, supplier: e.target.value})}
+                          maxLength={50}
+                          style={formStyles.input}
+                        />
+                      </div>
+                    </div>
+                    <div style={formStyles.formGroup}>
+                      <label style={formStyles.label}>Category</label>
+                      <input
+                        type="text"
+                        value={adjustmentForm.category}
+                        onChange={(e) => setAdjustmentForm({...adjustmentForm, category: e.target.value})}
+                        maxLength={50}
+                        style={formStyles.input}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Additional Information Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ marginBottom: '16px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '8px' }}>
-                  Additional Information
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-                  <div>
-                    <label>Notes</label>
-                    <textarea
-                      value={adjustmentForm.notes}
-                      onChange={(e) => setAdjustmentForm({...adjustmentForm, notes: e.target.value})}
-                      rows={3}
-                      maxLength={200}
-                      placeholder="Enter adjustment notes (optional)"
-                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-                    />
+              <div style={formStyles.section}>
+                <div style={{
+                  border: '1px solid #dee2e6',
+                  borderRadius: '6px',
+                  overflow: 'hidden'
+                }}>
+                  <h3 style={{ 
+                    margin: '0',
+                    backgroundColor: '#007bff',
+                    color: '#ffffff',
+                    padding: '12px 16px',
+                    borderRadius: '6px 6px 0 0',
+                    fontSize: '16px',
+                    fontWeight: '600'
+                  }}>
+                    📝 Additional Information
+                  </h3>
+                  <div style={{
+                    padding: '16px',
+                    backgroundColor: '#ffffff'
+                  }}>
+                    <div style={formStyles.formGroup}>
+                      <label style={formStyles.label}>Notes</label>
+                      <textarea
+                        value={adjustmentForm.notes}
+                        onChange={(e) => setAdjustmentForm({...adjustmentForm, notes: e.target.value})}
+                        rows={3}
+                        maxLength={200}
+                        placeholder="Enter adjustment notes (optional)"
+                        style={formStyles.textarea}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

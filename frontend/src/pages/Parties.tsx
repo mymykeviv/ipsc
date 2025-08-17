@@ -1130,7 +1130,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
           backgroundColor: '#fff',
           border: '1px solid #e9ecef',
           borderRadius: '8px',
-          overflow: 'hidden'
+          overflow: 'visible'
         }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>

@@ -400,7 +400,7 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
       <div style={{ 
         border: '1px solid #e9ecef', 
         borderRadius: '8px', 
-        overflow: 'hidden',
+        overflow: 'visible',
         backgroundColor: 'white'
       }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
