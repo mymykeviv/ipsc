@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { apiEmailInvoice } from '../lib/api'
 import { Modal } from './Modal'
 import { Button } from './Button'
-import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
+import { formStyles } from '../utils/formStyles'
 
 interface EmailFormModalProps {
   isOpen: boolean
@@ -139,68 +139,85 @@ export function EmailFormModal({
 
           {/* Invoice Details Section */}
           <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('basic') }}>
-              📄 Invoice Details
-            </h3>
-            <div style={formStyles.grid}>
-              <div style={formStyles.grid2Col}>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Invoice Number</label>
-                  <input
-                    type="text"
-                    value={invoiceNo}
-                    disabled
-                    style={{ 
-                      ...formStyles.input, 
-                      backgroundColor: '#f8f9fa',
-                      color: '#6b7280',
-                      cursor: 'not-allowed'
-                    }}
-                  />
+            <div style={{
+              border: '1px solid #dee2e6',
+              borderRadius: '6px',
+              overflow: 'hidden'
+            }}>
+              <h3 style={{ 
+                margin: '0',
+                backgroundColor: '#007bff',
+                color: '#ffffff',
+                padding: '12px 16px',
+                borderRadius: '6px 6px 0 0',
+                fontSize: '16px',
+                fontWeight: '600'
+              }}>
+                📄 Invoice Details
+              </h3>
+              <div style={{
+                padding: '16px',
+                backgroundColor: '#ffffff'
+              }}>
+                <div style={formStyles.grid2Col}>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Invoice Number</label>
+                    <input
+                      type="text"
+                      value={invoiceNo}
+                      disabled
+                      style={{ 
+                        ...formStyles.input, 
+                        backgroundColor: '#f8f9fa',
+                        color: '#6b7280',
+                        cursor: 'not-allowed'
+                      }}
+                    />
+                  </div>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Customer</label>
+                    <input
+                      type="text"
+                      value={customerName}
+                      disabled
+                      style={{ 
+                        ...formStyles.input, 
+                        backgroundColor: '#f8f9fa',
+                        color: '#6b7280',
+                        cursor: 'not-allowed'
+                      }}
+                    />
+                  </div>
                 </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Customer</label>
-                  <input
-                    type="text"
-                    value={customerName}
-                    disabled
-                    style={{ 
-                      ...formStyles.input, 
-                      backgroundColor: '#f8f9fa',
-                      color: '#6b7280',
-                      cursor: 'not-allowed'
-                    }}
-                  />
-                </div>
-              </div>
-              <div style={formStyles.grid2Col}>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Invoice Amount</label>
-                  <input
-                    type="text"
-                    value={`₹${grandTotal.toFixed(2)}`}
-                    disabled
-                    style={{ 
-                      ...formStyles.input, 
-                      backgroundColor: '#f8f9fa',
-                      color: '#6b7280',
-                      cursor: 'not-allowed'
-                    }}
-                  />
-                </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Due Date</label>
-                  <input
-                    type="text"
-                    value={new Date(dueDate).toLocaleDateString()}
-                    disabled
-                    style={{ 
-                      ...formStyles.input, 
-                      backgroundColor: '#f8f9fa',
-                      color: '#6b7280',
-                      cursor: 'not-allowed'
-                    }}
-                  />
+                <div style={formStyles.grid2Col}>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Invoice Amount</label>
+                    <input
+                      type="text"
+                      value={`₹${grandTotal.toFixed(2)}`}
+                      disabled
+                      style={{ 
+                        ...formStyles.input, 
+                        backgroundColor: '#f8f9fa',
+                        color: '#6b7280',
+                        cursor: 'not-allowed'
+                      }}
+                    />
+                  </div>
+                  <div style={formStyles.formGroup}>
+                    <label style={formStyles.label}>Due Date</label>
+                    <input
+                      type="text"
+                      value={new Date(dueDate).toLocaleDateString()}
+                      disabled
+                      style={{ 
+                        ...formStyles.input, 
+                        backgroundColor: '#f8f9fa',
+                        color: '#6b7280',
+                        cursor: 'not-allowed'
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -208,44 +225,61 @@ export function EmailFormModal({
 
           {/* Email Details Section */}
           <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, backgroundColor: getSectionHeaderColor('other') }}>
-              📧 Email Details
-            </h3>
-            <div style={formStyles.grid}>
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>
-                  Email Address <span style={{ color: '#dc2626' }}>*</span>
-                </label>
-                <input
-                  type="email"
-                  value={emailForm.email_address}
-                  onChange={(e) => setEmailForm(prev => ({ ...prev, email_address: e.target.value }))}
-                  style={formStyles.input}
-                  placeholder="Enter customer email address"
-                  required
-                />
-              </div>
+            <div style={{
+              border: '1px solid #dee2e6',
+              borderRadius: '6px',
+              overflow: 'hidden'
+            }}>
+              <h3 style={{ 
+                margin: '0',
+                backgroundColor: '#007bff',
+                color: '#ffffff',
+                padding: '12px 16px',
+                borderRadius: '6px 6px 0 0',
+                fontSize: '16px',
+                fontWeight: '600'
+              }}>
+                📧 Email Details
+              </h3>
+              <div style={{
+                padding: '16px',
+                backgroundColor: '#ffffff'
+              }}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>
+                    Email Address <span style={{ color: '#dc2626' }}>*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={emailForm.email_address}
+                    onChange={(e) => setEmailForm(prev => ({ ...prev, email_address: e.target.value }))}
+                    style={formStyles.input}
+                    placeholder="Enter customer email address"
+                    required
+                  />
+                </div>
 
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Subject</label>
-                <input
-                  type="text"
-                  value={emailForm.subject}
-                  onChange={(e) => setEmailForm(prev => ({ ...prev, subject: e.target.value }))}
-                  style={formStyles.input}
-                  placeholder="Enter email subject"
-                />
-              </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Subject</label>
+                  <input
+                    type="text"
+                    value={emailForm.subject}
+                    onChange={(e) => setEmailForm(prev => ({ ...prev, subject: e.target.value }))}
+                    style={formStyles.input}
+                    placeholder="Enter email subject"
+                  />
+                </div>
 
-              <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
-                <label style={formStyles.label}>Message</label>
-                <textarea
-                  value={emailForm.message}
-                  onChange={(e) => setEmailForm(prev => ({ ...prev, message: e.target.value }))}
-                  style={formStyles.textarea}
-                  rows={4}
-                  placeholder="Enter email message"
-                />
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Message</label>
+                  <textarea
+                    value={emailForm.message}
+                    onChange={(e) => setEmailForm(prev => ({ ...prev, message: e.target.value }))}
+                    style={formStyles.textarea}
+                    rows={4}
+                    placeholder="Enter email message"
+                  />
+                </div>
               </div>
             </div>
           </div>

@@ -25,7 +25,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'medium' }: Mod
       left: 0,
       right: 0,
       bottom: 0,
-      zIndex: 50,
+      zIndex: 9999,
       overflowY: 'auto',
       display: 'flex',
       alignItems: 'center',

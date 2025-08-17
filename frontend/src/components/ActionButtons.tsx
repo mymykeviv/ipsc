@@ -18,14 +18,15 @@ interface ActionButtonsProps {
   showDropdown?: boolean
 }
 
-export function ActionButtons({ 
-  primaryActions = [], 
-  secondaryActions = [], 
+export function ActionButtons({
+  primaryActions = [],
+  secondaryActions = [],
   contextualActions = [],
   maxVisible = 3,
   showDropdown = true
 }: ActionButtonsProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom')
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Close dropdown when clicking outside
@@ -40,6 +41,26 @@ export function ActionButtons({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  const handleToggleDropdown = () => {
+    if (!isOpen) {
+      // Calculate position before opening
+      if (dropdownRef.current) {
+        const rect = dropdownRef.current.getBoundingClientRect()
+        const viewportHeight = window.innerHeight
+        const dropdownHeight = 200 // Approximate height of dropdown
+        const spaceBelow = viewportHeight - rect.bottom
+        const spaceAbove = rect.top
+        
+        if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+          setDropdownPosition('top')
+        } else {
+          setDropdownPosition('bottom')
+        }
+      }
+    }
+    setIsOpen(!isOpen)
+  }
+
   const allActions = [...primaryActions, ...secondaryActions, ...contextualActions]
   const visibleActions = allActions.slice(0, maxVisible)
   const dropdownActions = allActions.slice(maxVisible)
@@ -50,7 +71,7 @@ export function ActionButtons({
       <div style={{ position: 'relative', display: 'inline-block' }} ref={dropdownRef}>
         <Button
           variant="secondary"
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={handleToggleDropdown}
           style={{ 
             fontSize: '12px', 
             padding: '6px 8px',
@@ -73,7 +94,7 @@ export function ActionButtons({
         {isOpen && (
           <div style={{
             position: 'absolute',
-            top: '100%',
+            [dropdownPosition === 'bottom' ? 'top' : 'bottom']: '100%',
             right: '0',
             zIndex: 1000,
             backgroundColor: '#ffffff',
@@ -82,7 +103,8 @@ export function ActionButtons({
             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
             minWidth: '160px',
             padding: '4px 0',
-            marginTop: '4px'
+            marginTop: dropdownPosition === 'bottom' ? '4px' : '0',
+            marginBottom: dropdownPosition === 'top' ? '4px' : '0'
           }}>
             {allActions.map((action, index) => (
               <button
