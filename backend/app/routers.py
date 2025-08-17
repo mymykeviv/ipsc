@@ -441,6 +441,36 @@ class PaymentOut(BaseModel):
         from_attributes = True
 
 
+class PurchasePaymentOut(BaseModel):
+    id: int
+    purchase_id: int
+    payment_amount: float
+    payment_method: str
+    account_head: str
+    reference_number: str | None
+    payment_date: str  # ISO date string
+    notes: str | None
+    vendor_name: str
+    purchase_number: str
+
+    class Config:
+        from_attributes = True
+
+
+class StockLedgerEntryOut(BaseModel):
+    id: int
+    product_id: int
+    entry_type: str
+    qty: float
+    reference_bill_number: str | None
+    notes: str | None
+    created_at: str  # ISO date string
+    product_name: str
+
+    class Config:
+        from_attributes = True
+
+
 class InvoiceOut(BaseModel):
     id: int
     customer_id: int
@@ -4155,7 +4185,7 @@ class PurchaseOrderOut(BaseModel):
         from_attributes = True
 
 
-@api.get('/stock/history', response_model=list[StockLedgerEntry])
+@api.get('/stock/history', response_model=list[StockLedgerEntryOut])
 def get_stock_history(
     search: str | None = None,
     product_id: int | None = None,
@@ -4201,7 +4231,22 @@ def get_stock_history(
         query = query.filter(StockLedgerEntry.created_at <= datetime.fromisoformat(date_to))
     
     entries = query.order_by(StockLedgerEntry.created_at.desc()).all()
-    return entries
+    
+    result = []
+    for entry in entries:
+        product = db.query(Product).filter(Product.id == entry.product_id).first()
+        result.append(StockLedgerEntryOut(
+            id=entry.id,
+            product_id=entry.product_id,
+            entry_type=entry.entry_type,
+            qty=float(entry.qty),
+            reference_bill_number=entry.reference_bill_number,
+            notes=entry.notes,
+            created_at=entry.created_at.isoformat(),
+            product_name=product.name if product else "Unknown"
+        ))
+    
+    return result
 
 @api.get('/stock/movement-history', response_model=list[StockMovementOut])
 def get_stock_movement_history(
