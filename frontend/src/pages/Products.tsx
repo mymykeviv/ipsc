@@ -134,13 +134,17 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   })
 
   useEffect(() => {
+    console.log('Products useEffect triggered:', { mode, id, loading })
     if (mode === 'manage') {
+      console.log('Loading products for manage mode')
       loadProducts()
       loadVendors()
     } else if (mode === 'edit' && id) {
+      console.log('Loading product for edit mode:', id)
       loadProduct(parseInt(id))
       loadVendors()
     } else if (mode === 'add') {
+      console.log('Setting up add mode')
       loadVendors()
       setLoading(false)
     }
@@ -148,6 +152,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
 
   // Reload products when filters change
   useEffect(() => {
+    console.log('Filter change useEffect triggered:', { mode, searchTerm, categoryFilter })
     if (mode === 'manage') {
       loadProducts()
     }
@@ -155,6 +160,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
 
   const loadProducts = async () => {
     try {
+      console.log('loadProducts called')
       setLoading(true)
       
       // Build filters object
@@ -175,12 +181,16 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         if (max) filters.price_max = parseFloat(max)
       }
       
+      console.log('Calling apiGetProducts with filters:', filters)
       const data = await apiGetProducts(filters)
+      console.log('Products loaded:', data)
       setProducts(data)
     } catch (error: any) {
+      console.error('Error loading products:', error)
       handleApiError(error)
       setError('Failed to load products')
     } finally {
+      console.log('Setting loading to false')
       setLoading(false)
     }
   }
@@ -594,12 +604,15 @@ export function Products({ mode = 'manage' }: ProductsProps) {
 
   // Manage Products Mode
   if (loading) {
+    console.log('Rendering loading state')
     return (
       <div style={{ padding: '20px' }}>
         <div>Loading...</div>
       </div>
     )
   }
+
+  console.log('Rendering manage mode:', { products: products.length, error })
 
   // Filter and sort products
   const filteredProducts = products.filter(product => {

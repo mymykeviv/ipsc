@@ -1,7 +1,7 @@
 {
-  "version": "1.44.1",
-  "buildDate": "2025-08-17T12:00:00Z",
-  "commitHash": "62b61b49",
+  "version": "1.44.2",
+  "buildDate": "2025-08-17T12:30:00Z",
+  "commitHash": "8c004c37",
   "environment": "development",
   "features": [
     "Enhanced Filter System",
@@ -10,6 +10,9 @@
     "Stock Movement History Filters",
     "Improved Accessibility",
     "Compact Filter Design",
-    "Fixed Dropdown Clipping"
+    "Fixed Dropdown Clipping",
+    "Filter Feedback Fixes",
+    "Collapsed by Default",
+    "Header Clear Button"
   ]
 }

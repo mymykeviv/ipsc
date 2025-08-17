@@ -1,5 +1,6 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { vi, describe, test, expect, beforeEach } from 'vitest'
 import { EnhancedFilterBar } from '../EnhancedFilterBar'
 import { FilterDropdown } from '../FilterDropdown'
 import { DateFilter } from '../DateFilter'
