@@ -1,7 +1,7 @@
 {
-  "version": "1.44.2",
-  "buildDate": "2025-08-17T12:30:00Z",
-  "commitHash": "8c004c37",
+  "version": "1.44.3",
+  "buildDate": "2025-08-17T13:00:00Z",
+  "commitHash": "42313a02",
   "environment": "development",
   "features": [
     "Enhanced Filter System",
@@ -13,6 +13,8 @@
     "Fixed Dropdown Clipping",
     "Filter Feedback Fixes",
     "Collapsed by Default",
-    "Header Clear Button"
+    "Header Clear Button",
+    "Dashboard Quick Links Fix",
+    "Enhanced Error Handling"
   ]
 }

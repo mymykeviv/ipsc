@@ -354,7 +354,21 @@ export function Products({ mode = 'manage' }: ProductsProps) {
 
         {error && <ErrorMessage message={error} />}
 
-        <form onSubmit={mode === 'add' ? handleAddProduct : handleEditProduct} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        {loading && (
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            minHeight: '100px',
+            fontSize: '16px',
+            color: '#6c757d'
+          }}>
+            {mode === 'add' ? 'Loading form...' : 'Loading product data...'}
+          </div>
+        )}
+
+        {!loading && (
+          <form onSubmit={mode === 'add' ? handleAddProduct : handleEditProduct} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           
           {/* Row 1: Product Details | Price Details */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
@@ -588,6 +602,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
             </Button>
           </div>
         </form>
+      )}
       </div>
     )
   }
@@ -607,12 +622,59 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     console.log('Rendering loading state')
     return (
       <div style={{ padding: '20px' }}>
-        <div>Loading...</div>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          minHeight: '200px',
+          fontSize: '16px',
+          color: '#6c757d'
+        }}>
+          Loading products...
+        </div>
       </div>
     )
   }
 
   console.log('Rendering manage mode:', { products: products.length, error })
+
+  // Show error state if there's an error
+  if (error) {
+    return (
+      <div style={{ padding: '20px' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '24px',
+          paddingBottom: '12px',
+          borderBottom: '2px solid #e9ecef'
+        }}>
+          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Manage Products</h1>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <Button variant="primary" onClick={() => navigate('/products/add')}>
+              Add Product
+            </Button>
+          </div>
+        </div>
+        
+        <div style={{ 
+          padding: '20px', 
+          backgroundColor: '#f8d7da', 
+          border: '1px solid #f5c6cb', 
+          borderRadius: '8px',
+          color: '#721c24',
+          textAlign: 'center'
+        }}>
+          <h3 style={{ margin: '0 0 12px 0' }}>Error Loading Products</h3>
+          <p style={{ margin: '0 0 16px 0' }}>{error}</p>
+          <Button variant="primary" onClick={loadProducts}>
+            Retry Loading
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   // Filter and sort products
   const filteredProducts = products.filter(product => {
