@@ -1064,9 +1064,57 @@ export type StockMovement = {
   closing_stock: number
 }
 
+export type StockLedgerEntry = {
+  id: number
+  product_id: number
+  product_name: string
+  entry_type: string
+  qty: number
+  reference_bill_number: string | null
+  notes: string | null
+  created_at: string
+}
+
 export async function apiGetStockMovementHistory(financialYear?: string): Promise<StockMovement[]> {
   const params = financialYear ? `?financial_year=${financialYear}` : ''
   const r = await fetch(`/api/stock/movement-history${params}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiGetStockLedgerHistory(
+  search?: string,
+  productId?: number,
+  entryType?: string,
+  referenceNumber?: string,
+  quantityMin?: number,
+  quantityMax?: number,
+  dateFrom?: string,
+  dateTo?: string
+): Promise<StockLedgerEntry[]> {
+  const params = new URLSearchParams()
+  if (search) params.append('search', search)
+  if (productId) params.append('product_id', productId.toString())
+  if (entryType) params.append('entry_type', entryType)
+  if (referenceNumber) params.append('reference_number', referenceNumber)
+  if (quantityMin) params.append('quantity_min', quantityMin.toString())
+  if (quantityMax) params.append('quantity_max', quantityMax.toString())
+  if (dateFrom) params.append('date_from', dateFrom)
+  if (dateTo) params.append('date_to', dateTo)
+  
+  const url = `/api/stock/history${params.toString() ? `?${params.toString()}` : ''}`
+  const r = await fetch(url, {
     headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
   })
   
