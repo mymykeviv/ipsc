@@ -22,6 +22,8 @@ import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { DateFilter } from '../components/DateFilter'
+import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
+import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 
 interface PurchasesProps {
   mode?: 'manage' | 'add' | 'edit' | 'payments'
@@ -242,19 +244,14 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
 
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '24px',
-        paddingBottom: '12px',
-        borderBottom: '2px solid #e9ecef'
-      }}>
-        <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Manage Purchases</h1>
-        <Button variant="primary" onClick={() => navigate('/purchases/add')}>
-          Create Purchase
-        </Button>
-      </div>
+      <EnhancedHeader
+        {...HeaderPatterns.purchases(purchases.length)}
+        primaryAction={{
+          label: 'Create Purchase',
+          onClick: () => navigate('/purchases/add'),
+          icon: '📦'
+        }}
+      />
 
       {error && (
         <div style={{ 
@@ -445,39 +442,14 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
                   <StatusBadge status={purchase.status} />
                 </td>
                 <td style={{ padding: '12px' }}>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <Button 
-                      variant="secondary" 
-                      onClick={() => navigate(`/purchases/edit/${purchase.id}`)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                    >
-                      Edit
-                    </Button>
-                    <Button 
-                      variant="secondary"
-                      onClick={() => navigate(`/payments/purchase/add/${purchase.id}`)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                    >
-                      Add Payment
-                    </Button>
-                    {purchase.status === 'Cancelled' ? (
-                      <Button 
-                        variant="secondary" 
-                        onClick={() => handleDelete(purchase.id)}
-                        style={{ fontSize: '14px', padding: '6px 12px' }}
-                      >
-                        Delete
-                      </Button>
-                    ) : (
-                      <Button 
-                        variant="secondary" 
-                        onClick={() => handleCancelPurchase(purchase.id)}
-                        style={{ fontSize: '14px', padding: '6px 12px' }}
-                      >
-                        Cancel Purchase
-                      </Button>
-                    )}
-                  </div>
+                  <ActionButtons
+                    {...ActionButtonSets.purchases(purchase, {
+                      onEdit: () => navigate(`/purchases/edit/${purchase.id}`),
+                      onPayment: () => navigate(`/payments/purchase/add/${purchase.id}`),
+                      onCancel: () => handleCancelPurchase(purchase.id),
+                      onDelete: () => handleDelete(purchase.id)
+                    })}
+                  />
                 </td>
               </tr>
             ))}

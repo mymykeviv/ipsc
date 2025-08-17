@@ -6,6 +6,8 @@ import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { DateFilter } from '../components/DateFilter'
 import { SearchBar } from '../components/SearchBar'
+import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
+import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 import { Party, apiListCustomers, apiListVendors, apiCreateParty, apiUpdateParty, apiToggleParty } from '../lib/api'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
@@ -703,136 +705,26 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
 
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
-      {/* Enhanced Header with Breadcrumb */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'flex-start', 
-        marginBottom: '24px',
-        paddingBottom: '16px',
-        borderBottom: '2px solid #e9ecef'
-      }}>
-        <div>
-          {/* Breadcrumb Navigation */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '8px', 
-            marginBottom: '8px',
-            fontSize: '14px',
-            color: '#6c757d'
-          }}>
-            <span>🏠</span>
-            <span>Dashboard</span>
-            <span>›</span>
-            <span style={{ color: '#007bff', fontWeight: '500' }}>Parties</span>
-          </div>
-          
-          {/* Page Title with Context */}
-          <h1 style={{ 
-            margin: '0',
-            fontSize: '28px',
-            fontWeight: '600',
-            color: '#2c3e50',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
-            👥 Parties Management
-            <span style={{ 
-              fontSize: '16px', 
-              fontWeight: '400', 
-              color: '#6c757d',
-              backgroundColor: '#f8f9fa',
-              padding: '4px 12px',
-              borderRadius: '16px',
-              border: '1px solid #e9ecef'
-            }}>
-              {customers.length + vendors.length} Total
-            </span>
-          </h1>
-          
-          {/* Contextual Description */}
-          <p style={{ 
-            margin: '8px 0 0 0',
-            fontSize: '14px',
-            color: '#6c757d',
-            lineHeight: '1.4'
-          }}>
-            Manage your customers and vendors with comprehensive filtering and search capabilities
-          </p>
-        </div>
-        
-        {/* Enhanced Action Buttons */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '12px', 
-          flexWrap: 'wrap',
-          alignItems: 'center'
-        }}>
-          <Button 
-            onClick={() => navigate('/parties/add')}
-            variant="primary"
-            style={{ 
-              padding: '12px 20px', 
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              backgroundColor: '#28a745',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '6px',
-              fontWeight: '600',
-              boxShadow: '0 2px 4px rgba(40,167,69,0.3)',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            ➕ Add New Party
-          </Button>
-          <div style={{ 
-            display: 'flex', 
-            gap: '8px'
-          }}>
-            <Button 
-              onClick={() => navigate('/customers/add')}
-              variant="secondary"
-              style={{ 
-                padding: '10px 16px', 
-                fontSize: '13px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                backgroundColor: '#17a2b8',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '6px',
-                fontWeight: '500'
-              }}
-            >
-              👤 Add Customer
-            </Button>
-            <Button 
-              onClick={() => navigate('/vendors/add')}
-              variant="secondary"
-              style={{ 
-                padding: '10px 16px', 
-                fontSize: '13px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                backgroundColor: '#ffc107',
-                color: '#856404',
-                border: 'none',
-                borderRadius: '6px',
-                fontWeight: '500'
-              }}
-            >
-              🏢 Add Vendor
-            </Button>
-          </div>
-        </div>
-      </div>
+      <EnhancedHeader
+        {...HeaderPatterns.parties(customers.length + vendors.length)}
+        primaryAction={{
+          label: 'Add New Party',
+          onClick: () => navigate('/parties/add'),
+          icon: '➕'
+        }}
+        secondaryActions={[
+          {
+            label: 'Add Customer',
+            onClick: () => navigate('/customers/add'),
+            icon: '👤'
+          },
+          {
+            label: 'Add Vendor',
+            onClick: () => navigate('/vendors/add'),
+            icon: '🏢'
+          }
+        ]}
+      />
 
       {error && <ErrorMessage message={error} />}
 
@@ -1297,22 +1189,12 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
                     </span>
                   </td>
                   <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                      <Button
-                        onClick={() => navigate(`/${party.type === 'vendor' ? 'vendors' : 'customers'}/edit/${party.id}`)}
-                        variant="secondary"
-                        style={{ padding: '6px 12px', fontSize: '12px' }}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        onClick={() => handleToggleParty(party)}
-                        variant={party.is_active ? "secondary" : "primary"}
-                        style={{ padding: '6px 12px', fontSize: '12px' }}
-                      >
-                        {party.is_active ? 'Deactivate' : 'Activate'}
-                      </Button>
-                    </div>
+                    <ActionButtons
+                      {...ActionButtonSets.parties(party, {
+                        onEdit: () => navigate(`/${party.type === 'vendor' ? 'vendors' : 'customers'}/edit/${party.id}`),
+                        onToggle: () => handleToggleParty(party)
+                      })}
+                    />
                   </td>
                 </tr>
               ))}

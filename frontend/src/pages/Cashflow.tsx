@@ -8,6 +8,7 @@ import { Button } from '../components/Button'
 import { DateFilter } from '../components/DateFilter'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
+import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 
 export function Cashflow() {
   const { token } = useAuth()
@@ -196,30 +197,12 @@ export function Cashflow() {
 
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '24px',
-        paddingBottom: '12px',
-        borderBottom: '2px solid #e9ecef'
-      }}>
-        <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Cashflow Transactions</h1>
-        <Button 
-          onClick={handleRefresh}
-          disabled={loading}
-          variant="secondary"
-          style={{ 
-            padding: '8px 16px',
-            fontSize: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          {loading ? '🔄 Refreshing...' : '🔄 Refresh'}
-        </Button>
-      </div>
+      <EnhancedHeader
+        {...HeaderPatterns.cashflow(transactions.length)}
+        showRefresh={true}
+        onRefresh={handleRefresh}
+        loading={loading}
+      />
 
       {/* Enhanced Filter Options */}
       <EnhancedFilterBar 

@@ -11,6 +11,8 @@ import { EmailFormModal } from '../components/EmailFormModal'
 import { DateFilter } from '../components/DateFilter'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
+import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
+import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface InvoicesProps {
@@ -301,21 +303,14 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
 
   return (
     <div style={{ padding: '20px' }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '24px',
-        paddingBottom: '12px',
-        borderBottom: '2px solid #e9ecef'
-      }}>
-        <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Manage Invoices</h1>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <Button variant="primary" onClick={() => navigate('/invoices/add')}>
-            Add Invoice
-          </Button>
-        </div>
-        </div>
+      <EnhancedHeader
+        {...HeaderPatterns.invoices(invoices.length)}
+        primaryAction={{
+          label: 'Add Invoice',
+          onClick: () => navigate('/invoices/add'),
+          icon: '📄'
+        }}
+      />
 
       {error && (
         <div style={{ 
@@ -477,6 +472,8 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Date</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Due Date</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Amount</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Payment Status</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Days Overdue</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Status</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Actions</th>
               </tr>
@@ -499,56 +496,82 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
                   ₹{invoice.grand_total.toFixed(2)}
                 </td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
+                  <span style={{
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    backgroundColor: invoice.balance_amount === 0 ? '#d4edda' : 
+                                   invoice.paid_amount > 0 ? '#fff3cd' : '#f8d7da',
+                    color: invoice.balance_amount === 0 ? '#155724' : 
+                          invoice.paid_amount > 0 ? '#856404' : '#721c24'
+                  }}>
+                    {invoice.balance_amount === 0 ? 'Paid' : 
+                     invoice.paid_amount > 0 ? 'Partial' : 'Unpaid'}
+                  </span>
+                </td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
+                  {(() => {
+                    const dueDate = new Date(invoice.due_date)
+                    const today = new Date()
+                    const daysDiff = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+                    if (daysDiff < 0) {
+                      return (
+                        <span style={{
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          backgroundColor: '#f8d7da',
+                          color: '#721c24'
+                        }}>
+                          {Math.abs(daysDiff)} days overdue
+                        </span>
+                      )
+                    } else if (daysDiff <= 7) {
+                      return (
+                        <span style={{
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          backgroundColor: '#fff3cd',
+                          color: '#856404'
+                        }}>
+                          Due in {daysDiff} days
+                        </span>
+                      )
+                    } else {
+                      return (
+                        <span style={{
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          backgroundColor: '#d4edda',
+                          color: '#155724'
+                        }}>
+                          {daysDiff} days
+                        </span>
+                      )
+                    }
+                  })()}
+                </td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
                   <StatusBadge status={invoice.status} />
                 </td>
                 <td style={{ padding: '12px' }}>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                         <Button 
-                           variant="secondary" 
-                      onClick={() => navigate(`/invoices/edit/${invoice.id}`)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                         >
-                           Edit
-                         </Button>
-                         <Button 
-                           variant="secondary" 
-                      onClick={() => handlePrint(invoice.id)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                         >
-                           Print
-                         </Button>
-                         <Button 
-                           variant="secondary" 
-                      onClick={() => handleEmail(invoice.id)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                         >
-                           Email
-                         </Button>
-                         <Button 
-                           variant="secondary" 
-                      onClick={() => navigate(`/payments/invoice/add/${invoice.id}`)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                         >
-                      Add Payment
-                         </Button>
-                    {invoice.status === 'Draft' && (
-                      <Button 
-                        variant="primary" 
-                        onClick={() => handleMarkAsSent(invoice.id)}
-                        style={{ fontSize: '14px', padding: '6px 12px' }}
-                      >
-                        Mark as Sent
-                      </Button>
-                    )}
-                         <Button 
-                           variant="secondary" 
-                      onClick={() => handleDelete(invoice.id)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                         >
-                           Delete
-                         </Button>
-                       </div>
-                     </td>
+                  <ActionButtons
+                    {...ActionButtonSets.invoices(invoice, {
+                      onEdit: () => navigate(`/invoices/edit/${invoice.id}`),
+                      onPrint: () => handlePrint(invoice.id),
+                      onEmail: () => handleEmail(invoice.id),
+                      onPayment: () => navigate(`/payments/invoice/add/${invoice.id}`),
+                      onMarkSent: () => handleMarkAsSent(invoice.id),
+                      onDelete: () => handleDelete(invoice.id)
+                    })}
+                  />
+                </td>
                   </tr>
             ))}
             </tbody>

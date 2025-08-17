@@ -1,6 +1,6 @@
 {
-  "version": "1.46.0",
-  "build_date": "2025-08-17T16:30:00Z",
+  "version": "1.47.0",
+  "build_date": "2025-08-17T17:00:00Z",
   "changes": [
     "Comprehensive UX improvements for Parties page and navigation",
     "Renamed side menu 'Customers / Vendors' to 'Parties' for better clarity",
@@ -11,7 +11,17 @@
     "Enhanced tab navigation with better visual design and count badges",
     "Added universal '/parties/add' route for better user flow",
     "Implemented comprehensive filter system with 10 enhanced quick filters",
-    "Enhanced visual design with better spacing, colors, and typography"
+    "Enhanced visual design with better spacing, colors, and typography",
+    "Standardized action button patterns across all screens",
+    "Implemented consistent header design with EnhancedHeader component",
+    "Added computed columns for better contextual value",
+    "Enhanced Products table with Stock Value column",
+    "Enhanced Invoices table with Payment Status and Days Overdue columns",
+    "Created reusable ActionButtons component with predefined patterns",
+    "Created reusable EnhancedHeader component with predefined patterns",
+    "Improved visual consistency across all screens",
+    "Added icons and better styling to action buttons",
+    "Enhanced user experience with contextual information"
   ],
   "features": {
     "filter_system": "Enhanced with improved UX and bug fixes",

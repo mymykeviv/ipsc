@@ -17,6 +17,8 @@ import { ExpenseForm } from '../components/ExpenseForm'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { DateFilter } from '../components/DateFilter'
+import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
+import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 
 interface ExpensesProps {
   mode?: 'manage' | 'add' | 'edit'
@@ -224,19 +226,14 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
   // Manage Expenses Mode
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '24px',
-        paddingBottom: '12px',
-        borderBottom: '2px solid #e9ecef'
-      }}>
-        <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Manage Expenses</h1>
-        <Button variant="primary" onClick={() => navigate('/expenses/add')}>
-          Add Expense
-        </Button>
-      </div>
+      <EnhancedHeader
+        {...HeaderPatterns.expenses(expenses.length)}
+        primaryAction={{
+          label: 'Add Expense',
+          onClick: () => navigate('/expenses/add'),
+          icon: '💰'
+        }}
+      />
 
       {/* Enhanced Filter Options */}
       <EnhancedFilterBar 
@@ -431,22 +428,12 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>₹{expense.amount.toFixed(2)}</td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{expense.payment_method}</td>
                 <td style={{ padding: '12px' }}>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <Button 
-                      variant="secondary" 
-                      onClick={() => navigate(`/expenses/edit/${expense.id}`)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                    >
-                      Edit
-                    </Button>
-                    <Button 
-                      variant="secondary" 
-                      onClick={() => handleDeleteExpense(expense.id)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                    >
-                      Delete
-                    </Button>
-                  </div>
+                  <ActionButtons
+                    {...ActionButtonSets.expenses(expense, {
+                      onEdit: () => navigate(`/expenses/edit/${expense.id}`),
+                      onDelete: () => handleDeleteExpense(expense.id)
+                    })}
+                  />
                 </td>
               </tr>
             ))}

@@ -10,6 +10,8 @@ import { FilterDropdown } from '../components/FilterDropdown'
 import { FilterBar } from '../components/FilterBar'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { EnhancedFilterDropdown } from '../components/EnhancedFilterDropdown'
+import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
+import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAdjustStock, apiListParties, Party, apiGetStockMovementHistory, StockMovement, ProductFilters } from '../lib/api'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
@@ -792,21 +794,14 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   if (error) {
     return (
       <div style={{ padding: '20px' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: '24px',
-          paddingBottom: '12px',
-          borderBottom: '2px solid #e9ecef'
-        }}>
-          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>Manage Products</h1>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <Button variant="primary" onClick={() => navigate('/products/add')}>
-              Add Product
-            </Button>
-          </div>
-        </div>
+        <EnhancedHeader
+          {...HeaderPatterns.products(products.length)}
+          primaryAction={{
+            label: 'Add Product',
+            onClick: () => navigate('/products/add'),
+            icon: '➕'
+          }}
+        />
         
         <div style={{ 
           padding: '20px', 
@@ -1108,6 +1103,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
               <SortableHeader field="stock">Stock</SortableHeader>
               <SortableHeader field="sales_price">Sales Price</SortableHeader>
               <SortableHeader field="gst_rate">GST Rate</SortableHeader>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Stock Value</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Status</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Actions</th>
             </tr>
@@ -1127,6 +1123,18 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>₹{product.sales_price.toFixed(2)}</td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{product.gst_rate}%</td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
+                  <span style={{
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    backgroundColor: product.stock < 10 ? '#fff3cd' : '#d4edda',
+                    color: product.stock < 10 ? '#856404' : '#155724'
+                  }}>
+                    ₹{((product.purchase_price || product.sales_price) * product.stock).toFixed(2)}
+                  </span>
+                </td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
                   <span style={{ 
                     padding: '6px 12px', 
                     borderRadius: '6px', 
@@ -1139,36 +1147,14 @@ export function Products({ mode = 'manage' }: ProductsProps) {
                   </span>
                 </td>
                 <td style={{ padding: '12px' }}>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <Button 
-                      variant="secondary" 
-                      onClick={() => navigate(`/products/edit/${product.id}`)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                    >
-                      Edit
-                    </Button>
-                    <Button 
-                      variant="secondary"
-                      onClick={() => navigate(`/products/stock-adjustment?product=${product.id}`)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                    >
-                      Stock
-                    </Button>
-                    <Button 
-                      variant="secondary"
-                      onClick={() => navigate(`/products/stock-history?product=${product.id}`)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                    >
-                      History
-                    </Button>
-                    <Button 
-                      variant="secondary" 
-                      onClick={() => handleToggleProduct(product.id)}
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
-                    >
-                      {product.is_active ? 'Deactivate' : 'Activate'}
-                    </Button>
-                  </div>
+                  <ActionButtons
+                    {...ActionButtonSets.products(product, {
+                      onEdit: () => navigate(`/products/edit/${product.id}`),
+                      onStock: () => navigate(`/products/stock-adjustment?product=${product.id}`),
+                      onHistory: () => navigate(`/products/stock-history?product=${product.id}`),
+                      onToggle: () => handleToggleProduct(product.id)
+                    })}
+                  />
                 </td>
               </tr>
             ))}
