@@ -57,9 +57,10 @@ export function EnhancedFilterBar({
       style={{
         marginBottom: '16px', // Reduced margin
         borderRadius: '6px', // Reduced border radius
-        overflow: 'hidden',
+        // Removed overflow: 'hidden' to prevent dropdown clipping
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)', // Reduced shadow
-        border: '1px solid #e9ecef'
+        border: '1px solid #e9ecef',
+        position: 'relative' // Added to ensure proper stacking context
       }}
     >
       {/* Header */}
@@ -179,19 +180,14 @@ export function EnhancedFilterBar({
       </div>
       
       {/* Content */}
-      <div
-        style={{
-          maxHeight: isCollapsed ? '0' : '1000px',
-          overflow: 'hidden',
-          transition: 'max-height 0.3s ease-in-out',
-          opacity: isCollapsed ? '0' : '1',
-          transitionDelay: isCollapsed ? '0s' : '0.1s'
-        }}
-      >
-        <div style={{ 
-          padding: '16px', // Reduced padding
-          backgroundColor: 'white'
-        }}>
+      {!isCollapsed && (
+        <div 
+          style={{
+            padding: '16px', // Reduced padding
+            backgroundColor: 'white',
+            overflow: 'visible' // Ensure dropdowns are not clipped
+          }}
+        >
           {/* Filter Content */}
           <div style={{
             display: 'grid',
@@ -243,7 +239,7 @@ export function EnhancedFilterBar({
             )}
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

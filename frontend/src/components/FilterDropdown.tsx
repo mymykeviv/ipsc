@@ -95,7 +95,10 @@ export function FilterDropdown({
     <div 
       ref={dropdownRef}
       className={`filter-dropdown ${className}`} 
-      style={{ position: 'relative' }}
+      style={{ 
+        position: 'relative',
+        zIndex: 9999 // Ensure the dropdown container has high z-index
+      }}
     >
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -153,7 +156,7 @@ export function FilterDropdown({
           border: '1px solid #ced4da',
           borderRadius: '4px', // Reduced border radius
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-          zIndex: 1000,
+          zIndex: 9999, // Increased z-index to ensure it appears above other elements
           maxHeight: '200px', // Reduced max height
           overflow: 'auto',
           marginTop: '2px' // Reduced margin

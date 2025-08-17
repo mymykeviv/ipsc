@@ -75,7 +75,10 @@ export function DateFilter({ value, onChange, placeholder = 'Select date range',
   }
 
   return (
-    <div className={`date-filter ${className}`} style={{ position: 'relative' }}>
+    <div className={`date-filter ${className}`} style={{ 
+      position: 'relative',
+      zIndex: 9999 // Ensure the dropdown container has high z-index
+    }}>
       <div
         onClick={() => setIsCustomOpen(!isCustomOpen)}
         style={{
@@ -118,7 +121,7 @@ export function DateFilter({ value, onChange, placeholder = 'Select date range',
           border: '1px solid #ced4da',
           borderRadius: '4px', // Reduced border radius
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-          zIndex: 1000,
+          zIndex: 9999, // Increased z-index to ensure it appears above other elements
           marginTop: '2px' // Reduced margin
         }}>
           {/* Preset Options */}

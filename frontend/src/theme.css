@@ -80,6 +80,25 @@ a:hover { background: var(--panel); }
   width: 100%;
   overflow-x: hidden;
 }
+
+/* Override main-wrapper overflow to prevent dropdown clipping */
+#main-wrapper {
+  overflow: visible !important;
+}
+
+/* Ensure filter dropdowns are always visible */
+.filter-dropdown,
+.date-filter {
+  position: relative;
+  z-index: 9999;
+}
+
+.filter-dropdown > div[style*="position: absolute"],
+.date-filter > div[style*="position: absolute"] {
+  z-index: 10000 !important;
+  position: absolute !important;
+}
+
 .sidebar {
   position: fixed;
   left: 0;
