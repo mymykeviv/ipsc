@@ -508,8 +508,8 @@ export function Dashboard() {
           {analyticsData && (
             <div style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
-              gap: '24px'
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+              gap: '20px'
             }}>
               {/* Top Selling Items */}
               <div style={{ 
