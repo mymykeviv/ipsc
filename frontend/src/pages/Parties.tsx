@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '../components/Button'
 import { ErrorMessage } from '../components/ErrorMessage'
+import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
+import { FilterDropdown } from '../components/FilterDropdown'
+import { DateFilter } from '../components/DateFilter'
+import { SearchBar } from '../components/SearchBar'
 import { Party, apiListCustomers, apiListVendors, apiCreateParty, apiUpdateParty, apiToggleParty } from '../lib/api'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
@@ -36,6 +40,36 @@ interface PartiesProps {
   mode?: 'manage' | 'add' | 'edit'
 }
 
+// Filter state interface
+interface PartiesFilterState {
+  // Quick filters
+  quickFilter: 'all' | 'active' | 'gst' | 'non_gst' | 'recent' | 'outstanding'
+  
+  // Advanced filters
+  search: string
+  contactPerson: string
+  email: string
+  phone: string
+  city: string
+  state: string
+  country: string
+  gstStatus: string
+  gstRegistration: string
+  gstStateCode: string
+  partyType: 'customer' | 'vendor' | 'both'
+  status: 'active' | 'inactive' | 'all'
+  dateRange: { start: string; end: string }
+  hasNotes: boolean
+  
+  // Sort options
+  sortBy: string
+  sortOrder: 'asc' | 'desc'
+  
+  // Pagination
+  page: number
+  limit: number
+}
+
 export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
   const { forceLogout } = useAuth()
   const navigate = useNavigate()
@@ -47,13 +81,36 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
   const [vendors, setVendors] = useState<Party[]>([])
   const [loading, setLoading] = useState(true)
   const [editingParty, setEditingParty] = useState<Party | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [sortField, setSortField] = useState<string>('name')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const [showInactive, setShowInactive] = useState(false)
+  
+  // Filter state
+  const [filters, setFilters] = useState<PartiesFilterState>({
+    quickFilter: 'all',
+    search: '',
+    contactPerson: '',
+    email: '',
+    phone: '',
+    city: '',
+    state: '',
+    country: '',
+    gstStatus: '',
+    gstRegistration: '',
+    gstStateCode: '',
+    partyType: 'both',
+    status: 'all',
+    dateRange: { start: '', end: '' },
+    hasNotes: false,
+    sortBy: 'name',
+    sortOrder: 'asc',
+    page: 1,
+    limit: 10
+  })
+  
   const [formData, setFormData] = useState<PartyFormData>({
     type: type,
     name: '',
@@ -130,8 +187,8 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
       setLoading(true)
       setError(null)
       const [customersData, vendorsData] = await Promise.all([
-        apiListCustomers(searchTerm, showInactive),
-        apiListVendors(searchTerm, showInactive)
+        apiListCustomers(filters.search, showInactive),
+        apiListVendors(filters.search, showInactive)
       ])
       setCustomers(customersData)
       setVendors(vendorsData)
@@ -147,9 +204,9 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
   useEffect(() => {
     if (mode === 'manage') {
       loadParties()
-      setCurrentPage(1) // Reset to first page when search changes
+      setCurrentPage(1) // Reset to first page when filters change
     }
-  }, [searchTerm, showInactive, mode])
+  }, [filters.search, showInactive, mode])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -215,6 +272,71 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
 
   const handleCancel = () => {
     navigate(`/${type === 'vendor' ? 'vendors' : 'customers'}`)
+  }
+
+  // Filter functions
+  const handleQuickFilter = (filter: PartiesFilterState['quickFilter']) => {
+    setFilters(prev => ({ ...prev, quickFilter: filter }))
+  }
+
+  const handleFilterChange = (field: keyof PartiesFilterState, value: any) => {
+    setFilters(prev => ({ ...prev, [field]: value }))
+  }
+
+  const clearAllFilters = () => {
+    setFilters({
+      quickFilter: 'all',
+      search: '',
+      contactPerson: '',
+      email: '',
+      phone: '',
+      city: '',
+      state: '',
+      country: '',
+      gstStatus: '',
+      gstRegistration: '',
+      gstStateCode: '',
+      partyType: 'both',
+      status: 'all',
+      dateRange: { start: '', end: '' },
+      hasNotes: false,
+      sortBy: 'name',
+      sortOrder: 'asc',
+      page: 1,
+      limit: 10
+    })
+  }
+
+  const getActiveFiltersCount = () => {
+    let count = 0
+    if (filters.search) count++
+    if (filters.contactPerson) count++
+    if (filters.email) count++
+    if (filters.phone) count++
+    if (filters.city) count++
+    if (filters.state) count++
+    if (filters.country) count++
+    if (filters.gstStatus) count++
+    if (filters.gstRegistration) count++
+    if (filters.gstStateCode) count++
+    if (filters.partyType !== 'both') count++
+    if (filters.status !== 'all') count++
+    if (filters.dateRange.start || filters.dateRange.end) count++
+    if (filters.hasNotes) count++
+    return count
+  }
+
+  // Get quick filter options based on active tab
+  const getQuickFilterOptions = () => {
+    const baseOptions = [
+      { value: 'all', label: `All ${activeTab === 'customers' ? 'Customers' : 'Vendors'}` },
+      { value: 'active', label: `Active ${activeTab === 'customers' ? 'Customers' : 'Vendors'}` },
+      { value: 'gst', label: 'GST Registered' },
+      { value: 'non_gst', label: 'Non-GST' },
+      { value: 'recent', label: 'Recent (30 Days)' },
+      { value: 'outstanding', label: 'With Outstanding' }
+    ]
+    return baseOptions
   }
 
   // Render form for add/edit modes
@@ -670,86 +792,197 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
         </button>
       </div>
 
-      {/* Search and Filters */}
+      {/* Quick Filters */}
       <div style={{ 
         display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '20px',
-        gap: '16px',
-        flexWrap: 'wrap'
+        gap: '8px', 
+        marginBottom: '16px',
+        flexWrap: 'wrap',
+        alignItems: 'center'
       }}>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
-          <input
-            type="text"
-            placeholder={`Search ${activeTab}...`}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '14px',
-              minWidth: '200px'
+        <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>
+          Quick Filters:
+        </span>
+        {getQuickFilterOptions().map((option) => (
+          <Button
+            key={option.value}
+            variant={filters.quickFilter === option.value ? 'primary' : 'secondary'}
+            onClick={() => handleQuickFilter(option.value as PartiesFilterState['quickFilter'])}
+            style={{ 
+              fontSize: '12px', 
+              padding: '6px 12px',
+              whiteSpace: 'nowrap'
             }}
-          />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-            <label
-              htmlFor="show-inactive-dropdown"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-                padding: '8px 12px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                backgroundColor: showInactive ? '#e3f2fd' : '#fff',
-                userSelect: 'none'
-              }}
-            >
-              Show Inactive:
-              <select
-                id="show-inactive-dropdown"
-                value={showInactive ? 'Yes' : 'No'}
-                onChange={(e) => {
-                  console.log('Dropdown changed, new value:', e.target.value)
-                  setShowInactive(e.target.value === 'Yes')
+          >
+            {option.label}
+          </Button>
+        ))}
+        <Button
+          variant="secondary"
+          onClick={clearAllFilters}
+          style={{ 
+            fontSize: '12px', 
+            padding: '6px 12px',
+            marginLeft: 'auto'
+          }}
+        >
+          Clear All
+        </Button>
+      </div>
+
+      {/* Advanced Filters */}
+      <EnhancedFilterBar
+        title="Advanced Filters"
+        activeFiltersCount={getActiveFiltersCount()}
+        onClearAll={clearAllFilters}
+        showClearAll={true}
+        defaultCollapsed={true}
+      >
+        <div style={{ display: 'grid', gap: '16px', padding: '16px' }}>
+          {/* Party Information Filters */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+            <SearchBar
+              placeholder="Search by name..."
+              value={filters.search}
+              onChange={(value) => handleFilterChange('search', value)}
+            />
+            <SearchBar
+              placeholder="Contact person..."
+              value={filters.contactPerson}
+              onChange={(value) => handleFilterChange('contactPerson', value)}
+            />
+            <SearchBar
+              placeholder="Email..."
+              value={filters.email}
+              onChange={(value) => handleFilterChange('email', value)}
+            />
+            <SearchBar
+              placeholder="Phone number..."
+              value={filters.phone}
+              onChange={(value) => handleFilterChange('phone', value)}
+            />
+          </div>
+
+          {/* Location Filters */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+            <SearchBar
+              placeholder="City..."
+              value={filters.city}
+              onChange={(value) => handleFilterChange('city', value)}
+            />
+            <SearchBar
+              placeholder="State..."
+              value={filters.state}
+              onChange={(value) => handleFilterChange('state', value)}
+            />
+            <SearchBar
+              placeholder="Country..."
+              value={filters.country}
+              onChange={(value) => handleFilterChange('country', value)}
+            />
+          </div>
+
+          {/* GST Filters */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+            <div>
+              <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>GST Status</div>
+              <FilterDropdown
+                value={filters.gstStatus}
+                onChange={(value) => handleFilterChange('gstStatus', value)}
+                options={[
+                  { value: '', label: 'All GST Status' },
+                  { value: 'GST', label: 'GST' },
+                  { value: 'Non-GST', label: 'Non-GST' },
+                  { value: 'Exempted', label: 'Exempted' }
+                ]}
+                placeholder="Select GST Status"
+              />
+            </div>
+            <div>
+              <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>GST Registration</div>
+              <FilterDropdown
+                value={filters.gstRegistration}
+                onChange={(value) => handleFilterChange('gstRegistration', value)}
+                options={[
+                  { value: '', label: 'All Registration' },
+                  { value: 'GST registered', label: 'GST Registered' },
+                  { value: 'GST not registered', label: 'GST Not Registered' },
+                  { value: 'Composition scheme', label: 'Composition Scheme' }
+                ]}
+                placeholder="Select Registration"
+              />
+            </div>
+            <SearchBar
+              placeholder="GST State Code..."
+              value={filters.gstStateCode}
+              onChange={(value) => handleFilterChange('gstStateCode', value)}
+            />
+          </div>
+
+          {/* Business Filters */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+            <div>
+              <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Party Type</div>
+              <FilterDropdown
+                value={filters.partyType}
+                onChange={(value) => handleFilterChange('partyType', value)}
+                options={[
+                  { value: 'both', label: 'All Parties' },
+                  { value: 'customer', label: 'Customers Only' },
+                  { value: 'vendor', label: 'Vendors Only' }
+                ]}
+                placeholder="Select Party Type"
+              />
+            </div>
+            <div>
+              <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Status</div>
+              <FilterDropdown
+                value={filters.status}
+                onChange={(value) => handleFilterChange('status', value)}
+                options={[
+                  { value: 'all', label: 'All Status' },
+                  { value: 'active', label: 'Active Only' },
+                  { value: 'inactive', label: 'Inactive Only' }
+                ]}
+                placeholder="Select Status"
+              />
+            </div>
+            <div>
+              <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Created Date Range</div>
+              <DateFilter
+                value={filters.dateRange.start && filters.dateRange.end ? `custom:${filters.dateRange.start}:${filters.dateRange.end}` : 'all'}
+                onChange={(value) => {
+                  if (value.startsWith('custom:')) {
+                    const [, start, end] = value.split(':')
+                    handleFilterChange('dateRange', { start, end })
+                  } else {
+                    handleFilterChange('dateRange', { start: '', end: '' })
+                  }
                 }}
-                style={{
-                  padding: '4px 8px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  cursor: 'pointer'
-                }}
-              >
-                <option value="No">No</option>
-                <option value="Yes">Yes</option>
-              </select>
-            </label>
-            <button
-              type="button"
-              onClick={() => {
-                console.log('Test button clicked, current showInactive:', showInactive)
-                setShowInactive(!showInactive)
-              }}
-              style={{
-                marginLeft: '10px',
-                padding: '4px 8px',
-                fontSize: '12px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
+                placeholder="Select Date Range"
+              />
+            </div>
+          </div>
+
+          {/* Filter Actions */}
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <Button
+              variant="secondary"
+              onClick={clearAllFilters}
+              style={{ fontSize: '12px', padding: '6px 12px' }}
             >
-              Test Toggle ({showInactive ? 'ON' : 'OFF'})
-            </button>
+              Clear All Filters
+            </Button>
+            <Button
+              variant="primary"
+              onClick={loadParties}
+              style={{ fontSize: '12px', padding: '6px 12px' }}
+            >
+              Apply Filters
+            </Button>
           </div>
         </div>
-      </div>
+      </EnhancedFilterBar>
 
       {/* Parties Table */}
       {loading ? (
