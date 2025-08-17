@@ -143,7 +143,6 @@ function Shell() {
   // If authenticated, show full app with sidebar
   return (
     <div className="app-shell">
-      <Header onLogout={logout} />
       <aside className="sidebar">
         <div className="brand">
           <Logo size="large" />
@@ -378,6 +377,7 @@ function Shell() {
         </nav>
       </aside>
       <main className="content">
+        <Header onLogout={logout} />
         <Routes>
           {/* Dashboard */}
           <Route path="/" element={<Dashboard />} />

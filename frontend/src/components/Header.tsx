@@ -1,6 +1,5 @@
 import React from 'react'
 import { GlobalSearch } from './GlobalSearch'
-import { SessionTimer } from './SessionTimer'
 
 interface HeaderProps {
   onLogout: () => void
@@ -30,7 +29,6 @@ export function Header({ onLogout }: HeaderProps) {
       
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         <GlobalSearch />
-        <SessionTimer />
         <button
           onClick={onLogout}
           style={{
