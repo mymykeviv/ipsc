@@ -326,15 +326,19 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
     return count
   }
 
-  // Get quick filter options based on active tab
+  // Get enhanced quick filter options with consistent labels and icons
   const getQuickFilterOptions = () => {
     const baseOptions = [
-      { value: 'all', label: `All ${activeTab === 'customers' ? 'Customers' : 'Vendors'}` },
-      { value: 'active', label: `Active ${activeTab === 'customers' ? 'Customers' : 'Vendors'}` },
-      { value: 'gst', label: 'GST Registered' },
-      { value: 'non_gst', label: 'Non-GST' },
-      { value: 'recent', label: 'Recent (30 Days)' },
-      { value: 'outstanding', label: 'With Outstanding' }
+      { value: 'all', label: '📊 All Parties', icon: '📊' },
+      { value: 'active', label: '✅ Active', icon: '✅' },
+      { value: 'gst', label: '🏛️ GST Registered', icon: '🏛️' },
+      { value: 'non_gst', label: '❌ Non-GST', icon: '❌' },
+      { value: 'recent', label: '📅 Recent (30 Days)', icon: '📅' },
+      { value: 'outstanding', label: '💰 Outstanding', icon: '💰' },
+      { value: 'low_activity', label: '⚠️ Low Activity', icon: '⚠️' },
+      { value: 'new_this_month', label: '🆕 New This Month', icon: '🆕' },
+      { value: 'high_value', label: '💎 High Value', icon: '💎' },
+      { value: 'inactive', label: '🚫 Inactive', icon: '🚫' }
     ]
     return baseOptions
   }
@@ -699,24 +703,67 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
 
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
-      {/* Header */}
+      {/* Enhanced Header with Breadcrumb */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
-        alignItems: 'center', 
+        alignItems: 'flex-start', 
         marginBottom: '24px',
-        paddingBottom: '12px',
+        paddingBottom: '16px',
         borderBottom: '2px solid #e9ecef'
       }}>
-        <h1 style={{ 
-          margin: '0',
-          fontSize: '28px',
-          fontWeight: '600',
-          color: '#2c3e50'
-        }}>
-          Parties
-        </h1>
+        <div>
+          {/* Breadcrumb Navigation */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px', 
+            marginBottom: '8px',
+            fontSize: '14px',
+            color: '#6c757d'
+          }}>
+            <span>🏠</span>
+            <span>Dashboard</span>
+            <span>›</span>
+            <span style={{ color: '#007bff', fontWeight: '500' }}>Parties</span>
+          </div>
+          
+          {/* Page Title with Context */}
+          <h1 style={{ 
+            margin: '0',
+            fontSize: '28px',
+            fontWeight: '600',
+            color: '#2c3e50',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            👥 Parties Management
+            <span style={{ 
+              fontSize: '16px', 
+              fontWeight: '400', 
+              color: '#6c757d',
+              backgroundColor: '#f8f9fa',
+              padding: '4px 12px',
+              borderRadius: '16px',
+              border: '1px solid #e9ecef'
+            }}>
+              {customers.length + vendors.length} Total
+            </span>
+          </h1>
+          
+          {/* Contextual Description */}
+          <p style={{ 
+            margin: '8px 0 0 0',
+            fontSize: '14px',
+            color: '#6c757d',
+            lineHeight: '1.4'
+          }}>
+            Manage your customers and vendors with comprehensive filtering and search capabilities
+          </p>
+        </div>
         
+        {/* Enhanced Action Buttons */}
         <div style={{ 
           display: 'flex', 
           gap: '12px', 
@@ -724,261 +771,458 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
           alignItems: 'center'
         }}>
           <Button 
-            onClick={() => navigate('/customers/add')}
+            onClick={() => navigate('/parties/add')}
             variant="primary"
             style={{ 
-              padding: '10px 16px', 
+              padding: '12px 20px', 
               fontSize: '14px',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '8px',
+              backgroundColor: '#28a745',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              fontWeight: '600',
+              boxShadow: '0 2px 4px rgba(40,167,69,0.3)',
+              transition: 'all 0.2s ease'
             }}
           >
-            👤 Add Customer
+            ➕ Add New Party
           </Button>
-          <Button 
-            onClick={() => navigate('/vendors/add')}
-            variant="primary"
-            style={{ 
-              padding: '10px 16px', 
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            🏢 Add Vendor
-          </Button>
+          <div style={{ 
+            display: 'flex', 
+            gap: '8px'
+          }}>
+            <Button 
+              onClick={() => navigate('/customers/add')}
+              variant="secondary"
+              style={{ 
+                padding: '10px 16px', 
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                backgroundColor: '#17a2b8',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: '500'
+              }}
+            >
+              👤 Add Customer
+            </Button>
+            <Button 
+              onClick={() => navigate('/vendors/add')}
+              variant="secondary"
+              style={{ 
+                padding: '10px 16px', 
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                backgroundColor: '#ffc107',
+                color: '#856404',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: '500'
+              }}
+            >
+              🏢 Add Vendor
+            </Button>
+          </div>
         </div>
       </div>
 
       {error && <ErrorMessage message={error} />}
 
-      {/* Tab Navigation */}
+      {/* Enhanced Tab Navigation */}
       <div style={{ 
         display: 'flex', 
-        borderBottom: '1px solid #e9ecef',
-        marginBottom: '20px'
+        borderBottom: '2px solid #e9ecef',
+        marginBottom: '24px',
+        backgroundColor: '#f8f9fa',
+        borderRadius: '8px 8px 0 0',
+        padding: '4px 4px 0 4px'
       }}>
         <button
           onClick={() => setActiveTab('customers')}
           style={{
-            padding: '12px 24px',
+            padding: '16px 32px',
             border: 'none',
-            backgroundColor: activeTab === 'customers' ? '#007bff' : 'transparent',
-            color: activeTab === 'customers' ? '#fff' : '#6c757d',
+            backgroundColor: activeTab === 'customers' ? '#fff' : 'transparent',
+            color: activeTab === 'customers' ? '#007bff' : '#6c757d',
             cursor: 'pointer',
             fontSize: '16px',
-            fontWeight: activeTab === 'customers' ? '600' : '400',
-            borderBottom: activeTab === 'customers' ? '2px solid #007bff' : 'none'
+            fontWeight: activeTab === 'customers' ? '600' : '500',
+            borderRadius: '6px 6px 0 0',
+            borderBottom: activeTab === 'customers' ? '2px solid #007bff' : 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'all 0.2s ease',
+            boxShadow: activeTab === 'customers' ? '0 -2px 4px rgba(0,0,0,0.1)' : 'none'
           }}
         >
-          Customers ({customers.length})
+          👤 Customers
+          <span style={{ 
+            backgroundColor: activeTab === 'customers' ? '#007bff' : '#6c757d',
+            color: '#fff',
+            padding: '2px 8px',
+            borderRadius: '12px',
+            fontSize: '12px',
+            fontWeight: '600',
+            minWidth: '20px',
+            textAlign: 'center'
+          }}>
+            {customers.length}
+          </span>
         </button>
         <button
           onClick={() => setActiveTab('vendors')}
           style={{
-            padding: '12px 24px',
+            padding: '16px 32px',
             border: 'none',
-            backgroundColor: activeTab === 'vendors' ? '#007bff' : 'transparent',
-            color: activeTab === 'vendors' ? '#fff' : '#6c757d',
+            backgroundColor: activeTab === 'vendors' ? '#fff' : 'transparent',
+            color: activeTab === 'vendors' ? '#007bff' : '#6c757d',
             cursor: 'pointer',
             fontSize: '16px',
-            fontWeight: activeTab === 'vendors' ? '600' : '400',
-            borderBottom: activeTab === 'vendors' ? '2px solid #007bff' : 'none'
+            fontWeight: activeTab === 'vendors' ? '600' : '500',
+            borderRadius: '6px 6px 0 0',
+            borderBottom: activeTab === 'vendors' ? '2px solid #007bff' : 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'all 0.2s ease',
+            boxShadow: activeTab === 'vendors' ? '0 -2px 4px rgba(0,0,0,0.1)' : 'none'
           }}
         >
-          Vendors ({vendors.length})
+          🏢 Vendors
+          <span style={{ 
+            backgroundColor: activeTab === 'vendors' ? '#007bff' : '#6c757d',
+            color: '#fff',
+            padding: '2px 8px',
+            borderRadius: '12px',
+            fontSize: '12px',
+            fontWeight: '600',
+            minWidth: '20px',
+            textAlign: 'center'
+          }}>
+            {vendors.length}
+          </span>
         </button>
       </div>
 
-      {/* Quick Filters */}
+      {/* Enhanced Quick Filters */}
       <div style={{ 
         display: 'flex', 
         gap: '8px', 
-        marginBottom: '16px',
+        marginBottom: '20px',
         flexWrap: 'wrap',
-        alignItems: 'center'
+        alignItems: 'center',
+        padding: '16px',
+        backgroundColor: '#f8f9fa',
+        borderRadius: '8px',
+        border: '1px solid #e9ecef'
       }}>
-        <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>
-          Quick Filters:
+        <span style={{ 
+          fontSize: '14px', 
+          fontWeight: '600', 
+          color: '#495057',
+          marginRight: '8px'
+        }}>
+          🎯 Quick Filters:
         </span>
-        {getQuickFilterOptions().map((option) => (
-          <Button
-            key={option.value}
-            variant={filters.quickFilter === option.value ? 'primary' : 'secondary'}
-            onClick={() => handleQuickFilter(option.value as PartiesFilterState['quickFilter'])}
-            style={{ 
-              fontSize: '12px', 
-              padding: '6px 12px',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            {option.label}
-          </Button>
-        ))}
+        <div style={{ 
+          display: 'flex', 
+          gap: '6px', 
+          flexWrap: 'wrap',
+          flex: 1
+        }}>
+          {getQuickFilterOptions().map((option) => (
+            <Button
+              key={option.value}
+              variant={filters.quickFilter === option.value ? 'primary' : 'secondary'}
+              onClick={() => handleQuickFilter(option.value as PartiesFilterState['quickFilter'])}
+              style={{ 
+                fontSize: '12px', 
+                padding: '8px 12px',
+                whiteSpace: 'nowrap',
+                borderRadius: '20px',
+                border: filters.quickFilter === option.value ? 'none' : '1px solid #dee2e6',
+                backgroundColor: filters.quickFilter === option.value ? '#007bff' : '#fff',
+                color: filters.quickFilter === option.value ? '#fff' : '#495057',
+                fontWeight: filters.quickFilter === option.value ? '600' : '500',
+                transition: 'all 0.2s ease',
+                boxShadow: filters.quickFilter === option.value ? '0 2px 4px rgba(0,123,255,0.3)' : 'none'
+              }}
+            >
+              {option.label}
+            </Button>
+          ))}
+        </div>
         <Button
           variant="secondary"
           onClick={clearAllFilters}
           style={{ 
             fontSize: '12px', 
-            padding: '6px 12px',
-            marginLeft: 'auto'
+            padding: '8px 16px',
+            backgroundColor: '#6c757d',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '6px',
+            fontWeight: '500',
+            transition: 'background-color 0.2s ease'
           }}
         >
-          Clear All
+          🗑️ Clear All
         </Button>
       </div>
 
-      {/* Advanced Filters */}
+      {/* Enhanced Advanced Filters */}
       <EnhancedFilterBar
-        title="Advanced Filters"
+        title="🔍 Advanced Filters"
         activeFiltersCount={getActiveFiltersCount()}
         onClearAll={clearAllFilters}
         showClearAll={true}
         defaultCollapsed={true}
       >
-        <div style={{ display: 'grid', gap: '16px', padding: '16px' }}>
-          {/* Party Information Filters */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-            <SearchBar
-              placeholder="Search by name..."
-              value={filters.search}
-              onChange={(value) => handleFilterChange('search', value)}
-            />
-            <SearchBar
-              placeholder="Contact person..."
-              value={filters.contactPerson}
-              onChange={(value) => handleFilterChange('contactPerson', value)}
-            />
-            <SearchBar
-              placeholder="Email..."
-              value={filters.email}
-              onChange={(value) => handleFilterChange('email', value)}
-            />
-            <SearchBar
-              placeholder="Phone number..."
-              value={filters.phone}
-              onChange={(value) => handleFilterChange('phone', value)}
-            />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px' }}>
+          
+          {/* Search & Contact Section */}
+          <div style={{ 
+            border: '1px solid #e9ecef', 
+            borderRadius: '8px', 
+            padding: '16px',
+            backgroundColor: '#f8f9fa'
+          }}>
+            <h4 style={{ 
+              margin: '0 0 12px 0', 
+              fontSize: '14px', 
+              fontWeight: '600', 
+              color: '#495057',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              🔍 Search & Contact
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+              <SearchBar
+                placeholder="Search by name..."
+                value={filters.search}
+                onChange={(value) => handleFilterChange('search', value)}
+              />
+              <SearchBar
+                placeholder="Contact person..."
+                value={filters.contactPerson}
+                onChange={(value) => handleFilterChange('contactPerson', value)}
+              />
+              <SearchBar
+                placeholder="Email..."
+                value={filters.email}
+                onChange={(value) => handleFilterChange('email', value)}
+              />
+              <SearchBar
+                placeholder="Phone number..."
+                value={filters.phone}
+                onChange={(value) => handleFilterChange('phone', value)}
+              />
+            </div>
           </div>
 
-          {/* Location Filters */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-            <SearchBar
-              placeholder="City..."
-              value={filters.city}
-              onChange={(value) => handleFilterChange('city', value)}
-            />
-            <SearchBar
-              placeholder="State..."
-              value={filters.state}
-              onChange={(value) => handleFilterChange('state', value)}
-            />
-            <SearchBar
-              placeholder="Country..."
-              value={filters.country}
-              onChange={(value) => handleFilterChange('country', value)}
-            />
+          {/* Location Section */}
+          <div style={{ 
+            border: '1px solid #e9ecef', 
+            borderRadius: '8px', 
+            padding: '16px',
+            backgroundColor: '#f8f9fa'
+          }}>
+            <h4 style={{ 
+              margin: '0 0 12px 0', 
+              fontSize: '14px', 
+              fontWeight: '600', 
+              color: '#495057',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              📍 Location
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+              <SearchBar
+                placeholder="City..."
+                value={filters.city}
+                onChange={(value) => handleFilterChange('city', value)}
+              />
+              <SearchBar
+                placeholder="State..."
+                value={filters.state}
+                onChange={(value) => handleFilterChange('state', value)}
+              />
+              <SearchBar
+                placeholder="Country..."
+                value={filters.country}
+                onChange={(value) => handleFilterChange('country', value)}
+              />
+            </div>
           </div>
 
-          {/* GST Filters */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-            <div>
-              <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>GST Status</div>
-              <FilterDropdown
-                value={filters.gstStatus}
-                onChange={(value) => handleFilterChange('gstStatus', value)}
-                options={[
-                  { value: '', label: 'All GST Status' },
-                  { value: 'GST', label: 'GST' },
-                  { value: 'Non-GST', label: 'Non-GST' },
-                  { value: 'Exempted', label: 'Exempted' }
-                ]}
-                placeholder="Select GST Status"
+          {/* GST & Compliance Section */}
+          <div style={{ 
+            border: '1px solid #e9ecef', 
+            borderRadius: '8px', 
+            padding: '16px',
+            backgroundColor: '#f8f9fa'
+          }}>
+            <h4 style={{ 
+              margin: '0 0 12px 0', 
+              fontSize: '14px', 
+              fontWeight: '600', 
+              color: '#495057',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              🏛️ GST & Compliance
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+              <div>
+                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>GST Status</div>
+                <FilterDropdown
+                  value={filters.gstStatus}
+                  onChange={(value) => handleFilterChange('gstStatus', value)}
+                  options={[
+                    { value: '', label: 'All GST Status' },
+                    { value: 'GST', label: 'GST' },
+                    { value: 'Non-GST', label: 'Non-GST' },
+                    { value: 'Exempted', label: 'Exempted' }
+                  ]}
+                  placeholder="Select GST Status"
+                />
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>GST Registration</div>
+                <FilterDropdown
+                  value={filters.gstRegistration}
+                  onChange={(value) => handleFilterChange('gstRegistration', value)}
+                  options={[
+                    { value: '', label: 'All Registration' },
+                    { value: 'GST registered', label: 'GST Registered' },
+                    { value: 'GST not registered', label: 'GST Not Registered' },
+                    { value: 'Composition scheme', label: 'Composition Scheme' }
+                  ]}
+                  placeholder="Select Registration"
+                />
+              </div>
+              <SearchBar
+                placeholder="GST State Code..."
+                value={filters.gstStateCode}
+                onChange={(value) => handleFilterChange('gstStateCode', value)}
               />
             </div>
-            <div>
-              <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>GST Registration</div>
-              <FilterDropdown
-                value={filters.gstRegistration}
-                onChange={(value) => handleFilterChange('gstRegistration', value)}
-                options={[
-                  { value: '', label: 'All Registration' },
-                  { value: 'GST registered', label: 'GST Registered' },
-                  { value: 'GST not registered', label: 'GST Not Registered' },
-                  { value: 'Composition scheme', label: 'Composition Scheme' }
-                ]}
-                placeholder="Select Registration"
-              />
-            </div>
-            <SearchBar
-              placeholder="GST State Code..."
-              value={filters.gstStateCode}
-              onChange={(value) => handleFilterChange('gstStateCode', value)}
-            />
           </div>
 
-          {/* Business Filters */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-            <div>
-              <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Party Type</div>
-              <FilterDropdown
-                value={filters.partyType}
-                onChange={(value) => handleFilterChange('partyType', value)}
-                options={[
-                  { value: 'both', label: 'All Parties' },
-                  { value: 'customer', label: 'Customers Only' },
-                  { value: 'vendor', label: 'Vendors Only' }
-                ]}
-                placeholder="Select Party Type"
-              />
-            </div>
-            <div>
-              <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Status</div>
-              <FilterDropdown
-                value={filters.status}
-                onChange={(value) => handleFilterChange('status', value)}
-                options={[
-                  { value: 'all', label: 'All Status' },
-                  { value: 'active', label: 'Active Only' },
-                  { value: 'inactive', label: 'Inactive Only' }
-                ]}
-                placeholder="Select Status"
-              />
-            </div>
-            <div>
-              <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Created Date Range</div>
-              <DateFilter
-                value={filters.dateRange.start && filters.dateRange.end ? `custom:${filters.dateRange.start}:${filters.dateRange.end}` : 'all'}
-                onChange={(value) => {
-                  if (value.startsWith('custom:')) {
-                    const [, start, end] = value.split(':')
-                    handleFilterChange('dateRange', { start, end })
-                  } else {
-                    handleFilterChange('dateRange', { start: '', end: '' })
-                  }
-                }}
-                placeholder="Select Date Range"
-              />
+          {/* Business Details Section */}
+          <div style={{ 
+            border: '1px solid #e9ecef', 
+            borderRadius: '8px', 
+            padding: '16px',
+            backgroundColor: '#f8f9fa'
+          }}>
+            <h4 style={{ 
+              margin: '0 0 12px 0', 
+              fontSize: '14px', 
+              fontWeight: '600', 
+              color: '#495057',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              💼 Business Details
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+              <div>
+                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Party Type</div>
+                <FilterDropdown
+                  value={filters.partyType}
+                  onChange={(value) => handleFilterChange('partyType', value)}
+                  options={[
+                    { value: 'both', label: 'All Parties' },
+                    { value: 'customer', label: 'Customers Only' },
+                    { value: 'vendor', label: 'Vendors Only' }
+                  ]}
+                  placeholder="Select Party Type"
+                />
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Status</div>
+                <FilterDropdown
+                  value={filters.status}
+                  onChange={(value) => handleFilterChange('status', value)}
+                  options={[
+                    { value: 'all', label: 'All Status' },
+                    { value: 'active', label: 'Active Only' },
+                    { value: 'inactive', label: 'Inactive Only' }
+                  ]}
+                  placeholder="Select Status"
+                />
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Created Date Range</div>
+                <DateFilter
+                  value={filters.dateRange.start && filters.dateRange.end ? `custom:${filters.dateRange.start}:${filters.dateRange.end}` : 'all'}
+                  onChange={(value) => {
+                    if (value.startsWith('custom:')) {
+                      const [, start, end] = value.split(':')
+                      handleFilterChange('dateRange', { start, end })
+                    } else {
+                      handleFilterChange('dateRange', { start: '', end: '' })
+                    }
+                  }}
+                  placeholder="Select Date Range"
+                />
+              </div>
             </div>
           </div>
 
           {/* Filter Actions */}
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+          <div style={{ 
+            display: 'flex', 
+            gap: '12px', 
+            justifyContent: 'flex-end',
+            paddingTop: '8px',
+            borderTop: '1px solid #e9ecef'
+          }}>
             <Button
               variant="secondary"
               onClick={clearAllFilters}
-              style={{ fontSize: '12px', padding: '6px 12px' }}
+              style={{ 
+                fontSize: '12px', 
+                padding: '8px 16px',
+                backgroundColor: '#6c757d',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: '500'
+              }}
             >
-              Clear All Filters
+              🗑️ Clear All Filters
             </Button>
             <Button
               variant="primary"
               onClick={loadParties}
-              style={{ fontSize: '12px', padding: '6px 12px' }}
+              style={{ 
+                fontSize: '12px', 
+                padding: '8px 16px',
+                backgroundColor: '#007bff',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: '500'
+              }}
             >
-              Apply Filters
+              ✅ Apply Filters
             </Button>
           </div>
         </div>

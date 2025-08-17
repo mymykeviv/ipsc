@@ -26,7 +26,7 @@ function Shell() {
     products: true,
     invoices: false, // Keep invoices section open by default
     purchases: true,
-    customers: true,
+    parties: true,
     cashflow: true,
     reporting: true,
     settings: true
@@ -56,9 +56,9 @@ function Shell() {
     } else if (path.startsWith('/purchases')) {
       Object.keys(newState).forEach(key => newState[key] = true)
       newState.purchases = false
-    } else if (path.startsWith('/customers') || path.startsWith('/vendors')) {
+    } else if (path.startsWith('/customers') || path.startsWith('/vendors') || path.startsWith('/parties')) {
       Object.keys(newState).forEach(key => newState[key] = true)
-      newState.customers = false
+      newState.parties = false
     } else if (path.startsWith('/cashflow') || path.startsWith('/expenses')) {
       Object.keys(newState).forEach(key => newState[key] = true)
       newState.cashflow = false
@@ -234,28 +234,25 @@ function Shell() {
             )}
           </div>
           
-          {/* Customers / Vendors Section */}
+          {/* Parties Section */}
           <div className="nav-section">
             <div 
               className="nav-section-header" 
-              onClick={() => toggleSection('customers')}
+              onClick={() => toggleSection('parties')}
               style={{ cursor: 'pointer', userSelect: 'none' }}
             >
-              👥 Customers / Vendors {collapsedSections.customers ? '▼' : '▶'}
+              👥 Parties {collapsedSections.parties ? '▼' : '▶'}
             </div>
-            {!collapsedSections.customers && (
+            {!collapsedSections.parties && (
               <>
                 <Link className={`nav-link sub-link ${isActive('/customers') ? 'active' : ''}`} to="/customers">
                   Customers
                 </Link>
-                <Link className={`nav-link sub-link ${isActive('/customers/add') ? 'active' : ''}`} to="/customers/add">
-                  Add/Edit Customer
-                </Link>
                 <Link className={`nav-link sub-link ${isActive('/vendors') ? 'active' : ''}`} to="/vendors">
                   Vendors
                 </Link>
-                <Link className={`nav-link sub-link ${isActive('/vendors/add') ? 'active' : ''}`} to="/vendors/add">
-                  Add/Edit Vendor
+                <Link className={`nav-link sub-link ${isActive('/parties/add') ? 'active' : ''}`} to="/parties/add">
+                  Add New Party
                 </Link>
               </>
             )}
@@ -421,6 +418,9 @@ function Shell() {
           <Route path="/vendors" element={<Parties type="vendor" />} />
           <Route path="/vendors/add" element={<Parties type="vendor" mode="add" />} />
           <Route path="/vendors/edit/:id" element={<Parties type="vendor" mode="edit" />} />
+          
+          {/* Universal Party Add Route */}
+          <Route path="/parties/add" element={<Parties type="customer" mode="add" />} />
           
           {/* Cashflow Routes */}
           <Route path="/cashflow" element={<Cashflow />} />
