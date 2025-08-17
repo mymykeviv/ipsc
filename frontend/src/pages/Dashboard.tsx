@@ -194,14 +194,19 @@ export function Dashboard() {
   }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '100%' }}>
+    <div style={{ 
+      padding: '24px', 
+      maxWidth: '1400px', 
+      margin: '0 auto',
+      minHeight: '100vh'
+    }}>
       {/* Header */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
         marginBottom: '24px',
-        paddingBottom: '12px',
+        paddingBottom: '16px',
         borderBottom: '2px solid #e9ecef'
       }}>
         <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
@@ -310,12 +315,13 @@ export function Dashboard() {
       )}
 
       {cashflowData ? (
-        <div style={{ display: 'grid', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Quick Actions */}
           <div style={{ 
             display: 'grid', 
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-            gap: '16px'
+            gap: '16px',
+            maxWidth: '600px'
           }}>
             <Button 
               onClick={() => navigate('/invoices/add')}
@@ -358,10 +364,57 @@ export function Dashboard() {
             </Button>
           </div>
 
-          {/* Pending Payments Cards */}
+          {/* Cashflow Summary - Full Width */}
+          <div style={{ 
+            padding: '24px', 
+            border: '2px solid #28a745',
+            borderRadius: '8px',
+            backgroundColor: '#f8fff9'
+          }}>
+            <h3 style={{ margin: '0 0 20px 0', color: '#155724', fontSize: '20px', textAlign: 'center', fontWeight: '600' }}>
+              💰 Cashflow Summary
+            </h3>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+              gap: '20px',
+              textAlign: 'center'
+            }}>
+              <div>
+                <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '4px' }}>
+                  Total Income
+                </div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#28a745' }}>
+                  {formatCurrency(cashflowData.income.total_invoice_amount)}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '4px' }}>
+                  Total Expenses
+                </div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc3545' }}>
+                  {formatCurrency(cashflowData.expenses.total_expenses)}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '4px' }}>
+                  Net Cashflow
+                </div>
+                <div style={{ 
+                  fontSize: '24px', 
+                  fontWeight: 'bold', 
+                  color: getNetCashflowColor(cashflowData.cashflow.net_cashflow)
+                }}>
+                  {formatCurrency(cashflowData.cashflow.net_cashflow)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Pending Payments Cards - 2 Column Layout */}
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: '1fr 1fr', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
             gap: '20px'
           }}>
             {/* Pending Purchase Payments */}
@@ -439,62 +492,20 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* Cashflow Summary */}
-          <div style={{ 
-            padding: '24px', 
-            border: '2px solid #28a745',
-            borderRadius: '8px',
-            backgroundColor: '#f8fff9'
-          }}>
-            <h3 style={{ margin: '0 0 20px 0', color: '#155724', fontSize: '20px', textAlign: 'center', fontWeight: '600' }}>
-              💰 Cashflow Summary
-            </h3>
+          {/* Advanced Analytics Section - 2 Column Layout */}
+          {analyticsData && (
             <div style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-              gap: '20px',
-              textAlign: 'center'
+              gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
+              gap: '24px'
             }}>
-              <div>
-                <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '4px' }}>
-                  Total Income
-                </div>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#28a745' }}>
-                  {formatCurrency(cashflowData.income.total_invoice_amount)}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '4px' }}>
-                  Total Expenses
-                </div>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc3545' }}>
-                  {formatCurrency(cashflowData.expenses.total_expenses)}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '4px' }}>
-                  Net Cashflow
-                </div>
-                <div style={{ 
-                  fontSize: '24px', 
-                  fontWeight: 'bold', 
-                  color: getNetCashflowColor(cashflowData.cashflow.net_cashflow)
-                }}>
-                  {formatCurrency(cashflowData.cashflow.net_cashflow)}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Advanced Analytics Section */}
-          {analyticsData && (
-            <div style={{ display: 'grid', gap: '24px' }}>
               {/* Top Selling Items */}
               <div style={{ 
                 padding: '20px', 
                 border: '1px solid #dee2e6',
                 borderRadius: '8px',
-                backgroundColor: 'white'
+                backgroundColor: 'white',
+                height: 'fit-content'
               }}>
                 <h4 style={{ margin: '0 0 16px 0', color: '#495057', fontSize: '18px', fontWeight: '600' }}>
                   🏆 Top Selling Items
@@ -528,7 +539,8 @@ export function Dashboard() {
                 padding: '20px', 
                 border: '1px solid #ffc107',
                 borderRadius: '8px',
-                backgroundColor: '#fff8e1'
+                backgroundColor: '#fff8e1',
+                height: 'fit-content'
               }}>
                 <h4 style={{ margin: '0 0 16px 0', color: '#856404', fontSize: '18px', fontWeight: '600' }}>
                   ⚠️ Low Stock Alerts
@@ -566,7 +578,8 @@ export function Dashboard() {
                 padding: '20px', 
                 border: '1px solid #17a2b8',
                 borderRadius: '8px',
-                backgroundColor: '#e7f3ff'
+                backgroundColor: '#e7f3ff',
+                height: 'fit-content'
               }}>
                 <h4 style={{ margin: '0 0 16px 0', color: '#0056b3', fontSize: '18px', fontWeight: '600' }}>
                   👥 Top Customers
@@ -600,7 +613,8 @@ export function Dashboard() {
                 padding: '20px', 
                 border: '1px solid #6f42c1',
                 borderRadius: '8px',
-                backgroundColor: '#f8f5ff'
+                backgroundColor: '#f8f5ff',
+                height: 'fit-content'
               }}>
                 <h4 style={{ margin: '0 0 16px 0', color: '#6f42c1', fontSize: '18px', fontWeight: '600' }}>
                   🏛️ GST Insights (Last 3 Months)
