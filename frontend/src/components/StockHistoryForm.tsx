@@ -4,6 +4,8 @@ import { Button } from './Button'
 import { ErrorMessage } from './ErrorMessage'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
+import { EnhancedFilterBar } from './EnhancedFilterBar'
+import { FilterDropdown } from './FilterDropdown'
 
 interface StockHistoryFormProps {
   onSuccess: () => void
@@ -12,8 +14,11 @@ interface StockHistoryFormProps {
 
 export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
   const [stockHistory, setStockHistory] = useState<StockMovement[]>([])
+  const [filteredStockHistory, setFilteredStockHistory] = useState<StockMovement[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [productFilter, setProductFilter] = useState('all')
+  const [financialYearFilter, setFinancialYearFilter] = useState('all')
   const { forceLogout } = useAuth()
   const handleApiError = createApiErrorHandler(forceLogout)
 
@@ -23,6 +28,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
       setError(null)
       const history = await apiGetStockMovementHistory()
       setStockHistory(history)
+      setFilteredStockHistory(history)
     } catch (err) {
       console.error('Failed to load stock history:', err)
       const errorMessage = handleApiError(err)
@@ -31,6 +37,25 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
       setHistoryLoading(false)
     }
   }
+
+  // Filter stock history based on selected filters
+  useEffect(() => {
+    let filtered = stockHistory
+
+    if (productFilter !== 'all') {
+      filtered = filtered.filter(movement => 
+        movement.product_name.toLowerCase().includes(productFilter.toLowerCase())
+      )
+    }
+
+    if (financialYearFilter !== 'all') {
+      filtered = filtered.filter(movement => 
+        movement.financial_year === financialYearFilter
+      )
+    }
+
+    setFilteredStockHistory(filtered)
+  }, [stockHistory, productFilter, financialYearFilter])
 
   useEffect(() => {
     loadStockHistory()
@@ -55,6 +80,68 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
       </div>
 
       {error && <ErrorMessage message={error} />}
+
+      {/* Enhanced Filter Options */}
+      <EnhancedFilterBar 
+        title="Stock History Filters"
+        activeFiltersCount={
+          (productFilter !== 'all' ? 1 : 0) +
+          (financialYearFilter !== 'all' ? 1 : 0)
+        }
+        onClearAll={() => {
+          setProductFilter('all')
+          setFinancialYearFilter('all')
+        }}
+        showQuickActions={true}
+        quickActions={[
+          {
+            label: 'Current FY',
+            action: () => {
+              const currentYear = new Date().getFullYear()
+              setFinancialYearFilter(`${currentYear}-${currentYear + 1}`)
+            },
+            icon: '📅'
+          },
+          {
+            label: 'Last FY',
+            action: () => {
+              const currentYear = new Date().getFullYear()
+              setFinancialYearFilter(`${currentYear - 1}-${currentYear}`)
+            },
+            icon: '📊'
+          }
+        ]}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Product</span>
+          <FilterDropdown
+            value={productFilter}
+            onChange={(value) => setProductFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Products' },
+              ...stockHistory
+                .map(movement => ({ value: movement.product_name, label: movement.product_name }))
+                .filter((item, index, self) => self.findIndex(t => t.value === item.value) === index)
+            ]}
+            placeholder="Select product"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Financial Year</span>
+          <FilterDropdown
+            value={financialYearFilter}
+            onChange={(value) => setFinancialYearFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Years' },
+              ...stockHistory
+                .map(movement => ({ value: movement.financial_year, label: movement.financial_year }))
+                .filter((item, index, self) => self.findIndex(t => t.value === item.value) === index)
+            ]}
+            placeholder="Select financial year"
+          />
+        </div>
+      </EnhancedFilterBar>
 
       {/* Stock Movement Table */}
       <div style={{ 
@@ -81,8 +168,8 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
                   Loading stock movement history...
                 </td>
               </tr>
-            ) : stockHistory.length > 0 ? (
-              stockHistory.map((movement, index) => (
+            ) : filteredStockHistory.length > 0 ? (
+              filteredStockHistory.map((movement, index) => (
                 <tr key={index} style={{ 
                   borderBottom: '1px solid #e9ecef',
                   backgroundColor: 'white'
@@ -110,7 +197,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
             ) : (
               <tr>
                 <td colSpan={6} style={{ padding: '20px', textAlign: 'center', color: '#6c757d' }}>
-                  No stock movement data available
+                  {stockHistory.length === 0 ? 'No stock movement data available' : 'No data matches the selected filters'}
                 </td>
               </tr>
             )}

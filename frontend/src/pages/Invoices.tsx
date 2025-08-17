@@ -10,7 +10,7 @@ import { PDFViewer } from '../components/PDFViewer'
 import { EmailFormModal } from '../components/EmailFormModal'
 import { DateFilter } from '../components/DateFilter'
 import { FilterDropdown } from '../components/FilterDropdown'
-import { FilterBar } from '../components/FilterBar'
+import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface InvoicesProps {
@@ -331,18 +331,48 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
         </div>
       )}
 
-      {/* Filter Options */}
-      <FilterBar onClearAll={() => {
-        setSearchTerm('')
-        setStatusFilter('all')
-        setCustomerFilter('all')
-        setAmountRangeFilter('all')
-        setGstTypeFilter('all')
-        setPaymentStatusFilter('all')
-        setDateFilter('all')
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Search:</span>
+      {/* Enhanced Filter Options */}
+      <EnhancedFilterBar 
+        title="Invoice Filters"
+        activeFiltersCount={
+          (searchTerm ? 1 : 0) +
+          (statusFilter !== 'all' ? 1 : 0) +
+          (customerFilter !== 'all' ? 1 : 0) +
+          (amountRangeFilter !== 'all' ? 1 : 0) +
+          (gstTypeFilter !== 'all' ? 1 : 0) +
+          (paymentStatusFilter !== 'all' ? 1 : 0) +
+          (dateFilter !== 'all' ? 1 : 0)
+        }
+        onClearAll={() => {
+          setSearchTerm('')
+          setStatusFilter('all')
+          setCustomerFilter('all')
+          setAmountRangeFilter('all')
+          setGstTypeFilter('all')
+          setPaymentStatusFilter('all')
+          setDateFilter('all')
+        }}
+        showQuickActions={true}
+        quickActions={[
+          {
+            label: 'Pending Payment',
+            action: () => {
+              setPaymentStatusFilter('unpaid')
+            },
+            icon: '💰'
+          },
+          {
+            label: 'Last 10',
+            action: () => {
+              // This would need to be implemented in the backend
+              setDateFilter('last_10')
+            },
+            icon: '📋'
+          }
+        ]}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Search</span>
           <input
             type="text"
             value={searchTerm}
@@ -352,14 +382,14 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
               padding: '8px 12px',
               border: '1px solid #ced4da',
               borderRadius: '4px',
-              fontSize: '14px',
-              minWidth: '200px'
+              fontSize: '13px',
+              minWidth: '160px'
             }}
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Status:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Status</span>
           <FilterDropdown
             value={statusFilter}
             onChange={(value) => setStatusFilter(Array.isArray(value) ? value[0] || 'all' : value)}
@@ -375,8 +405,8 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Payment Status:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Payment Status</span>
           <FilterDropdown
             value={paymentStatusFilter}
             onChange={(value) => setPaymentStatusFilter(Array.isArray(value) ? value[0] || 'all' : value)}
@@ -391,8 +421,8 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Amount Range:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Amount Range</span>
           <FilterDropdown
             value={amountRangeFilter}
             onChange={(value) => setAmountRangeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
@@ -408,8 +438,8 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>GST Type:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>GST Type</span>
           <FilterDropdown
             value={gstTypeFilter}
             onChange={(value) => setGstTypeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
@@ -422,15 +452,15 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Date:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
           <DateFilter
             value={dateFilter}
             onChange={setDateFilter}
             placeholder="Select date range"
           />
         </div>
-      </FilterBar>
+      </EnhancedFilterBar>
 
         {/* Invoices Table */}
       <div style={{ 

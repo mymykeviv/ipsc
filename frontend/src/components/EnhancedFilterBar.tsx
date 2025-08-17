@@ -25,15 +25,15 @@ interface EnhancedFilterBarProps {
   }>
 }
 
-export function EnhancedFilterBar({ 
-  children, 
-  onClearAll, 
-  showClearAll = true, 
+export function EnhancedFilterBar({
+  children,
+  onClearAll,
+  showClearAll = true,
   className = '',
   title = 'Advanced Filters',
   activeFiltersCount = 0,
   onToggleCollapse,
-  defaultCollapsed = true,
+  defaultCollapsed = false,
   showFilterCount = true,
   showQuickActions = false,
   quickActions = []
@@ -192,16 +192,16 @@ export function EnhancedFilterBar({
           padding: '20px',
           backgroundColor: 'white'
         }}>
-          {/* Filter Content */}
-          <div style={{ 
-            display: 'flex', 
-            flexWrap: 'wrap', 
-            gap: '16px', 
-            alignItems: 'flex-start',
-            marginBottom: '16px'
-          }}>
-            {children}
-          </div>
+                         {/* Filter Content */}
+               <div style={{
+                 display: 'grid',
+                 gridTemplateColumns: 'repeat(4, 1fr)',
+                 gap: '12px',
+                 alignItems: 'start',
+                 marginBottom: '16px'
+               }}>
+                 {children}
+               </div>
           
           {/* Actions */}
           <div style={{ 

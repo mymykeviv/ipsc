@@ -749,11 +749,25 @@ export function Products({ mode = 'manage' }: ProductsProps) {
               setStatusFilter('active')
             },
             icon: '✅'
+          },
+          {
+            label: 'Electronics',
+            action: () => {
+              setCategoryFilter('Electronics')
+            },
+            icon: '📱'
+          },
+          {
+            label: 'High GST',
+            action: () => {
+              setGstRateFilter('18')
+            },
+            icon: '💰'
           }
         ]}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Search:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Search</span>
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
@@ -761,8 +775,8 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Status:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Status</span>
           <FilterDropdown
             value={statusFilter}
             onChange={(value) => setStatusFilter(Array.isArray(value) ? value[0] || 'all' : value)}
@@ -775,8 +789,8 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Category:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Category</span>
           <FilterDropdown
             value={categoryFilter}
             onChange={(value) => setCategoryFilter(Array.isArray(value) ? value[0] || 'all' : value)}
@@ -792,8 +806,8 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Item Type:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Item Type</span>
           <FilterDropdown
             value={itemTypeFilter}
             onChange={(value) => setItemTypeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
@@ -807,8 +821,8 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>GST Rate:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>GST Rate</span>
           <FilterDropdown
             value={gstRateFilter}
             onChange={(value) => setGstRateFilter(Array.isArray(value) ? value[0] || 'all' : value)}
@@ -824,8 +838,8 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Stock Level:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Stock Level</span>
           <FilterDropdown
             value={stockLevelFilter}
             onChange={(value) => setStockLevelFilter(Array.isArray(value) ? value[0] || 'all' : value)}
@@ -839,8 +853,8 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Price Range:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Price Range</span>
           <FilterDropdown
             value={priceRangeFilter}
             onChange={(value) => setPriceRangeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
@@ -856,8 +870,8 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '500', color: '#495057' }}>Date:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
           <DateFilter
             value={dateFilter}
             onChange={setDateFilter}

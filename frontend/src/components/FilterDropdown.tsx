@@ -100,16 +100,16 @@ export function FilterDropdown({
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
         style={{
-          padding: '10px 16px',
+          padding: '8px 12px',
           border: '1px solid #ced4da',
-          borderRadius: '6px',
+          borderRadius: '4px',
           backgroundColor: disabled ? '#f8f9fa' : 'white',
           cursor: disabled ? 'not-allowed' : 'pointer',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          minWidth: '200px',
-          fontSize: '14px',
+          minWidth: '160px',
+          fontSize: '13px',
           opacity: disabled ? 0.6 : 1
         }}
       >
