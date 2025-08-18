@@ -28,7 +28,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch, cm
 from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
 from reportlab.pdfbase import pdfmetrics
@@ -1953,6 +1953,132 @@ def validate_gst_data(
             "error": str(e),
             "message": "Failed to validate GST data"
         }
+
+
+# Inventory Reports Pydantic Models
+class InventorySummaryItem(BaseModel):
+    product_id: int
+    product_name: str
+    sku: str | None
+    category: str | None
+    unit: str | None
+    current_stock: float
+    purchase_price: float | None
+    sales_price: float | None
+    stock_value: float
+    last_movement_date: str | None
+    minimum_stock: float | None
+
+class InventorySummaryReport(BaseModel):
+    total_products: int
+    total_stock_value: float
+    low_stock_items: int
+    out_of_stock_items: int
+    items: list[InventorySummaryItem]
+    generated_at: str
+    filters_applied: dict | None = None
+
+
+@api.get('/reports/inventory-summary', response_model=InventorySummaryReport)
+def get_inventory_summary_report(
+    category: str | None = Query(None, description="Filter by product category"),
+    low_stock_only: bool = Query(False, description="Show only low stock items"),
+    out_of_stock_only: bool = Query(False, description="Show only out of stock items"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate comprehensive inventory summary report"""
+    
+    # Build base query
+    query = db.query(Product).filter(Product.is_active == True)
+    
+    # Apply filters
+    if category:
+        query = query.filter(Product.category == category)
+    
+    products = query.all()
+    
+    # Calculate current stock levels and values
+    summary_items = []
+    total_stock_value = 0
+    low_stock_count = 0
+    out_of_stock_count = 0
+    
+    for product in products:
+        # Calculate current stock from ledger entries
+        stock_entries = db.query(StockLedgerEntry).filter(
+            StockLedgerEntry.product_id == product.id
+        ).all()
+        
+        current_stock = sum(
+            entry.qty for entry in stock_entries 
+            if entry.entry_type in ['in', 'adjust']
+        ) - sum(
+            entry.qty for entry in stock_entries 
+            if entry.entry_type == 'out'
+        )
+        current_stock = max(0, current_stock)
+        
+        # Calculate stock value
+        unit_price = product.purchase_price or product.sales_price or 0
+        stock_value = current_stock * float(unit_price) if unit_price else 0
+        
+        # Get last movement date
+        last_movement = db.query(StockLedgerEntry).filter(
+            StockLedgerEntry.product_id == product.id
+        ).order_by(StockLedgerEntry.created_at.desc()).first()
+        
+        last_movement_date = last_movement.created_at.isoformat() if last_movement else None
+        
+        # Check stock status
+        is_low_stock = current_stock <= (product.minimum_stock or 10)
+        is_out_of_stock = current_stock == 0
+        
+        if is_low_stock:
+            low_stock_count += 1
+        if is_out_of_stock:
+            out_of_stock_count += 1
+        
+        # Apply additional filters
+        if low_stock_only and not is_low_stock:
+            continue
+        if out_of_stock_only and not is_out_of_stock:
+            continue
+        
+        summary_items.append(InventorySummaryItem(
+            product_id=product.id,
+            product_name=product.name,
+            sku=product.sku,
+            category=product.category,
+            unit=product.unit,
+            current_stock=current_stock,
+            purchase_price=float(product.purchase_price) if product.purchase_price else None,
+            sales_price=float(product.sales_price) if product.sales_price else None,
+            stock_value=stock_value,
+            last_movement_date=last_movement_date,
+            minimum_stock=float(product.minimum_stock) if product.minimum_stock else None
+        ))
+        
+        total_stock_value += stock_value
+    
+    # Build filters applied
+    filters_applied = {}
+    if category:
+        filters_applied["category"] = category
+    if low_stock_only:
+        filters_applied["low_stock_only"] = True
+    if out_of_stock_only:
+        filters_applied["out_of_stock_only"] = True
+    
+    return InventorySummaryReport(
+        total_products=len(summary_items),
+        total_stock_value=total_stock_value,
+        low_stock_items=low_stock_count,
+        out_of_stock_items=out_of_stock_count,
+        items=summary_items,
+        generated_at=datetime.now().isoformat(),
+        filters_applied=filters_applied if filters_applied else None
+    )
 
 
 def _calculate_period_dates(period_type: str, period_value: str) -> tuple[str, str]:
@@ -4519,10 +4645,15 @@ def get_stock_movement_history(
 def get_stock_movement_history_pdf(
     financial_year: str | None = None,
     product_id: int | None = None,
+    product_filter: str | None = None,
+    entry_type_filter: str | None = None,
+    reference_type_filter: str | None = None,
+    reference_search: str | None = None,
+    stock_level_filter: str | None = None,
     _: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Generate PDF report for stock movement history"""
+    """Generate PDF report for stock movement history with filters applied"""
     
     # If no financial year specified, use current year
     if not financial_year:
@@ -4543,6 +4674,9 @@ def get_stock_movement_history_pdf(
         products = db.query(Product).filter(Product.id == product_id).all()
         if not products:
             raise HTTPException(status_code=404, detail="Product not found")
+    elif product_filter and product_filter != 'all':
+        # Filter by product name
+        products = db.query(Product).filter(Product.name.ilike(f"%{product_filter}%")).all()
     else:
         products = db.query(Product).all()
     
@@ -4591,14 +4725,84 @@ def get_stock_movement_history_pdf(
     story.append(Paragraph(f"Generated on: {datetime.now().strftime('%d/%m/%Y %H:%M')}", normal_style))
     story.append(Spacer(1, 20))
     
-    # Process each product
-    for product in products:
+    # Process each product with enhanced sections
+    for i, product in enumerate(products, 1):
+        # Add page break for each product (except the first one)
+        if i > 1:
+            story.append(PageBreak())
+        
+        # Enhanced Product Section Header
+        story.append(Paragraph(f"PRODUCT {i}: {product.name.upper()}", heading_style))
+        story.append(Spacer(1, 5))
+        
+        # Product Details Box
+        product_details = [
+            ['Product Name:', product.name],
+            ['SKU:', product.sku or 'N/A'],
+            ['Category:', product.category or 'N/A'],
+            ['Unit:', product.unit or 'N/A'],
+            ['Purchase Price:', f"₹{float(product.purchase_price or 0):.2f}"],
+            ['Sales Price:', f"₹{float(product.sales_price or 0):.2f}"]
+        ]
+        
+        product_table = Table(product_details, colWidths=[3*cm, 8*cm])
+        product_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('BACKGROUND', (1, 0), (1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        story.append(product_table)
+        story.append(Spacer(1, 15))
+        
         # Get all stock transactions for this product in the financial year
         stock_transactions = db.query(StockLedgerEntry).filter(
             StockLedgerEntry.product_id == product.id,
             StockLedgerEntry.created_at >= fy_start_date,
             StockLedgerEntry.created_at <= fy_end_date
         ).order_by(StockLedgerEntry.created_at).all()
+        
+        # Apply filters to transactions
+        filtered_transactions = []
+        for transaction in stock_transactions:
+            # Entry type filter
+            if entry_type_filter and entry_type_filter != 'all':
+                if entry_type_filter == 'incoming' and transaction.entry_type not in ['in', 'adjust']:
+                    continue
+                elif entry_type_filter == 'outgoing' and transaction.entry_type not in ['out', 'adjust']:
+                    continue
+                elif entry_type_filter == 'adjustment' and transaction.entry_type != 'adjust':
+                    continue
+            
+            # Reference type filter
+            if reference_type_filter and reference_type_filter != 'all':
+                if reference_type_filter != transaction.ref_type:
+                    continue
+            
+            # Reference search filter
+            if reference_search:
+                ref_type = transaction.ref_type
+                ref_id = transaction.ref_id
+                reference_number = None
+                
+                if ref_type and ref_id:
+                    if ref_type == 'invoice':
+                        invoice = db.query(Invoice).filter(Invoice.id == ref_id).first()
+                        reference_number = invoice.invoice_no if invoice else None
+                    elif ref_type == 'purchase':
+                        purchase = db.query(Purchase).filter(Purchase.id == ref_id).first()
+                        reference_number = purchase.purchase_no if purchase else None
+                    elif ref_type == 'adjustment':
+                        reference_number = f"ADJ-{ref_id}"
+                
+                if not reference_number or reference_search.lower() not in reference_number.lower():
+                    continue
+            
+            filtered_transactions.append(transaction)
         
         # Calculate opening stock
         pre_fy_transactions = db.query(StockLedgerEntry).filter(
@@ -4620,11 +4824,11 @@ def get_stock_movement_history_pdf(
         unit_price_float = float(unit_price) if unit_price else 0.0
         opening_value = opening_stock * unit_price_float
         
-        # Process transactions
+        # Process filtered transactions
         transactions = []
         running_balance = opening_stock
         
-        for transaction in stock_transactions:
+        for transaction in filtered_transactions:
             # Calculate unit price and total value
             unit_price = product.purchase_price or product.sales_price or 0
             unit_price_float = float(unit_price) if unit_price else 0.0
@@ -4665,25 +4869,31 @@ def get_stock_movement_history_pdf(
                 'reference': reference_number or '-'
             })
         
-        # Calculate summary totals
-        total_incoming = sum(t.qty for t in stock_transactions if t.entry_type == 'in') + \
-                        sum(t.qty for t in stock_transactions if t.entry_type == 'adjust' and t.qty > 0)
-        total_incoming_value = sum(t.qty * unit_price_float for t in stock_transactions if t.entry_type == 'in') + \
-                              sum(t.qty * unit_price_float for t in stock_transactions if t.entry_type == 'adjust' and t.qty > 0)
-        total_outgoing = sum(t.qty for t in stock_transactions if t.entry_type == 'out') + \
-                        sum(abs(t.qty) for t in stock_transactions if t.entry_type == 'adjust' and t.qty < 0)
-        total_outgoing_value = sum(t.qty * unit_price_float for t in stock_transactions if t.entry_type == 'out') + \
-                              sum(abs(t.qty) * unit_price_float for t in stock_transactions if t.entry_type == 'adjust' and t.qty < 0)
+        # Calculate summary totals from filtered transactions
+        total_incoming = sum(t.qty for t in filtered_transactions if t.entry_type == 'in') + \
+                        sum(t.qty for t in filtered_transactions if t.entry_type == 'adjust' and t.qty > 0)
+        total_incoming_value = sum(t.qty * unit_price_float for t in filtered_transactions if t.entry_type == 'in') + \
+                              sum(t.qty * unit_price_float for t in filtered_transactions if t.entry_type == 'adjust' and t.qty > 0)
+        total_outgoing = sum(t.qty for t in filtered_transactions if t.entry_type == 'out') + \
+                        sum(abs(t.qty) for t in filtered_transactions if t.entry_type == 'adjust' and t.qty < 0)
+        total_outgoing_value = sum(t.qty * unit_price_float for t in filtered_transactions if t.entry_type == 'out') + \
+                              sum(abs(t.qty) * unit_price_float for t in filtered_transactions if t.entry_type == 'adjust' and t.qty < 0)
         closing_stock = running_balance
         closing_value = closing_stock * unit_price_float
         
-        # Product header
-        story.append(Paragraph(f"Product: {product.name}", heading_style))
-        story.append(Paragraph(f"SKU: {product.sku or 'N/A'}", normal_style))
-        story.append(Paragraph(f"Category: {product.category or 'N/A'}", normal_style))
-        story.append(Spacer(1, 10))
+        # Apply stock level filter
+        if stock_level_filter and stock_level_filter != 'all':
+            if stock_level_filter == 'out_of_stock' and closing_stock > 0:
+                continue
+            elif stock_level_filter == 'in_stock' and closing_stock <= 0:
+                continue
+            elif stock_level_filter == 'low_stock' and (closing_stock <= 0 or closing_stock >= 10):
+                continue
         
-        # Summary table
+        # Enhanced Summary Section
+        story.append(Paragraph("STOCK SUMMARY", heading_style))
+        story.append(Spacer(1, 5))
+        
         summary_data = [
             ['Opening Stock', f"{opening_stock:.2f}", f"₹{opening_value:.2f}"],
             ['Total Incoming', f"{total_incoming:.2f}", f"₹{total_incoming_value:.2f}"],
@@ -4693,20 +4903,23 @@ def get_stock_movement_history_pdf(
         
         summary_table = Table(summary_data, colWidths=[4*cm, 3*cm, 4*cm])
         summary_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 10),
             ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.lightgrey),
             ('GRID', (0, 0), (-1, -1), 1, colors.black)
         ]))
         story.append(summary_table)
         story.append(Spacer(1, 15))
         
-        # Transactions table
+        # Enhanced Transactions Section
         if transactions:
+            story.append(Paragraph("TRANSACTION DETAILS", heading_style))
+            story.append(Spacer(1, 5))
+            
             # Add opening balance row
             transactions.insert(0, {
                 'date': f"{start_year}-04-01",
@@ -4726,18 +4939,19 @@ def get_stock_movement_history_pdf(
                     t['total_value'], t['running_balance'], t['reference']
                 ])
             
-            # Create table
+            # Create table with enhanced styling
             transaction_table = Table(table_data, colWidths=[2*cm, 1.5*cm, 1.5*cm, 2*cm, 2*cm, 2*cm, 2*cm])
             transaction_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                 ('FONTSIZE', (0, 0), (-1, -1), 8),
                 ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
                 ('GRID', (0, 0), (-1, -1), 1, colors.black),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey])
             ]))
             story.append(transaction_table)
         else:
@@ -4762,6 +4976,355 @@ def get_stock_movement_history_pdf(
         content=pdf, 
         media_type='application/pdf',
         headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@api.get('/stock/movement-history/pdf-preview')
+def get_stock_movement_history_pdf_preview(
+    financial_year: str | None = None,
+    product_id: int | None = None,
+    product_filter: str | None = None,
+    entry_type_filter: str | None = None,
+    reference_type_filter: str | None = None,
+    reference_search: str | None = None,
+    stock_level_filter: str | None = None,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate PDF preview for stock movement history (inline display)"""
+    
+    # If no financial year specified, use current year
+    if not financial_year:
+        current_year = datetime.now().year
+        financial_year = f"{current_year}-{current_year + 1}"
+    
+    # Parse financial year (format: "2024-2025")
+    try:
+        start_year = int(financial_year.split('-')[0])
+        end_year = int(financial_year.split('-')[1])
+        fy_start_date = datetime(start_year, 4, 1)  # April 1st
+        fy_end_date = datetime(end_year, 3, 31)     # March 31st
+    except (ValueError, IndexError):
+        raise HTTPException(status_code=400, detail="Invalid financial year format. Use YYYY-YYYY")
+    
+    # Get products (all or specific)
+    if product_id:
+        products = db.query(Product).filter(Product.id == product_id).all()
+        if not products:
+            raise HTTPException(status_code=404, detail="Product not found")
+    elif product_filter and product_filter != 'all':
+        # Filter by product name
+        products = db.query(Product).filter(Product.name.ilike(f"%{product_filter}%")).all()
+    else:
+        products = db.query(Product).all()
+    
+    # Create PDF buffer
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, rightMargin=1*cm, leftMargin=1*cm, topMargin=1*cm, bottomMargin=1*cm)
+    
+    # Define styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        textColor=darkblue,
+        alignment=TA_CENTER,
+        spaceAfter=20
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=14,
+        textColor=darkblue,
+        spaceAfter=10
+    )
+    
+    normal_style = ParagraphStyle(
+        'CustomNormal',
+        parent=styles['Normal'],
+        fontSize=10,
+        spaceAfter=3
+    )
+    
+    # Build PDF content
+    story = []
+    
+    # Header
+    story.append(Paragraph("Stock Movement History Report", title_style))
+    story.append(Paragraph(f"Financial Year: {financial_year}", normal_style))
+    if product_id:
+        product = products[0] if products else None
+        if product:
+            story.append(Paragraph(f"Product: {product.name}", normal_style))
+    else:
+        story.append(Paragraph(f"All Products ({len(products)} items)", normal_style))
+    story.append(Paragraph(f"Generated on: {datetime.now().strftime('%d/%m/%Y %H:%M')}", normal_style))
+    
+    # Add filter information
+    active_filters = []
+    if product_filter and product_filter != 'all':
+        active_filters.append(f"Product: {product_filter}")
+    if entry_type_filter and entry_type_filter != 'all':
+        active_filters.append(f"Entry Type: {entry_type_filter}")
+    if reference_type_filter and reference_type_filter != 'all':
+        active_filters.append(f"Reference Type: {reference_type_filter}")
+    if reference_search:
+        active_filters.append(f"Reference Search: {reference_search}")
+    if stock_level_filter and stock_level_filter != 'all':
+        active_filters.append(f"Stock Level: {stock_level_filter}")
+    
+    if active_filters:
+        story.append(Paragraph("Active Filters:", normal_style))
+        for filter_info in active_filters:
+            story.append(Paragraph(f"• {filter_info}", normal_style))
+    
+    story.append(Spacer(1, 20))
+    
+    # Process each product with enhanced sections (same logic as download endpoint)
+    for i, product in enumerate(products, 1):
+        # Add page break for each product (except the first one)
+        if i > 1:
+            story.append(PageBreak())
+        
+        # Enhanced Product Section Header
+        story.append(Paragraph(f"PRODUCT {i}: {product.name.upper()}", heading_style))
+        story.append(Spacer(1, 5))
+        
+        # Product Details Box
+        product_details = [
+            ['Product Name:', product.name],
+            ['SKU:', product.sku or 'N/A'],
+            ['Category:', product.category or 'N/A'],
+            ['Unit:', product.unit or 'N/A'],
+            ['Purchase Price:', f"₹{float(product.purchase_price or 0):.2f}"],
+            ['Sales Price:', f"₹{float(product.sales_price or 0):.2f}"]
+        ]
+        
+        product_table = Table(product_details, colWidths=[3*cm, 8*cm])
+        product_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('BACKGROUND', (1, 0), (1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        story.append(product_table)
+        story.append(Spacer(1, 15))
+        
+        # Get all stock transactions for this product in the financial year
+        stock_transactions = db.query(StockLedgerEntry).filter(
+            StockLedgerEntry.product_id == product.id,
+            StockLedgerEntry.created_at >= fy_start_date,
+            StockLedgerEntry.created_at <= fy_end_date
+        ).order_by(StockLedgerEntry.created_at).all()
+        
+        # Apply filters to transactions (same logic as download endpoint)
+        filtered_transactions = []
+        for transaction in stock_transactions:
+            # Entry type filter
+            if entry_type_filter and entry_type_filter != 'all':
+                if entry_type_filter == 'incoming' and transaction.entry_type not in ['in', 'adjust']:
+                    continue
+                elif entry_type_filter == 'outgoing' and transaction.entry_type not in ['out', 'adjust']:
+                    continue
+                elif entry_type_filter == 'adjustment' and transaction.entry_type != 'adjust':
+                    continue
+            
+            # Reference type filter
+            if reference_type_filter and reference_type_filter != 'all':
+                if reference_type_filter != transaction.ref_type:
+                    continue
+            
+            # Reference search filter
+            if reference_search:
+                ref_type = transaction.ref_type
+                ref_id = transaction.ref_id
+                reference_number = None
+                
+                if ref_type and ref_id:
+                    if ref_type == 'invoice':
+                        invoice = db.query(Invoice).filter(Invoice.id == ref_id).first()
+                        reference_number = invoice.invoice_no if invoice else None
+                    elif ref_type == 'purchase':
+                        purchase = db.query(Purchase).filter(Purchase.id == ref_id).first()
+                        reference_number = purchase.purchase_no if purchase else None
+                    elif ref_type == 'adjustment':
+                        reference_number = f"ADJ-{ref_id}"
+                
+                if not reference_number or reference_search.lower() not in reference_number.lower():
+                    continue
+            
+            filtered_transactions.append(transaction)
+        
+        # Calculate opening stock
+        pre_fy_transactions = db.query(StockLedgerEntry).filter(
+            StockLedgerEntry.product_id == product.id,
+            StockLedgerEntry.created_at < fy_start_date
+        ).all()
+        
+        opening_stock = sum(
+            adj.qty for adj in pre_fy_transactions 
+            if adj.entry_type == 'in'
+        ) - sum(
+            adj.qty for adj in pre_fy_transactions 
+            if adj.entry_type == 'out'
+        )
+        opening_stock = max(0, opening_stock)
+        
+        # Calculate opening value
+        unit_price = product.purchase_price or product.sales_price or 0
+        unit_price_float = float(unit_price) if unit_price else 0.0
+        opening_value = opening_stock * unit_price_float
+        
+        # Process filtered transactions
+        transactions = []
+        running_balance = opening_stock
+        
+        for transaction in filtered_transactions:
+            # Calculate unit price and total value
+            unit_price = product.purchase_price or product.sales_price or 0
+            unit_price_float = float(unit_price) if unit_price else 0.0
+            total_value = transaction.qty * unit_price_float
+            
+            # Determine reference information
+            ref_type = None
+            ref_id = None
+            reference_number = None
+            
+            if transaction.ref_type and transaction.ref_id:
+                ref_type = transaction.ref_type
+                ref_id = transaction.ref_id
+                if ref_type == 'invoice':
+                    invoice = db.query(Invoice).filter(Invoice.id == ref_id).first()
+                    reference_number = invoice.invoice_no if invoice else None
+                elif ref_type == 'purchase':
+                    purchase = db.query(Purchase).filter(Purchase.id == ref_id).first()
+                    reference_number = purchase.purchase_no if purchase else None
+                elif ref_type == 'adjustment':
+                    reference_number = f"ADJ-{ref_id}"
+            
+            # Update running balance
+            if transaction.entry_type == 'in':
+                running_balance += transaction.qty
+            elif transaction.entry_type == 'out':
+                running_balance -= transaction.qty
+            elif transaction.entry_type == 'adjust':
+                running_balance += transaction.qty
+            
+            transactions.append({
+                'date': transaction.created_at.strftime('%d/%m/%Y'),
+                'type': transaction.entry_type.upper(),
+                'quantity': f"{transaction.qty:.2f}",
+                'unit_price': f"₹{unit_price_float:.2f}" if unit_price_float > 0 else '-',
+                'total_value': f"₹{total_value:.2f}" if total_value > 0 else '-',
+                'running_balance': f"{running_balance:.2f}",
+                'reference': reference_number or '-'
+            })
+        
+        # Calculate summary totals from filtered transactions
+        total_incoming = sum(t.qty for t in filtered_transactions if t.entry_type == 'in') + \
+                        sum(t.qty for t in filtered_transactions if t.entry_type == 'adjust' and t.qty > 0)
+        total_incoming_value = sum(t.qty * unit_price_float for t in filtered_transactions if t.entry_type == 'in') + \
+                              sum(t.qty * unit_price_float for t in filtered_transactions if t.entry_type == 'adjust' and t.qty > 0)
+        total_outgoing = sum(t.qty for t in filtered_transactions if t.entry_type == 'out') + \
+                        sum(abs(t.qty) for t in filtered_transactions if t.entry_type == 'adjust' and t.qty < 0)
+        total_outgoing_value = sum(t.qty * unit_price_float for t in filtered_transactions if t.entry_type == 'out') + \
+                              sum(abs(t.qty) * unit_price_float for t in filtered_transactions if t.entry_type == 'adjust' and t.qty < 0)
+        closing_stock = running_balance
+        closing_value = closing_stock * unit_price_float
+        
+        # Apply stock level filter
+        if stock_level_filter and stock_level_filter != 'all':
+            if stock_level_filter == 'out_of_stock' and closing_stock > 0:
+                continue
+            elif stock_level_filter == 'in_stock' and closing_stock <= 0:
+                continue
+            elif stock_level_filter == 'low_stock' and (closing_stock <= 0 or closing_stock >= 10):
+                continue
+        
+        # Enhanced Summary Section
+        story.append(Paragraph("STOCK SUMMARY", heading_style))
+        story.append(Spacer(1, 5))
+        
+        summary_data = [
+            ['Opening Stock', f"{opening_stock:.2f}", f"₹{opening_value:.2f}"],
+            ['Total Incoming', f"{total_incoming:.2f}", f"₹{total_incoming_value:.2f}"],
+            ['Total Outgoing', f"{total_outgoing:.2f}", f"₹{total_outgoing_value:.2f}"],
+            ['Closing Stock', f"{closing_stock:.2f}", f"₹{closing_value:.2f}"]
+        ]
+        
+        summary_table = Table(summary_data, colWidths=[4*cm, 3*cm, 4*cm])
+        summary_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.lightgrey),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        story.append(summary_table)
+        story.append(Spacer(1, 15))
+        
+        # Enhanced Transactions Section
+        if transactions:
+            story.append(Paragraph("TRANSACTION DETAILS", heading_style))
+            story.append(Spacer(1, 5))
+            
+            # Add opening balance row
+            transactions.insert(0, {
+                'date': f"{start_year}-04-01",
+                'type': 'OPENING',
+                'quantity': f"{opening_stock:.2f}",
+                'unit_price': f"₹{unit_price_float:.2f}" if unit_price_float > 0 else '-',
+                'total_value': f"₹{opening_value:.2f}" if opening_value > 0 else '-',
+                'running_balance': f"{opening_stock:.2f}",
+                'reference': '-'
+            })
+            
+            # Create table data
+            table_data = [['Date', 'Type', 'Quantity', 'Unit Price', 'Total Value', 'Running Balance', 'Reference']]
+            for t in transactions:
+                table_data.append([
+                    t['date'], t['type'], t['quantity'], t['unit_price'], 
+                    t['total_value'], t['running_balance'], t['reference']
+                ])
+            
+            # Create table with enhanced styling
+            transaction_table = Table(table_data, colWidths=[2*cm, 1.5*cm, 1.5*cm, 2*cm, 2*cm, 2*cm, 2*cm])
+            transaction_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey])
+            ]))
+            story.append(transaction_table)
+        else:
+            story.append(Paragraph("No transactions found for this period.", normal_style))
+        
+        story.append(Spacer(1, 20))
+    
+    # Build PDF
+    doc.build(story)
+    pdf = buf.getvalue()
+    buf.close()
+    
+    return Response(
+        content=pdf, 
+        media_type='application/pdf',
+        headers={"Content-Disposition": "inline; filename=stock_movement_history_preview.pdf"}
     )
 
 

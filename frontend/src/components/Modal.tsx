@@ -81,8 +81,6 @@ export function Modal({ isOpen, onClose, title, children, size = 'medium' }: Mod
               padding: '0.25rem',
               transition: 'color 0.2s'
             }}
-            onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#4b5563'}
-            onMouseLeave={(e) => (e.target as HTMLElement).style.color = '#9ca3af'}
           >
             <svg style={{ width: '1.5rem', height: '1.5rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

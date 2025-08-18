@@ -8,6 +8,7 @@ import { EnhancedFilterBar } from './EnhancedFilterBar'
 import { FilterDropdown } from './FilterDropdown'
 import { DateFilter } from './DateFilter'
 import { useSearchParams } from 'react-router-dom'
+import { PDFViewer } from './PDFViewer'
 
 interface StockHistoryFormProps {
   onSuccess: () => void
@@ -42,6 +43,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
   
   // PDF download state
   const [downloadingPDF, setDownloadingPDF] = useState(false)
+  const [showPDFPreview, setShowPDFPreview] = useState(false)
   
   const { forceLogout } = useAuth()
   const handleApiError = createApiErrorHandler(forceLogout)
@@ -307,7 +309,13 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
       // Get product ID if filtering by specific product
       const productIdNum = (productId && forceReload === 0) ? parseInt(productId) : undefined
       
-      await apiDownloadStockMovementHistoryPDF(fy, productIdNum)
+      await apiDownloadStockMovementHistoryPDF(fy, productIdNum, {
+        productFilter: productFilter !== 'all' ? productFilter : undefined,
+        entryTypeFilter: entryTypeFilter !== 'all' ? entryTypeFilter : undefined,
+        referenceTypeFilter: referenceTypeFilter !== 'all' ? referenceTypeFilter : undefined,
+        referenceSearch: referenceSearch || undefined,
+        stockLevelFilter: stockLevelFilter !== 'all' ? stockLevelFilter : undefined
+      })
     } catch (err) {
       console.error('Failed to download PDF:', err)
       const errorMessage = handleApiError(err)
@@ -315,6 +323,10 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
     } finally {
       setDownloadingPDF(false)
     }
+  }
+
+  const handlePreviewPDF = () => {
+    setShowPDFPreview(true)
   }
 
   return (
@@ -332,7 +344,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
         </h1>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <Button 
-            onClick={handleDownloadPDF} 
+            onClick={handlePreviewPDF} 
             variant="primary"
             disabled={downloadingPDF}
             style={{ 
@@ -350,7 +362,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
             ) : (
               <>
                 <span style={{ fontSize: '14px' }}>📄</span>
-                Download PDF
+                Stock History - PDF
               </>
             )}
           </Button>
@@ -861,6 +873,23 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
           </div>
         </>
       )}
+
+      {/* PDF Preview Modal */}
+      <PDFViewer
+        isOpen={showPDFPreview}
+        onClose={() => setShowPDFPreview(false)}
+        type="stock-history"
+        title={`Stock Movement History - ${financialYearFilter === 'all' ? getCurrentFinancialYear() : financialYearFilter}`}
+        financialYear={financialYearFilter === 'all' ? getCurrentFinancialYear() : financialYearFilter}
+        productId={(productId && forceReload === 0) ? parseInt(productId) : undefined}
+        filters={{
+          productFilter: productFilter !== 'all' ? productFilter : undefined,
+          entryTypeFilter: entryTypeFilter !== 'all' ? entryTypeFilter : undefined,
+          referenceTypeFilter: referenceTypeFilter !== 'all' ? referenceTypeFilter : undefined,
+          referenceSearch: referenceSearch || undefined,
+          stockLevelFilter: stockLevelFilter !== 'all' ? stockLevelFilter : undefined
+        }}
+      />
     </div>
   )
 }

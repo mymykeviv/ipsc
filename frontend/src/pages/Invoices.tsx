@@ -647,6 +647,8 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           <PDFViewer
             isOpen={pdfModalOpen}
             onClose={() => setPdfModalOpen(false)}
+            type="invoice"
+            title={`Invoice ${selectedInvoice.invoice_no}`}
             invoiceId={selectedInvoice.id}
             invoiceNo={selectedInvoice.invoice_no}
           />

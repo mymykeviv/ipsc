@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../modules/AuthContext'
 import { apiGetGstFilingReport, GstFilingReport } from '../lib/api'
 import { Button } from '../components/Button'
+import { InventorySummaryReport } from '../components/InventorySummaryReport'
 
 type Summary = { taxable_value: number; cgst: number; sgst: number; igst: number; grand_total: number; rate_breakup: { rate: number; taxable_value: number }[] }
 
@@ -25,7 +26,7 @@ export function Reports({ section }: ReportsProps) {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   })
   const [reportType, setReportType] = useState<'gstr1' | 'gstr2' | 'gstr3b'>('gstr1')
-  const [activeTab, setActiveTab] = useState<'summary' | 'gst-filing'>('gst-filing')
+  const [activeTab, setActiveTab] = useState<'summary' | 'gst-filing' | 'inventory'>('gst-filing')
 
   useEffect(() => {
     if (!token) return
@@ -140,6 +141,21 @@ export function Reports({ section }: ReportsProps) {
           }}
         >
           GST Filing Reports
+        </button>
+        <button
+          onClick={() => setActiveTab('inventory')}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            backgroundColor: activeTab === 'inventory' ? '#007bff' : 'transparent',
+            color: activeTab === 'inventory' ? 'white' : '#495057',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: '500',
+            borderBottom: activeTab === 'inventory' ? '2px solid #007bff' : 'none'
+          }}
+        >
+          Inventory Reports
         </button>
       </div>
 
@@ -443,6 +459,10 @@ export function Reports({ section }: ReportsProps) {
             </div>
           )}
         </div>
+      )}
+
+      {activeTab === 'inventory' && (
+        <InventorySummaryReport />
       )}
     </div>
   )

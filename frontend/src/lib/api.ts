@@ -1124,10 +1124,25 @@ export async function apiGetProductStockMovementHistory(
   return r.json()
 }
 
-export async function apiDownloadStockMovementHistoryPDF(financialYear?: string, productId?: number): Promise<void> {
+export async function apiDownloadStockMovementHistoryPDF(
+  financialYear?: string, 
+  productId?: number,
+  filters?: {
+    productFilter?: string
+    entryTypeFilter?: string
+    referenceTypeFilter?: string
+    referenceSearch?: string
+    stockLevelFilter?: string
+  }
+): Promise<void> {
   const params = new URLSearchParams()
   if (financialYear) params.append('financial_year', financialYear)
   if (productId) params.append('product_id', productId.toString())
+  if (filters?.productFilter && filters.productFilter !== 'all') params.append('product_filter', filters.productFilter)
+  if (filters?.entryTypeFilter && filters.entryTypeFilter !== 'all') params.append('entry_type_filter', filters.entryTypeFilter)
+  if (filters?.referenceTypeFilter && filters.referenceTypeFilter !== 'all') params.append('reference_type_filter', filters.referenceTypeFilter)
+  if (filters?.referenceSearch) params.append('reference_search', filters.referenceSearch)
+  if (filters?.stockLevelFilter && filters.stockLevelFilter !== 'all') params.append('stock_level_filter', filters.stockLevelFilter)
   
   const queryString = params.toString()
   const url = `/api/stock/movement-history/pdf${queryString ? `?${queryString}` : ''}`
@@ -1165,6 +1180,101 @@ export async function apiDownloadStockMovementHistoryPDF(financialYear?: string,
   a.click()
   window.URL.revokeObjectURL(url2)
   document.body.removeChild(a)
+}
+
+export async function apiGetStockMovementHistoryPDFPreview(
+  financialYear?: string, 
+  productId?: number,
+  filters?: {
+    productFilter?: string
+    entryTypeFilter?: string
+    referenceTypeFilter?: string
+    referenceSearch?: string
+    stockLevelFilter?: string
+  }
+): Promise<string> {
+  const params = new URLSearchParams()
+  if (financialYear) params.append('financial_year', financialYear)
+  if (productId) params.append('product_id', productId.toString())
+  if (filters?.productFilter && filters.productFilter !== 'all') params.append('product_filter', filters.productFilter)
+  if (filters?.entryTypeFilter && filters.entryTypeFilter !== 'all') params.append('entry_type_filter', filters.entryTypeFilter)
+  if (filters?.referenceTypeFilter && filters.referenceTypeFilter !== 'all') params.append('reference_type_filter', filters.referenceTypeFilter)
+  if (filters?.referenceSearch) params.append('reference_search', filters.referenceSearch)
+  if (filters?.stockLevelFilter && filters.stockLevelFilter !== 'all') params.append('stock_level_filter', filters.stockLevelFilter)
+  
+  const queryString = params.toString()
+  const url = `/api/stock/movement-history/pdf-preview${queryString ? `?${queryString}` : ''}`
+  
+  const r = await fetch(url, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  // Return the PDF as a blob URL for preview
+  const blob = await r.blob()
+  return window.URL.createObjectURL(blob)
+}
+
+// Inventory Reports API Types
+export interface InventorySummaryItem {
+  product_id: number
+  product_name: string
+  sku: string | null
+  category: string | null
+  unit: string | null
+  current_stock: number
+  purchase_price: number | null
+  sales_price: number | null
+  stock_value: number
+  last_movement_date: string | null
+  minimum_stock: number | null
+}
+
+export interface InventorySummaryReport {
+  total_products: number
+  total_stock_value: number
+  low_stock_items: number
+  out_of_stock_items: number
+  items: InventorySummaryItem[]
+  generated_at: string
+  filters_applied: Record<string, any> | null
+}
+
+export async function apiGetInventorySummary(
+  category?: string,
+  lowStockOnly?: boolean,
+  outOfStockOnly?: boolean
+): Promise<InventorySummaryReport> {
+  const params = new URLSearchParams()
+  if (category) params.append('category', category)
+  if (lowStockOnly) params.append('low_stock_only', 'true')
+  if (outOfStockOnly) params.append('out_of_stock_only', 'true')
+  
+  const queryString = params.toString()
+  const url = `/api/reports/inventory-summary${queryString ? `?${queryString}` : ''}`
+  
+  const r = await fetch(url, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
 }
 
 
