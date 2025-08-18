@@ -33,7 +33,7 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    command: ["sh", "-c", "npm ci || npm install && npm run dev -- --host"]
+    command: ["sh", "-c", "npm ci || npm install && npm run dev -- --config vite.config.docker.ts --host"]
     depends_on:
       - backend
   mailhog:

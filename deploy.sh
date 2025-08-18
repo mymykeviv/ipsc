@@ -155,8 +155,8 @@ check_health() {
         exit 1
     fi
     
-    # Check frontend health
-    if curl -f http://localhost:3000 >/dev/null 2>&1; then
+    # Check frontend health (Vite dev server runs on 5173)
+    if curl -f http://localhost:5173 >/dev/null 2>&1; then
         echo -e "${GREEN}✅ Frontend is healthy${NC}"
     else
         echo -e "${RED}❌ Frontend health check failed${NC}"
@@ -172,8 +172,9 @@ show_info() {
     echo -e "${GREEN}🎉 Deployment completed successfully!${NC}"
     echo -e "${BLUE}Environment: $ENVIRONMENT${NC}"
     echo -e "${BLUE}Backend: http://localhost:8000${NC}"
-    echo -e "${BLUE}Frontend: http://localhost:3000${NC}"
+    echo -e "${BLUE}Frontend: http://localhost:5173${NC}"
     echo -e "${BLUE}API Docs: http://localhost:8000/docs${NC}"
+    echo -e "${BLUE}MailHog: http://localhost:8025${NC}"
     echo -e "${BLUE}==================================${NC}"
 }
 

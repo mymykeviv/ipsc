@@ -176,6 +176,12 @@ check_prerequisites() {
 - Health checks pass
 - Services are accessible
 
+**Port Configuration**:
+- ✅ **Backend**: http://localhost:8000 (correct)
+- ✅ **Frontend**: http://localhost:5173 (correct - Vite dev server)
+- ✅ **Database**: localhost:5432
+- ✅ **MailHog**: http://localhost:8025
+
 ### ❌ **Deployment With Tests - FAILING**
 
 ```bash
@@ -183,6 +189,32 @@ check_prerequisites() {
 ```
 
 **Result**: ❌ Tests fail due to multiple issues
+
+### ⚠️ **Login Issues - PARTIALLY RESOLVED**
+
+**Backend Login**: ✅ **WORKING**
+```bash
+curl -X POST http://localhost:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
+```
+
+**Frontend Login**: ⚠️ **PROXY ISSUE**
+- Frontend can reach backend directly: ✅
+- Vite proxy configuration needs adjustment: ❌
+- CORS middleware added to backend: ✅
+
+**Issues Identified**:
+1. **Port Configuration**: Fixed - Frontend runs on 5173 (Vite dev server)
+2. **CORS Support**: Added to backend for frontend communication
+3. **Vite Proxy**: Configuration exists but not being used correctly
+4. **Docker Network**: Frontend can reach backend via Docker network
+
+**Current Workaround**:
+- Backend API is fully functional at http://localhost:8000
+- Frontend is accessible at http://localhost:5173
+- For API testing, use backend directly at http://localhost:8000
+- Frontend proxy issue is being investigated
 
 ## Test Issues Identified
 
