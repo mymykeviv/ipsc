@@ -106,9 +106,7 @@ function Shell() {
     if (path === '/products' && location.pathname.startsWith('/products')) {
       // Only highlight /products if we're not on a specific sub-path
       return !location.pathname.includes('/add') && 
-             !location.pathname.includes('/edit') &&
-             !location.pathname.includes('/stock-adjustment') &&
-             !location.pathname.includes('/stock-history')
+             !location.pathname.includes('/edit')
     }
     if (path === '/customers' && location.pathname.startsWith('/customers')) {
       // Only highlight /customers if we're not on a specific sub-path

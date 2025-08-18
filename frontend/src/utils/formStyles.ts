@@ -106,6 +106,23 @@ export const formStyles = {
     gridTemplateColumns: '1fr 1fr 1fr 1fr',
     gap: '8px',
   } as const,
+
+  // Checkbox label styling
+  checkboxLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '14px',
+    color: 'var(--text)',
+    cursor: 'pointer',
+  } as const,
+
+  // Checkbox input styling
+  checkbox: {
+    width: '16px',
+    height: '16px',
+    cursor: 'pointer',
+  } as const,
 } as const;
 
 // Standardized error message styling

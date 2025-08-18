@@ -954,22 +954,7 @@ export async function apiEmailInvoice(id: number, email: string): Promise<void> 
   }
 }
 
-export async function apiGetInvoicePDF(id: number): Promise<Blob> {
-  const r = await fetch(`/api/invoices/${id}/pdf`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  
-  return r.blob()
-}
+
 
 export async function apiGetPurchasePDF(id: number): Promise<Blob> {
   const r = await fetch(`/api/purchases/${id}/pdf`, {
@@ -1064,57 +1049,9 @@ export type StockMovement = {
   closing_stock: number
 }
 
-export type StockLedgerEntry = {
-  id: number
-  product_id: number
-  product_name: string
-  entry_type: string
-  qty: number
-  reference_bill_number: string | null
-  notes: string | null
-  created_at: string
-}
-
 export async function apiGetStockMovementHistory(financialYear?: string): Promise<StockMovement[]> {
   const params = financialYear ? `?financial_year=${financialYear}` : ''
   const r = await fetch(`/api/stock/movement-history${params}`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  
-  return r.json()
-}
-
-export async function apiGetStockLedgerHistory(
-  search?: string,
-  productId?: number,
-  entryType?: string,
-  referenceNumber?: string,
-  quantityMin?: number,
-  quantityMax?: number,
-  dateFrom?: string,
-  dateTo?: string
-): Promise<StockLedgerEntry[]> {
-  const params = new URLSearchParams()
-  if (search) params.append('search', search)
-  if (productId) params.append('product_id', productId.toString())
-  if (entryType) params.append('entry_type', entryType)
-  if (referenceNumber) params.append('reference_number', referenceNumber)
-  if (quantityMin) params.append('quantity_min', quantityMin.toString())
-  if (quantityMax) params.append('quantity_max', quantityMax.toString())
-  if (dateFrom) params.append('date_from', dateFrom)
-  if (dateTo) params.append('date_to', dateTo)
-  
-  const url = `/api/stock/history${params.toString() ? `?${params.toString()}` : ''}`
-  const r = await fetch(url, {
     headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
   })
   
@@ -1376,5 +1313,199 @@ export async function apiUpdateCompanySettings(settings: Partial<CompanySettings
     }
   }
   return r.json()
+}
+
+
+// Invoice Template Types and API Functions
+
+export type InvoiceTemplate = {
+  id: number
+  name: string
+  description: string | null
+  template_type: string
+  primary_color: string
+  secondary_color: string
+  accent_color: string
+  header_font: string
+  body_font: string
+  header_font_size: number
+  body_font_size: number
+  show_logo: boolean
+  logo_position: string
+  show_company_details: boolean
+  show_customer_details: boolean
+  show_supplier_details: boolean
+  show_terms: boolean
+  show_notes: boolean
+  show_footer: boolean
+  header_text: string
+  footer_text: string
+  terms_text: string
+  is_active: boolean
+  is_default: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type InvoiceTemplateCreate = {
+  name: string
+  description?: string
+  template_type?: string
+  primary_color?: string
+  secondary_color?: string
+  accent_color?: string
+  header_font?: string
+  body_font?: string
+  header_font_size?: number
+  body_font_size?: number
+  show_logo?: boolean
+  logo_position?: string
+  show_company_details?: boolean
+  show_customer_details?: boolean
+  show_supplier_details?: boolean
+  show_terms?: boolean
+  show_notes?: boolean
+  show_footer?: boolean
+  header_text?: string
+  footer_text?: string
+  terms_text?: string
+}
+
+export type InvoiceTemplateUpdate = Partial<InvoiceTemplateCreate>
+
+export async function apiGetInvoiceTemplates(): Promise<InvoiceTemplate[]> {
+  const r = await fetch('/api/invoice-templates', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  return r.json()
+}
+
+export async function apiGetInvoiceTemplate(templateId: number): Promise<InvoiceTemplate> {
+  const r = await fetch(`/api/invoice-templates/${templateId}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  return r.json()
+}
+
+export async function apiGetDefaultInvoiceTemplate(): Promise<InvoiceTemplate> {
+  const r = await fetch('/api/invoice-templates/default', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  return r.json()
+}
+
+export async function apiCreateInvoiceTemplate(template: InvoiceTemplateCreate): Promise<InvoiceTemplate> {
+  const r = await fetch('/api/invoice-templates', {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('auth_token')}` 
+    },
+    body: JSON.stringify(template)
+  })
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  return r.json()
+}
+
+export async function apiUpdateInvoiceTemplate(templateId: number, template: InvoiceTemplateUpdate): Promise<InvoiceTemplate> {
+  const r = await fetch(`/api/invoice-templates/${templateId}`, {
+    method: 'PUT',
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('auth_token')}` 
+    },
+    body: JSON.stringify(template)
+  })
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  return r.json()
+}
+
+export async function apiDeleteInvoiceTemplate(templateId: number): Promise<void> {
+  const r = await fetch(`/api/invoice-templates/${templateId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+}
+
+export async function apiSetDefaultInvoiceTemplate(templateId: number): Promise<void> {
+  const r = await fetch(`/api/invoice-templates/${templateId}/set-default`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+}
+
+export async function apiGetInvoicePDF(invoiceId: number, templateId?: number): Promise<Blob> {
+  const params = new URLSearchParams()
+  if (templateId) {
+    params.append('template_id', templateId.toString())
+  }
+  
+  const url = `/api/invoices/${invoiceId}/pdf${params.toString() ? `?${params.toString()}` : ''}`
+  const r = await fetch(url, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  return r.blob()
 }
 

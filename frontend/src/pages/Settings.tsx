@@ -4,6 +4,7 @@ import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
 import { ErrorMessage } from '../components/ErrorMessage'
+import { InvoiceTemplateManager } from '../components/InvoiceTemplateManager'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface SettingsProps {
@@ -65,6 +66,7 @@ export function Settings({ section = 'company' }: SettingsProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [templateManagerOpen, setTemplateManagerOpen] = useState(false)
 
   // Company Settings
   const [companySettings, setCompanySettings] = useState<CompanySettings>({
@@ -714,6 +716,18 @@ export function Settings({ section = 'company' }: SettingsProps) {
             </select>
           </div>
         </div>
+        <div style={{ marginTop: '16px' }}>
+          <Button 
+            onClick={() => setTemplateManagerOpen(true)} 
+            variant="secondary"
+            style={{ marginRight: '12px' }}
+          >
+            Manage Templates
+          </Button>
+          <span style={{ fontSize: '14px', color: '#6c757d' }}>
+            Create and customize invoice templates with different designs and layouts
+          </span>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', marginTop: '24px' }}>
@@ -788,6 +802,11 @@ export function Settings({ section = 'company' }: SettingsProps) {
       ) : (
         renderContent()
       )}
+
+      <InvoiceTemplateManager 
+        isOpen={templateManagerOpen}
+        onClose={() => setTemplateManagerOpen(false)}
+      />
     </div>
   )
 }

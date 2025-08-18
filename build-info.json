@@ -1,6 +1,6 @@
 {
-  "version": "1.47.4",
-  "build_date": "2025-08-17T19:00:00Z",
+  "version": "1.48.1",
+  "build_date": "2025-08-18T10:55:54.414276",
   "changes": [
     "Comprehensive UX improvements for Parties page and navigation",
     "Renamed side menu 'Customers / Vendors' to 'Parties' for better clarity",
@@ -33,7 +33,18 @@
     "Enhanced Modal z-index to appear above sidebar",
     "Standardized EmailFormModal styling with consistent design",
     "Fixed table overflow issues to prevent kebab menu dropdown clipping",
-    "Updated Stock adjustment form with 2-column layout and consistent styling"
+    "Updated Stock adjustment form with 2-column layout and consistent styling",
+    "Implemented comprehensive Invoice Template System with customizable designs",
+    "Added InvoiceTemplate model with extensive customization options",
+    "Created InvoiceTemplateManager component for template management",
+    "Enhanced PDF generation to support multiple template designs",
+    "Added template selection in PDFViewer component",
+    "Implemented template API endpoints for CRUD operations",
+    "Added color scheme, typography, and layout customization options",
+    "Integrated template management into Settings page",
+    "Created professional, modern, classic, and minimal template types",
+    "Added template preview and selection functionality",
+    "Implemented default template system with fallback handling"
   ],
   "features": {
     "filter_system": "Enhanced with improved UX and bug fixes",
@@ -74,7 +85,8 @@
     "quick_actions": "Enhanced button layout and visual design",
     "contextual_actions": "Widget-specific action buttons for better UX",
     "dashboard_layout": "Consistent 2-column grid layout across all sections",
-    "parties_management": "Complete UX overhaul with enhanced navigation and filtering"
+    "parties_management": "Complete UX overhaul with enhanced navigation and filtering",
+    "invoice_templates": "Comprehensive template system with customization options"
   },
   "dashboard_improvements": {
     "layout": "2-column grid layout for analytics widgets",

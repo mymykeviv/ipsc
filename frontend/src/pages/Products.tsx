@@ -12,7 +12,7 @@ import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { EnhancedFilterDropdown } from '../components/EnhancedFilterDropdown'
 import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
 import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
-import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAdjustStock, apiListParties, Party, apiGetStockMovementHistory, apiGetStockLedgerHistory, StockMovement, StockLedgerEntry, ProductFilters } from '../lib/api'
+import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAdjustStock, apiListParties, Party, apiGetStockMovementHistory, StockMovement, ProductFilters } from '../lib/api'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface Product {
@@ -88,7 +88,6 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [skuFilter, setSkuFilter] = useState<string>('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [itemTypeFilter, setItemTypeFilter] = useState<string>('all')
@@ -256,8 +255,6 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       setLoading(true)
       loadProducts()
       loadVendors()
-      // Load stock history data
-      loadStockHistory()
       setLoading(false)
     }
   }, [mode, id, token, navigate])
@@ -357,19 +354,6 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     }
   }
 
-  const loadStockHistory = async () => {
-    try {
-      console.log('loadStockHistory called')
-      const history = await apiGetStockMovementHistory()
-      console.log('Stock history loaded:', history)
-      // Note: This function is called from stock history mode
-      // The actual state management is handled in the StockHistoryForm component
-    } catch (error: any) {
-      console.error('Error loading stock history:', error)
-      handleApiError(error)
-    }
-  }
-
   const resetForm = () => {
     setFormData({
       name: '',
@@ -395,32 +379,19 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     e.preventDefault()
     setLoading(true)
     try {
-      // Validate required fields
-      if (!formData.name.trim()) {
-        setError('Product name is required')
-        setLoading(false)
-        return
-      }
-      
-      if (!formData.sales_price || parseFloat(formData.sales_price) <= 0) {
-        setError('Sales price must be greater than 0')
-        setLoading(false)
-        return
-      }
-      
       const payload = {
-        name: formData.name.trim(),
-        description: formData.description.trim() || null,
+        name: formData.name,
+        description: formData.description,
         item_type: formData.product_type,
         sales_price: parseFloat(formData.sales_price),
-        purchase_price: formData.purchase_price && parseFloat(formData.purchase_price) > 0 ? parseFloat(formData.purchase_price) : null,
-        stock: parseInt(formData.opening_stock) || 0,
-        sku: formData.sku.trim() || null,
+        purchase_price: formData.purchase_price ? parseFloat(formData.purchase_price) : null,
+        stock: parseFloat(formData.opening_stock),
+        sku: formData.sku,
         unit: formData.unit,
-        supplier: formData.supplier.trim() || null,
-        category: formData.category.trim() || null,
-        notes: formData.notes.trim() || null,
-        hsn: formData.hsn_code.trim() || null,
+        supplier: formData.supplier,
+        category: formData.category,
+        notes: formData.notes,
+        hsn: formData.hsn_code,
         gst_rate: formData.gst_rate && formData.gst_rate !== '' ? parseFloat(formData.gst_rate) : null
       }
       
@@ -853,45 +824,11 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       (product.supplier && product.supplier.toLowerCase().includes(searchLower))
     )
     
-    const matchesSku = !skuFilter || 
-      (product.sku && product.sku.toLowerCase().includes(skuFilter.toLowerCase()))
-    
     const matchesStatus = statusFilter === 'all' || 
       (statusFilter === 'active' && product.is_active) ||
       (statusFilter === 'inactive' && !product.is_active)
     
-    const matchesCategory = categoryFilter === 'all' || 
-      product.category === categoryFilter
-    
-    const matchesItemType = itemTypeFilter === 'all' || 
-      product.item_type === itemTypeFilter
-    
-    const matchesGstRate = gstRateFilter === 'all' || 
-      product.gst_rate?.toString() === gstRateFilter
-    
-    const matchesStockLevel = stockLevelFilter === 'all' || 
-      (stockLevelFilter === 'low_stock' && product.stock < 10) ||
-      (stockLevelFilter === 'out_of_stock' && product.stock === 0) ||
-      (stockLevelFilter === 'in_stock' && product.stock > 0)
-    
-    const matchesSupplier = supplierFilter === 'all' || 
-      product.supplier === supplierFilter
-    
-    const matchesPriceRange = priceRangeFilter === 'all' || 
-      (() => {
-        const [min, max] = priceRangeFilter.split('-')
-        const price = product.sales_price
-        if (min && max) {
-          return price >= parseFloat(min) && price <= parseFloat(max)
-        } else if (min) {
-          return price >= parseFloat(min)
-        }
-        return true
-      })()
-    
-    return matchesSearch && matchesSku && matchesStatus && matchesCategory && 
-           matchesItemType && matchesGstRate && matchesStockLevel && 
-           matchesSupplier && matchesPriceRange
+    return matchesSearch && matchesStatus
   })
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -989,7 +926,6 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         title="Product Filters"
         activeFiltersCount={
           (searchTerm ? 1 : 0) +
-          (skuFilter ? 1 : 0) +
           (statusFilter !== 'all' ? 1 : 0) +
           (categoryFilter !== 'all' ? 1 : 0) +
           (itemTypeFilter !== 'all' ? 1 : 0) +
@@ -1001,7 +937,6 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         }
         onClearAll={() => {
           setSearchTerm('')
-          setSkuFilter('')
           setStatusFilter('all')
           setCategoryFilter('all')
           setItemTypeFilter('all')
@@ -1036,25 +971,6 @@ export function Products({ mode = 'manage' }: ProductsProps) {
             value={searchTerm}
             onChange={setSearchTerm}
             placeholder="Search products..."
-          />
-        </div>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Product Code (SKU)</span>
-          <input
-            type="text"
-            value={skuFilter}
-            onChange={(e) => setSkuFilter(e.target.value)}
-            placeholder="Filter by SKU..."
-            style={{
-              width: '100%',
-              padding: '6px 10px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '12px',
-              outline: 'none',
-              minHeight: '32px'
-            }}
           />
         </div>
         
@@ -1402,10 +1318,6 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
   })
   const [selectedProductId, setSelectedProductId] = useState<string>('')
   const [stockLoading, setStockLoading] = useState(false)
-  
-  // Get URL parameters to pre-select product
-  const urlParams = new URLSearchParams(window.location.search)
-  const productIdParam = urlParams.get('product')
 
   useEffect(() => {
     loadData()
@@ -1420,20 +1332,6 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
       ])
       setProducts(productsData)
       setVendors(vendorsData.filter(party => party.type === 'vendor'))
-      
-      // Pre-select product if specified in URL
-      if (productIdParam) {
-        const selectedProduct = productsData.find(p => p.id.toString() === productIdParam)
-        if (selectedProduct) {
-          setSelectedProductId(selectedProduct.id.toString())
-          // Pre-fill some form data based on the selected product
-          setStockFormData(prev => ({
-            ...prev,
-            supplier: selectedProduct.supplier || '',
-            category: selectedProduct.category || ''
-          }))
-        }
-      }
     } catch (err: any) {
       const errorMessage = handleApiError(err)
       setError(errorMessage)
@@ -1477,10 +1375,7 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
         })
         setSelectedProductId('')
         alert(`Stock adjusted successfully. New stock: ${result.new_stock}`)
-        // Reload stock history to show the new entry
-        if (typeof onSuccess === 'function') {
-          onSuccess()
-        }
+        onSuccess()
       }
     } catch (err: any) {
       console.error('Failed to adjust stock:', err)
@@ -1701,7 +1596,7 @@ interface StockHistoryFormProps {
 }
 
 function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
-  const [stockHistory, setStockHistory] = useState<StockLedgerEntry[]>([])
+  const [stockHistory, setStockHistory] = useState<StockMovement[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [products, setProducts] = useState<Product[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -1711,28 +1606,17 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
   
   // New filter states for Stock Movement History
   const [productFilter, setProductFilter] = useState('all')
+  const [financialYearFilter, setFinancialYearFilter] = useState('all')
   const [entryTypeFilter, setEntryTypeFilter] = useState('all')
   const [dateFilter, setDateFilter] = useState('all')
   
   const { forceLogout } = useAuth()
   const handleApiError = createApiErrorHandler(forceLogout)
-  
-  // Get URL parameters to set initial product filter
-  const urlParams = new URLSearchParams(window.location.search)
-  const productIdParam = urlParams.get('product')
 
   const loadProducts = async () => {
     try {
       const productsData = await apiGetProducts()
       setProducts(productsData)
-      
-      // Set product filter based on URL parameter
-      if (productIdParam) {
-        const selectedProduct = productsData.find(p => p.id.toString() === productIdParam)
-        if (selectedProduct) {
-          setProductFilter(selectedProduct.name)
-        }
-      }
     } catch (err) {
       const errorMessage = handleApiError(err)
       setError(errorMessage)
@@ -1743,39 +1627,7 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
     try {
       setHistoryLoading(true)
       setError(null)
-      
-      // Build filter parameters
-      const filters: any = {}
-      if (historySearchTerm) filters.search = historySearchTerm
-      if (productFilter !== 'all') {
-        const selectedProduct = products.find(p => p.name === productFilter)
-        if (selectedProduct) filters.productId = selectedProduct.id
-      }
-      if (entryTypeFilter !== 'all') filters.entryType = entryTypeFilter
-      if (dateFilter !== 'all') {
-        if (dateFilter.startsWith('custom:')) {
-          const [from, to] = dateFilter.replace('custom:', '').split('|')
-          if (from) filters.dateFrom = from
-          if (to) filters.dateTo = to
-        } else if (dateFilter === 'current_fy') {
-          const currentYear = new Date().getFullYear()
-          const fyStart = `${currentYear}-04-01`
-          const fyEnd = `${currentYear + 1}-03-31`
-          filters.dateFrom = fyStart
-          filters.dateTo = fyEnd
-        }
-      }
-      
-      const history = await apiGetStockLedgerHistory(
-        filters.search,
-        filters.productId,
-        filters.entryType,
-        undefined, // referenceNumber
-        undefined, // quantityMin
-        undefined, // quantityMax
-        filters.dateFrom,
-        filters.dateTo
-      )
+      const history = await apiGetStockMovementHistory()
       setStockHistory(history)
     } catch (err) {
       console.error('Failed to load stock history:', err)
@@ -1789,47 +1641,34 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
   useEffect(() => {
     loadProducts()
     loadStockHistory()
-  }, [historySearchTerm, productFilter, entryTypeFilter, dateFilter])
-
-  // Calculate running balance for stock ledger entries
-  const calculateRunningBalance = (entries: StockLedgerEntry[]) => {
-    let runningBalance = 0
-    return entries.map(entry => {
-      if (entry.entry_type === 'in') {
-        runningBalance += entry.qty
-      } else {
-        runningBalance -= entry.qty
-      }
-      return {
-        ...entry,
-        running_balance: runningBalance
-      }
-    })
-  }
+  }, [])
 
   // Filter and paginate stock history with enhanced filters
-  const filteredStockHistory = stockHistory.filter(entry => {
-    const matchesSearch = entry.product_name.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
-                         entry.reference_bill_number?.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
-                         entry.notes?.toLowerCase().includes(historySearchTerm.toLowerCase())
+  const filteredStockHistory = stockHistory.filter(movement => {
+    const matchesSearch = movement.product_name.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
+                         movement.financial_year.toString().includes(historySearchTerm)
     
     const matchesProduct = productFilter === 'all' || 
-                          entry.product_name === productFilter
+                          movement.product_name === productFilter
+    
+    const matchesFinancialYear = financialYearFilter === 'all' || 
+                                 movement.financial_year.toString() === financialYearFilter
     
     const matchesEntryType = entryTypeFilter === 'all' || 
-                            entry.entry_type === entryTypeFilter
+                            (entryTypeFilter === 'incoming' && movement.incoming_stock > 0) ||
+                            (entryTypeFilter === 'outgoing' && movement.outgoing_stock > 0)
     
-    return matchesSearch && matchesProduct && matchesEntryType
+    return matchesSearch && matchesProduct && matchesFinancialYear && matchesEntryType
   })
 
-  // Calculate running balance for the filtered entries
-  const entriesWithBalance = calculateRunningBalance(filteredStockHistory)
-  
-  const historyTotalPages = Math.ceil(entriesWithBalance.length / historyItemsPerPage)
+  const historyTotalPages = Math.ceil(filteredStockHistory.length / historyItemsPerPage)
   const historyStartIndex = (historyCurrentPage - 1) * historyItemsPerPage
   const historyEndIndex = historyStartIndex + historyItemsPerPage
-  const paginatedStockHistory = entriesWithBalance.slice(historyStartIndex, historyEndIndex)
+  const paginatedStockHistory = filteredStockHistory.slice(historyStartIndex, historyEndIndex)
 
+  // Get unique financial years for filter
+  const financialYears = [...new Set(stockHistory.map(m => m.financial_year.toString()))].sort((a, b) => b.localeCompare(a))
+  
   // Get unique product names for filter
   const productNames = [...new Set(stockHistory.map(m => m.product_name))].sort()
 
@@ -1874,12 +1713,14 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
         activeFiltersCount={
           (historySearchTerm ? 1 : 0) +
           (productFilter !== 'all' ? 1 : 0) +
+          (financialYearFilter !== 'all' ? 1 : 0) +
           (entryTypeFilter !== 'all' ? 1 : 0) +
           (dateFilter !== 'all' ? 1 : 0)
         }
         onClearAll={() => {
           setHistorySearchTerm('')
           setProductFilter('all')
+          setFinancialYearFilter('all')
           setEntryTypeFilter('all')
           setDateFilter('all')
         }}
@@ -1887,17 +1728,20 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
         quickActions={[
           {
             label: 'Current FY',
-            action: () => setDateFilter('current_fy'),
+            action: () => {
+              const currentYear = new Date().getFullYear()
+              setFinancialYearFilter(`${currentYear}-${currentYear + 1}`)
+            },
             icon: '📅'
           },
           {
             label: 'Incoming Only',
-            action: () => setEntryTypeFilter('in'),
+            action: () => setEntryTypeFilter('incoming'),
             icon: '📥'
           },
           {
             label: 'Outgoing Only',
-            action: () => setEntryTypeFilter('out'),
+            action: () => setEntryTypeFilter('outgoing'),
             icon: '📤'
           }
         ]}
@@ -1933,14 +1777,25 @@ function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
           placeholder="Select Product"
         />
 
+        {/* Financial Year Filter */}
+        <FilterDropdown
+          value={financialYearFilter}
+          onChange={(value) => setFinancialYearFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+          options={[
+            { value: 'all', label: 'All Financial Years' },
+            ...financialYears.map(year => ({ value: year, label: year }))
+          ]}
+          placeholder="Select Financial Year"
+        />
+
         {/* Entry Type Filter */}
         <FilterDropdown
           value={entryTypeFilter}
           onChange={(value) => setEntryTypeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
           options={[
             { value: 'all', label: 'All Entries' },
-            { value: 'in', label: 'Incoming Stock' },
-            { value: 'out', label: 'Outgoing Stock' }
+            { value: 'incoming', label: 'Incoming Stock' },
+            { value: 'outgoing', label: 'Outgoing Stock' }
           ]}
           placeholder="Select Entry Type"
         />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { apiGetInvoicePDF } from '../lib/api'
+import { apiGetInvoicePDF, apiGetInvoiceTemplates, InvoiceTemplate } from '../lib/api'
 import { Modal } from './Modal'
 import { Button } from './Button'
 
@@ -14,19 +14,36 @@ export function PDFViewer({ isOpen, onClose, invoiceId, invoiceNo }: PDFViewerPr
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [templates, setTemplates] = useState<InvoiceTemplate[]>([])
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | undefined>(undefined)
 
   useEffect(() => {
     if (isOpen && invoiceId) {
+      loadTemplates()
       loadPDF()
     }
   }, [isOpen, invoiceId])
+
+  const loadTemplates = async () => {
+    try {
+      const data = await apiGetInvoiceTemplates()
+      setTemplates(data)
+      // Set default template if available
+      const defaultTemplate = data.find(t => t.is_default)
+      if (defaultTemplate) {
+        setSelectedTemplateId(defaultTemplate.id)
+      }
+    } catch (err) {
+      console.error('Failed to load templates:', err)
+    }
+  }
 
   const loadPDF = async () => {
     try {
       setLoading(true)
       setError(null)
       
-      const pdfBlob = await apiGetInvoicePDF(invoiceId)
+      const pdfBlob = await apiGetInvoicePDF(invoiceId, selectedTemplateId)
       const url = URL.createObjectURL(pdfBlob)
       setPdfUrl(url)
     } catch (err: any) {
@@ -128,6 +145,41 @@ export function PDFViewer({ isOpen, onClose, invoiceId, invoiceNo }: PDFViewerPr
                 alignItems: 'center',
                 gap: '12px'
               }}>
+                {templates.length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <label style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>
+                      Template:
+                    </label>
+                    <select
+                      value={selectedTemplateId || ''}
+                      onChange={(e) => {
+                        const templateId = e.target.value ? parseInt(e.target.value) : undefined
+                        setSelectedTemplateId(templateId)
+                        // Reload PDF with new template
+                        if (pdfUrl) {
+                          URL.revokeObjectURL(pdfUrl)
+                          setPdfUrl(null)
+                        }
+                        setTimeout(() => loadPDF(), 100)
+                      }}
+                      style={{
+                        padding: '4px 8px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '4px',
+                        fontSize: '14px',
+                        backgroundColor: 'white'
+                      }}
+                    >
+                      <option value="">Default</option>
+                      {templates.map(template => (
+                        <option key={template.id} value={template.id}>
+                          {template.name} {template.is_default ? '(Default)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                
                 <Button 
                   onClick={handleDownload} 
                   variant="primary"
