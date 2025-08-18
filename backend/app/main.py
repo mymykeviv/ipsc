@@ -4,15 +4,23 @@ from .db import Base, engine
 from .seed import run_seed
 from .routers import api
 from .config import settings
+from .monitoring import (
+    MonitoringMiddleware, SystemMonitor, HealthChecker,
+    get_metrics_response, record_invoice_created, record_payment_processed,
+    record_product_created, record_stock_adjustment
+)
+from .logging_config import setup_logging, get_logger
 import logging
 from datetime import datetime
 
-# Configure logging
-logging.basicConfig(
-    level=getattr(logging, settings.log_level),
-    format=settings.log_format
+# Configure structured logging
+setup_logging(
+    log_level=settings.log_level,
+    log_file="logs/app.log" if settings.environment == "production" else None,
+    enable_json=settings.environment == "production",
+    enable_console=True
 )
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Version tracking
 VERSION = settings.version
@@ -62,6 +70,47 @@ def create_app(database_engine=None) -> FastAPI:
             "allowed_origins": settings.allowed_origins
         }
 
+    # Monitoring endpoints
+    @app.get("/metrics")
+    async def metrics():
+        """Prometheus metrics endpoint"""
+        return get_metrics_response()
+
+    @app.get("/system/status")
+    async def system_status():
+        """System status and metrics"""
+        system_metrics = SystemMonitor.get_system_metrics()
+        process_metrics = SystemMonitor.get_process_metrics()
+        
+        return {
+            "timestamp": datetime.utcnow().isoformat(),
+            "system": system_metrics,
+            "process": process_metrics,
+            "uptime": "N/A"  # Could be enhanced with actual uptime tracking
+        }
+
+    @app.get("/health/detailed")
+    async def detailed_health_check():
+        """Detailed health check with all components"""
+        health_checker = HealthChecker()
+        return await health_checker.comprehensive_health_check()
+
+    @app.get("/health/ready")
+    async def readiness_check():
+        """Kubernetes readiness probe endpoint"""
+        health_checker = HealthChecker()
+        health = await health_checker.comprehensive_health_check()
+        
+        if health["status"] == "healthy":
+            return {"status": "ready"}
+        else:
+            return {"status": "not_ready", "details": health}
+
+    @app.get("/health/live")
+    async def liveness_check():
+        """Kubernetes liveness probe endpoint"""
+        return {"status": "alive"}
+
     # Use provided engine or default engine
     db_engine = database_engine or engine
     
@@ -77,9 +126,6 @@ def create_app(database_engine=None) -> FastAPI:
     return app
 
 
-# Only create app if not in testing mode
-if __name__ == "__main__":
-    app = create_app()
-else:
-    app = None
+# Create app instance
+app = create_app()
 
