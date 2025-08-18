@@ -601,23 +601,42 @@ export function Dashboard() {
                 }}>
                   📦 Stock Inventory
                 </h3>
-                <Button 
-                  onClick={() => navigate('/reports/inventory')}
-                  variant="primary"
-                  style={{ 
-                    fontSize: '14px', 
-                    padding: '8px 16px',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    fontWeight: '600',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s'
-                  }}
-                >
-                  View Inventory Reports
-                </Button>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <Button 
+                    onClick={() => navigate('/products')}
+                    variant="secondary"
+                    style={{ 
+                      fontSize: '14px', 
+                      padding: '8px 16px',
+                      backgroundColor: '#6c757d',
+                      color: 'white',
+                      fontWeight: '600',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                  >
+                    📦 Manage Products
+                  </Button>
+                  <Button 
+                    onClick={() => navigate('/reports/inventory')}
+                    variant="primary"
+                    style={{ 
+                      fontSize: '14px', 
+                      padding: '8px 16px',
+                      backgroundColor: '#007bff',
+                      color: 'white',
+                      fontWeight: '600',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                  >
+                    View Inventory Reports
+                  </Button>
+                </div>
               </div>
 
               {/* Inventory Metrics Cards */}
@@ -767,6 +786,24 @@ export function Dashboard() {
                                 <div style={{ fontSize: '12px', color: '#6c757d' }}>
                                   Min: {alert.minimum_stock}
                                 </div>
+                                <Button 
+                                  onClick={() => navigate(`/products?adjust_stock=${alert.product_id}`)}
+                                  variant="secondary"
+                                  style={{ 
+                                    fontSize: '11px', 
+                                    padding: '4px 8px',
+                                    backgroundColor: '#f8f9fa',
+                                    color: '#6c757d',
+                                    fontWeight: '500',
+                                    border: '1px solid #dee2e6',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    transition: 'background-color 0.2s',
+                                    marginTop: '4px'
+                                  }}
+                                >
+                                  Adjust Stock
+                                </Button>
                               </div>
                             </div>
                           </div>
