@@ -5,8 +5,8 @@ from .seed import run_seed
 from .routers import api
 
 # Version tracking
-VERSION = "1.4.3"
-BUILD_DATE = "2024-01-15"
+VERSION = "1.4.4"
+BUILD_DATE = "2024-12-15"
 
 def create_app(database_engine=None) -> FastAPI:
     app = FastAPI(title="CASHFLOW Backend", version=VERSION)
