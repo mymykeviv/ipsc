@@ -65,11 +65,11 @@ def create_app(database_engine=None) -> FastAPI:
     # Use provided engine or default engine
     db_engine = database_engine or engine
     
-    # DB init for dev
-    Base.metadata.create_all(bind=db_engine)
-    
-    # Seed database
-    run_seed()
+    # DB init for dev (only if not in testing)
+    if not settings.environment == "testing":
+        Base.metadata.create_all(bind=db_engine)
+        # Seed database
+        run_seed()
 
     app.include_router(api, prefix="/api")
 
@@ -77,5 +77,9 @@ def create_app(database_engine=None) -> FastAPI:
     return app
 
 
-app = create_app()
+# Only create app if not in testing mode
+if __name__ == "__main__":
+    app = create_app()
+else:
+    app = None
 
