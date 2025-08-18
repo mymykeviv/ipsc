@@ -101,12 +101,11 @@ def test_role(db_session):
 @pytest.fixture
 def test_user(db_session, test_role):
     """Create a test user"""
-    from passlib.context import CryptContext
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    from app.auth import get_password_hash
     
     user = User(
         username="admin",
-        password_hash=pwd_context.hash("admin123"),  # Properly hash the password
+        password_hash=get_password_hash("admin123"),  # Use centralized password hashing
         role_id=test_role.id
     )
     db_session.add(user)

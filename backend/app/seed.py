@@ -1,9 +1,7 @@
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
 from .db import engine
 from .models import Base, Role, User, CompanySettings, Product, Party, StockLedgerEntry
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from .auth import get_password_hash
 
 
 def run_seed():
@@ -19,7 +17,7 @@ def run_seed():
 
         if not db.query(User).first():
             admin_role = db.query(Role).filter_by(name="Admin").first()
-            db.add(User(username="admin", password_hash=pwd_context.hash("admin123"), role_id=admin_role.id))
+            db.add(User(username="admin", password_hash=get_password_hash("admin123"), role_id=admin_role.id))
 
         if not db.query(CompanySettings).first():
             db.add(
