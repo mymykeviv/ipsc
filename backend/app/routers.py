@@ -2030,8 +2030,9 @@ def get_inventory_summary_report(
         
         last_movement_date = last_movement.created_at.isoformat() if last_movement else None
         
-        # Check stock status
-        is_low_stock = current_stock <= (product.minimum_stock or 10)
+        # Check stock status (using default minimum stock of 10 since field doesn't exist)
+        default_minimum_stock = 10
+        is_low_stock = current_stock <= default_minimum_stock
         is_out_of_stock = current_stock == 0
         
         if is_low_stock:
@@ -2056,7 +2057,7 @@ def get_inventory_summary_report(
             sales_price=float(product.sales_price) if product.sales_price else None,
             stock_value=stock_value,
             last_movement_date=last_movement_date,
-            minimum_stock=float(product.minimum_stock) if product.minimum_stock else None
+            minimum_stock=default_minimum_stock
         ))
         
         total_stock_value += stock_value
