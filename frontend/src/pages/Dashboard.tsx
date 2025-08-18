@@ -725,68 +725,156 @@ export function Dashboard() {
                 </div>
               </div>
 
-              {/* Top Moving Products */}
+              {/* Alerts and Insights */}
               <div style={{ 
-                border: '1px solid #e9ecef',
-                borderRadius: '8px',
-                backgroundColor: 'white',
-                overflow: 'hidden',
-                maxWidth: '600px'
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
+                gap: '24px'
               }}>
+                {/* Low Stock Alerts */}
                 <div style={{ 
-                  padding: '12px 16px', 
-                  backgroundColor: '#d1ecf1', 
-                  borderBottom: '1px solid #e9ecef'
+                  border: '1px solid #e9ecef',
+                  borderRadius: '8px',
+                  backgroundColor: 'white',
+                  overflow: 'hidden'
                 }}>
-                  <h4 style={{ 
-                    margin: '0', 
-                    fontSize: '16px', 
-                    fontWeight: '600', 
-                    color: '#0c5460'
+                  <div style={{ 
+                    padding: '12px 16px', 
+                    backgroundColor: '#fff3cd', 
+                    borderBottom: '1px solid #e9ecef'
                   }}>
-                    📊 Top Moving Products
-                  </h4>
-                </div>
-                
-                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                  {inventoryData.top_moving_products.length === 0 ? (
-                    <div style={{ padding: '16px', textAlign: 'center', color: '#6c757d' }}>
-                      No movement data available
-                    </div>
-                  ) : (
-                    <div style={{ padding: '0' }}>
-                      {inventoryData.top_moving_products.slice(0, 5).map((product, index) => (
-                        <div key={product.product_id} style={{ 
-                          padding: '12px 16px', 
-                          borderBottom: index < Math.min(inventoryData.top_moving_products.length - 1, 4) ? '1px solid #f1f3f4' : 'none',
-                          backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'white'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                              <div style={{ fontWeight: '500', color: '#495057', marginBottom: '4px' }}>
-                                {product.product_name}
+                    <h4 style={{ 
+                      margin: '0', 
+                      fontSize: '16px', 
+                      fontWeight: '600', 
+                      color: '#856404'
+                    }}>
+                      ⚠️ Low Stock Alerts ({inventoryData.low_stock_alerts.length})
+                    </h4>
+                  </div>
+                  
+                  <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    {inventoryData.low_stock_alerts.length === 0 ? (
+                      <div style={{ padding: '16px', textAlign: 'center', color: '#6c757d' }}>
+                        No low stock alerts
+                      </div>
+                    ) : (
+                      <div style={{ padding: '0' }}>
+                        {inventoryData.low_stock_alerts.slice(0, 5).map((alert, index) => (
+                          <div key={alert.product_id} style={{ 
+                            padding: '12px 16px', 
+                            borderBottom: index < Math.min(inventoryData.low_stock_alerts.length - 1, 4) ? '1px solid #f1f3f4' : 'none',
+                            backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'white'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div>
+                                <div style={{ fontWeight: '500', color: '#495057', marginBottom: '4px' }}>
+                                  {alert.product_name}
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                                  Category: {alert.category || 'Uncategorized'}
+                                </div>
                               </div>
-                              <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                                Category: {product.category || 'Uncategorized'}
-                              </div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                              <div style={{ 
-                                fontSize: '16px', 
-                                fontWeight: 'bold',
-                                color: '#1976d2'
-                              }}>
-                                {product.movement_count}
-                              </div>
-                              <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                                Stock: {product.current_stock}
+                              <div style={{ textAlign: 'right' }}>
+                                <div style={{ 
+                                  fontSize: '16px', 
+                                  fontWeight: 'bold',
+                                  color: '#f57c00'
+                                }}>
+                                  {alert.current_stock}
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                                  Min: {alert.minimum_stock}
+                                </div>
+                                <Button 
+                                  onClick={() => navigate(`/products?adjust_stock=${alert.product_id}`)}
+                                  variant="secondary"
+                                  style={{ 
+                                    fontSize: '11px', 
+                                    padding: '4px 8px',
+                                    backgroundColor: '#f8f9fa',
+                                    color: '#6c757d',
+                                    fontWeight: '500',
+                                    border: '1px solid #dee2e6',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    transition: 'background-color 0.2s',
+                                    marginTop: '4px'
+                                  }}
+                                >
+                                  Adjust Stock
+                                </Button>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Top Moving Products */}
+                <div style={{ 
+                  border: '1px solid #e9ecef',
+                  borderRadius: '8px',
+                  backgroundColor: 'white',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{ 
+                    padding: '12px 16px', 
+                    backgroundColor: '#d1ecf1', 
+                    borderBottom: '1px solid #e9ecef'
+                  }}>
+                    <h4 style={{ 
+                      margin: '0', 
+                      fontSize: '16px', 
+                      fontWeight: '600', 
+                      color: '#0c5460'
+                    }}>
+                      📊 Top Moving Products
+                    </h4>
+                  </div>
+                  
+                  <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    {inventoryData.top_moving_products.length === 0 ? (
+                      <div style={{ padding: '16px', textAlign: 'center', color: '#6c757d' }}>
+                        No movement data available
+                      </div>
+                    ) : (
+                      <div style={{ padding: '0' }}>
+                        {inventoryData.top_moving_products.slice(0, 5).map((product, index) => (
+                          <div key={product.product_id} style={{ 
+                            padding: '12px 16px', 
+                            borderBottom: index < Math.min(inventoryData.top_moving_products.length - 1, 4) ? '1px solid #f1f3f4' : 'none',
+                            backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'white'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div>
+                                <div style={{ fontWeight: '500', color: '#495057', marginBottom: '4px' }}>
+                                  {product.product_name}
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                                  Category: {product.category || 'Uncategorized'}
+                                </div>
+                              </div>
+                              <div style={{ textAlign: 'right' }}>
+                                <div style={{ 
+                                  fontSize: '16px', 
+                                  fontWeight: 'bold',
+                                  color: '#1976d2'
+                                }}>
+                                  {product.movement_count}
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                                  Stock: {product.current_stock}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -853,63 +941,7 @@ export function Dashboard() {
                 </div>
               </div>
 
-              {/* Low Stock Alerts */}
-              <div style={{ 
-                padding: '20px', 
-                border: '1px solid #ffc107',
-                borderRadius: '8px',
-                backgroundColor: '#fff8e1',
-                height: 'fit-content'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h4 style={{ margin: '0', color: '#856404', fontSize: '18px', fontWeight: '600' }}>
-                    ⚠️ Low Stock Alerts
-                  </h4>
-                  <Button 
-                    onClick={() => navigate('/products')}
-                    variant="primary"
-                    style={{ 
-                      fontSize: '12px', 
-                      padding: '6px 12px',
-                      backgroundColor: '#ffc107',
-                      color: '#856404',
-                      fontWeight: '600',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s'
-                    }}
-                  >
-                    📦 Manage Products
-                  </Button>
-                </div>
-                <div style={{ display: 'grid', gap: '12px' }}>
-                  {analyticsData.lowStockItems.map((item, index) => (
-                    <div key={index} style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center',
-                      padding: '8px 12px',
-                      backgroundColor: '#fff3cd',
-                      borderRadius: '4px'
-                    }}>
-                      <div>
-                        <div style={{ fontWeight: '500', color: '#856404' }}>{item.name}</div>
-                        <div style={{ fontSize: '12px', color: '#856404' }}>
-                          Current: {item.currentStock} | Min: {item.minStock}
-                        </div>
-                      </div>
-                      <Button 
-                        onClick={() => navigate('/products/stock-adjustment')}
-                        variant="secondary"
-                        style={{ fontSize: '11px', padding: '4px 8px' }}
-                      >
-                        Adjust Stock
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
+
 
               {/* Customer Insights */}
               <div style={{ 
