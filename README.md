@@ -1,4 +1,4 @@
-# IPSC - Indian Payment & Stock Control
+# CashFlow - Invoicing, Purchases, Payment & Stock Control
 
 A comprehensive business management system designed for Indian businesses with GST compliance, inventory management, and financial tracking capabilities.
 
