@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import EnhancedTemplatePreview from '../components/EnhancedTemplatePreview';
 
 interface Template {
   id: number;
@@ -36,7 +37,7 @@ const TemplateManagement: React.FC = () => {
     css_content: '',
     is_default: false
   });
-  const [previewMode, setPreviewMode] = useState(false);
+  const [showEnhancedPreview, setShowEnhancedPreview] = useState(false);
 
   const navigate = useNavigate();
 
@@ -154,7 +155,7 @@ const TemplateManagement: React.FC = () => {
   // Preview template
   const previewTemplate = (template: Template) => {
     setSelectedTemplate(template);
-    setPreviewMode(true);
+    setShowEnhancedPreview(true);
   };
 
   if (loading) {
@@ -429,62 +430,13 @@ const TemplateManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Preview Modal */}
-      {previewMode && selectedTemplate && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            width: '90%',
-            height: '90%',
-            borderRadius: '8px',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            <div style={{
-              padding: '20px',
-              borderBottom: '1px solid #e0e0e0',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <h3 style={{ margin: 0, color: '#333' }}>Template Preview: {selectedTemplate.name}</h3>
-              <button
-                onClick={() => setPreviewMode(false)}
-                style={{
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Close
-              </button>
-            </div>
-            <div style={{ flex: 1, padding: '20px', overflow: 'auto' }}>
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: `
-                    <style>${selectedTemplate.css_content}</style>
-                    ${selectedTemplate.html_content}
-                  `
-                }}
-              />
-            </div>
-          </div>
-        </div>
+      {/* Enhanced Preview Modal */}
+      {showEnhancedPreview && selectedTemplate && (
+        <EnhancedTemplatePreview
+          template={selectedTemplate}
+          isOpen={showEnhancedPreview}
+          onClose={() => setShowEnhancedPreview(false)}
+        />
       )}
     </div>
   );
