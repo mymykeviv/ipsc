@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../modules/AuthContext'
 import { apiGetGstFilingReport, GstFilingReport } from '../lib/api'
 import { Button } from '../components/Button'
-import { InventorySummaryReport } from '../components/InventorySummaryReport'
+import { InventorySummaryReportComponent } from '../components/InventorySummaryReport'
 
 type Summary = { taxable_value: number; cgst: number; sgst: number; igst: number; grand_total: number; rate_breakup: { rate: number; taxable_value: number }[] }
 
@@ -462,7 +462,7 @@ export function Reports({ section }: ReportsProps) {
       )}
 
       {activeTab === 'inventory' && (
-        <InventorySummaryReport />
+        <InventorySummaryReportComponent />
       )}
     </div>
   )

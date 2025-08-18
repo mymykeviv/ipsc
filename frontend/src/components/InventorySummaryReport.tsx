@@ -10,7 +10,7 @@ interface InventorySummaryReportProps {
   onClose?: () => void
 }
 
-export function InventorySummaryReport({ onClose }: InventorySummaryReportProps) {
+export function InventorySummaryReportComponent({ onClose }: InventorySummaryReportProps) {
   const [report, setReport] = useState<InventorySummaryReport | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
