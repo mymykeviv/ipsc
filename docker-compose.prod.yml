@@ -1,64 +1,138 @@
+version: '3.8'
+
 services:
-  # Database
   db:
     image: postgres:16-alpine
-    container_name: cashflow-db-prod
     environment:
-      POSTGRES_DB: cashflow
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-cashflow}
     ports:
       - "5432:5432"
     volumes:
-      - cashflow_db_data_prod:/var/lib/postgresql/data
-      - ./backups:/backups
-    networks:
-      - cashflow_network_prod
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
+    networks:
+      - cashflow-network
 
-  # Backend API
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
-    image: cashflow-backend:prod
-    container_name: cashflow-backend-prod
+      context: ./backend
+      dockerfile: Dockerfile.prod
     environment:
-      - DATABASE_URL=postgresql+psycopg://postgres:postgres@db:5432/cashflow
-      - DEBUG=false
-      - LOG_LEVEL=INFO
-      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-cashflow}
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: "false"
+      LOG_LEVEL: WARNING
+    env_file:
+      - .env.prod
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "8000:8000"
-    depends_on:
-      - db
-    networks:
-      - cashflow_network_prod
+    volumes:
+      - ./backend/uploads:/app/uploads
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     restart: unless-stopped
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+    networks:
+      - cashflow-network
 
-  # Frontend (Nginx)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
-    image: cashflow-frontend:prod
-    container_name: cashflow-frontend-prod
-    environment:
-      - VITE_API_URL=http://localhost:8000
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./frontend/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       - backend
-    networks:
-      - cashflow_network_prod
     restart: unless-stopped
+    networks:
+      - cashflow-network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./frontend/dist:/usr/share/nginx/html:ro
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    networks:
+      - cashflow-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - cashflow-network
+
+  monitoring:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - cashflow-network
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - monitoring
+    restart: unless-stopped
+    networks:
+      - cashflow-network
 
 volumes:
-  cashflow_db_data_prod:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
 
 networks:
-  cashflow_network_prod:
-    name: cashflow_network_prod
+  cashflow-network:
     driver: bridge
