@@ -1,24 +1,17 @@
 import React, { useState } from 'react'
-import { InventorySummaryReportComponent } from '../../components/InventorySummaryReport'
 import { StockLedgerReportComponent } from '../../components/StockLedgerReport'
 import { InventoryValuationReportComponent } from '../../components/InventoryValuationReport'
-import { InventoryDashboardComponent } from '../../components/InventoryDashboard'
 
 export function InventoryReports() {
-  const [activeReport, setActiveReport] = useState<'summary' | 'ledger' | 'valuation' | 'dashboard'>('summary')
+  const [activeReport, setActiveReport] = useState<'valuation' | 'ledger'>('valuation')
 
   const renderReport = () => {
     switch (activeReport) {
-      case 'summary':
-        return <InventorySummaryReportComponent />
       case 'ledger':
         return <StockLedgerReportComponent />
       case 'valuation':
-        return <InventoryValuationReportComponent />
-      case 'dashboard':
-        return <InventoryDashboardComponent />
       default:
-        return <InventorySummaryReportComponent />
+        return <InventoryValuationReportComponent />
     }
   }
 
@@ -43,40 +36,6 @@ export function InventoryReports() {
         flexWrap: 'wrap'
       }}>
         <button
-          onClick={() => setActiveReport('summary')}
-          style={{
-            padding: '12px 20px',
-            borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: '500',
-            cursor: 'pointer',
-            backgroundColor: activeReport === 'summary' ? '#007bff' : '#f8f9fa',
-            color: activeReport === 'summary' ? 'white' : '#495057',
-            border: activeReport === 'summary' ? 'none' : '1px solid #e9ecef',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          📊 Inventory Summary
-        </button>
-        
-        <button
-          onClick={() => setActiveReport('ledger')}
-          style={{
-            padding: '12px 20px',
-            borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: '500',
-            cursor: 'pointer',
-            backgroundColor: activeReport === 'ledger' ? '#007bff' : '#f8f9fa',
-            color: activeReport === 'ledger' ? 'white' : '#495057',
-            border: activeReport === 'ledger' ? 'none' : '1px solid #e9ecef',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          📋 Stock Ledger
-        </button>
-        
-        <button
           onClick={() => setActiveReport('valuation')}
           style={{
             padding: '12px 20px',
@@ -94,20 +53,20 @@ export function InventoryReports() {
         </button>
         
         <button
-          onClick={() => setActiveReport('dashboard')}
+          onClick={() => setActiveReport('ledger')}
           style={{
             padding: '12px 20px',
             borderRadius: '8px',
             fontSize: '14px',
             fontWeight: '500',
             cursor: 'pointer',
-            backgroundColor: activeReport === 'dashboard' ? '#007bff' : '#f8f9fa',
-            color: activeReport === 'dashboard' ? 'white' : '#495057',
-            border: activeReport === 'dashboard' ? 'none' : '1px solid #e9ecef',
+            backgroundColor: activeReport === 'ledger' ? '#007bff' : '#f8f9fa',
+            color: activeReport === 'ledger' ? 'white' : '#495057',
+            border: activeReport === 'ledger' ? 'none' : '1px solid #e9ecef',
             transition: 'all 0.2s ease'
           }}
         >
-          🎯 Dashboard
+          📋 Stock Ledger
         </button>
       </div>
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../modules/AuthContext'
-import { apiGetCashflowSummary, CashflowSummary } from '../lib/api'
+import { apiGetCashflowSummary, CashflowSummary, apiGetInventoryDashboard, InventoryDashboardMetrics } from '../lib/api'
 import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
 
@@ -21,6 +21,7 @@ export function Dashboard() {
   const navigate = useNavigate()
   const [cashflowData, setCashflowData] = useState<CashflowSummary | null>(null)
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
+  const [inventoryData, setInventoryData] = useState<InventoryDashboardMetrics | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
@@ -40,6 +41,7 @@ export function Dashboard() {
     // Load cashflow data when component mounts or when dates change
     loadCashflowData()
     loadAnalyticsData()
+    loadInventoryData()
   }, [token, startDate, endDate, navigate])
 
   const loadCashflowData = async () => {
@@ -75,6 +77,16 @@ export function Dashboard() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadInventoryData = async () => {
+    try {
+      const data = await apiGetInventoryDashboard()
+      setInventoryData(data)
+    } catch (err) {
+      console.error('Failed to load inventory data:', err)
+      // Don't show error for inventory data, just log it
     }
   }
 
@@ -565,6 +577,271 @@ export function Dashboard() {
               </div>
             </div>
           </div>
+
+          {/* Stock Inventory Section */}
+          {inventoryData && (
+            <div style={{ 
+              marginTop: '32px',
+              padding: '24px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '12px',
+              border: '1px solid #e9ecef'
+            }}>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                marginBottom: '24px' 
+              }}>
+                <h3 style={{ 
+                  margin: '0', 
+                  fontSize: '24px', 
+                  fontWeight: '600', 
+                  color: '#2c3e50'
+                }}>
+                  📦 Stock Inventory
+                </h3>
+                <Button 
+                  onClick={() => navigate('/reports/inventory')}
+                  variant="primary"
+                  style={{ 
+                    fontSize: '14px', 
+                    padding: '8px 16px',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    fontWeight: '600',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                >
+                  View Inventory Reports
+                </Button>
+              </div>
+
+              {/* Inventory Metrics Cards */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                gap: '16px',
+                marginBottom: '24px'
+              }}>
+                <div style={{ 
+                  padding: '20px', 
+                  backgroundColor: '#e3f2fd', 
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  border: '1px solid #bbdefb'
+                }}>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1976d2', marginBottom: '8px' }}>
+                    {inventoryData.total_products}
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#1976d2', fontWeight: '500' }}>Total Products</div>
+                </div>
+                
+                <div style={{ 
+                  padding: '20px', 
+                  backgroundColor: '#e8f5e8', 
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  border: '1px solid #c8e6c9'
+                }}>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2e7d32', marginBottom: '8px' }}>
+                    ₹{inventoryData.total_stock_value.toLocaleString('en-IN')}
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#2e7d32', fontWeight: '500' }}>Total Stock Value</div>
+                </div>
+                
+                <div style={{ 
+                  padding: '20px', 
+                  backgroundColor: '#fff3e0', 
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  border: '1px solid #ffe0b2'
+                }}>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f57c00', marginBottom: '8px' }}>
+                    {inventoryData.low_stock_items}
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#f57c00', fontWeight: '500' }}>Low Stock Items</div>
+                </div>
+                
+                <div style={{ 
+                  padding: '20px', 
+                  backgroundColor: '#fce4ec', 
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  border: '1px solid #f8bbd9'
+                }}>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#c2185b', marginBottom: '8px' }}>
+                    {inventoryData.out_of_stock_items}
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#c2185b', fontWeight: '500' }}>Out of Stock</div>
+                </div>
+                
+                <div style={{ 
+                  padding: '20px', 
+                  backgroundColor: '#f3e5f5', 
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  border: '1px solid #e1bee7'
+                }}>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#7b1fa2', marginBottom: '8px' }}>
+                    {inventoryData.recent_movements}
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#7b1fa2', fontWeight: '500' }}>Recent Movements</div>
+                </div>
+                
+                <div style={{ 
+                  padding: '20px', 
+                  backgroundColor: '#e0f2f1', 
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  border: '1px solid #b2dfdb'
+                }}>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#00695c', marginBottom: '8px' }}>
+                    {inventoryData.average_stock_level.toFixed(1)}
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#00695c', fontWeight: '500' }}>Avg Stock Level</div>
+                </div>
+              </div>
+
+              {/* Alerts and Insights */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
+                gap: '24px'
+              }}>
+                {/* Low Stock Alerts */}
+                <div style={{ 
+                  border: '1px solid #e9ecef',
+                  borderRadius: '8px',
+                  backgroundColor: 'white',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{ 
+                    padding: '12px 16px', 
+                    backgroundColor: '#fff3cd', 
+                    borderBottom: '1px solid #e9ecef'
+                  }}>
+                    <h4 style={{ 
+                      margin: '0', 
+                      fontSize: '16px', 
+                      fontWeight: '600', 
+                      color: '#856404'
+                    }}>
+                      ⚠️ Low Stock Alerts ({inventoryData.low_stock_alerts.length})
+                    </h4>
+                  </div>
+                  
+                  <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    {inventoryData.low_stock_alerts.length === 0 ? (
+                      <div style={{ padding: '16px', textAlign: 'center', color: '#6c757d' }}>
+                        No low stock alerts
+                      </div>
+                    ) : (
+                      <div style={{ padding: '0' }}>
+                        {inventoryData.low_stock_alerts.slice(0, 5).map((alert, index) => (
+                          <div key={alert.product_id} style={{ 
+                            padding: '12px 16px', 
+                            borderBottom: index < Math.min(inventoryData.low_stock_alerts.length - 1, 4) ? '1px solid #f1f3f4' : 'none',
+                            backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'white'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div>
+                                <div style={{ fontWeight: '500', color: '#495057', marginBottom: '4px' }}>
+                                  {alert.product_name}
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                                  Category: {alert.category || 'Uncategorized'}
+                                </div>
+                              </div>
+                              <div style={{ textAlign: 'right' }}>
+                                <div style={{ 
+                                  fontSize: '16px', 
+                                  fontWeight: 'bold',
+                                  color: '#f57c00'
+                                }}>
+                                  {alert.current_stock}
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                                  Min: {alert.minimum_stock}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Top Moving Products */}
+                <div style={{ 
+                  border: '1px solid #e9ecef',
+                  borderRadius: '8px',
+                  backgroundColor: 'white',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{ 
+                    padding: '12px 16px', 
+                    backgroundColor: '#d1ecf1', 
+                    borderBottom: '1px solid #e9ecef'
+                  }}>
+                    <h4 style={{ 
+                      margin: '0', 
+                      fontSize: '16px', 
+                      fontWeight: '600', 
+                      color: '#0c5460'
+                    }}>
+                      📊 Top Moving Products
+                    </h4>
+                  </div>
+                  
+                  <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    {inventoryData.top_moving_products.length === 0 ? (
+                      <div style={{ padding: '16px', textAlign: 'center', color: '#6c757d' }}>
+                        No movement data available
+                      </div>
+                    ) : (
+                      <div style={{ padding: '0' }}>
+                        {inventoryData.top_moving_products.slice(0, 5).map((product, index) => (
+                          <div key={product.product_id} style={{ 
+                            padding: '12px 16px', 
+                            borderBottom: index < Math.min(inventoryData.top_moving_products.length - 1, 4) ? '1px solid #f1f3f4' : 'none',
+                            backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'white'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div>
+                                <div style={{ fontWeight: '500', color: '#495057', marginBottom: '4px' }}>
+                                  {product.product_name}
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                                  Category: {product.category || 'Uncategorized'}
+                                </div>
+                              </div>
+                              <div style={{ textAlign: 'right' }}>
+                                <div style={{ 
+                                  fontSize: '16px', 
+                                  fontWeight: 'bold',
+                                  color: '#1976d2'
+                                }}>
+                                  {product.movement_count}
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                                  Stock: {product.current_stock}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Advanced Analytics Section - 2 Column Layout */}
           {analyticsData && (
