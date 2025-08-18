@@ -465,8 +465,8 @@ export type Purchase = {
 }
 
 export type PurchasePaymentCreate = {
-  amount: number
-  method: string
+  payment_amount: number
+  payment_method: string
   account_head: string
   reference_number?: string
   notes?: string
