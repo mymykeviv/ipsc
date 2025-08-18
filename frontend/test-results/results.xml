@@ -1,33 +1,24 @@
-<testsuites id="" name="" tests="6" failures="6" skipped="0" errors="0" time="63.236087999999995">
-<testsuite name="stock-history-filter-fixes.spec.ts" timestamp="2025-08-18T14:55:46.305Z" hostname="chromium" tests="3" failures="3" skipped="0" time="92.264" errors="0">
-<testcase name="Stock History Filter Fixes › should show correct product filter when navigating from product page" classname="stock-history-filter-fixes.spec.ts" time="30.748">
-<failure message="stock-history-filter-fixes.spec.ts:17:3 should show correct product filter when navigating from product page" type="FAILURE">
-<![CDATA[  [chromium] › stock-history-filter-fixes.spec.ts:17:3 › Stock History Filter Fixes › should show correct product filter when navigating from product page 
+<testsuites id="" name="" tests="12" failures="12" skipped="0" errors="0" time="96.597083">
+<testsuite name="stock-history-filter-fixes.spec.ts" timestamp="2025-08-18T15:57:54.344Z" hostname="chromium" tests="6" failures="6" skipped="0" time="187.098" errors="0">
+<testcase name="Stock History Filter Fixes › should show correct product filter when navigating from product page" classname="stock-history-filter-fixes.spec.ts" time="31.551">
+<failure message="stock-history-filter-fixes.spec.ts:23:3 should show correct product filter when navigating from product page" type="FAILURE">
+<![CDATA[  [chromium] › stock-history-filter-fixes.spec.ts:23:3 › Stock History Filter Fixes › should show correct product filter when navigating from product page 
 
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
+    Test timeout of 30000ms exceeded.
 
-      2 |
-      3 | test.describe('Stock History Filter Fixes', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5173')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
+    Error: page.click: Test timeout of 30000ms exceeded.
     Call log:
-      - waiting for locator('[data-testid="username"]')
+      - waiting for locator('text=PRODUCTS')
 
 
-       7 |     
-       8 |     // Login
-    >  9 |     await page.fill('[data-testid="username"]', 'admin')
+      23 |   test('should show correct product filter when navigating from product page', async ({ page }) => {
+      24 |     // Navigate to products page
+    > 25 |     await page.click('text=PRODUCTS')
          |                ^
-      10 |     await page.fill('[data-testid="password"]', 'admin123')
-      11 |     await page.click('[data-testid="login-button"]')
-      12 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16
+      26 |     await page.click('text=Manage Products')
+      27 |     
+      28 |     // Wait for products to load
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:25:16
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
     ../../test-results/stock-history-filter-fixes-af400-avigating-from-product-page-chromium/test-failed-1.png
@@ -50,34 +41,25 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Stock History Filter Fixes › should clear all filters and show all products when Clear All is clicked" classname="stock-history-filter-fixes.spec.ts" time="30.753">
-<failure message="stock-history-filter-fixes.spec.ts:40:3 should clear all filters and show all products when Clear All is clicked" type="FAILURE">
-<![CDATA[  [chromium] › stock-history-filter-fixes.spec.ts:40:3 › Stock History Filter Fixes › should clear all filters and show all products when Clear All is clicked 
+<testcase name="Stock History Filter Fixes › should clear all filters and show all products when Clear All is clicked" classname="stock-history-filter-fixes.spec.ts" time="31.383">
+<failure message="stock-history-filter-fixes.spec.ts:52:3 should clear all filters and show all products when Clear All is clicked" type="FAILURE">
+<![CDATA[  [chromium] › stock-history-filter-fixes.spec.ts:52:3 › Stock History Filter Fixes › should clear all filters and show all products when Clear All is clicked 
 
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
+    Test timeout of 30000ms exceeded.
 
-      2 |
-      3 | test.describe('Stock History Filter Fixes', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5173')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
+    Error: page.click: Test timeout of 30000ms exceeded.
     Call log:
-      - waiting for locator('[data-testid="username"]')
+      - waiting for locator('text=PRODUCTS')
 
 
-       7 |     
-       8 |     // Login
-    >  9 |     await page.fill('[data-testid="username"]', 'admin')
+      52 |   test('should clear all filters and show all products when Clear All is clicked', async ({ page }) => {
+      53 |     // Navigate to products page
+    > 54 |     await page.click('text=PRODUCTS')
          |                ^
-      10 |     await page.fill('[data-testid="password"]', 'admin123')
-      11 |     await page.click('[data-testid="login-button"]')
-      12 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16
+      55 |     await page.click('text=Manage Products')
+      56 |     
+      57 |     // Wait for products to load
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:54:16
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
     ../../test-results/stock-history-filter-fixes-97277-s-when-Clear-All-is-clicked-chromium/test-failed-1.png
@@ -100,34 +82,25 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Stock History Filter Fixes › should maintain filter state correctly when switching between filtered and unfiltered views" classname="stock-history-filter-fixes.spec.ts" time="30.763">
-<failure message="stock-history-filter-fixes.spec.ts:72:3 should maintain filter state correctly when switching between filtered and unfiltered views" type="FAILURE">
-<![CDATA[  [chromium] › stock-history-filter-fixes.spec.ts:72:3 › Stock History Filter Fixes › should maintain filter state correctly when switching between filtered and unfiltered views 
+<testcase name="Stock History Filter Fixes › should maintain filter state correctly when switching between filtered and unfiltered views" classname="stock-history-filter-fixes.spec.ts" time="31.042">
+<failure message="stock-history-filter-fixes.spec.ts:93:3 should maintain filter state correctly when switching between filtered and unfiltered views" type="FAILURE">
+<![CDATA[  [chromium] › stock-history-filter-fixes.spec.ts:93:3 › Stock History Filter Fixes › should maintain filter state correctly when switching between filtered and unfiltered views 
 
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
+    Test timeout of 30000ms exceeded.
 
-      2 |
-      3 | test.describe('Stock History Filter Fixes', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5173')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
     Call log:
-      - waiting for locator('[data-testid="username"]')
+      - waiting for locator('text=Stock Movement History') to be visible
 
 
-       7 |     
-       8 |     // Login
-    >  9 |     await page.fill('[data-testid="username"]', 'admin')
-         |                ^
-      10 |     await page.fill('[data-testid="password"]', 'admin123')
-      11 |     await page.click('[data-testid="login-button"]')
-      12 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16
+       96 |     
+       97 |     // Wait for stock history page to load
+    >  98 |     await page.waitForSelector('text=Stock Movement History')
+          |                ^
+       99 |     
+      100 |     // Verify no active filters initially
+      101 |     const filtersButton = page.locator('button').filter({ hasText: 'Filters' })
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:98:16
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
     ../../test-results/stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-chromium/test-failed-1.png
@@ -150,36 +123,150 @@
 ]]>
 </system-out>
 </testcase>
-</testsuite>
-<testsuite name="stock-history-filter-fixes.spec.ts" timestamp="2025-08-18T14:55:46.305Z" hostname="firefox" tests="3" failures="3" skipped="0" time="90.214" errors="0">
-<testcase name="Stock History Filter Fixes › should show correct product filter when navigating from product page" classname="stock-history-filter-fixes.spec.ts" time="30.077">
-<failure message="stock-history-filter-fixes.spec.ts:17:3 should show correct product filter when navigating from product page" type="FAILURE">
-<![CDATA[  [firefox] › stock-history-filter-fixes.spec.ts:17:3 › Stock History Filter Fixes › should show correct product filter when navigating from product page 
+<testcase name="Stock History Filter Fixes › should handle multiple filter combinations and clear all properly" classname="stock-history-filter-fixes.spec.ts" time="30.901">
+<failure message="stock-history-filter-fixes.spec.ts:125:3 should handle multiple filter combinations and clear all properly" type="FAILURE">
+<![CDATA[  [chromium] › stock-history-filter-fixes.spec.ts:125:3 › Stock History Filter Fixes › should handle multiple filter combinations and clear all properly 
 
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
+    Test timeout of 30000ms exceeded.
 
-      2 |
-      3 | test.describe('Stock History Filter Fixes', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5173')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
     Call log:
-      - waiting for locator('[data-testid="username"]')
+      - waiting for locator('text=Stock Movement History') to be visible
 
 
-       7 |     
-       8 |     // Login
-    >  9 |     await page.fill('[data-testid="username"]', 'admin')
+      126 |     // Navigate to stock history
+      127 |     await page.goto('http://localhost:5173/products/stock-history')
+    > 128 |     await page.waitForSelector('text=Stock Movement History')
+          |                ^
+      129 |     
+      130 |     // Apply multiple filters
+      131 |     const productFilter = page.locator('select').filter({ hasText: 'Product' })
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:128:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-chromium/video.webm]]
+
+[[ATTACHMENT|stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Stock History Filter Fixes › should handle URL parameters correctly when navigating back and forth" classname="stock-history-filter-fixes.spec.ts" time="31.647">
+<failure message="stock-history-filter-fixes.spec.ts:160:3 should handle URL parameters correctly when navigating back and forth" type="FAILURE">
+<![CDATA[  [chromium] › stock-history-filter-fixes.spec.ts:160:3 › Stock History Filter Fixes › should handle URL parameters correctly when navigating back and forth 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('text=PRODUCTS')
+
+
+      160 |   test('should handle URL parameters correctly when navigating back and forth', async ({ page }) => {
+      161 |     // Start from products page
+    > 162 |     await page.click('text=PRODUCTS')
+          |                ^
+      163 |     await page.click('text=Manage Products')
+      164 |     await page.waitForSelector('table')
+      165 |     
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:162:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/stock-history-filter-fixes-b8352-n-navigating-back-and-forth-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/stock-history-filter-fixes-b8352-n-navigating-back-and-forth-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/stock-history-filter-fixes-b8352-n-navigating-back-and-forth-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|stock-history-filter-fixes-b8352-n-navigating-back-and-forth-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|stock-history-filter-fixes-b8352-n-navigating-back-and-forth-chromium/video.webm]]
+
+[[ATTACHMENT|stock-history-filter-fixes-b8352-n-navigating-back-and-forth-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Stock History Filter Fixes › should show correct summary data when filters are applied and cleared" classname="stock-history-filter-fixes.spec.ts" time="30.574">
+<failure message="stock-history-filter-fixes.spec.ts:199:3 should show correct summary data when filters are applied and cleared" type="FAILURE">
+<![CDATA[  [chromium] › stock-history-filter-fixes.spec.ts:199:3 › Stock History Filter Fixes › should show correct summary data when filters are applied and cleared 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('text=Stock Movement History') to be visible
+
+
+      200 |     // Navigate to stock history
+      201 |     await page.goto('http://localhost:5173/products/stock-history')
+    > 202 |     await page.waitForSelector('text=Stock Movement History')
+          |                ^
+      203 |     
+      204 |     // Get initial summary data
+      205 |     const initialSummary = await page.locator('text=Summary').first().textContent()
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:202:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-chromium/video.webm]]
+
+[[ATTACHMENT|stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="stock-history-filter-fixes.spec.ts" timestamp="2025-08-18T15:57:54.344Z" hostname="firefox" tests="6" failures="6" skipped="0" time="180.439" errors="0">
+<testcase name="Stock History Filter Fixes › should show correct product filter when navigating from product page" classname="stock-history-filter-fixes.spec.ts" time="30.065">
+<failure message="stock-history-filter-fixes.spec.ts:23:3 should show correct product filter when navigating from product page" type="FAILURE">
+<![CDATA[  [firefox] › stock-history-filter-fixes.spec.ts:23:3 › Stock History Filter Fixes › should show correct product filter when navigating from product page 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('text=PRODUCTS')
+
+
+      23 |   test('should show correct product filter when navigating from product page', async ({ page }) => {
+      24 |     // Navigate to products page
+    > 25 |     await page.click('text=PRODUCTS')
          |                ^
-      10 |     await page.fill('[data-testid="password"]', 'admin123')
-      11 |     await page.click('[data-testid="login-button"]')
-      12 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16
+      26 |     await page.click('text=Manage Products')
+      27 |     
+      28 |     // Wait for products to load
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:25:16
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
     ../../test-results/stock-history-filter-fixes-af400-avigating-from-product-page-firefox/test-failed-1.png
@@ -202,34 +289,25 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Stock History Filter Fixes › should clear all filters and show all products when Clear All is clicked" classname="stock-history-filter-fixes.spec.ts" time="30.075">
-<failure message="stock-history-filter-fixes.spec.ts:40:3 should clear all filters and show all products when Clear All is clicked" type="FAILURE">
-<![CDATA[  [firefox] › stock-history-filter-fixes.spec.ts:40:3 › Stock History Filter Fixes › should clear all filters and show all products when Clear All is clicked 
+<testcase name="Stock History Filter Fixes › should clear all filters and show all products when Clear All is clicked" classname="stock-history-filter-fixes.spec.ts" time="30.095">
+<failure message="stock-history-filter-fixes.spec.ts:52:3 should clear all filters and show all products when Clear All is clicked" type="FAILURE">
+<![CDATA[  [firefox] › stock-history-filter-fixes.spec.ts:52:3 › Stock History Filter Fixes › should clear all filters and show all products when Clear All is clicked 
 
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
+    Test timeout of 30000ms exceeded.
 
-      2 |
-      3 | test.describe('Stock History Filter Fixes', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5173')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
+    Error: page.click: Test timeout of 30000ms exceeded.
     Call log:
-      - waiting for locator('[data-testid="username"]')
+      - waiting for locator('text=PRODUCTS')
 
 
-       7 |     
-       8 |     // Login
-    >  9 |     await page.fill('[data-testid="username"]', 'admin')
+      52 |   test('should clear all filters and show all products when Clear All is clicked', async ({ page }) => {
+      53 |     // Navigate to products page
+    > 54 |     await page.click('text=PRODUCTS')
          |                ^
-      10 |     await page.fill('[data-testid="password"]', 'admin123')
-      11 |     await page.click('[data-testid="login-button"]')
-      12 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16
+      55 |     await page.click('text=Manage Products')
+      56 |     
+      57 |     // Wait for products to load
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:54:16
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
     ../../test-results/stock-history-filter-fixes-97277-s-when-Clear-All-is-clicked-firefox/test-failed-1.png
@@ -252,34 +330,25 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Stock History Filter Fixes › should maintain filter state correctly when switching between filtered and unfiltered views" classname="stock-history-filter-fixes.spec.ts" time="30.062">
-<failure message="stock-history-filter-fixes.spec.ts:72:3 should maintain filter state correctly when switching between filtered and unfiltered views" type="FAILURE">
-<![CDATA[  [firefox] › stock-history-filter-fixes.spec.ts:72:3 › Stock History Filter Fixes › should maintain filter state correctly when switching between filtered and unfiltered views 
+<testcase name="Stock History Filter Fixes › should maintain filter state correctly when switching between filtered and unfiltered views" classname="stock-history-filter-fixes.spec.ts" time="30.097">
+<failure message="stock-history-filter-fixes.spec.ts:93:3 should maintain filter state correctly when switching between filtered and unfiltered views" type="FAILURE">
+<![CDATA[  [firefox] › stock-history-filter-fixes.spec.ts:93:3 › Stock History Filter Fixes › should maintain filter state correctly when switching between filtered and unfiltered views 
 
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
+    Test timeout of 30000ms exceeded.
 
-      2 |
-      3 | test.describe('Stock History Filter Fixes', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5173')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
     Call log:
-      - waiting for locator('[data-testid="username"]')
+      - waiting for locator('text=Stock Movement History') to be visible
 
 
-       7 |     
-       8 |     // Login
-    >  9 |     await page.fill('[data-testid="username"]', 'admin')
-         |                ^
-      10 |     await page.fill('[data-testid="password"]', 'admin123')
-      11 |     await page.click('[data-testid="login-button"]')
-      12 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16
+       96 |     
+       97 |     // Wait for stock history page to load
+    >  98 |     await page.waitForSelector('text=Stock Movement History')
+          |                ^
+       99 |     
+      100 |     // Verify no active filters initially
+      101 |     const filtersButton = page.locator('button').filter({ hasText: 'Filters' })
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:98:16
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
     ../../test-results/stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-firefox/test-failed-1.png
@@ -299,6 +368,129 @@
 [[ATTACHMENT|stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-firefox/video.webm]]
 
 [[ATTACHMENT|stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-firefox/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Stock History Filter Fixes › should handle multiple filter combinations and clear all properly" classname="stock-history-filter-fixes.spec.ts" time="30.064">
+<failure message="stock-history-filter-fixes.spec.ts:125:3 should handle multiple filter combinations and clear all properly" type="FAILURE">
+<![CDATA[  [firefox] › stock-history-filter-fixes.spec.ts:125:3 › Stock History Filter Fixes › should handle multiple filter combinations and clear all properly 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('text=Stock Movement History') to be visible
+
+
+      126 |     // Navigate to stock history
+      127 |     await page.goto('http://localhost:5173/products/stock-history')
+    > 128 |     await page.waitForSelector('text=Stock Movement History')
+          |                ^
+      129 |     
+      130 |     // Apply multiple filters
+      131 |     const productFilter = page.locator('select').filter({ hasText: 'Product' })
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:128:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-firefox/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-firefox/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-firefox/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-firefox/test-failed-1.png]]
+
+[[ATTACHMENT|stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-firefox/video.webm]]
+
+[[ATTACHMENT|stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-firefox/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Stock History Filter Fixes › should handle URL parameters correctly when navigating back and forth" classname="stock-history-filter-fixes.spec.ts" time="30.057">
+<failure message="stock-history-filter-fixes.spec.ts:160:3 should handle URL parameters correctly when navigating back and forth" type="FAILURE">
+<![CDATA[  [firefox] › stock-history-filter-fixes.spec.ts:160:3 › Stock History Filter Fixes › should handle URL parameters correctly when navigating back and forth 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('text=PRODUCTS')
+
+
+      160 |   test('should handle URL parameters correctly when navigating back and forth', async ({ page }) => {
+      161 |     // Start from products page
+    > 162 |     await page.click('text=PRODUCTS')
+          |                ^
+      163 |     await page.click('text=Manage Products')
+      164 |     await page.waitForSelector('table')
+      165 |     
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:162:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/stock-history-filter-fixes-b8352-n-navigating-back-and-forth-firefox/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/stock-history-filter-fixes-b8352-n-navigating-back-and-forth-firefox/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/stock-history-filter-fixes-b8352-n-navigating-back-and-forth-firefox/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|stock-history-filter-fixes-b8352-n-navigating-back-and-forth-firefox/test-failed-1.png]]
+
+[[ATTACHMENT|stock-history-filter-fixes-b8352-n-navigating-back-and-forth-firefox/video.webm]]
+
+[[ATTACHMENT|stock-history-filter-fixes-b8352-n-navigating-back-and-forth-firefox/error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Stock History Filter Fixes › should show correct summary data when filters are applied and cleared" classname="stock-history-filter-fixes.spec.ts" time="30.061">
+<failure message="stock-history-filter-fixes.spec.ts:199:3 should show correct summary data when filters are applied and cleared" type="FAILURE">
+<![CDATA[  [firefox] › stock-history-filter-fixes.spec.ts:199:3 › Stock History Filter Fixes › should show correct summary data when filters are applied and cleared 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('text=Stock Movement History') to be visible
+
+
+      200 |     // Navigate to stock history
+      201 |     await page.goto('http://localhost:5173/products/stock-history')
+    > 202 |     await page.waitForSelector('text=Stock Movement History')
+          |                ^
+      203 |     
+      204 |     // Get initial summary data
+      205 |     const initialSummary = await page.locator('text=Summary').first().textContent()
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:202:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-firefox/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-firefox/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-firefox/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-firefox/test-failed-1.png]]
+
+[[ATTACHMENT|stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-firefox/video.webm]]
+
+[[ATTACHMENT|stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-firefox/error-context.md]]
 ]]>
 </system-out>
 </testcase>

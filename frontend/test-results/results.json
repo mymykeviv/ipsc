@@ -113,39 +113,28 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "timedOut",
-                      "duration": 30748,
+                      "duration": 31551,
                       "error": {
-                        "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8",
-                        "location": {
-                          "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                          "column": 8,
-                          "line": 4
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 2 |\u001b[39m\n \u001b[90m 3 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'Stock History Filter Fixes'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 4 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m   |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 5 |\u001b[39m     \u001b[90m// Navigate to the application\u001b[39m\n \u001b[90m 6 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:5173'\u001b[39m)\n \u001b[90m 7 |\u001b[39m     \u001b[0m"
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
                       },
                       "errors": [
                         {
-                          "location": {
-                            "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                            "column": 8,
-                            "line": 4
-                          },
-                          "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 2 |\u001b[39m\n \u001b[90m 3 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'Stock History Filter Fixes'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 4 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m   |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 5 |\u001b[39m     \u001b[90m// Navigate to the application\u001b[39m\n \u001b[90m 6 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:5173'\u001b[39m)\n \u001b[90m 7 |\u001b[39m     \u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8\u001b[22m"
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
                         },
                         {
                           "location": {
                             "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
                             "column": 16,
-                            "line": 9
+                            "line": 25
                           },
-                          "message": "Error: page.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"username\"]')\u001b[22m\n\n\n\u001b[0m \u001b[90m  7 |\u001b[39m     \n \u001b[90m  8 |\u001b[39m     \u001b[90m// Login\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  9 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'[data-testid=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'admin'\u001b[39m)\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 10 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'[data-testid=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'admin123'\u001b[39m)\n \u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'[data-testid=\"login-button\"]'\u001b[39m)\n \u001b[90m 12 |\u001b[39m     \u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16\u001b[22m"
+                          "message": "Error: page.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=PRODUCTS')\u001b[22m\n\n\n\u001b[0m \u001b[90m 23 |\u001b[39m   test(\u001b[32m'should show correct product filter when navigating from product page'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 24 |\u001b[39m     \u001b[90m// Navigate to products page\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 25 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'text=PRODUCTS'\u001b[39m)\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 26 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'text=Manage Products'\u001b[39m)\n \u001b[90m 27 |\u001b[39m     \n \u001b[90m 28 |\u001b[39m     \u001b[90m// Wait for products to load\u001b[39m\u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:25:16\u001b[22m"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-08-18T14:55:46.752Z",
+                      "startTime": "2025-08-18T15:57:54.699Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -163,12 +152,7 @@
                           "contentType": "text/markdown",
                           "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-af400-avigating-from-product-page-chromium/error-context.md"
                         }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                        "column": 8,
-                        "line": 4
-                      }
+                      ]
                     }
                   ],
                   "status": "unexpected"
@@ -176,7 +160,7 @@
               ],
               "id": "5f2ff338092b6ed5ab04-be219f4d258fdc945950",
               "file": "stock-history-filter-fixes.spec.ts",
-              "line": 17,
+              "line": 23,
               "column": 3
             },
             {
@@ -195,39 +179,28 @@
                       "workerIndex": 1,
                       "parallelIndex": 1,
                       "status": "timedOut",
-                      "duration": 30753,
+                      "duration": 31383,
                       "error": {
-                        "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8",
-                        "location": {
-                          "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                          "column": 8,
-                          "line": 4
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 2 |\u001b[39m\n \u001b[90m 3 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'Stock History Filter Fixes'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 4 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m   |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 5 |\u001b[39m     \u001b[90m// Navigate to the application\u001b[39m\n \u001b[90m 6 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:5173'\u001b[39m)\n \u001b[90m 7 |\u001b[39m     \u001b[0m"
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
                       },
                       "errors": [
                         {
-                          "location": {
-                            "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                            "column": 8,
-                            "line": 4
-                          },
-                          "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 2 |\u001b[39m\n \u001b[90m 3 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'Stock History Filter Fixes'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 4 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m   |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 5 |\u001b[39m     \u001b[90m// Navigate to the application\u001b[39m\n \u001b[90m 6 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:5173'\u001b[39m)\n \u001b[90m 7 |\u001b[39m     \u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8\u001b[22m"
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
                         },
                         {
                           "location": {
                             "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
                             "column": 16,
-                            "line": 9
+                            "line": 54
                           },
-                          "message": "Error: page.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"username\"]')\u001b[22m\n\n\n\u001b[0m \u001b[90m  7 |\u001b[39m     \n \u001b[90m  8 |\u001b[39m     \u001b[90m// Login\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  9 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'[data-testid=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'admin'\u001b[39m)\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 10 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'[data-testid=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'admin123'\u001b[39m)\n \u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'[data-testid=\"login-button\"]'\u001b[39m)\n \u001b[90m 12 |\u001b[39m     \u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16\u001b[22m"
+                          "message": "Error: page.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=PRODUCTS')\u001b[22m\n\n\n\u001b[0m \u001b[90m 52 |\u001b[39m   test(\u001b[32m'should clear all filters and show all products when Clear All is clicked'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 53 |\u001b[39m     \u001b[90m// Navigate to products page\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 54 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'text=PRODUCTS'\u001b[39m)\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 55 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'text=Manage Products'\u001b[39m)\n \u001b[90m 56 |\u001b[39m     \n \u001b[90m 57 |\u001b[39m     \u001b[90m// Wait for products to load\u001b[39m\u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:54:16\u001b[22m"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-08-18T14:55:46.757Z",
+                      "startTime": "2025-08-18T15:57:54.702Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -245,12 +218,7 @@
                           "contentType": "text/markdown",
                           "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-97277-s-when-Clear-All-is-clicked-chromium/error-context.md"
                         }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                        "column": 8,
-                        "line": 4
-                      }
+                      ]
                     }
                   ],
                   "status": "unexpected"
@@ -258,7 +226,7 @@
               ],
               "id": "5f2ff338092b6ed5ab04-50d099a0dd1355465a9e",
               "file": "stock-history-filter-fixes.spec.ts",
-              "line": 40,
+              "line": 52,
               "column": 3
             },
             {
@@ -277,39 +245,28 @@
                       "workerIndex": 2,
                       "parallelIndex": 2,
                       "status": "timedOut",
-                      "duration": 30763,
+                      "duration": 31042,
                       "error": {
-                        "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8",
-                        "location": {
-                          "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                          "column": 8,
-                          "line": 4
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 2 |\u001b[39m\n \u001b[90m 3 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'Stock History Filter Fixes'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 4 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m   |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 5 |\u001b[39m     \u001b[90m// Navigate to the application\u001b[39m\n \u001b[90m 6 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:5173'\u001b[39m)\n \u001b[90m 7 |\u001b[39m     \u001b[0m"
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
                       },
                       "errors": [
                         {
-                          "location": {
-                            "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                            "column": 8,
-                            "line": 4
-                          },
-                          "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 2 |\u001b[39m\n \u001b[90m 3 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'Stock History Filter Fixes'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 4 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m   |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 5 |\u001b[39m     \u001b[90m// Navigate to the application\u001b[39m\n \u001b[90m 6 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:5173'\u001b[39m)\n \u001b[90m 7 |\u001b[39m     \u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8\u001b[22m"
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
                         },
                         {
                           "location": {
                             "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
                             "column": 16,
-                            "line": 9
+                            "line": 98
                           },
-                          "message": "Error: page.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"username\"]')\u001b[22m\n\n\n\u001b[0m \u001b[90m  7 |\u001b[39m     \n \u001b[90m  8 |\u001b[39m     \u001b[90m// Login\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  9 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'[data-testid=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'admin'\u001b[39m)\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 10 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'[data-testid=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'admin123'\u001b[39m)\n \u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'[data-testid=\"login-button\"]'\u001b[39m)\n \u001b[90m 12 |\u001b[39m     \u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16\u001b[22m"
+                          "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=Stock Movement History') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m  96 |\u001b[39m     \n \u001b[90m  97 |\u001b[39m     \u001b[90m// Wait for stock history page to load\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  98 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'text=Stock Movement History'\u001b[39m)\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m  99 |\u001b[39m     \n \u001b[90m 100 |\u001b[39m     \u001b[90m// Verify no active filters initially\u001b[39m\n \u001b[90m 101 |\u001b[39m     \u001b[36mconst\u001b[39m filtersButton \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'button'\u001b[39m)\u001b[33m.\u001b[39mfilter({ hasText\u001b[33m:\u001b[39m \u001b[32m'Filters'\u001b[39m })\u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:98:16\u001b[22m"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-08-18T14:55:46.783Z",
+                      "startTime": "2025-08-18T15:57:54.701Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -327,12 +284,7 @@
                           "contentType": "text/markdown",
                           "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-chromium/error-context.md"
                         }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                        "column": 8,
-                        "line": 4
-                      }
+                      ]
                     }
                   ],
                   "status": "unexpected"
@@ -340,7 +292,205 @@
               ],
               "id": "5f2ff338092b6ed5ab04-798e06a010b6c205d7c7",
               "file": "stock-history-filter-fixes.spec.ts",
-              "line": 72,
+              "line": 93,
+              "column": 3
+            },
+            {
+              "title": "should handle multiple filter combinations and clear all properly",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "timedOut",
+                      "duration": 30901,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
+                            "column": 16,
+                            "line": 128
+                          },
+                          "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=Stock Movement History') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 126 |\u001b[39m     \u001b[90m// Navigate to stock history\u001b[39m\n \u001b[90m 127 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:5173/products/stock-history'\u001b[39m)\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 128 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'text=Stock Movement History'\u001b[39m)\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 129 |\u001b[39m     \n \u001b[90m 130 |\u001b[39m     \u001b[90m// Apply multiple filters\u001b[39m\n \u001b[90m 131 |\u001b[39m     \u001b[36mconst\u001b[39m productFilter \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'select'\u001b[39m)\u001b[33m.\u001b[39mfilter({ hasText\u001b[33m:\u001b[39m \u001b[32m'Product'\u001b[39m })\u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:128:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-18T15:57:54.704Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "5f2ff338092b6ed5ab04-fa6cb8c5ea206f4d1e85",
+              "file": "stock-history-filter-fixes.spec.ts",
+              "line": 125,
+              "column": 3
+            },
+            {
+              "title": "should handle URL parameters correctly when navigating back and forth",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "timedOut",
+                      "duration": 31647,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
+                            "column": 16,
+                            "line": 162
+                          },
+                          "message": "Error: page.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=PRODUCTS')\u001b[22m\n\n\n\u001b[0m \u001b[90m 160 |\u001b[39m   test(\u001b[32m'should handle URL parameters correctly when navigating back and forth'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 161 |\u001b[39m     \u001b[90m// Start from products page\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 162 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'text=PRODUCTS'\u001b[39m)\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 163 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'text=Manage Products'\u001b[39m)\n \u001b[90m 164 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'table'\u001b[39m)\n \u001b[90m 165 |\u001b[39m     \u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:162:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-18T15:57:54.703Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-b8352-n-navigating-back-and-forth-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-b8352-n-navigating-back-and-forth-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-b8352-n-navigating-back-and-forth-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "5f2ff338092b6ed5ab04-3e884a0f0f3289978e47",
+              "file": "stock-history-filter-fixes.spec.ts",
+              "line": 160,
+              "column": 3
+            },
+            {
+              "title": "should show correct summary data when filters are applied and cleared",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 3,
+                      "status": "timedOut",
+                      "duration": 30574,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
+                            "column": 16,
+                            "line": 202
+                          },
+                          "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=Stock Movement History') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 200 |\u001b[39m     \u001b[90m// Navigate to stock history\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:5173/products/stock-history'\u001b[39m)\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 202 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'text=Stock Movement History'\u001b[39m)\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 203 |\u001b[39m     \n \u001b[90m 204 |\u001b[39m     \u001b[90m// Get initial summary data\u001b[39m\n \u001b[90m 205 |\u001b[39m     \u001b[36mconst\u001b[39m initialSummary \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'text=Summary'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m.\u001b[39mtextContent()\u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:202:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-18T15:58:27.638Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "5f2ff338092b6ed5ab04-7f138abf9a34d32a4075",
+              "file": "stock-history-filter-fixes.spec.ts",
+              "line": 199,
               "column": 3
             },
             {
@@ -356,42 +506,31 @@
                   "projectName": "firefox",
                   "results": [
                     {
-                      "workerIndex": 3,
-                      "parallelIndex": 3,
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
                       "status": "timedOut",
-                      "duration": 30077,
+                      "duration": 30065,
                       "error": {
-                        "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8",
-                        "location": {
-                          "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                          "column": 8,
-                          "line": 4
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 2 |\u001b[39m\n \u001b[90m 3 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'Stock History Filter Fixes'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 4 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m   |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 5 |\u001b[39m     \u001b[90m// Navigate to the application\u001b[39m\n \u001b[90m 6 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:5173'\u001b[39m)\n \u001b[90m 7 |\u001b[39m     \u001b[0m"
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
                       },
                       "errors": [
                         {
-                          "location": {
-                            "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                            "column": 8,
-                            "line": 4
-                          },
-                          "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 2 |\u001b[39m\n \u001b[90m 3 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'Stock History Filter Fixes'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 4 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m   |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 5 |\u001b[39m     \u001b[90m// Navigate to the application\u001b[39m\n \u001b[90m 6 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:5173'\u001b[39m)\n \u001b[90m 7 |\u001b[39m     \u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8\u001b[22m"
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
                         },
                         {
                           "location": {
                             "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
                             "column": 16,
-                            "line": 9
+                            "line": 25
                           },
-                          "message": "Error: page.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"username\"]')\u001b[22m\n\n\n\u001b[0m \u001b[90m  7 |\u001b[39m     \n \u001b[90m  8 |\u001b[39m     \u001b[90m// Login\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  9 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'[data-testid=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'admin'\u001b[39m)\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 10 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'[data-testid=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'admin123'\u001b[39m)\n \u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'[data-testid=\"login-button\"]'\u001b[39m)\n \u001b[90m 12 |\u001b[39m     \u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16\u001b[22m"
+                          "message": "Error: page.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=PRODUCTS')\u001b[22m\n\n\n\u001b[0m \u001b[90m 23 |\u001b[39m   test(\u001b[32m'should show correct product filter when navigating from product page'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 24 |\u001b[39m     \u001b[90m// Navigate to products page\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 25 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'text=PRODUCTS'\u001b[39m)\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 26 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'text=Manage Products'\u001b[39m)\n \u001b[90m 27 |\u001b[39m     \n \u001b[90m 28 |\u001b[39m     \u001b[90m// Wait for products to load\u001b[39m\u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:25:16\u001b[22m"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-08-18T14:55:46.808Z",
+                      "startTime": "2025-08-18T15:58:27.665Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -409,12 +548,7 @@
                           "contentType": "text/markdown",
                           "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-af400-avigating-from-product-page-firefox/error-context.md"
                         }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                        "column": 8,
-                        "line": 4
-                      }
+                      ]
                     }
                   ],
                   "status": "unexpected"
@@ -422,7 +556,7 @@
               ],
               "id": "5f2ff338092b6ed5ab04-13e8358e4134a579c4a6",
               "file": "stock-history-filter-fixes.spec.ts",
-              "line": 17,
+              "line": 23,
               "column": 3
             },
             {
@@ -438,42 +572,31 @@
                   "projectName": "firefox",
                   "results": [
                     {
-                      "workerIndex": 4,
-                      "parallelIndex": 4,
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
                       "status": "timedOut",
-                      "duration": 30075,
+                      "duration": 30095,
                       "error": {
-                        "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8",
-                        "location": {
-                          "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                          "column": 8,
-                          "line": 4
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 2 |\u001b[39m\n \u001b[90m 3 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'Stock History Filter Fixes'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 4 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m   |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 5 |\u001b[39m     \u001b[90m// Navigate to the application\u001b[39m\n \u001b[90m 6 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:5173'\u001b[39m)\n \u001b[90m 7 |\u001b[39m     \u001b[0m"
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
                       },
                       "errors": [
                         {
-                          "location": {
-                            "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                            "column": 8,
-                            "line": 4
-                          },
-                          "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 2 |\u001b[39m\n \u001b[90m 3 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'Stock History Filter Fixes'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 4 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m   |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 5 |\u001b[39m     \u001b[90m// Navigate to the application\u001b[39m\n \u001b[90m 6 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:5173'\u001b[39m)\n \u001b[90m 7 |\u001b[39m     \u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8\u001b[22m"
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
                         },
                         {
                           "location": {
                             "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
                             "column": 16,
-                            "line": 9
+                            "line": 54
                           },
-                          "message": "Error: page.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"username\"]')\u001b[22m\n\n\n\u001b[0m \u001b[90m  7 |\u001b[39m     \n \u001b[90m  8 |\u001b[39m     \u001b[90m// Login\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  9 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'[data-testid=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'admin'\u001b[39m)\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 10 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'[data-testid=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'admin123'\u001b[39m)\n \u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'[data-testid=\"login-button\"]'\u001b[39m)\n \u001b[90m 12 |\u001b[39m     \u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16\u001b[22m"
+                          "message": "Error: page.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=PRODUCTS')\u001b[22m\n\n\n\u001b[0m \u001b[90m 52 |\u001b[39m   test(\u001b[32m'should clear all filters and show all products when Clear All is clicked'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 53 |\u001b[39m     \u001b[90m// Navigate to products page\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 54 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'text=PRODUCTS'\u001b[39m)\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 55 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'text=Manage Products'\u001b[39m)\n \u001b[90m 56 |\u001b[39m     \n \u001b[90m 57 |\u001b[39m     \u001b[90m// Wait for products to load\u001b[39m\u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:54:16\u001b[22m"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-08-18T14:55:46.761Z",
+                      "startTime": "2025-08-18T15:58:27.962Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -491,12 +614,7 @@
                           "contentType": "text/markdown",
                           "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-97277-s-when-Clear-All-is-clicked-firefox/error-context.md"
                         }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                        "column": 8,
-                        "line": 4
-                      }
+                      ]
                     }
                   ],
                   "status": "unexpected"
@@ -504,7 +622,7 @@
               ],
               "id": "5f2ff338092b6ed5ab04-ea8ef4672f5f0234cd93",
               "file": "stock-history-filter-fixes.spec.ts",
-              "line": 40,
+              "line": 52,
               "column": 3
             },
             {
@@ -520,42 +638,31 @@
                   "projectName": "firefox",
                   "results": [
                     {
-                      "workerIndex": 5,
+                      "workerIndex": 8,
                       "parallelIndex": 0,
                       "status": "timedOut",
-                      "duration": 30062,
+                      "duration": 30097,
                       "error": {
-                        "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8",
-                        "location": {
-                          "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                          "column": 8,
-                          "line": 4
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 2 |\u001b[39m\n \u001b[90m 3 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'Stock History Filter Fixes'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 4 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m   |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 5 |\u001b[39m     \u001b[90m// Navigate to the application\u001b[39m\n \u001b[90m 6 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:5173'\u001b[39m)\n \u001b[90m 7 |\u001b[39m     \u001b[0m"
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
                       },
                       "errors": [
                         {
-                          "location": {
-                            "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                            "column": 8,
-                            "line": 4
-                          },
-                          "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 2 |\u001b[39m\n \u001b[90m 3 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'Stock History Filter Fixes'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 4 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m   |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 5 |\u001b[39m     \u001b[90m// Navigate to the application\u001b[39m\n \u001b[90m 6 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:5173'\u001b[39m)\n \u001b[90m 7 |\u001b[39m     \u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8\u001b[22m"
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
                         },
                         {
                           "location": {
                             "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
                             "column": 16,
-                            "line": 9
+                            "line": 98
                           },
-                          "message": "Error: page.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"username\"]')\u001b[22m\n\n\n\u001b[0m \u001b[90m  7 |\u001b[39m     \n \u001b[90m  8 |\u001b[39m     \u001b[90m// Login\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  9 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'[data-testid=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'admin'\u001b[39m)\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 10 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'[data-testid=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'admin123'\u001b[39m)\n \u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'[data-testid=\"login-button\"]'\u001b[39m)\n \u001b[90m 12 |\u001b[39m     \u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16\u001b[22m"
+                          "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=Stock Movement History') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m  96 |\u001b[39m     \n \u001b[90m  97 |\u001b[39m     \u001b[90m// Wait for stock history page to load\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  98 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'text=Stock Movement History'\u001b[39m)\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m  99 |\u001b[39m     \n \u001b[90m 100 |\u001b[39m     \u001b[90m// Verify no active filters initially\u001b[39m\n \u001b[90m 101 |\u001b[39m     \u001b[36mconst\u001b[39m filtersButton \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'button'\u001b[39m)\u001b[33m.\u001b[39mfilter({ hasText\u001b[33m:\u001b[39m \u001b[32m'Filters'\u001b[39m })\u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:98:16\u001b[22m"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-08-18T14:56:18.437Z",
+                      "startTime": "2025-08-18T15:58:28.089Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -573,12 +680,7 @@
                           "contentType": "text/markdown",
                           "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-firefox/error-context.md"
                         }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
-                        "column": 8,
-                        "line": 4
-                      }
+                      ]
                     }
                   ],
                   "status": "unexpected"
@@ -586,7 +688,205 @@
               ],
               "id": "5f2ff338092b6ed5ab04-3d166d21327f2c65b957",
               "file": "stock-history-filter-fixes.spec.ts",
-              "line": 72,
+              "line": 93,
+              "column": 3
+            },
+            {
+              "title": "should handle multiple filter combinations and clear all properly",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 4,
+                      "status": "timedOut",
+                      "duration": 30064,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
+                            "column": 16,
+                            "line": 128
+                          },
+                          "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=Stock Movement History') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 126 |\u001b[39m     \u001b[90m// Navigate to stock history\u001b[39m\n \u001b[90m 127 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:5173/products/stock-history'\u001b[39m)\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 128 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'text=Stock Movement History'\u001b[39m)\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 129 |\u001b[39m     \n \u001b[90m 130 |\u001b[39m     \u001b[90m// Apply multiple filters\u001b[39m\n \u001b[90m 131 |\u001b[39m     \u001b[36mconst\u001b[39m productFilter \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'select'\u001b[39m)\u001b[33m.\u001b[39mfilter({ hasText\u001b[33m:\u001b[39m \u001b[32m'Product'\u001b[39m })\u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:128:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-18T15:58:28.113Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-firefox/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-firefox/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-6b9d6-ions-and-clear-all-properly-firefox/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "5f2ff338092b6ed5ab04-b156cba7ced80b1594cb",
+              "file": "stock-history-filter-fixes.spec.ts",
+              "line": 125,
+              "column": 3
+            },
+            {
+              "title": "should handle URL parameters correctly when navigating back and forth",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 2,
+                      "status": "timedOut",
+                      "duration": 30057,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
+                            "column": 16,
+                            "line": 162
+                          },
+                          "message": "Error: page.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=PRODUCTS')\u001b[22m\n\n\n\u001b[0m \u001b[90m 160 |\u001b[39m   test(\u001b[32m'should handle URL parameters correctly when navigating back and forth'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 161 |\u001b[39m     \u001b[90m// Start from products page\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 162 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'text=PRODUCTS'\u001b[39m)\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 163 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'text=Manage Products'\u001b[39m)\n \u001b[90m 164 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'table'\u001b[39m)\n \u001b[90m 165 |\u001b[39m     \u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:162:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-18T15:58:59.621Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-b8352-n-navigating-back-and-forth-firefox/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-b8352-n-navigating-back-and-forth-firefox/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-b8352-n-navigating-back-and-forth-firefox/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "5f2ff338092b6ed5ab04-6ec581e079b248d338d6",
+              "file": "stock-history-filter-fixes.spec.ts",
+              "line": 160,
+              "column": 3
+            },
+            {
+              "title": "should show correct summary data when filters are applied and cleared",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 3,
+                      "status": "timedOut",
+                      "duration": 30061,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts",
+                            "column": 16,
+                            "line": 202
+                          },
+                          "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=Stock Movement History') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 200 |\u001b[39m     \u001b[90m// Navigate to stock history\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:5173/products/stock-history'\u001b[39m)\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 202 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'text=Stock Movement History'\u001b[39m)\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 203 |\u001b[39m     \n \u001b[90m 204 |\u001b[39m     \u001b[90m// Get initial summary data\u001b[39m\n \u001b[90m 205 |\u001b[39m     \u001b[36mconst\u001b[39m initialSummary \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'text=Summary'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m.\u001b[39mtextContent()\u001b[0m\n\u001b[2m    at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:202:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-18T15:58:59.621Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-firefox/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-firefox/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/vivekm/code/ipsc/frontend/test-results/stock-history-filter-fixes-e9757-ers-are-applied-and-cleared-firefox/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "5f2ff338092b6ed5ab04-b5ef0d6a66e434aec446",
+              "file": "stock-history-filter-fixes.spec.ts",
+              "line": 199,
               "column": 3
             }
           ]
@@ -596,11 +896,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-08-18T14:55:45.966Z",
-    "duration": 63236.087999999996,
+    "startTime": "2025-08-18T15:57:54.209Z",
+    "duration": 96597.083,
     "expected": 0,
     "skipped": 0,
-    "unexpected": 6,
+    "unexpected": 12,
     "flaky": 0
   }
 }
