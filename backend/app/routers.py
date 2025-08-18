@@ -3,7 +3,11 @@ from pydantic import BaseModel, validator
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_
 import re
+import logging
 from datetime import datetime, timedelta, date
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 from .auth import authenticate_user, create_access_token, get_current_user, require_role
 from .db import get_db
@@ -2208,24 +2212,23 @@ def get_stock_ledger_report(
                 product = db.query(Product).filter(Product.id == entry.product_id).first()
                 
                 # Determine reference information
-                reference_type = None
-                reference_id = None
+                reference_type = entry.ref_type if entry.ref_type else 'adjustment'
+                reference_id = entry.ref_id if entry.ref_id else entry.id
                 reference_number = None
                 
-                if hasattr(entry, 'invoice_id') and entry.invoice_id:
-                    reference_type = 'invoice'
-                    reference_id = entry.invoice_id
-                    invoice = db.query(Invoice).filter(Invoice.id == entry.invoice_id).first()
+                if entry.ref_type == 'invoice' and entry.ref_id:
+                    invoice = db.query(Invoice).filter(Invoice.id == entry.ref_id).first()
                     reference_number = invoice.invoice_no if invoice else None
-                elif hasattr(entry, 'purchase_id') and entry.purchase_id:
-                    reference_type = 'purchase'
-                    reference_id = entry.purchase_id
-                    purchase = db.query(Purchase).filter(Purchase.id == entry.purchase_id).first()
+                elif entry.ref_type == 'purchase' and entry.ref_id:
+                    purchase = db.query(Purchase).filter(Purchase.id == entry.ref_id).first()
                     reference_number = purchase.purchase_no if purchase else None
                 else:
-                    reference_type = 'adjustment'
-                    reference_id = entry.id
                     reference_number = f"ADJ-{entry.id}"
+                
+                # Get unit price from product if available
+                unit_price = None
+                if product and product.purchase_price:
+                    unit_price = float(product.purchase_price)
                 
                 ledger_items.append(StockLedgerItem(
                     transaction_id=entry.id,
@@ -2235,13 +2238,13 @@ def get_stock_ledger_report(
                     sku=product.sku if product else None,
                     entry_type=entry.entry_type,
                     quantity=entry.qty,
-                    unit_price=entry.unit_price,
-                    total_value=entry.qty * (entry.unit_price or 0),
+                    unit_price=unit_price,
+                    total_value=entry.qty * (unit_price or 0),
                     running_balance=running_balance,
                     reference_type=reference_type,
                     reference_id=reference_id,
                     reference_number=reference_number,
-                    notes=entry.notes
+                    notes=None  # StockLedgerEntry doesn't have notes field
                 ))
         
         # Calculate opening and closing balances
