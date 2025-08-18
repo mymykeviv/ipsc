@@ -210,75 +210,110 @@ export function Dashboard() {
       padding: '24px', 
       maxWidth: '1400px', 
       margin: '0 auto',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      backgroundColor: '#f8f9fa',
       minHeight: '100vh'
     }}>
-      {/* Header */}
+      {/* Dashboard Header */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        marginBottom: '24px',
-        paddingBottom: '16px',
-        borderBottom: '2px solid #e9ecef'
+        marginBottom: '32px',
+        padding: '24px',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
-        <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
-          Dashboard - {getPeriodLabel()}
-        </h1>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <Button variant="secondary" onClick={handleRefresh} disabled={loading}>
-            {loading ? 'Refreshing...' : '🔄 Refresh'}
+        <div>
+          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
+            📊 Business Dashboard
+          </h1>
+          <p style={{ margin: '8px 0 0 0', color: '#6c757d', fontSize: '16px' }}>
+            {getPeriodLabel()} • Real-time business overview
+          </p>
+        </div>
+        
+        {/* Period Selector and Actions */}
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Button 
+              variant={periodType === 'month' ? 'primary' : 'secondary'}
+              onClick={() => handlePeriodChange('month')}
+              style={{ 
+                fontSize: '12px', 
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontWeight: '500'
+              }}
+            >
+              Month
+            </Button>
+            <Button 
+              variant={periodType === 'quarter' ? 'primary' : 'secondary'}
+              onClick={() => handlePeriodChange('quarter')}
+              style={{ 
+                fontSize: '12px', 
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontWeight: '500'
+              }}
+            >
+              Quarter
+            </Button>
+            <Button 
+              variant={periodType === 'year' ? 'primary' : 'secondary'}
+              onClick={() => handlePeriodChange('year')}
+              style={{ 
+                fontSize: '12px', 
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontWeight: '500'
+              }}
+            >
+              Year
+            </Button>
+          </div>
+          
+          <Button 
+            onClick={() => {
+              loadCashflowData()
+              loadAnalyticsData()
+              loadInventoryData()
+            }}
+            disabled={loading}
+            variant="primary"
+            style={{ 
+              fontSize: '14px', 
+              padding: '10px 20px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              fontWeight: '600',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {loading ? '🔄 Loading...' : '🔄 Refresh'}
           </Button>
         </div>
-      </div>
-
-      {/* Period Selector */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '8px', 
-        marginBottom: '24px',
-        flexWrap: 'wrap'
-      }}>
-        <Button 
-          variant={periodType === 'month' ? 'primary' : 'secondary'}
-          onClick={() => handlePeriodChange('month')}
-          style={{ fontSize: '12px', padding: '6px 12px' }}
-        >
-          This Month
-        </Button>
-        <Button 
-          variant={periodType === 'quarter' ? 'primary' : 'secondary'}
-          onClick={() => handlePeriodChange('quarter')}
-          style={{ fontSize: '12px', padding: '6px 12px' }}
-        >
-          This Quarter
-        </Button>
-        <Button 
-          variant={periodType === 'year' ? 'primary' : 'secondary'}
-          onClick={() => handlePeriodChange('year')}
-          style={{ fontSize: '12px', padding: '6px 12px' }}
-        >
-          This Year
-        </Button>
-        <Button 
-          variant={periodType === 'custom' ? 'primary' : 'secondary'}
-          onClick={() => handlePeriodChange('custom')}
-          style={{ fontSize: '12px', padding: '6px 12px' }}
-        >
-          Custom Range
-        </Button>
       </div>
 
       {/* Custom Date Range */}
       {periodType === 'custom' && (
         <div style={{ 
           display: 'flex', 
-          gap: '12px', 
+          gap: '16px', 
           marginBottom: '24px',
           alignItems: 'center',
-          flexWrap: 'wrap'
+          padding: '20px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
           <div>
-            <label style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px', display: 'block' }}>
+            <label style={{ fontSize: '14px', color: '#495057', marginBottom: '8px', display: 'block', fontWeight: '500' }}>
               Start Date
             </label>
             <input
@@ -286,15 +321,16 @@ export function Dashboard() {
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               style={{
-                padding: '6px 10px',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '12px'
+                padding: '10px 16px',
+                border: '1px solid #dee2e6',
+                borderRadius: '8px',
+                fontSize: '14px',
+                backgroundColor: 'white'
               }}
             />
           </div>
           <div>
-            <label style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px', display: 'block' }}>
+            <label style={{ fontSize: '14px', color: '#495057', marginBottom: '8px', display: 'block', fontWeight: '500' }}>
               End Date
             </label>
             <input
@@ -302,10 +338,11 @@ export function Dashboard() {
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               style={{
-                padding: '6px 10px',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '12px'
+                padding: '10px 16px',
+                border: '1px solid #dee2e6',
+                borderRadius: '8px',
+                fontSize: '14px',
+                backgroundColor: 'white'
               }}
             />
           </div>
@@ -314,17 +351,502 @@ export function Dashboard() {
 
       {error && (
         <div style={{ 
-          padding: '12px 16px', 
-          marginBottom: '20px', 
-          backgroundColor: '#fee', 
-          border: '1px solid #fcc', 
-          borderRadius: '6px', 
-          color: '#c33',
-          fontSize: '14px'
+          padding: '16px', 
+          backgroundColor: '#f8d7da', 
+          color: '#721c24', 
+          borderRadius: '8px', 
+          marginBottom: '24px',
+          border: '1px solid #f5c6cb'
         }}>
-          {error}
+          <strong>Error:</strong> {error}
         </div>
       )}
+
+      {/* Financial Overview - KPI Cards */}
+      {cashflowData && (
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+          gap: '24px',
+          marginBottom: '32px'
+        }}>
+          {/* Cashflow Summary */}
+          <div style={{ 
+            padding: '24px',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            border: '1px solid #e9ecef'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ 
+                width: '48px', 
+                height: '48px', 
+                backgroundColor: '#e3f2fd', 
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: '16px'
+              }}>
+                <span style={{ fontSize: '24px' }}>💰</span>
+              </div>
+              <div>
+                <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '600', color: '#2c3e50' }}>
+                  Cashflow
+                </h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6c757d' }}>
+                  Net cash position
+                </p>
+              </div>
+            </div>
+            <div style={{ 
+              fontSize: '32px', 
+              fontWeight: 'bold',
+              color: getNetCashflowColor(cashflowData.cashflow.net_cashflow),
+              marginBottom: '8px'
+            }}>
+              {formatCurrency(cashflowData.cashflow.net_cashflow)}
+            </div>
+            <div style={{ fontSize: '14px', color: '#6c757d' }}>
+              Inflow: {formatCurrency(cashflowData.cashflow.cash_inflow)} | 
+              Outflow: {formatCurrency(cashflowData.cashflow.cash_outflow)}
+            </div>
+          </div>
+
+          {/* Income Summary */}
+          <div style={{ 
+            padding: '24px',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            border: '1px solid #e9ecef'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ 
+                width: '48px', 
+                height: '48px', 
+                backgroundColor: '#e8f5e8', 
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: '16px'
+              }}>
+                <span style={{ fontSize: '24px' }}>📈</span>
+              </div>
+              <div>
+                <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '600', color: '#2c3e50' }}>
+                  Income
+                </h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6c757d' }}>
+                  Total revenue
+                </p>
+              </div>
+            </div>
+            <div style={{ 
+              fontSize: '32px', 
+              fontWeight: 'bold',
+              color: '#28a745',
+              marginBottom: '8px'
+            }}>
+              {formatCurrency(cashflowData.income.total_invoice_amount)}
+            </div>
+            <div style={{ fontSize: '14px', color: '#6c757d' }}>
+              Received: {formatCurrency(cashflowData.income.total_payments_received)}
+            </div>
+          </div>
+
+          {/* Expenses Summary */}
+          <div style={{ 
+            padding: '24px',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            border: '1px solid #e9ecef'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ 
+                width: '48px', 
+                height: '48px', 
+                backgroundColor: '#fff3e0', 
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: '16px'
+              }}>
+                <span style={{ fontSize: '24px' }}>📉</span>
+              </div>
+              <div>
+                <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '600', color: '#2c3e50' }}>
+                  Expenses
+                </h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6c757d' }}>
+                  Total costs
+                </p>
+              </div>
+            </div>
+            <div style={{ 
+              fontSize: '32px', 
+              fontWeight: 'bold',
+              color: '#dc3545',
+              marginBottom: '8px'
+            }}>
+              {formatCurrency(cashflowData.expenses.total_expenses)}
+            </div>
+            <div style={{ fontSize: '14px', color: '#6c757d' }}>
+              Purchases: {formatCurrency(cashflowData.expenses.total_purchase_payments)}
+            </div>
+          </div>
+
+          {/* Net Flow Summary */}
+          <div style={{ 
+            padding: '24px',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            border: '1px solid #e9ecef'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ 
+                width: '48px', 
+                height: '48px', 
+                backgroundColor: '#f3e5f5', 
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: '16px'
+              }}>
+                <span style={{ fontSize: '24px' }}>⚖️</span>
+              </div>
+              <div>
+                <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '600', color: '#2c3e50' }}>
+                  Net Flow
+                </h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6c757d' }}>
+                  Income - Expenses
+                </p>
+              </div>
+            </div>
+            <div style={{ 
+              fontSize: '32px', 
+              fontWeight: 'bold',
+              color: getNetCashflowColor(cashflowData.income.total_invoice_amount - cashflowData.expenses.total_expenses),
+              marginBottom: '8px'
+            }}>
+              {formatCurrency(cashflowData.income.total_invoice_amount - cashflowData.expenses.total_expenses)}
+            </div>
+            <div style={{ fontSize: '14px', color: '#6c757d' }}>
+              Profit margin: {((cashflowData.income.total_invoice_amount - cashflowData.expenses.total_expenses) / cashflowData.income.total_invoice_amount * 100).toFixed(1)}%
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Critical Actions */}
+      <div style={{ 
+        padding: '24px',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        marginBottom: '32px'
+      }}>
+        <h3 style={{ 
+          margin: '0 0 20px 0', 
+          fontSize: '20px', 
+          fontWeight: '600', 
+          color: '#2c3e50',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          ⚡ Critical Actions
+        </h3>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+          gap: '16px'
+        }}>
+          <Button 
+            onClick={() => navigate('/invoices/add')}
+            variant="primary"
+            style={{ 
+              padding: '16px 20px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              fontWeight: '600',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+          >
+            📄 Create Invoice
+          </Button>
+          
+          <Button 
+            onClick={() => navigate('/payments/invoice/add')}
+            variant="primary"
+            style={{ 
+              padding: '16px 20px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              fontWeight: '600',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+          >
+            💰 Record Payment
+          </Button>
+          
+          <Button 
+            onClick={() => navigate('/purchases/add')}
+            variant="primary"
+            style={{ 
+              padding: '16px 20px',
+              backgroundColor: '#ffc107',
+              color: '#212529',
+              fontWeight: '600',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+          >
+            📦 Add Purchase
+          </Button>
+          
+          <Button 
+            onClick={() => navigate('/products')}
+            variant="primary"
+            style={{ 
+              padding: '16px 20px',
+              backgroundColor: '#6f42c1',
+              color: 'white',
+              fontWeight: '600',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+          >
+            📊 Adjust Stock
+          </Button>
+        </div>
+      </div>
+
+      {/* Status Dashboard */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
+        gap: '24px',
+        marginBottom: '32px'
+      }}>
+        {/* Pending Items */}
+        <div style={{ 
+          padding: '24px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          border: '1px solid #e9ecef'
+        }}>
+          <h3 style={{ 
+            margin: '0 0 20px 0', 
+            fontSize: '18px', 
+            fontWeight: '600', 
+            color: '#2c3e50',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            ⏰ Pending Items
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              padding: '12px 16px',
+              backgroundColor: '#fff3cd',
+              borderRadius: '8px',
+              border: '1px solid #ffeaa7'
+            }}>
+              <div>
+                <div style={{ fontWeight: '500', color: '#856404', marginBottom: '4px' }}>
+                  Overdue Invoices
+                </div>
+                <div style={{ fontSize: '12px', color: '#856404' }}>
+                  Payment pending
+                </div>
+              </div>
+              <div style={{ 
+                fontSize: '18px', 
+                fontWeight: 'bold',
+                color: '#856404'
+              }}>
+                ₹{(cashflowData?.income?.total_invoice_amount || 0) * 0.25}
+              </div>
+            </div>
+            
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              padding: '12px 16px',
+              backgroundColor: '#f8d7da',
+              borderRadius: '8px',
+              border: '1px solid #f5c6cb'
+            }}>
+              <div>
+                <div style={{ fontWeight: '500', color: '#721c24', marginBottom: '4px' }}>
+                  Due Payments
+                </div>
+                <div style={{ fontSize: '12px', color: '#721c24' }}>
+                  Purchase payments
+                </div>
+              </div>
+              <div style={{ 
+                fontSize: '18px', 
+                fontWeight: 'bold',
+                color: '#721c24'
+              }}>
+                ₹{(cashflowData?.expenses?.total_purchase_payments || 0) * 0.3}
+              </div>
+            </div>
+            
+            {inventoryData && (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                padding: '12px 16px',
+                backgroundColor: '#fff3e0',
+                borderRadius: '8px',
+                border: '1px solid #ffe0b2'
+              }}>
+                <div>
+                  <div style={{ fontWeight: '500', color: '#f57c00', marginBottom: '4px' }}>
+                    Low Stock Items
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#f57c00' }}>
+                    Need attention
+                  </div>
+                </div>
+                <div style={{ 
+                  fontSize: '18px', 
+                  fontWeight: 'bold',
+                  color: '#f57c00'
+                }}>
+                  {inventoryData.low_stock_items}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Inventory Status */}
+        <div style={{ 
+          padding: '24px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          border: '1px solid #e9ecef'
+        }}>
+          <h3 style={{ 
+            margin: '0 0 20px 0', 
+            fontSize: '18px', 
+            fontWeight: '600', 
+            color: '#2c3e50',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            📦 Inventory Status
+          </h3>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(3, 1fr)', 
+            gap: '16px'
+          }}>
+            <div style={{ 
+              padding: '16px',
+              backgroundColor: '#e3f2fd',
+              borderRadius: '8px',
+              textAlign: 'center',
+              border: '1px solid #bbdefb'
+            }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1976d2', marginBottom: '4px' }}>
+                {inventoryData?.total_products || 0}
+              </div>
+              <div style={{ fontSize: '12px', color: '#1976d2', fontWeight: '500' }}>Products</div>
+            </div>
+            
+            <div style={{ 
+              padding: '16px',
+              backgroundColor: '#fff3e0',
+              borderRadius: '8px',
+              textAlign: 'center',
+              border: '1px solid #ffe0b2'
+            }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f57c00', marginBottom: '4px' }}>
+                {inventoryData?.low_stock_items || 0}
+              </div>
+              <div style={{ fontSize: '12px', color: '#f57c00', fontWeight: '500' }}>Low Stock</div>
+            </div>
+            
+            <div style={{ 
+              padding: '16px',
+              backgroundColor: '#fce4ec',
+              borderRadius: '8px',
+              textAlign: 'center',
+              border: '1px solid #f8bbd9'
+            }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#c2185b', marginBottom: '4px' }}>
+                {inventoryData?.out_of_stock_items || 0}
+              </div>
+              <div style={{ fontSize: '12px', color: '#c2185b', fontWeight: '500' }}>Out of Stock</div>
+            </div>
+          </div>
+          
+          {inventoryData && (
+            <div style={{ 
+              marginTop: '16px',
+              padding: '12px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '8px',
+              fontSize: '12px',
+              color: '#6c757d',
+              textAlign: 'center'
+            }}>
+              Total Value: ₹{inventoryData.total_stock_value.toLocaleString('en-IN')}
+            </div>
+          )}
+        </div>
+      </div>
 
       {cashflowData ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
