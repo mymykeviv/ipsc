@@ -367,8 +367,8 @@ export function Dashboard() {
         <div style={{ 
           display: 'grid', 
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-          gap: '24px',
-          marginBottom: '32px'
+          gap: '20px',
+          marginBottom: '24px'
         }}>
           {/* Cashflow Summary */}
           <div style={{ 
@@ -551,7 +551,7 @@ export function Dashboard() {
         backgroundColor: 'white',
         borderRadius: '12px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        marginBottom: '32px'
+        marginBottom: '24px'
       }}>
         <h3 style={{ 
           margin: '0 0 20px 0', 
@@ -663,8 +663,8 @@ export function Dashboard() {
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
-        gap: '24px',
-        marginBottom: '32px'
+        gap: '20px',
+        marginBottom: '24px'
       }}>
         {/* Pending Items */}
         <div style={{ 
@@ -848,749 +848,157 @@ export function Dashboard() {
         </div>
       </div>
 
+
+
+
+
+
       {cashflowData ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-
-
-          {/* Cashflow Summary - Full Width */}
+        <>
+          {/* Recent Activity & Quick Insights */}
           <div style={{ 
-            padding: '24px', 
-            border: '2px solid #28a745',
-            borderRadius: '8px',
-            backgroundColor: '#f8fff9'
+            padding: '24px',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            marginBottom: '24px'
           }}>
-            <h3 style={{ margin: '0 0 20px 0', color: '#155724', fontSize: '20px', textAlign: 'center', fontWeight: '600' }}>
-              💰 Cashflow Summary
+            <h3 style={{ 
+              margin: '0 0 20px 0', 
+              fontSize: '18px', 
+              fontWeight: '600', 
+              color: '#2c3e50',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              📊 Recent Activity & Quick Insights
             </h3>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-              gap: '20px',
-              textAlign: 'center'
-            }}>
-              <div>
-                <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '4px' }}>
-                  Total Income
-                </div>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#28a745' }}>
-                  {formatCurrency(cashflowData.income.total_invoice_amount)}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '4px' }}>
-                  Total Expenses
-                </div>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc3545' }}>
-                  {formatCurrency(cashflowData.expenses.total_expenses)}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '4px' }}>
-                  Net Cashflow
-                </div>
-                <div style={{ 
-                  fontSize: '24px', 
-                  fontWeight: 'bold', 
-                  color: getNetCashflowColor(cashflowData.cashflow.net_cashflow)
-                }}>
-                  {formatCurrency(cashflowData.cashflow.net_cashflow)}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Expense Breakdown by Category */}
-          <div style={{ 
-            padding: '20px', 
-            border: '2px solid #dc3545',
-            borderRadius: '8px',
-            backgroundColor: '#fff5f5'
-          }}>
-            <h3 style={{ margin: '0 0 16px 0', color: '#721c24', fontSize: '18px', textAlign: 'center', fontWeight: '600' }}>
-              📊 Expense Breakdown by Category
-            </h3>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-              gap: '20px',
-              textAlign: 'center'
-            }}>
-              <div style={{ 
-                padding: '16px', 
-                border: '1px solid #dc3545',
-                borderRadius: '6px',
-                backgroundColor: '#fff'
-              }}>
-                <div style={{ fontSize: '14px', color: '#721c24', marginBottom: '8px', fontWeight: '600' }}>
-                  🏭 Direct/COGS
-                </div>
-                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#dc3545', marginBottom: '4px' }}>
-                  {formatCurrency(cashflowData.expenses.total_expenses * 0.6)}
-                </div>
-                <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                  {Math.round((cashflowData.expenses.total_expenses * 0.6 / cashflowData.expenses.total_expenses) * 100)}% of total expenses
-                </div>
-              </div>
-              <div style={{ 
-                padding: '16px', 
-                border: '1px solid #dc3545',
-                borderRadius: '6px',
-                backgroundColor: '#fff'
-              }}>
-                <div style={{ fontSize: '14px', color: '#721c24', marginBottom: '8px', fontWeight: '600' }}>
-                  🏢 Indirect/Operating
-                </div>
-                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#dc3545', marginBottom: '4px' }}>
-                  {formatCurrency(cashflowData.expenses.total_expenses * 0.4)}
-                </div>
-                <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                  {Math.round((cashflowData.expenses.total_expenses * 0.4 / cashflowData.expenses.total_expenses) * 100)}% of total expenses
-                </div>
-              </div>
-            </div>
-            <div style={{ 
-              marginTop: '16px', 
-              padding: '12px', 
-              backgroundColor: '#f8f9fa', 
-              borderRadius: '6px',
-              fontSize: '12px',
-              color: '#6c757d',
-              textAlign: 'center'
-            }}>
-              💡 <strong>Direct/COGS:</strong> Raw materials, packing, freight | <strong>Indirect/Operating:</strong> Salary, rent, utilities, marketing
-            </div>
-          </div>
-
-          {/* Pending Payments Cards - 2 Column Layout */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-            gap: '20px'
-          }}>
-            {/* Pending Purchase Payments */}
-            <div style={{ 
-              padding: '20px', 
-              border: '2px solid #ffc107',
-              borderRadius: '8px',
-              backgroundColor: '#fff8e1'
-            }}>
-              <h4 style={{ margin: '0 0 12px 0', color: '#856404', fontSize: '16px', textAlign: 'center', fontWeight: '600' }}>
-                📦 Pending Purchase Payments
-              </h4>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ 
-                  fontSize: '24px', 
-                  fontWeight: 'bold',
-                  color: '#856404',
-                  marginBottom: '6px'
-                }}>
-                  ₹{(cashflowData?.expenses?.total_purchase_payments || 0) * 0.3}
-                </div>
-                <div style={{ 
-                  fontSize: '12px', 
-                  color: '#856404',
-                  fontWeight: '500',
-                  marginBottom: '12px'
-                }}>
-                  Outstanding payments
-                </div>
-                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <Button 
-                    onClick={() => navigate('/purchases/add')}
-                    variant="primary"
-                    style={{ 
-                      fontSize: '12px', 
-                      padding: '6px 12px',
-                      backgroundColor: '#007bff',
-                      color: 'white',
-                      fontWeight: '600',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s'
-                    }}
-                  >
-                    📦 New Purchase
-                  </Button>
-                  <Button 
-                    onClick={() => navigate('/payments/purchase/list')}
-                    variant="secondary"
-                    style={{ 
-                      fontSize: '12px', 
-                      padding: '6px 12px',
-                      backgroundColor: '#6c757d',
-                      color: 'white',
-                      fontWeight: '500',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s'
-                    }}
-                  >
-                    View Payments
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Pending Invoice Payments */}
-            <div style={{ 
-              padding: '20px', 
-              border: '2px solid #17a2b8',
-              borderRadius: '8px',
-              backgroundColor: '#e7f3ff'
-            }}>
-              <h4 style={{ margin: '0 0 12px 0', color: '#0056b3', fontSize: '16px', textAlign: 'center', fontWeight: '600' }}>
-                📄 Pending Invoice Payments
-              </h4>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ 
-                  fontSize: '24px', 
-                  fontWeight: 'bold',
-                  color: '#0056b3',
-                  marginBottom: '6px'
-                }}>
-                  ₹{(cashflowData?.income?.total_invoice_amount || 0) * 0.25}
-                </div>
-                <div style={{ 
-                  fontSize: '12px', 
-                  color: '#0056b3',
-                  fontWeight: '500',
-                  marginBottom: '12px'
-                }}>
-                  Outstanding payments
-                </div>
-                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <Button 
-                    onClick={() => navigate('/invoices/add')}
-                    variant="primary"
-                    style={{ 
-                      fontSize: '12px', 
-                      padding: '6px 12px',
-                      backgroundColor: '#007bff',
-                      color: 'white',
-                      fontWeight: '600',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s'
-                    }}
-                  >
-                    📄 New Invoice
-                  </Button>
-                  <Button 
-                    onClick={() => navigate('/payments/invoice/list')}
-                    variant="secondary"
-                    style={{ 
-                      fontSize: '12px', 
-                      padding: '6px 12px',
-                      backgroundColor: '#6c757d',
-                      color: 'white',
-                      fontWeight: '500',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s'
-                    }}
-                  >
-                    View Payments
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Stock Inventory Section */}
-          {inventoryData && (
-            <div style={{ 
-              marginTop: '32px',
-              padding: '24px',
-              backgroundColor: '#f8f9fa',
-              borderRadius: '12px',
-              border: '1px solid #e9ecef'
-            }}>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
-                marginBottom: '24px' 
-              }}>
-                <h3 style={{ 
-                  margin: '0', 
-                  fontSize: '24px', 
-                  fontWeight: '600', 
-                  color: '#2c3e50'
-                }}>
-                  📦 Stock Inventory
-                </h3>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <Button 
-                    onClick={() => navigate('/products')}
-                    variant="secondary"
-                    style={{ 
-                      fontSize: '14px', 
-                      padding: '8px 16px',
-                      backgroundColor: '#6c757d',
-                      color: 'white',
-                      fontWeight: '600',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s'
-                    }}
-                  >
-                    📦 Manage Products
-                  </Button>
-                  <Button 
-                    onClick={() => navigate('/reports/inventory')}
-                    variant="primary"
-                    style={{ 
-                      fontSize: '14px', 
-                      padding: '8px 16px',
-                      backgroundColor: '#007bff',
-                      color: 'white',
-                      fontWeight: '600',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s'
-                    }}
-                  >
-                    View Inventory Reports
-                  </Button>
-                </div>
-              </div>
-
-              {/* Inventory Metrics Cards */}
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-                gap: '16px',
-                marginBottom: '24px'
-              }}>
-                <div style={{ 
-                  padding: '20px', 
-                  backgroundColor: '#e3f2fd', 
-                  borderRadius: '8px',
-                  textAlign: 'center',
-                  border: '1px solid #bbdefb'
-                }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1976d2', marginBottom: '8px' }}>
-                    {inventoryData.total_products}
-                  </div>
-                  <div style={{ fontSize: '14px', color: '#1976d2', fontWeight: '500' }}>Total Products</div>
-                </div>
-                
-                <div style={{ 
-                  padding: '20px', 
-                  backgroundColor: '#e8f5e8', 
-                  borderRadius: '8px',
-                  textAlign: 'center',
-                  border: '1px solid #c8e6c9'
-                }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2e7d32', marginBottom: '8px' }}>
-                    ₹{inventoryData.total_stock_value.toLocaleString('en-IN')}
-                  </div>
-                  <div style={{ fontSize: '14px', color: '#2e7d32', fontWeight: '500' }}>Total Stock Value</div>
-                </div>
-                
-                <div style={{ 
-                  padding: '20px', 
-                  backgroundColor: '#fff3e0', 
-                  borderRadius: '8px',
-                  textAlign: 'center',
-                  border: '1px solid #ffe0b2'
-                }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f57c00', marginBottom: '8px' }}>
-                    {inventoryData.low_stock_items}
-                  </div>
-                  <div style={{ fontSize: '14px', color: '#f57c00', fontWeight: '500' }}>Low Stock Items</div>
-                </div>
-                
-                <div style={{ 
-                  padding: '20px', 
-                  backgroundColor: '#fce4ec', 
-                  borderRadius: '8px',
-                  textAlign: 'center',
-                  border: '1px solid #f8bbd9'
-                }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#c2185b', marginBottom: '8px' }}>
-                    {inventoryData.out_of_stock_items}
-                  </div>
-                  <div style={{ fontSize: '14px', color: '#c2185b', fontWeight: '500' }}>Out of Stock</div>
-                </div>
-                
-                <div style={{ 
-                  padding: '20px', 
-                  backgroundColor: '#f3e5f5', 
-                  borderRadius: '8px',
-                  textAlign: 'center',
-                  border: '1px solid #e1bee7'
-                }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#7b1fa2', marginBottom: '8px' }}>
-                    {inventoryData.recent_movements}
-                  </div>
-                  <div style={{ fontSize: '14px', color: '#7b1fa2', fontWeight: '500' }}>Recent Movements</div>
-                </div>
-                
-                <div style={{ 
-                  padding: '20px', 
-                  backgroundColor: '#e0f2f1', 
-                  borderRadius: '8px',
-                  textAlign: 'center',
-                  border: '1px solid #b2dfdb'
-                }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#00695c', marginBottom: '8px' }}>
-                    {inventoryData.average_stock_level.toFixed(1)}
-                  </div>
-                  <div style={{ fontSize: '14px', color: '#00695c', fontWeight: '500' }}>Avg Stock Level</div>
-                </div>
-              </div>
-
-              {/* Alerts and Insights */}
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
-                gap: '24px'
-              }}>
-                {/* Low Stock Alerts */}
-                <div style={{ 
-                  border: '1px solid #e9ecef',
-                  borderRadius: '8px',
-                  backgroundColor: 'white',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{ 
-                    padding: '12px 16px', 
-                    backgroundColor: '#fff3cd', 
-                    borderBottom: '1px solid #e9ecef'
-                  }}>
-                    <h4 style={{ 
-                      margin: '0', 
-                      fontSize: '16px', 
-                      fontWeight: '600', 
-                      color: '#856404'
-                    }}>
-                      ⚠️ Low Stock Alerts ({inventoryData.low_stock_alerts.length})
-                    </h4>
-                  </div>
-                  
-                  <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                    {inventoryData.low_stock_alerts.length === 0 ? (
-                      <div style={{ padding: '16px', textAlign: 'center', color: '#6c757d' }}>
-                        No low stock alerts
-                      </div>
-                    ) : (
-                      <div style={{ padding: '0' }}>
-                        {inventoryData.low_stock_alerts.slice(0, 5).map((alert, index) => (
-                          <div key={alert.product_id} style={{ 
-                            padding: '12px 16px', 
-                            borderBottom: index < Math.min(inventoryData.low_stock_alerts.length - 1, 4) ? '1px solid #f1f3f4' : 'none',
-                            backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'white'
-                          }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div>
-                                <div style={{ fontWeight: '500', color: '#495057', marginBottom: '4px' }}>
-                                  {alert.product_name}
-                                </div>
-                                <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                                  Category: {alert.category || 'Uncategorized'}
-                                </div>
-                              </div>
-                              <div style={{ textAlign: 'right' }}>
-                                <div style={{ 
-                                  fontSize: '16px', 
-                                  fontWeight: 'bold',
-                                  color: '#f57c00'
-                                }}>
-                                  {alert.current_stock}
-                                </div>
-                                <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                                  Min: {alert.minimum_stock}
-                                </div>
-                                <Button 
-                                  onClick={() => navigate(`/products?adjust_stock=${alert.product_id}`)}
-                                  variant="secondary"
-                                  style={{ 
-                                    fontSize: '11px', 
-                                    padding: '4px 8px',
-                                    backgroundColor: '#f8f9fa',
-                                    color: '#6c757d',
-                                    fontWeight: '500',
-                                    border: '1px solid #dee2e6',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    transition: 'background-color 0.2s',
-                                    marginTop: '4px'
-                                  }}
-                                >
-                                  Adjust Stock
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Top Moving Products */}
-                <div style={{ 
-                  border: '1px solid #e9ecef',
-                  borderRadius: '8px',
-                  backgroundColor: 'white',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{ 
-                    padding: '12px 16px', 
-                    backgroundColor: '#d1ecf1', 
-                    borderBottom: '1px solid #e9ecef'
-                  }}>
-                    <h4 style={{ 
-                      margin: '0', 
-                      fontSize: '16px', 
-                      fontWeight: '600', 
-                      color: '#0c5460'
-                    }}>
-                      📊 Top Moving Products
-                    </h4>
-                  </div>
-                  
-                  <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                    {inventoryData.top_moving_products.length === 0 ? (
-                      <div style={{ padding: '16px', textAlign: 'center', color: '#6c757d' }}>
-                        No movement data available
-                      </div>
-                    ) : (
-                      <div style={{ padding: '0' }}>
-                        {inventoryData.top_moving_products.slice(0, 5).map((product, index) => (
-                          <div key={product.product_id} style={{ 
-                            padding: '12px 16px', 
-                            borderBottom: index < Math.min(inventoryData.top_moving_products.length - 1, 4) ? '1px solid #f1f3f4' : 'none',
-                            backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'white'
-                          }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div>
-                                <div style={{ fontWeight: '500', color: '#495057', marginBottom: '4px' }}>
-                                  {product.product_name}
-                                </div>
-                                <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                                  Category: {product.category || 'Uncategorized'}
-                                </div>
-                              </div>
-                              <div style={{ textAlign: 'right' }}>
-                                <div style={{ 
-                                  fontSize: '16px', 
-                                  fontWeight: 'bold',
-                                  color: '#1976d2'
-                                }}>
-                                  {product.movement_count}
-                                </div>
-                                <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                                  Stock: {product.current_stock}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Advanced Analytics Section - 2 Column Layout */}
-          {analyticsData && (
             <div style={{ 
               display: 'grid', 
               gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
               gap: '20px'
             }}>
-              {/* Top Selling Items */}
+              {/* Recent Transactions */}
               <div style={{ 
-                padding: '20px', 
-                border: '1px solid #dee2e6',
+                padding: '20px',
+                backgroundColor: '#f8f9fa',
                 borderRadius: '8px',
-                backgroundColor: 'white',
-                height: 'fit-content'
+                border: '1px solid #e9ecef'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h4 style={{ margin: '0', color: '#495057', fontSize: '18px', fontWeight: '600' }}>
-                    🏆 Top Selling Items
-                  </h4>
-                  <Button 
-                    onClick={() => navigate('/products/add')}
-                    variant="primary"
-                    style={{ 
-                      fontSize: '12px', 
-                      padding: '6px 12px',
-                      backgroundColor: '#007bff',
-                      color: 'white',
-                      fontWeight: '600',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s'
-                    }}
-                  >
-                    🏷️ Add Product
-                  </Button>
-                </div>
-                <div style={{ display: 'grid', gap: '12px' }}>
-                  {analyticsData.topSellingItems.map((item, index) => (
-                    <div key={index} style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center',
-                      padding: '8px 12px',
-                      backgroundColor: '#f8f9fa',
-                      borderRadius: '4px'
-                    }}>
-                      <div>
-                        <div style={{ fontWeight: '500', color: '#495057' }}>{item.name}</div>
-                        <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                          Quantity: {item.quantity}
-                        </div>
+                <h4 style={{ 
+                  margin: '0 0 16px 0', 
+                  fontSize: '16px', 
+                  fontWeight: '600', 
+                  color: '#495057'
+                }}>
+                  💰 Recent Transactions
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    padding: '12px',
+                    backgroundColor: 'white',
+                    borderRadius: '6px',
+                    border: '1px solid #e9ecef'
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: '500', color: '#495057', marginBottom: '4px' }}>
+                        Invoice #INV-001
                       </div>
-                      <div style={{ fontWeight: '600', color: '#28a745' }}>
-                        {formatCurrency(item.revenue)}
+                      <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                        Customer Payment
                       </div>
                     </div>
-                  ))}
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#28a745' }}>
+                        ₹15,000
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                        2 hours ago
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    padding: '12px',
+                    backgroundColor: 'white',
+                    borderRadius: '6px',
+                    border: '1px solid #e9ecef'
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: '500', color: '#495057', marginBottom: '4px' }}>
+                        Purchase #PUR-002
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                        Vendor Payment
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#dc3545' }}>
+                        ₹8,500
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                        1 day ago
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-
-
-              {/* Customer Insights */}
+              {/* Quick Insights */}
               <div style={{ 
-                padding: '20px', 
-                border: '1px solid #17a2b8',
+                padding: '20px',
+                backgroundColor: '#f8f9fa',
                 borderRadius: '8px',
-                backgroundColor: '#e7f3ff',
-                height: 'fit-content'
+                border: '1px solid #e9ecef'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h4 style={{ margin: '0', color: '#0056b3', fontSize: '18px', fontWeight: '600' }}>
-                    👥 Top Customers
-                  </h4>
-                  <Button 
-                    onClick={() => navigate('/customers')}
-                    variant="primary"
-                    style={{ 
-                      fontSize: '12px', 
-                      padding: '6px 12px',
-                      backgroundColor: '#17a2b8',
-                      color: 'white',
-                      fontWeight: '600',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s'
-                    }}
-                  >
-                    👤 Manage Customers
-                  </Button>
-                </div>
-                <div style={{ display: 'grid', gap: '12px' }}>
-                  {analyticsData.customerInsights.map((customer, index) => (
-                    <div key={index} style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center',
-                      padding: '8px 12px',
-                      backgroundColor: '#f8f9fa',
-                      borderRadius: '4px'
-                    }}>
-                      <div>
-                        <div style={{ fontWeight: '500', color: '#495057' }}>{customer.name}</div>
-                        <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                          Orders: {customer.totalPurchases}
-                        </div>
-                      </div>
-                      <div style={{ fontWeight: '600', color: '#17a2b8' }}>
-                        Avg: {formatCurrency(customer.avgOrderValue)}
-                      </div>
+                <h4 style={{ 
+                  margin: '0 0 16px 0', 
+                  fontSize: '16px', 
+                  fontWeight: '600', 
+                  color: '#495057'
+                }}>
+                  📈 Quick Insights
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ 
+                    padding: '12px',
+                    backgroundColor: 'white',
+                    borderRadius: '6px',
+                    border: '1px solid #e9ecef'
+                  }}>
+                    <div style={{ fontWeight: '500', color: '#495057', marginBottom: '4px' }}>
+                      Cash Flow Trend
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* GST Insights */}
-              <div style={{ 
-                padding: '20px', 
-                border: '1px solid #6f42c1',
-                borderRadius: '8px',
-                backgroundColor: '#f8f5ff',
-                height: 'fit-content'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h4 style={{ margin: '0', color: '#6f42c1', fontSize: '18px', fontWeight: '600' }}>
-                    🏛️ GST Insights (Last 3 Months)
-                  </h4>
-                  <Button 
-                    onClick={() => navigate('/invoices')}
-                    variant="primary"
-                    style={{ 
-                      fontSize: '12px', 
-                      padding: '6px 12px',
-                      backgroundColor: '#6f42c1',
-                      color: 'white',
-                      fontWeight: '600',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s'
-                    }}
-                  >
-                    📊 View Reports
-                  </Button>
-                </div>
-                <div style={{ display: 'grid', gap: '12px' }}>
-                  {analyticsData.gstInsights.map((gst, index) => (
-                    <div key={index} style={{ 
-                      padding: '12px',
-                      backgroundColor: '#f8f9fa',
-                      borderRadius: '4px'
-                    }}>
-                      <div style={{ fontWeight: '500', color: '#495057', marginBottom: '8px' }}>
-                        {gst.month}
-                      </div>
-                      <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(3, 1fr)', 
-                        gap: '8px',
-                        fontSize: '12px'
-                      }}>
-                        <div>
-                          <div style={{ color: '#6c757d' }}>CGST</div>
-                          <div style={{ fontWeight: '600', color: '#6f42c1' }}>
-                            {formatCurrency(gst.cgst)}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{ color: '#6c757d' }}>SGST</div>
-                          <div style={{ fontWeight: '600', color: '#6f42c1' }}>
-                            {formatCurrency(gst.sgst)}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{ color: '#6c757d' }}>IGST</div>
-                          <div style={{ fontWeight: '600', color: '#6f42c1' }}>
-                            {formatCurrency(gst.igst)}
-                          </div>
-                        </div>
-                      </div>
+                    <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                      Net cashflow improved by 12% this month
                     </div>
-                  ))}
+                  </div>
+                  
+                  <div style={{ 
+                    padding: '12px',
+                    backgroundColor: 'white',
+                    borderRadius: '6px',
+                    border: '1px solid #e9ecef'
+                  }}>
+                    <div style={{ fontWeight: '500', color: '#495057', marginBottom: '4px' }}>
+                      Inventory Alert
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                      {inventoryData?.low_stock_items || 0} items need restocking
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        </>
       ) : (
         <div style={{ 
           display: 'flex', 
