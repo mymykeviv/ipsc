@@ -5693,3 +5693,253 @@ def export_invoice_template(
         headers={"Content-Disposition": f"attachment; filename=template_{template_id}.json"}
     )
 
+
+@api.get('/stock/movement-history/pdf')
+def get_stock_movement_history_pdf(
+    financial_year: str | None = None,
+    product_id: int | None = None,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate PDF report for stock movement history"""
+    
+    # If no financial year specified, use current year
+    if not financial_year:
+        current_year = datetime.now().year
+        financial_year = f"{current_year}-{current_year + 1}"
+    
+    # Parse financial year (format: "2024-2025")
+    try:
+        start_year = int(financial_year.split('-')[0])
+        end_year = int(financial_year.split('-')[1])
+        fy_start_date = datetime(start_year, 4, 1)  # April 1st
+        fy_end_date = datetime(end_year, 3, 31)     # March 31st
+    except (ValueError, IndexError):
+        raise HTTPException(status_code=400, detail="Invalid financial year format. Use YYYY-YYYY")
+    
+    # Get products (all or specific)
+    if product_id:
+        products = db.query(Product).filter(Product.id == product_id).all()
+        if not products:
+            raise HTTPException(status_code=404, detail="Product not found")
+    else:
+        products = db.query(Product).all()
+    
+    # Create PDF buffer
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, rightMargin=1*cm, leftMargin=1*cm, topMargin=1*cm, bottomMargin=1*cm)
+    
+    # Define styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        textColor=darkblue,
+        alignment=TA_CENTER,
+        spaceAfter=20
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=14,
+        textColor=darkblue,
+        spaceAfter=10
+    )
+    
+    normal_style = ParagraphStyle(
+        'CustomNormal',
+        parent=styles['Normal'],
+        fontSize=10,
+        spaceAfter=3
+    )
+    
+    # Build PDF content
+    story = []
+    
+    # Header
+    story.append(Paragraph("Stock Movement History Report", title_style))
+    story.append(Paragraph(f"Financial Year: {financial_year}", normal_style))
+    if product_id:
+        product = products[0] if products else None
+        if product:
+            story.append(Paragraph(f"Product: {product.name}", normal_style))
+    else:
+        story.append(Paragraph(f"All Products ({len(products)} items)", normal_style))
+    story.append(Paragraph(f"Generated on: {datetime.now().strftime('%d/%m/%Y %H:%M')}", normal_style))
+    story.append(Spacer(1, 20))
+    
+    # Process each product
+    for product in products:
+        # Get all stock transactions for this product in the financial year
+        stock_transactions = db.query(StockLedgerEntry).filter(
+            StockLedgerEntry.product_id == product.id,
+            StockLedgerEntry.created_at >= fy_start_date,
+            StockLedgerEntry.created_at <= fy_end_date
+        ).order_by(StockLedgerEntry.created_at).all()
+        
+        # Calculate opening stock
+        pre_fy_transactions = db.query(StockLedgerEntry).filter(
+            StockLedgerEntry.product_id == product.id,
+            StockLedgerEntry.created_at < fy_start_date
+        ).all()
+        
+        opening_stock = sum(
+            adj.qty for adj in pre_fy_transactions 
+            if adj.entry_type == 'in'
+        ) - sum(
+            adj.qty for adj in pre_fy_transactions 
+            if adj.entry_type == 'out'
+        )
+        opening_stock = max(0, opening_stock)
+        
+        # Calculate opening value
+        unit_price = product.purchase_price or product.sales_price or 0
+        unit_price_float = float(unit_price) if unit_price else 0.0
+        opening_value = opening_stock * unit_price_float
+        
+        # Process transactions
+        transactions = []
+        running_balance = opening_stock
+        
+        for transaction in stock_transactions:
+            # Calculate unit price and total value
+            unit_price = product.purchase_price or product.sales_price or 0
+            unit_price_float = float(unit_price) if unit_price else 0.0
+            total_value = transaction.qty * unit_price_float
+            
+            # Determine reference information
+            ref_type = None
+            ref_id = None
+            reference_number = None
+            
+            if transaction.ref_type and transaction.ref_id:
+                ref_type = transaction.ref_type
+                ref_id = transaction.ref_id
+                if ref_type == 'invoice':
+                    invoice = db.query(Invoice).filter(Invoice.id == ref_id).first()
+                    reference_number = invoice.invoice_no if invoice else None
+                elif ref_type == 'purchase':
+                    purchase = db.query(Purchase).filter(Purchase.id == ref_id).first()
+                    reference_number = purchase.purchase_no if purchase else None
+                elif ref_type == 'adjustment':
+                    reference_number = f"ADJ-{ref_id}"
+            
+            # Update running balance
+            if transaction.entry_type == 'in':
+                running_balance += transaction.qty
+            elif transaction.entry_type == 'out':
+                running_balance -= transaction.qty
+            elif transaction.entry_type == 'adjust':
+                running_balance += transaction.qty
+            
+            transactions.append({
+                'date': transaction.created_at.strftime('%d/%m/%Y'),
+                'type': transaction.entry_type.upper(),
+                'quantity': f"{transaction.qty:.2f}",
+                'unit_price': f"₹{unit_price_float:.2f}" if unit_price_float > 0 else '-',
+                'total_value': f"₹{total_value:.2f}" if total_value > 0 else '-',
+                'running_balance': f"{running_balance:.2f}",
+                'reference': reference_number or '-'
+            })
+        
+        # Calculate summary totals
+        total_incoming = sum(t.qty for t in stock_transactions if t.entry_type == 'in') + \
+                        sum(t.qty for t in stock_transactions if t.entry_type == 'adjust' and t.qty > 0)
+        total_incoming_value = sum(t.qty * unit_price_float for t in stock_transactions if t.entry_type == 'in') + \
+                              sum(t.qty * unit_price_float for t in stock_transactions if t.entry_type == 'adjust' and t.qty > 0)
+        total_outgoing = sum(t.qty for t in stock_transactions if t.entry_type == 'out') + \
+                        sum(abs(t.qty) for t in stock_transactions if t.entry_type == 'adjust' and t.qty < 0)
+        total_outgoing_value = sum(t.qty * unit_price_float for t in stock_transactions if t.entry_type == 'out') + \
+                              sum(abs(t.qty) * unit_price_float for t in stock_transactions if t.entry_type == 'adjust' and t.qty < 0)
+        closing_stock = running_balance
+        closing_value = closing_stock * unit_price_float
+        
+        # Product header
+        story.append(Paragraph(f"Product: {product.name}", heading_style))
+        story.append(Paragraph(f"SKU: {product.sku or 'N/A'}", normal_style))
+        story.append(Paragraph(f"Category: {product.category or 'N/A'}", normal_style))
+        story.append(Spacer(1, 10))
+        
+        # Summary table
+        summary_data = [
+            ['Opening Stock', f"{opening_stock:.2f}", f"₹{opening_value:.2f}"],
+            ['Total Incoming', f"{total_incoming:.2f}", f"₹{total_incoming_value:.2f}"],
+            ['Total Outgoing', f"{total_outgoing:.2f}", f"₹{total_outgoing_value:.2f}"],
+            ['Closing Stock', f"{closing_stock:.2f}", f"₹{closing_value:.2f}"]
+        ]
+        
+        summary_table = Table(summary_data, colWidths=[4*cm, 3*cm, 4*cm])
+        summary_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        story.append(summary_table)
+        story.append(Spacer(1, 15))
+        
+        # Transactions table
+        if transactions:
+            # Add opening balance row
+            transactions.insert(0, {
+                'date': f"{start_year}-04-01",
+                'type': 'OPENING',
+                'quantity': f"{opening_stock:.2f}",
+                'unit_price': f"₹{unit_price_float:.2f}" if unit_price_float > 0 else '-',
+                'total_value': f"₹{opening_value:.2f}" if opening_value > 0 else '-',
+                'running_balance': f"{opening_stock:.2f}",
+                'reference': '-'
+            })
+            
+            # Create table data
+            table_data = [['Date', 'Type', 'Quantity', 'Unit Price', 'Total Value', 'Running Balance', 'Reference']]
+            for t in transactions:
+                table_data.append([
+                    t['date'], t['type'], t['quantity'], t['unit_price'], 
+                    t['total_value'], t['running_balance'], t['reference']
+                ])
+            
+            # Create table
+            transaction_table = Table(table_data, colWidths=[2*cm, 1.5*cm, 1.5*cm, 2*cm, 2*cm, 2*cm, 2*cm])
+            transaction_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            story.append(transaction_table)
+        else:
+            story.append(Paragraph("No transactions found for this period.", normal_style))
+        
+        story.append(Spacer(1, 20))
+    
+    # Build PDF
+    doc.build(story)
+    pdf = buf.getvalue()
+    buf.close()
+    
+    # Generate filename
+    filename = f"stock_movement_history_{financial_year}"
+    if product_id:
+        product = products[0] if products else None
+        if product:
+            filename += f"_{product.name.replace(' ', '_')}"
+    filename += ".pdf"
+    
+    return Response(
+        content=pdf, 
+        media_type='application/pdf',
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+

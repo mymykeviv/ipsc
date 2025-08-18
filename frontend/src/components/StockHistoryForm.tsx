@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { apiGetStockMovementHistory, StockMovement, StockTransaction, apiGetProducts, Product } from '../lib/api'
+import { apiGetStockMovementHistory, StockMovement, StockTransaction, apiGetProducts, Product, apiDownloadStockMovementHistoryPDF } from '../lib/api'
 import { Button } from './Button'
 import { ErrorMessage } from './ErrorMessage'
 import { useAuth } from '../modules/AuthContext'
@@ -39,6 +39,9 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
   
   // Force reload state
   const [forceReload, setForceReload] = useState(0)
+  
+  // PDF download state
+  const [downloadingPDF, setDownloadingPDF] = useState(false)
   
   const { forceLogout } = useAuth()
   const handleApiError = createApiErrorHandler(forceLogout)
@@ -293,6 +296,27 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
     }
   }
 
+  const handleDownloadPDF = async () => {
+    try {
+      setDownloadingPDF(true)
+      setError(null)
+      
+      // Get current financial year
+      const fy = financialYearFilter === 'all' ? getCurrentFinancialYear() : financialYearFilter
+      
+      // Get product ID if filtering by specific product
+      const productIdNum = (productId && forceReload === 0) ? parseInt(productId) : undefined
+      
+      await apiDownloadStockMovementHistoryPDF(fy, productIdNum)
+    } catch (err) {
+      console.error('Failed to download PDF:', err)
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
+    } finally {
+      setDownloadingPDF(false)
+    }
+  }
+
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
       <div style={{ 
@@ -306,9 +330,34 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
         <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
           {productName ? `Stock Movement History - ${productName}` : 'Stock Movement History'}
         </h1>
-        <Button onClick={onCancel} variant="secondary">
-          ← Back to Products
-        </Button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <Button 
+            onClick={handleDownloadPDF} 
+            variant="primary"
+            disabled={downloadingPDF}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              minWidth: '140px'
+            }}
+          >
+            {downloadingPDF ? (
+              <>
+                <span style={{ fontSize: '14px' }}>⏳</span>
+                Generating PDF...
+              </>
+            ) : (
+              <>
+                <span style={{ fontSize: '14px' }}>📄</span>
+                Download PDF
+              </>
+            )}
+          </Button>
+          <Button onClick={onCancel} variant="secondary">
+            ← Back to Products
+          </Button>
+        </div>
       </div>
 
       {error && <ErrorMessage message={error} />}

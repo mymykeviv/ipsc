@@ -1103,7 +1103,7 @@ export async function apiGetProductStockMovementHistory(
 ): Promise<StockMovement[]> {
   const params = new URLSearchParams()
   if (fromYear) params.append('from_year', fromYear.toString())
-  if (toYear) params.append('to_year', toYear.toString())
+  if (toYear) params.append('toYear', toYear.toString())
   
   const queryString = params.toString()
   const url = `/api/stock/movement-history/${productId}${queryString ? `?${queryString}` : ''}`
@@ -1122,6 +1122,49 @@ export async function apiGetProductStockMovementHistory(
   }
   
   return r.json()
+}
+
+export async function apiDownloadStockMovementHistoryPDF(financialYear?: string, productId?: number): Promise<void> {
+  const params = new URLSearchParams()
+  if (financialYear) params.append('financial_year', financialYear)
+  if (productId) params.append('product_id', productId.toString())
+  
+  const queryString = params.toString()
+  const url = `/api/stock/movement-history/pdf${queryString ? `?${queryString}` : ''}`
+  
+  const r = await fetch(url, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  // Get filename from response headers
+  const contentDisposition = r.headers.get('Content-Disposition')
+  let filename = 'stock_movement_history.pdf'
+  if (contentDisposition) {
+    const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+    if (filenameMatch) {
+      filename = filenameMatch[1]
+    }
+  }
+  
+  // Create blob and download
+  const blob = await r.blob()
+  const url2 = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url2
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  window.URL.revokeObjectURL(url2)
+  document.body.removeChild(a)
 }
 
 
