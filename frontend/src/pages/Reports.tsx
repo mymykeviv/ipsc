@@ -26,7 +26,15 @@ export function Reports({ section }: ReportsProps) {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   })
   const [reportType, setReportType] = useState<'gstr1' | 'gstr2' | 'gstr3b'>('gstr1')
-  const [activeTab, setActiveTab] = useState<'summary' | 'gst-filing' | 'inventory'>('gst-filing')
+  
+  // Set active tab based on section prop
+  const getInitialActiveTab = () => {
+    if (section === 'inventory') return 'inventory'
+    if (section === 'summary') return 'summary'
+    return 'gst-filing' // default
+  }
+  
+  const [activeTab, setActiveTab] = useState<'summary' | 'gst-filing' | 'inventory'>(getInitialActiveTab())
 
   useEffect(() => {
     if (!token) return

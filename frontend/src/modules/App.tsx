@@ -4,7 +4,14 @@ import { Dashboard } from '../pages/Dashboard'
 import { Products } from '../pages/Products'
 import { Purchases } from '../pages/Purchases'
 import { Parties } from '../pages/Parties'
-import { Reports } from '../pages/Reports'
+import { GstReports } from '../pages/reports/GstReports'
+import { InventoryReports } from '../pages/reports/InventoryReports'
+import { CashflowReports } from '../pages/reports/CashflowReports'
+import { IncomeReports } from '../pages/reports/IncomeReports'
+import { ExpenseReports } from '../pages/reports/ExpenseReports'
+import { PurchaseReports } from '../pages/reports/PurchaseReports'
+import { PaymentReports } from '../pages/reports/PaymentReports'
+import { FinancialReports } from '../pages/reports/FinancialReports'
 import { Settings } from '../pages/Settings'
 import { Login } from '../pages/Login'
 import { AuthProvider, useAuth } from './AuthContext'
@@ -447,15 +454,15 @@ function Shell() {
           <Route path="/expenses/edit/:id" element={<Expenses mode="edit" />} />
           
           {/* Report Routes */}
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/reports/gst" element={<Reports section="gst" />} />
-          <Route path="/reports/cashflow" element={<Reports section="cashflow" />} />
-          <Route path="/reports/income" element={<Reports section="income" />} />
-          <Route path="/reports/expenses" element={<Reports section="expenses" />} />
-          <Route path="/reports/inventory" element={<Reports section="inventory" />} />
-          <Route path="/reports/purchases" element={<Reports section="purchases" />} />
-          <Route path="/reports/payments" element={<Reports section="payments" />} />
-          <Route path="/reports/financial" element={<Reports section="financial" />} />
+          <Route path="/reports" element={<GstReports />} />
+          <Route path="/reports/gst" element={<GstReports />} />
+          <Route path="/reports/cashflow" element={<CashflowReports />} />
+          <Route path="/reports/income" element={<IncomeReports />} />
+          <Route path="/reports/expenses" element={<ExpenseReports />} />
+          <Route path="/reports/inventory" element={<InventoryReports />} />
+          <Route path="/reports/purchases" element={<PurchaseReports />} />
+          <Route path="/reports/payments" element={<PaymentReports />} />
+          <Route path="/reports/financial" element={<FinancialReports />} />
           
           {/* Legacy Routes for backward compatibility */}
           <Route path="/parties" element={<Parties />} />
