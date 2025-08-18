@@ -1248,6 +1248,86 @@ export interface InventorySummaryReport {
   filters_applied: Record<string, any> | null
 }
 
+// Stock Ledger Report Types
+export interface StockLedgerItem {
+  transaction_id: number
+  transaction_date: string
+  product_id: number
+  product_name: string
+  sku: string | null
+  entry_type: string
+  quantity: number
+  unit_price: number | null
+  total_value: number | null
+  running_balance: number
+  reference_type: string | null
+  reference_id: number | null
+  reference_number: string | null
+  notes: string | null
+}
+
+export interface StockLedgerReport {
+  total_transactions: number
+  total_incoming: number
+  total_outgoing: number
+  total_adjustments: number
+  opening_balance: number
+  closing_balance: number
+  transactions: StockLedgerItem[]
+  generated_at: string
+  filters_applied: Record<string, any> | null
+}
+
+// Inventory Valuation Report Types
+export interface InventoryValuationItem {
+  product_id: number
+  product_name: string
+  sku: string | null
+  category: string | null
+  current_stock: number
+  unit_cost: number | null
+  total_cost_value: number
+  unit_market_price: number | null
+  total_market_value: number
+  valuation_difference: number
+  last_updated: string | null
+}
+
+export interface InventoryValuationReport {
+  total_products: number
+  total_cost_value: number
+  total_market_value: number
+  total_valuation_difference: number
+  items: InventoryValuationItem[]
+  generated_at: string
+  filters_applied: Record<string, any> | null
+}
+
+// Inventory Dashboard Types
+export interface InventoryDashboardMetrics {
+  total_products: number
+  total_stock_value: number
+  low_stock_items: number
+  out_of_stock_items: number
+  recent_movements: number
+  average_stock_level: number
+  top_moving_products: Array<{
+    product_id: number
+    product_name: string
+    movement_count: number
+    current_stock: number
+    category: string | null
+  }>
+  low_stock_alerts: Array<{
+    product_id: number
+    product_name: string
+    current_stock: number
+    minimum_stock: number
+    category: string | null
+  }>
+  generated_at: string
+}
+
 export async function apiGetInventorySummary(
   category?: string,
   lowStockOnly?: boolean,
@@ -1260,6 +1340,83 @@ export async function apiGetInventorySummary(
   
   const queryString = params.toString()
   const url = `/api/reports/inventory-summary${queryString ? `?${queryString}` : ''}`
+  
+  const r = await fetch(url, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiGetStockLedger(
+  productId?: number,
+  fromDate?: string,
+  toDate?: string,
+  entryType?: string
+): Promise<StockLedgerReport> {
+  const params = new URLSearchParams()
+  if (productId) params.append('product_id', productId.toString())
+  if (fromDate) params.append('from_date', fromDate)
+  if (toDate) params.append('to_date', toDate)
+  if (entryType) params.append('entry_type', entryType)
+  
+  const queryString = params.toString()
+  const url = `/api/reports/stock-ledger${queryString ? `?${queryString}` : ''}`
+  
+  const r = await fetch(url, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiGetInventoryValuation(
+  category?: string,
+  includeZeroStock?: boolean
+): Promise<InventoryValuationReport> {
+  const params = new URLSearchParams()
+  if (category) params.append('category', category)
+  if (includeZeroStock !== undefined) params.append('include_zero_stock', includeZeroStock.toString())
+  
+  const queryString = params.toString()
+  const url = `/api/reports/inventory-valuation${queryString ? `?${queryString}` : ''}`
+  
+  const r = await fetch(url, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiGetInventoryDashboard(): Promise<InventoryDashboardMetrics> {
+  const url = '/api/reports/inventory-dashboard'
   
   const r = await fetch(url, {
     headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }

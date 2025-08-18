@@ -1976,7 +1976,70 @@ class InventorySummaryReport(BaseModel):
     out_of_stock_items: int
     items: list[InventorySummaryItem]
     generated_at: str
-    filters_applied: dict | None = None
+    filters_applied: dict | None
+
+# Stock Ledger Report Models
+class StockLedgerItem(BaseModel):
+    transaction_id: int
+    transaction_date: str
+    product_id: int
+    product_name: str
+    sku: str | None
+    entry_type: str  # 'in', 'out', 'adjust'
+    quantity: float
+    unit_price: float | None
+    total_value: float | None
+    running_balance: float
+    reference_type: str | None  # 'invoice', 'purchase', 'adjustment'
+    reference_id: int | None
+    reference_number: str | None
+    notes: str | None
+
+class StockLedgerReport(BaseModel):
+    total_transactions: int
+    total_incoming: float
+    total_outgoing: float
+    total_adjustments: float
+    opening_balance: float
+    closing_balance: float
+    transactions: list[StockLedgerItem]
+    generated_at: str
+    filters_applied: dict | None
+
+# Inventory Valuation Report Models
+class InventoryValuationItem(BaseModel):
+    product_id: int
+    product_name: str
+    sku: str | None
+    category: str | None
+    current_stock: float
+    unit_cost: float | None
+    total_cost_value: float
+    unit_market_price: float | None
+    total_market_value: float
+    valuation_difference: float
+    last_updated: str | None
+
+class InventoryValuationReport(BaseModel):
+    total_products: int
+    total_cost_value: float
+    total_market_value: float
+    total_valuation_difference: float
+    items: list[InventoryValuationItem]
+    generated_at: str
+    filters_applied: dict | None
+
+# Inventory Dashboard Models
+class InventoryDashboardMetrics(BaseModel):
+    total_products: int
+    total_stock_value: float
+    low_stock_items: int
+    out_of_stock_items: int
+    recent_movements: int
+    average_stock_level: float
+    top_moving_products: list[dict]
+    low_stock_alerts: list[dict]
+    generated_at: str = None
 
 
 @api.get('/reports/inventory-summary', response_model=InventorySummaryReport)
@@ -2080,6 +2143,329 @@ def get_inventory_summary_report(
         generated_at=datetime.now().isoformat(),
         filters_applied=filters_applied if filters_applied else None
     )
+
+
+@api.get('/reports/stock-ledger', response_model=StockLedgerReport)
+def get_stock_ledger_report(
+    product_id: int | None = Query(None, description="Filter by product ID"),
+    from_date: str | None = Query(None, description="Filter from date (YYYY-MM-DD)"),
+    to_date: str | None = Query(None, description="Filter to date (YYYY-MM-DD)"),
+    entry_type: str | None = Query(None, description="Filter by entry type (in/out/adjust)"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate detailed stock ledger report with running balances"""
+    try:
+        # Build query for stock ledger entries
+        query = db.query(StockLedgerEntry).join(Product)
+        
+        # Apply filters
+        if product_id:
+            query = query.filter(StockLedgerEntry.product_id == product_id)
+        
+        if from_date:
+            query = query.filter(StockLedgerEntry.created_at >= from_date)
+        
+        if to_date:
+            query = query.filter(StockLedgerEntry.created_at <= to_date + " 23:59:59")
+        
+        if entry_type:
+            query = query.filter(StockLedgerEntry.entry_type == entry_type)
+        
+        # Order by date and product
+        entries = query.order_by(StockLedgerEntry.created_at, StockLedgerEntry.product_id).all()
+        
+        # Group entries by product and calculate running balances
+        ledger_items = []
+        total_incoming = 0
+        total_outgoing = 0
+        total_adjustments = 0
+        
+        # Group by product for running balance calculation
+        product_entries = {}
+        for entry in entries:
+            if entry.product_id not in product_entries:
+                product_entries[entry.product_id] = []
+            product_entries[entry.product_id].append(entry)
+        
+        # Calculate running balances for each product
+        for product_id, product_entry_list in product_entries.items():
+            running_balance = 0
+            
+            for entry in product_entry_list:
+                # Calculate running balance
+                if entry.entry_type == 'in':
+                    running_balance += entry.qty
+                    total_incoming += entry.qty
+                elif entry.entry_type == 'out':
+                    running_balance -= entry.qty
+                    total_outgoing += entry.qty
+                elif entry.entry_type == 'adjust':
+                    running_balance += entry.qty
+                    total_adjustments += abs(entry.qty)
+                
+                # Get product details
+                product = db.query(Product).filter(Product.id == entry.product_id).first()
+                
+                # Determine reference information
+                reference_type = None
+                reference_id = None
+                reference_number = None
+                
+                if hasattr(entry, 'invoice_id') and entry.invoice_id:
+                    reference_type = 'invoice'
+                    reference_id = entry.invoice_id
+                    invoice = db.query(Invoice).filter(Invoice.id == entry.invoice_id).first()
+                    reference_number = invoice.invoice_no if invoice else None
+                elif hasattr(entry, 'purchase_id') and entry.purchase_id:
+                    reference_type = 'purchase'
+                    reference_id = entry.purchase_id
+                    purchase = db.query(Purchase).filter(Purchase.id == entry.purchase_id).first()
+                    reference_number = purchase.purchase_no if purchase else None
+                else:
+                    reference_type = 'adjustment'
+                    reference_id = entry.id
+                    reference_number = f"ADJ-{entry.id}"
+                
+                ledger_items.append(StockLedgerItem(
+                    transaction_id=entry.id,
+                    transaction_date=entry.created_at.isoformat(),
+                    product_id=entry.product_id,
+                    product_name=product.name if product else "Unknown Product",
+                    sku=product.sku if product else None,
+                    entry_type=entry.entry_type,
+                    quantity=entry.qty,
+                    unit_price=entry.unit_price,
+                    total_value=entry.qty * (entry.unit_price or 0),
+                    running_balance=running_balance,
+                    reference_type=reference_type,
+                    reference_id=reference_id,
+                    reference_number=reference_number,
+                    notes=entry.notes
+                ))
+        
+        # Calculate opening and closing balances
+        opening_balance = 0
+        closing_balance = running_balance if ledger_items else 0
+        
+        return StockLedgerReport(
+            total_transactions=len(ledger_items),
+            total_incoming=total_incoming,
+            total_outgoing=total_outgoing,
+            total_adjustments=total_adjustments,
+            opening_balance=opening_balance,
+            closing_balance=closing_balance,
+            transactions=ledger_items,
+            generated_at=datetime.now().isoformat(),
+            filters_applied={
+                "product_id": product_id,
+                "from_date": from_date,
+                "to_date": to_date,
+                "entry_type": entry_type
+            } if any([product_id, from_date, to_date, entry_type]) else None
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating stock ledger report: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate stock ledger report")
+
+
+@api.get('/reports/inventory-valuation', response_model=InventoryValuationReport)
+def get_inventory_valuation_report(
+    category: str | None = Query(None, description="Filter by product category"),
+    include_zero_stock: bool = Query(True, description="Include products with zero stock"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate inventory valuation report with cost and market value calculations"""
+    try:
+        # Build base query
+        query = db.query(Product).filter(Product.is_active == True)
+        
+        # Apply filters
+        if category:
+            query = query.filter(Product.category == category)
+        
+        products = query.all()
+        
+        # Calculate valuations
+        valuation_items = []
+        total_cost_value = 0
+        total_market_value = 0
+        total_valuation_difference = 0
+        
+        for product in products:
+            # Calculate current stock from ledger entries
+            stock_entries = db.query(StockLedgerEntry).filter(
+                StockLedgerEntry.product_id == product.id
+            ).all()
+            
+            current_stock = sum(
+                entry.qty for entry in stock_entries 
+                if entry.entry_type in ['in', 'adjust']
+            ) - sum(
+                entry.qty for entry in stock_entries 
+                if entry.entry_type == 'out'
+            )
+            current_stock = max(0, current_stock)
+            
+            # Skip zero stock items if not included
+            if not include_zero_stock and current_stock == 0:
+                continue
+            
+            # Calculate unit costs and values
+            unit_cost = float(product.purchase_price) if product.purchase_price else 0
+            unit_market_price = float(product.sales_price) if product.sales_price else unit_cost
+            
+            total_cost_value_product = current_stock * unit_cost
+            total_market_value_product = current_stock * unit_market_price
+            valuation_difference = total_market_value_product - total_cost_value_product
+            
+            # Get last updated date
+            last_movement = db.query(StockLedgerEntry).filter(
+                StockLedgerEntry.product_id == product.id
+            ).order_by(StockLedgerEntry.created_at.desc()).first()
+            
+            last_updated = last_movement.created_at.isoformat() if last_movement else None
+            
+            valuation_items.append(InventoryValuationItem(
+                product_id=product.id,
+                product_name=product.name,
+                sku=product.sku,
+                category=product.category,
+                current_stock=current_stock,
+                unit_cost=unit_cost,
+                total_cost_value=total_cost_value_product,
+                unit_market_price=unit_market_price,
+                total_market_value=total_market_value_product,
+                valuation_difference=valuation_difference,
+                last_updated=last_updated
+            ))
+            
+            total_cost_value += total_cost_value_product
+            total_market_value += total_market_value_product
+            total_valuation_difference += valuation_difference
+        
+        # Build filters applied
+        filters_applied = {}
+        if category:
+            filters_applied["category"] = category
+        if not include_zero_stock:
+            filters_applied["include_zero_stock"] = False
+        
+        return InventoryValuationReport(
+            total_products=len(valuation_items),
+            total_cost_value=total_cost_value,
+            total_market_value=total_market_value,
+            total_valuation_difference=total_valuation_difference,
+            items=valuation_items,
+            generated_at=datetime.now().isoformat(),
+            filters_applied=filters_applied if filters_applied else None
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating inventory valuation report: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate inventory valuation report")
+
+
+@api.get('/reports/inventory-dashboard', response_model=InventoryDashboardMetrics)
+def get_inventory_dashboard_metrics(
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate real-time inventory dashboard metrics"""
+    try:
+        # Get all active products
+        products = db.query(Product).filter(Product.is_active == True).all()
+        
+        total_products = len(products)
+        total_stock_value = 0
+        low_stock_items = 0
+        out_of_stock_items = 0
+        recent_movements = 0
+        total_stock_quantity = 0
+        
+        # Calculate metrics for each product
+        low_stock_alerts = []
+        top_moving_products = []
+        
+        # Get recent movements (last 7 days)
+        from datetime import timedelta
+        recent_date = datetime.now() - timedelta(days=7)
+        recent_entries = db.query(StockLedgerEntry).filter(
+            StockLedgerEntry.created_at >= recent_date
+        ).all()
+        recent_movements = len(recent_entries)
+        
+        for product in products:
+            # Calculate current stock
+            stock_entries = db.query(StockLedgerEntry).filter(
+                StockLedgerEntry.product_id == product.id
+            ).all()
+            
+            current_stock = sum(
+                entry.qty for entry in stock_entries 
+                if entry.entry_type in ['in', 'adjust']
+            ) - sum(
+                entry.qty for entry in stock_entries 
+                if entry.entry_type == 'out'
+            )
+            current_stock = max(0, current_stock)
+            
+            total_stock_quantity += current_stock
+            
+            # Calculate stock value
+            unit_price = product.purchase_price or product.sales_price or 0
+            stock_value = current_stock * float(unit_price) if unit_price else 0
+            total_stock_value += stock_value
+            
+            # Check stock status
+            default_minimum_stock = 10
+            if current_stock == 0:
+                out_of_stock_items += 1
+            elif current_stock <= default_minimum_stock:
+                low_stock_items += 1
+                low_stock_alerts.append({
+                    "product_id": product.id,
+                    "product_name": product.name,
+                    "current_stock": current_stock,
+                    "minimum_stock": default_minimum_stock,
+                    "category": product.category
+                })
+            
+            # Calculate movement frequency for top moving products
+            movement_count = len(stock_entries)
+            if movement_count > 0:
+                top_moving_products.append({
+                    "product_id": product.id,
+                    "product_name": product.name,
+                    "movement_count": movement_count,
+                    "current_stock": current_stock,
+                    "category": product.category
+                })
+        
+        # Sort top moving products by movement count
+        top_moving_products.sort(key=lambda x: x["movement_count"], reverse=True)
+        top_moving_products = top_moving_products[:10]  # Top 10
+        
+        # Calculate average stock level
+        average_stock_level = total_stock_quantity / total_products if total_products > 0 else 0
+        
+        return InventoryDashboardMetrics(
+            total_products=total_products,
+            total_stock_value=total_stock_value,
+            low_stock_items=low_stock_items,
+            out_of_stock_items=out_of_stock_items,
+            recent_movements=recent_movements,
+            average_stock_level=average_stock_level,
+            top_moving_products=top_moving_products,
+            low_stock_alerts=low_stock_alerts,
+            generated_at=datetime.now().isoformat()
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating inventory dashboard metrics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate inventory dashboard metrics")
 
 
 def _calculate_period_dates(period_type: str, period_value: str) -> tuple[str, str]:
