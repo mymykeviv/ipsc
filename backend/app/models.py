@@ -408,3 +408,43 @@ class PurchaseOrderItem(Base):
     amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
+
+class InvoiceTemplate(Base):
+    __tablename__ = "invoice_templates"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    
+    # Template Design Settings
+    template_type: Mapped[str] = mapped_column(String(20), nullable=False, default="professional")  # professional, modern, classic, minimal
+    primary_color: Mapped[str] = mapped_column(String(7), nullable=False, default="#2c3e50")  # Hex color
+    secondary_color: Mapped[str] = mapped_column(String(7), nullable=False, default="#3498db")  # Hex color
+    accent_color: Mapped[str] = mapped_column(String(7), nullable=False, default="#e74c3c")  # Hex color
+    
+    # Typography Settings
+    header_font: Mapped[str] = mapped_column(String(50), nullable=False, default="Helvetica-Bold")
+    body_font: Mapped[str] = mapped_column(String(50), nullable=False, default="Helvetica")
+    header_font_size: Mapped[int] = mapped_column(Integer, nullable=False, default=18)
+    body_font_size: Mapped[int] = mapped_column(Integer, nullable=False, default=10)
+    
+    # Layout Settings
+    show_logo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    logo_position: Mapped[str] = mapped_column(String(20), nullable=False, default="top-left")  # top-left, top-right, center
+    show_company_details: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    show_customer_details: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    show_supplier_details: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    show_terms: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    show_notes: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    show_footer: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    
+    # Content Settings
+    header_text: Mapped[str] = mapped_column(String(100), nullable=False, default="TAX INVOICE")
+    footer_text: Mapped[str] = mapped_column(String(200), nullable=False, default="Thank you for your business!")
+    terms_text: Mapped[str] = mapped_column(String(200), nullable=False, default="Payment is due within the terms specified above.")
+    
+    # Status
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+

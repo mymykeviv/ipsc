@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, date
 
 from .auth import authenticate_user, create_access_token, get_current_user, require_role
 from .db import get_db
-from .models import Product, User, Party, CompanySettings, Invoice, InvoiceItem, StockLedgerEntry, Purchase, PurchaseItem, Payment, PurchasePayment, Expense, AuditTrail, RecurringInvoiceTemplate, RecurringInvoiceTemplateItem, RecurringInvoice, PurchaseOrder, PurchaseOrderItem
+from .models import Product, User, Party, CompanySettings, Invoice, InvoiceItem, StockLedgerEntry, Purchase, PurchaseItem, Payment, PurchasePayment, Expense, AuditTrail, RecurringInvoiceTemplate, RecurringInvoiceTemplateItem, RecurringInvoice, PurchaseOrder, PurchaseOrderItem, InvoiceTemplate
 from .audit import AuditService
 from .gst import money, split_gst
 from .gst_reports import generate_gstr1_report, generate_gstr3b_report
@@ -745,10 +745,33 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
 
 
 @api.get('/invoices/{invoice_id}/pdf')
-def invoice_pdf(invoice_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def invoice_pdf(invoice_id: int, template_id: int | None = None, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
     inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not inv:
         raise HTTPException(status_code=404, detail='Invoice not found')
+    
+    # Get template
+    if template_id:
+        template = db.query(InvoiceTemplate).filter(InvoiceTemplate.id == template_id).first()
+        if not template:
+            raise HTTPException(status_code=404, detail='Invoice template not found')
+    else:
+        # Get default template
+        template = db.query(InvoiceTemplate).filter(
+            InvoiceTemplate.is_default == True,
+            InvoiceTemplate.is_active == True
+        ).first()
+        if not template:
+            # Create default template if none exists
+            template = InvoiceTemplate(
+                name="Default Professional",
+                description="Default professional invoice template",
+                template_type="professional",
+                is_default=True
+            )
+            db.add(template)
+            db.commit()
+            db.refresh(template)
     
     # Get related data
     company = db.query(CompanySettings).first()
@@ -760,48 +783,61 @@ def invoice_pdf(invoice_id: int, _: User = Depends(get_current_user), db: Sessio
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, rightMargin=1*cm, leftMargin=1*cm, topMargin=1*cm, bottomMargin=1*cm)
     
-    # Define styles
+    # Define styles based on template
     styles = getSampleStyleSheet()
+    
+    # Convert hex colors to reportlab colors
+    def hex_to_color(hex_color):
+        hex_color = hex_color.lstrip('#')
+        return colors.HexColor(f'#{hex_color}')
+    
+    primary_color = hex_to_color(template.primary_color)
+    secondary_color = hex_to_color(template.secondary_color)
+    accent_color = hex_to_color(template.accent_color)
+    
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
-        fontSize=18,
-        textColor=darkblue,
+        fontSize=template.header_font_size,
+        textColor=primary_color,
         alignment=TA_CENTER,
-        spaceAfter=20
+        spaceAfter=20,
+        fontName=template.header_font
     )
     
     heading_style = ParagraphStyle(
         'CustomHeading',
         parent=styles['Heading2'],
-        fontSize=12,
-        textColor=darkblue,
-        spaceAfter=6
+        fontSize=template.body_font_size + 2,
+        textColor=primary_color,
+        spaceAfter=6,
+        fontName=template.header_font
     )
     
     normal_style = ParagraphStyle(
         'CustomNormal',
         parent=styles['Normal'],
-        fontSize=10,
-        spaceAfter=3
+        fontSize=template.body_font_size,
+        spaceAfter=3,
+        fontName=template.body_font
     )
     
     # Build PDF content
     story = []
     
     # Header - Company Details
-    if company:
+    if template.show_company_details and company:
         story.append(Paragraph(f"<b>{company.name}</b>", title_style))
         story.append(Paragraph(f"GSTIN: {company.gstin}", normal_style))
         story.append(Paragraph(f"State: {company.state} - {company.state_code}", normal_style))
-    else:
+    elif template.show_company_details:
         story.append(Paragraph("<b>CASHFLOW</b>", title_style))
         story.append(Paragraph("Financial Management System", normal_style))
     
     story.append(Spacer(1, 20))
     
     # Invoice Header
-    story.append(Paragraph(f"<b>TAX INVOICE</b>", heading_style))
+    story.append(Paragraph(f"<b>{template.header_text}</b>", heading_style))
     
     # Invoice Details Table
     invoice_data = [
@@ -816,10 +852,13 @@ def invoice_pdf(invoice_id: int, _: User = Depends(get_current_user), db: Sessio
     invoice_table = Table(invoice_data, colWidths=[2*cm, 6*cm, 2*cm, 6*cm])
     invoice_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('FONTNAME', (0, 0), (-1, -1), template.body_font),
+        ('FONTSIZE', (0, 0), (-1, -1), template.body_font_size - 1),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
         ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BACKGROUND', (0, 0), (0, -1), secondary_color),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
+        ('FONTNAME', (0, 0), (0, -1), template.header_font),
     ]))
     story.append(invoice_table)
     story.append(Spacer(1, 15))
@@ -827,7 +866,7 @@ def invoice_pdf(invoice_id: int, _: User = Depends(get_current_user), db: Sessio
     # Customer and Supplier Details
     details_data = []
     
-    if customer:
+    if template.show_customer_details and customer:
         details_data.append(['Bill To:', customer.name])
         details_data.append(['', f"GSTIN: {customer.gstin}" if customer.gstin else "GSTIN: Not Available"])
         customer_address = f"{customer.billing_address_line1}"
@@ -840,7 +879,7 @@ def invoice_pdf(invoice_id: int, _: User = Depends(get_current_user), db: Sessio
         if customer.contact_number:
             details_data.append(['', f"Phone: {customer.contact_number}"])
     
-    if supplier:
+    if template.show_supplier_details and supplier:
         details_data.append(['Ship From:', supplier.name])
         details_data.append(['', f"GSTIN: {supplier.gstin}" if supplier.gstin else "GSTIN: Not Available"])
         supplier_address = f"{supplier.billing_address_line1}"
@@ -853,11 +892,13 @@ def invoice_pdf(invoice_id: int, _: User = Depends(get_current_user), db: Sessio
         details_table = Table(details_data, colWidths=[2*cm, 14*cm])
         details_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('FONTNAME', (0, 0), (-1, -1), template.body_font),
+            ('FONTSIZE', (0, 0), (-1, -1), template.body_font_size - 1),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
             ('TOPPADDING', (0, 0), (-1, -1), 2),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 0), (0, -1), template.header_font),
+            ('BACKGROUND', (0, 0), (0, -1), secondary_color),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
         ]))
         story.append(details_table)
         story.append(Spacer(1, 15))
@@ -893,13 +934,13 @@ def invoice_pdf(invoice_id: int, _: User = Depends(get_current_user), db: Sessio
     items_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('ALIGN', (1, 0), (1, -1), 'LEFT'),  # Description left-aligned
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),  # Header row
-        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('FONTNAME', (0, 0), (-1, 0), template.header_font),  # Header row
+        ('FONTSIZE', (0, 0), (-1, -1), template.body_font_size - 2),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
         ('TOPPADDING', (0, 0), (-1, -1), 3),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, primary_color),
+        ('BACKGROUND', (0, 0), (-1, 0), secondary_color),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
     ]))
     story.append(items_table)
     story.append(Spacer(1, 15))
@@ -916,25 +957,33 @@ def invoice_pdf(invoice_id: int, _: User = Depends(get_current_user), db: Sessio
     totals_table = Table(totals_data, colWidths=[4*cm, 2*cm])
     totals_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),  # Total row bold
-        ('FONTSIZE', (0, -1), (-1, -1), 12),  # Total row larger
+        ('FONTNAME', (0, 0), (-1, -1), template.body_font),
+        ('FONTSIZE', (0, 0), (-1, -1), template.body_font_size),
+        ('FONTNAME', (0, -1), (-1, -1), template.header_font),  # Total row bold
+        ('FONTSIZE', (0, -1), (-1, -1), template.body_font_size + 2),  # Total row larger
         ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
         ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BACKGROUND', (0, -1), (-1, -1), accent_color),
+        ('TEXTCOLOR', (0, -1), (-1, -1), colors.white),
     ]))
     story.append(totals_table)
     story.append(Spacer(1, 20))
     
+    # Terms
+    if template.show_terms:
+        story.append(Paragraph(f"<b>Terms:</b> {template.terms_text}", normal_style))
+        story.append(Spacer(1, 10))
+    
     # Notes
-    if inv.notes:
+    if template.show_notes and inv.notes:
         story.append(Paragraph("<b>Notes:</b>", heading_style))
         story.append(Paragraph(inv.notes, normal_style))
         story.append(Spacer(1, 15))
     
     # Footer
-    story.append(Paragraph("Thank you for your business!", normal_style))
-    story.append(Paragraph("This is a computer generated invoice", normal_style))
+    if template.show_footer:
+        story.append(Paragraph(template.footer_text, normal_style))
+        story.append(Paragraph("This is a computer generated invoice", normal_style))
     
     # Build PDF
     doc.build(story)
@@ -5012,4 +5061,285 @@ def get_financial_summary(
             "cash_balance": cash_flow["cash_balances"]["closing_balance"]
         }
     }
+
+
+# Invoice Template Management - API Endpoints
+
+class InvoiceTemplateCreate(BaseModel):
+    name: str
+    description: str | None = None
+    template_type: str = "professional"
+    primary_color: str = "#2c3e50"
+    secondary_color: str = "#3498db"
+    accent_color: str = "#e74c3c"
+    header_font: str = "Helvetica-Bold"
+    body_font: str = "Helvetica"
+    header_font_size: int = 18
+    body_font_size: int = 10
+    show_logo: bool = True
+    logo_position: str = "top-left"
+    show_company_details: bool = True
+    show_customer_details: bool = True
+    show_supplier_details: bool = True
+    show_terms: bool = True
+    show_notes: bool = True
+    show_footer: bool = True
+    header_text: str = "TAX INVOICE"
+    footer_text: str = "Thank you for your business!"
+    terms_text: str = "Payment is due within the terms specified above."
+
+
+class InvoiceTemplateUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    template_type: str | None = None
+    primary_color: str | None = None
+    secondary_color: str | None = None
+    accent_color: str | None = None
+    header_font: str | None = None
+    body_font: str | None = None
+    header_font_size: int | None = None
+    body_font_size: int | None = None
+    show_logo: bool | None = None
+    logo_position: str | None = None
+    show_company_details: bool | None = None
+    show_customer_details: bool | None = None
+    show_supplier_details: bool | None = None
+    show_terms: bool | None = None
+    show_notes: bool | None = None
+    show_footer: bool | None = None
+    header_text: str | None = None
+    footer_text: str | None = None
+    terms_text: str | None = None
+
+
+class InvoiceTemplateOut(BaseModel):
+    id: int
+    name: str
+    description: str | None
+    template_type: str
+    primary_color: str
+    secondary_color: str
+    accent_color: str
+    header_font: str
+    body_font: str
+    header_font_size: int
+    body_font_size: int
+    show_logo: bool
+    logo_position: str
+    show_company_details: bool
+    show_customer_details: bool
+    show_supplier_details: bool
+    show_terms: bool
+    show_notes: bool
+    show_footer: bool
+    header_text: str
+    footer_text: str
+    terms_text: str
+    is_active: bool
+    is_default: bool
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+@api.post('/invoice-templates', response_model=InvoiceTemplateOut, status_code=status.HTTP_201_CREATED)
+def create_invoice_template(
+    payload: InvoiceTemplateCreate,
+    _: User = Depends(require_role("Admin")),
+    db: Session = Depends(get_db)
+):
+    """Create a new invoice template"""
+    # Validate template type
+    valid_types = ["professional", "modern", "classic", "minimal"]
+    if payload.template_type not in valid_types:
+        raise HTTPException(status_code=400, detail=f"Template type must be one of: {', '.join(valid_types)}")
+    
+    # Validate logo position
+    valid_positions = ["top-left", "top-right", "center"]
+    if payload.logo_position not in valid_positions:
+        raise HTTPException(status_code=400, detail=f"Logo position must be one of: {', '.join(valid_positions)}")
+    
+    # Validate colors (hex format)
+    import re
+    hex_pattern = r'^#[0-9A-Fa-f]{6}$'
+    for color_field, color_value in [("primary_color", payload.primary_color), 
+                                    ("secondary_color", payload.secondary_color), 
+                                    ("accent_color", payload.accent_color)]:
+        if not re.match(hex_pattern, color_value):
+            raise HTTPException(status_code=400, detail=f"{color_field} must be a valid hex color (e.g., #2c3e50)")
+    
+    # If this is the first template, make it default
+    existing_templates = db.query(InvoiceTemplate).filter(InvoiceTemplate.is_active == True).count()
+    is_default = existing_templates == 0
+    
+    template = InvoiceTemplate(
+        name=payload.name,
+        description=payload.description,
+        template_type=payload.template_type,
+        primary_color=payload.primary_color,
+        secondary_color=payload.secondary_color,
+        accent_color=payload.accent_color,
+        header_font=payload.header_font,
+        body_font=payload.body_font,
+        header_font_size=payload.header_font_size,
+        body_font_size=payload.body_font_size,
+        show_logo=payload.show_logo,
+        logo_position=payload.logo_position,
+        show_company_details=payload.show_company_details,
+        show_customer_details=payload.show_customer_details,
+        show_supplier_details=payload.show_supplier_details,
+        show_terms=payload.show_terms,
+        show_notes=payload.show_notes,
+        show_footer=payload.show_footer,
+        header_text=payload.header_text,
+        footer_text=payload.footer_text,
+        terms_text=payload.terms_text,
+        is_default=is_default
+    )
+    
+    db.add(template)
+    db.commit()
+    db.refresh(template)
+    
+    return template
+
+
+@api.get('/invoice-templates', response_model=list[InvoiceTemplateOut])
+def get_invoice_templates(
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all active invoice templates"""
+    templates = db.query(InvoiceTemplate).filter(InvoiceTemplate.is_active == True).order_by(InvoiceTemplate.is_default.desc(), InvoiceTemplate.name).all()
+    return templates
+
+
+@api.get('/invoice-templates/default', response_model=InvoiceTemplateOut)
+def get_default_invoice_template(
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get the default invoice template"""
+    template = db.query(InvoiceTemplate).filter(
+        InvoiceTemplate.is_default == True,
+        InvoiceTemplate.is_active == True
+    ).first()
+    
+    if not template:
+        # Create a default template if none exists
+        template = InvoiceTemplate(
+            name="Default Professional",
+            description="Default professional invoice template",
+            template_type="professional",
+            is_default=True
+        )
+        db.add(template)
+        db.commit()
+        db.refresh(template)
+    
+    return template
+
+
+@api.get('/invoice-templates/{template_id}', response_model=InvoiceTemplateOut)
+def get_invoice_template(
+    template_id: int,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get a specific invoice template"""
+    template = db.query(InvoiceTemplate).filter(InvoiceTemplate.id == template_id).first()
+    if not template:
+        raise HTTPException(status_code=404, detail='Invoice template not found')
+    
+    return template
+
+
+@api.put('/invoice-templates/{template_id}', response_model=InvoiceTemplateOut)
+def update_invoice_template(
+    template_id: int,
+    payload: InvoiceTemplateUpdate,
+    _: User = Depends(require_role("Admin")),
+    db: Session = Depends(get_db)
+):
+    """Update an invoice template"""
+    template = db.query(InvoiceTemplate).filter(InvoiceTemplate.id == template_id).first()
+    if not template:
+        raise HTTPException(status_code=404, detail='Invoice template not found')
+    
+    # Update fields
+    update_data = payload.dict(exclude_unset=True)
+    
+    # Validate template type if provided
+    if 'template_type' in update_data:
+        valid_types = ["professional", "modern", "classic", "minimal"]
+        if update_data['template_type'] not in valid_types:
+            raise HTTPException(status_code=400, detail=f"Template type must be one of: {', '.join(valid_types)}")
+    
+    # Validate logo position if provided
+    if 'logo_position' in update_data:
+        valid_positions = ["top-left", "top-right", "center"]
+        if update_data['logo_position'] not in valid_positions:
+            raise HTTPException(status_code=400, detail=f"Logo position must be one of: {', '.join(valid_positions)}")
+    
+    # Validate colors if provided
+    import re
+    hex_pattern = r'^#[0-9A-Fa-f]{6}$'
+    for color_field in ['primary_color', 'secondary_color', 'accent_color']:
+        if color_field in update_data and not re.match(hex_pattern, update_data[color_field]):
+            raise HTTPException(status_code=400, detail=f"{color_field} must be a valid hex color (e.g., #2c3e50)")
+    
+    for field, value in update_data.items():
+        setattr(template, field, value)
+    
+    template.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(template)
+    
+    return template
+
+
+@api.delete('/invoice-templates/{template_id}')
+def delete_invoice_template(
+    template_id: int,
+    _: User = Depends(require_role("Admin")),
+    db: Session = Depends(get_db)
+):
+    """Delete an invoice template (soft delete)"""
+    template = db.query(InvoiceTemplate).filter(InvoiceTemplate.id == template_id).first()
+    if not template:
+        raise HTTPException(status_code=404, detail='Invoice template not found')
+    
+    if template.is_default:
+        raise HTTPException(status_code=400, detail='Cannot delete the default template')
+    
+    template.is_active = False
+    template.updated_at = datetime.utcnow()
+    db.commit()
+    
+    return {"message": "Template deleted successfully"}
+
+
+@api.post('/invoice-templates/{template_id}/set-default')
+def set_default_invoice_template(
+    template_id: int,
+    _: User = Depends(require_role("Admin")),
+    db: Session = Depends(get_db)
+):
+    """Set an invoice template as default"""
+    template = db.query(InvoiceTemplate).filter(InvoiceTemplate.id == template_id).first()
+    if not template:
+        raise HTTPException(status_code=404, detail='Invoice template not found')
+    
+    # Remove default from all other templates
+    db.query(InvoiceTemplate).update({InvoiceTemplate.is_default: False})
+    
+    # Set this template as default
+    template.is_default = True
+    template.updated_at = datetime.utcnow()
+    db.commit()
+    
+    return {"message": "Default template updated successfully"}
 
