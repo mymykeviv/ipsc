@@ -1,0 +1,30 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Check for compiled JavaScript files in src directory
+echo "🔍 Checking for compiled JavaScript files..."
+
+# Find any .js files in src directory that have corresponding .tsx or .ts files
+COMPILED_JS_FILES=$(find src -name "*.js" -type f | while read -r js_file; do
+    # Get the corresponding TypeScript file
+    ts_file="${js_file%.js}.tsx"
+    if [ ! -f "$ts_file" ]; then
+        ts_file="${js_file%.js}.ts"
+    fi
+    
+    # If TypeScript file exists, this is a compiled JS file
+    if [ -f "$ts_file" ]; then
+        echo "$js_file"
+    fi
+done)
+
+if [ -n "$COMPILED_JS_FILES" ]; then
+    echo "❌ Found compiled JavaScript files that should not be committed:"
+    echo "$COMPILED_JS_FILES"
+    echo ""
+    echo "These files are compiled from TypeScript and should not be committed."
+    echo "Please run 'npm run clean' to remove them, or add them to .gitignore."
+    exit 1
+fi
+
+echo "✅ No compiled JavaScript files found."

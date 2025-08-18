@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest --run",
     "test:watch": "vitest",
@@ -16,7 +16,9 @@
     "test:e2e:stories": "playwright test tests/e2e/story-*.spec.ts",
     "test:e2e:all": "playwright test tests/e2e/",
     "test:report": "playwright show-report",
-    "test:install": "playwright install --with-deps chromium firefox"
+    "test:install": "playwright install --with-deps chromium firefox",
+    "clean": "find src -name '*.js' -type f -delete && echo '✅ Cleaned compiled JavaScript files'",
+    "prebuild": "npm run clean"
   },
   "dependencies": {
     "react": "^18.2.0",

@@ -82,7 +82,10 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
     try {
       setLoading(true)
       setError(null)
-      const expensesData = await apiListExpenses(searchTerm, categoryFilter, expenseTypeFilter)
+      const effectiveSearch = searchTerm || undefined
+      const effectiveCategory = categoryFilter !== 'all' ? categoryFilter : undefined
+      const effectiveType = expenseTypeFilter !== 'all' ? expenseTypeFilter : undefined
+      const expensesData = await apiListExpenses(effectiveSearch, effectiveCategory, effectiveType)
       setExpenses(expensesData)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load expenses')

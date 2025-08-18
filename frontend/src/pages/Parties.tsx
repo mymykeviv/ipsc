@@ -114,7 +114,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
   })
   
   const [formData, setFormData] = useState<PartyFormData>({
-    type: type,
+    type: type, // This will be set based on the route
     name: '',
     contact_person: '',
     contact_number: '',
@@ -136,6 +136,11 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
     shipping_pincode: '',
     notes: ''
   })
+
+  // Update form type when type prop changes
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, type }))
+  }, [type])
 
   // Load editing party data when in edit mode
   useEffect(() => {
@@ -702,7 +707,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
               Cancel
             </Button>
             <Button type="submit" variant="primary" disabled={loading}>
-              {loading ? `Saving ${type === 'customer' ? 'Customer' : 'Vendor'}...` : (mode === 'add' ? 'Add' : 'Update')} {type === 'customer' ? 'Customer' : 'Vendor'}
+              {loading ? `Saving ${formData.type === 'customer' ? 'Customer' : 'Vendor'}...` : (mode === 'add' ? 'Add' : 'Update')} {formData.type === 'customer' ? 'Customer' : 'Vendor'}
             </Button>
           </div>
         </form>
@@ -906,222 +911,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
         </Button>
       </div>
 
-      {/* Enhanced Advanced Filters */}
-      <EnhancedFilterBar
-        title="🔍 Advanced Filters"
-        activeFiltersCount={getActiveFiltersCount()}
-        onClearAll={clearAllFilters}
-        showClearAll={true}
-        defaultCollapsed={true}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px' }}>
-          
-          {/* Search & Contact Section */}
-          <div style={{ 
-            border: '1px solid #e9ecef', 
-            borderRadius: '8px', 
-            padding: '16px',
-            backgroundColor: '#f8f9fa'
-          }}>
-            <h4 style={{ 
-              margin: '0 0 12px 0', 
-              fontSize: '14px', 
-              fontWeight: '600', 
-              color: '#495057',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              🔍 Search & Contact
-            </h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-              <SearchBar
-                placeholder="Contact person..."
-                value={filters.contactPerson}
-                onChange={(value) => handleFilterChange('contactPerson', value)}
-              />
-              <SearchBar
-                placeholder="Email..."
-                value={filters.email}
-                onChange={(value) => handleFilterChange('email', value)}
-              />
-              <SearchBar
-                placeholder="Phone number..."
-                value={filters.phone}
-                onChange={(value) => handleFilterChange('phone', value)}
-              />
-            </div>
-          </div>
-
-          {/* Location Section */}
-          <div style={{ 
-            border: '1px solid #e9ecef', 
-            borderRadius: '8px', 
-            padding: '16px',
-            backgroundColor: '#f8f9fa'
-          }}>
-            <h4 style={{ 
-              margin: '0 0 12px 0', 
-              fontSize: '14px', 
-              fontWeight: '600', 
-              color: '#495057',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              📍 Location
-            </h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-              <SearchBar
-                placeholder="City..."
-                value={filters.city}
-                onChange={(value) => handleFilterChange('city', value)}
-              />
-              <SearchBar
-                placeholder="State..."
-                value={filters.state}
-                onChange={(value) => handleFilterChange('state', value)}
-              />
-              <SearchBar
-                placeholder="Country..."
-                value={filters.country}
-                onChange={(value) => handleFilterChange('country', value)}
-              />
-            </div>
-          </div>
-
-          {/* GST & Compliance Section */}
-          <div style={{ 
-            border: '1px solid #e9ecef', 
-            borderRadius: '8px', 
-            padding: '16px',
-            backgroundColor: '#f8f9fa'
-          }}>
-            <h4 style={{ 
-              margin: '0 0 12px 0', 
-              fontSize: '14px', 
-              fontWeight: '600', 
-              color: '#495057',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              🏛️ GST & Compliance
-            </h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-              <div>
-                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>GST Registration</div>
-                <FilterDropdown
-                  value={filters.gstRegistration}
-                  onChange={(value) => handleFilterChange('gstRegistration', value)}
-                  options={[
-                    { value: '', label: 'All Registration' },
-                    { value: 'GST registered', label: 'GST Registered' },
-                    { value: 'GST not registered', label: 'GST Not Registered' },
-                    { value: 'Composition scheme', label: 'Composition Scheme' }
-                  ]}
-                  placeholder="Select Registration"
-                />
-              </div>
-              <SearchBar
-                placeholder="GST State Code..."
-                value={filters.gstStateCode}
-                onChange={(value) => handleFilterChange('gstStateCode', value)}
-              />
-            </div>
-          </div>
-
-          {/* Business Details Section */}
-          <div style={{ 
-            border: '1px solid #e9ecef', 
-            borderRadius: '8px', 
-            padding: '16px',
-            backgroundColor: '#f8f9fa'
-          }}>
-            <h4 style={{ 
-              margin: '0 0 12px 0', 
-              fontSize: '14px', 
-              fontWeight: '600', 
-              color: '#495057',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              💼 Business Details
-            </h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-              <div>
-                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Party Type</div>
-                <FilterDropdown
-                  value={filters.partyType}
-                  onChange={(value) => handleFilterChange('partyType', value)}
-                  options={[
-                    { value: 'both', label: 'All Parties' },
-                    { value: 'customer', label: 'Customers Only' },
-                    { value: 'vendor', label: 'Vendors Only' }
-                  ]}
-                  placeholder="Select Party Type"
-                />
-              </div>
-              <div>
-                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Created Date Range</div>
-                <DateFilter
-                  value={filters.dateRange.start && filters.dateRange.end ? `custom:${filters.dateRange.start}:${filters.dateRange.end}` : 'all'}
-                  onChange={(value) => {
-                    if (value.startsWith('custom:')) {
-                      const [, start, end] = value.split(':')
-                      handleFilterChange('dateRange', { start, end })
-                    } else {
-                      handleFilterChange('dateRange', { start: '', end: '' })
-                    }
-                  }}
-                  placeholder="Select Date Range"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Filter Actions */}
-          <div style={{ 
-            display: 'flex', 
-            gap: '12px', 
-            justifyContent: 'flex-end',
-            paddingTop: '8px',
-            borderTop: '1px solid #e9ecef'
-          }}>
-            <Button
-              variant="secondary"
-              onClick={clearAllFilters}
-              style={{ 
-                fontSize: '12px', 
-                padding: '8px 16px',
-                backgroundColor: '#6c757d',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '6px',
-                fontWeight: '500'
-              }}
-            >
-              🗑️ Clear All Filters
-            </Button>
-            <Button
-              variant="primary"
-              onClick={loadParties}
-              style={{ 
-                fontSize: '12px', 
-                padding: '8px 16px',
-                backgroundColor: '#007bff',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '6px',
-                fontWeight: '500'
-              }}
-            >
-              ✅ Apply Filters
-            </Button>
-          </div>
-        </div>
-      </EnhancedFilterBar>
+      {/* Removed Enhanced Advanced Filters - simplified as per user feedback */}
 
       {/* Parties Table */}
       {loading ? (

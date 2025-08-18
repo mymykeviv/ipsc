@@ -1,2904 +1,304 @@
-<testsuites id="" name="" tests="58" failures="58" skipped="0" errors="0" time="386.08446299999997">
-<testsuite name="filter-system-e2e.spec.ts" timestamp="2025-08-17T03:38:28.927Z" hostname="chromium" tests="29" failures="29" skipped="0" time="907.743" errors="0">
-<testcase name="Filter System E2E Tests › Products Page Filters › should have collapsible filter section collapsed by default" classname="filter-system-e2e.spec.ts" time="31.652">
-<failure message="filter-system-e2e.spec.ts:26:5 should have collapsible filter section collapsed by default" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:26:5 › Filter System E2E Tests › Products Page Filters › should have collapsible filter section collapsed by default 
+<testsuites id="" name="" tests="6" failures="6" skipped="0" errors="0" time="63.236087999999995">
+<testsuite name="stock-history-filter-fixes.spec.ts" timestamp="2025-08-18T14:55:46.305Z" hostname="chromium" tests="3" failures="3" skipped="0" time="92.264" errors="0">
+<testcase name="Stock History Filter Fixes › should show correct product filter when navigating from product page" classname="stock-history-filter-fixes.spec.ts" time="30.748">
+<failure message="stock-history-filter-fixes.spec.ts:17:3 should show correct product filter when navigating from product page" type="FAILURE">
+<![CDATA[  [chromium] › stock-history-filter-fixes.spec.ts:17:3 › Stock History Filter Fixes › should show correct product filter when navigating from product page 
 
     Test timeout of 30000ms exceeded while running "beforeEach" hook.
 
       2 |
-      3 | test.describe('Filter System E2E Tests', () => {
+      3 | test.describe('Stock History Filter Fixes', () => {
     > 4 |   test.beforeEach(async ({ page }) => {
         |        ^
       5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
+      6 |     await page.goto('http://localhost:5173')
       7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8
 
     Error: page.fill: Test timeout of 30000ms exceeded.
     Call log:
-      - waiting for locator('input[name="username"]')
+      - waiting for locator('[data-testid="username"]')
 
 
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
+       7 |     
+       8 |     // Login
+    >  9 |     await page.fill('[data-testid="username"]', 'admin')
          |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
+      10 |     await page.fill('[data-testid="password"]', 'admin123')
+      11 |     await page.click('[data-testid="login-button"]')
+      12 |     
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-bf779-ection-collapsed-by-default-chromium/test-failed-1.png
+    ../../test-results/stock-history-filter-fixes-af400-avigating-from-product-page-chromium/test-failed-1.png
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
     attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-bf779-ection-collapsed-by-default-chromium/video.webm
+    ../../test-results/stock-history-filter-fixes-af400-avigating-from-product-page-chromium/video.webm
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-bf779-ection-collapsed-by-default-chromium/error-context.md
+    Error Context: ../../test-results/stock-history-filter-fixes-af400-avigating-from-product-page-chromium/error-context.md
 ]]>
 </failure>
 <system-out>
 <![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-bf779-ection-collapsed-by-default-chromium/test-failed-1.png]]
+[[ATTACHMENT|stock-history-filter-fixes-af400-avigating-from-product-page-chromium/test-failed-1.png]]
 
-[[ATTACHMENT|filter-system-e2e-Filter-S-bf779-ection-collapsed-by-default-chromium/video.webm]]
+[[ATTACHMENT|stock-history-filter-fixes-af400-avigating-from-product-page-chromium/video.webm]]
 
-[[ATTACHMENT|filter-system-e2e-Filter-S-bf779-ection-collapsed-by-default-chromium/error-context.md]]
+[[ATTACHMENT|stock-history-filter-fixes-af400-avigating-from-product-page-chromium/error-context.md]]
 ]]>
 </system-out>
 </testcase>
-<testcase name="Filter System E2E Tests › Products Page Filters › should expand filter section when clicked" classname="filter-system-e2e.spec.ts" time="31.018">
-<failure message="filter-system-e2e.spec.ts:39:5 should expand filter section when clicked" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:39:5 › Filter System E2E Tests › Products Page Filters › should expand filter section when clicked 
+<testcase name="Stock History Filter Fixes › should clear all filters and show all products when Clear All is clicked" classname="stock-history-filter-fixes.spec.ts" time="30.753">
+<failure message="stock-history-filter-fixes.spec.ts:40:3 should clear all filters and show all products when Clear All is clicked" type="FAILURE">
+<![CDATA[  [chromium] › stock-history-filter-fixes.spec.ts:40:3 › Stock History Filter Fixes › should clear all filters and show all products when Clear All is clicked 
 
     Test timeout of 30000ms exceeded while running "beforeEach" hook.
 
       2 |
-      3 | test.describe('Filter System E2E Tests', () => {
+      3 | test.describe('Stock History Filter Fixes', () => {
     > 4 |   test.beforeEach(async ({ page }) => {
         |        ^
       5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
+      6 |     await page.goto('http://localhost:5173')
       7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8
 
     Error: page.fill: Test timeout of 30000ms exceeded.
     Call log:
-      - waiting for locator('input[name="username"]')
+      - waiting for locator('[data-testid="username"]')
 
 
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
+       7 |     
+       8 |     // Login
+    >  9 |     await page.fill('[data-testid="username"]', 'admin')
          |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
+      10 |     await page.fill('[data-testid="password"]', 'admin123')
+      11 |     await page.click('[data-testid="login-button"]')
+      12 |     
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-8f572-filter-section-when-clicked-chromium/test-failed-1.png
+    ../../test-results/stock-history-filter-fixes-97277-s-when-Clear-All-is-clicked-chromium/test-failed-1.png
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
     attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-8f572-filter-section-when-clicked-chromium/video.webm
+    ../../test-results/stock-history-filter-fixes-97277-s-when-Clear-All-is-clicked-chromium/video.webm
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-8f572-filter-section-when-clicked-chromium/error-context.md
+    Error Context: ../../test-results/stock-history-filter-fixes-97277-s-when-Clear-All-is-clicked-chromium/error-context.md
 ]]>
 </failure>
 <system-out>
 <![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-8f572-filter-section-when-clicked-chromium/test-failed-1.png]]
+[[ATTACHMENT|stock-history-filter-fixes-97277-s-when-Clear-All-is-clicked-chromium/test-failed-1.png]]
 
-[[ATTACHMENT|filter-system-e2e-Filter-S-8f572-filter-section-when-clicked-chromium/video.webm]]
+[[ATTACHMENT|stock-history-filter-fixes-97277-s-when-Clear-All-is-clicked-chromium/video.webm]]
 
-[[ATTACHMENT|filter-system-e2e-Filter-S-8f572-filter-section-when-clicked-chromium/error-context.md]]
+[[ATTACHMENT|stock-history-filter-fixes-97277-s-when-Clear-All-is-clicked-chromium/error-context.md]]
 ]]>
 </system-out>
 </testcase>
-<testcase name="Filter System E2E Tests › Products Page Filters › should filter products by category" classname="filter-system-e2e.spec.ts" time="31.593">
-<failure message="filter-system-e2e.spec.ts:52:5 should filter products by category" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:52:5 › Filter System E2E Tests › Products Page Filters › should filter products by category 
+<testcase name="Stock History Filter Fixes › should maintain filter state correctly when switching between filtered and unfiltered views" classname="stock-history-filter-fixes.spec.ts" time="30.763">
+<failure message="stock-history-filter-fixes.spec.ts:72:3 should maintain filter state correctly when switching between filtered and unfiltered views" type="FAILURE">
+<![CDATA[  [chromium] › stock-history-filter-fixes.spec.ts:72:3 › Stock History Filter Fixes › should maintain filter state correctly when switching between filtered and unfiltered views 
 
     Test timeout of 30000ms exceeded while running "beforeEach" hook.
 
       2 |
-      3 | test.describe('Filter System E2E Tests', () => {
+      3 | test.describe('Stock History Filter Fixes', () => {
     > 4 |   test.beforeEach(async ({ page }) => {
         |        ^
       5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
+      6 |     await page.goto('http://localhost:5173')
       7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8
 
     Error: page.fill: Test timeout of 30000ms exceeded.
     Call log:
-      - waiting for locator('input[name="username"]')
+      - waiting for locator('[data-testid="username"]')
 
 
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
+       7 |     
+       8 |     // Login
+    >  9 |     await page.fill('[data-testid="username"]', 'admin')
          |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
+      10 |     await page.fill('[data-testid="password"]', 'admin123')
+      11 |     await page.click('[data-testid="login-button"]')
+      12 |     
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-125bf-filter-products-by-category-chromium/test-failed-1.png
+    ../../test-results/stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-chromium/test-failed-1.png
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
     attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-125bf-filter-products-by-category-chromium/video.webm
+    ../../test-results/stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-chromium/video.webm
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-125bf-filter-products-by-category-chromium/error-context.md
+    Error Context: ../../test-results/stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-chromium/error-context.md
 ]]>
 </failure>
 <system-out>
 <![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-125bf-filter-products-by-category-chromium/test-failed-1.png]]
+[[ATTACHMENT|stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-chromium/test-failed-1.png]]
 
-[[ATTACHMENT|filter-system-e2e-Filter-S-125bf-filter-products-by-category-chromium/video.webm]]
+[[ATTACHMENT|stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-chromium/video.webm]]
 
-[[ATTACHMENT|filter-system-e2e-Filter-S-125bf-filter-products-by-category-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Products Page Filters › should filter products by price range" classname="filter-system-e2e.spec.ts" time="31.762">
-<failure message="filter-system-e2e.spec.ts:68:5 should filter products by price range" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:68:5 › Filter System E2E Tests › Products Page Filters › should filter products by price range 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-fb177-ter-products-by-price-range-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-fb177-ter-products-by-price-range-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-fb177-ter-products-by-price-range-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-fb177-ter-products-by-price-range-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-fb177-ter-products-by-price-range-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-fb177-ter-products-by-price-range-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Products Page Filters › should show active filter count" classname="filter-system-e2e.spec.ts" time="31.454">
-<failure message="filter-system-e2e.spec.ts:84:5 should show active filter count" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:84:5 › Filter System E2E Tests › Products Page Filters › should show active filter count 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-55283-ld-show-active-filter-count-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-55283-ld-show-active-filter-count-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-55283-ld-show-active-filter-count-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-55283-ld-show-active-filter-count-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-55283-ld-show-active-filter-count-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-55283-ld-show-active-filter-count-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Products Page Filters › should clear all filters" classname="filter-system-e2e.spec.ts" time="30.864">
-<failure message="filter-system-e2e.spec.ts:99:5 should clear all filters" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:99:5 › Filter System E2E Tests › Products Page Filters › should clear all filters 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-8e832-rs-should-clear-all-filters-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-8e832-rs-should-clear-all-filters-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-8e832-rs-should-clear-all-filters-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-8e832-rs-should-clear-all-filters-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-8e832-rs-should-clear-all-filters-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-8e832-rs-should-clear-all-filters-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Invoices Page Filters › should filter invoices by payment status" classname="filter-system-e2e.spec.ts" time="30.924">
-<failure message="filter-system-e2e.spec.ts:125:5 should filter invoices by payment status" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:125:5 › Filter System E2E Tests › Invoices Page Filters › should filter invoices by payment status 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-565c9--invoices-by-payment-status-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-565c9--invoices-by-payment-status-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-565c9--invoices-by-payment-status-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-565c9--invoices-by-payment-status-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-565c9--invoices-by-payment-status-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-565c9--invoices-by-payment-status-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Invoices Page Filters › should filter invoices by amount range" classname="filter-system-e2e.spec.ts" time="31.244">
-<failure message="filter-system-e2e.spec.ts:142:5 should filter invoices by amount range" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:142:5 › Filter System E2E Tests › Invoices Page Filters › should filter invoices by amount range 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-ba08a-er-invoices-by-amount-range-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-ba08a-er-invoices-by-amount-range-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-ba08a-er-invoices-by-amount-range-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-ba08a-er-invoices-by-amount-range-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-ba08a-er-invoices-by-amount-range-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-ba08a-er-invoices-by-amount-range-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Cashflow Transactions Filters › should filter transactions by type" classname="filter-system-e2e.spec.ts" time="31.256">
-<failure message="filter-system-e2e.spec.ts:160:5 should filter transactions by type" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:160:5 › Filter System E2E Tests › Cashflow Transactions Filters › should filter transactions by type 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-01430-filter-transactions-by-type-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-01430-filter-transactions-by-type-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-01430-filter-transactions-by-type-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-01430-filter-transactions-by-type-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-01430-filter-transactions-by-type-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-01430-filter-transactions-by-type-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Cashflow Transactions Filters › should filter transactions by payment method" classname="filter-system-e2e.spec.ts" time="32.229">
-<failure message="filter-system-e2e.spec.ts:177:5 should filter transactions by payment method" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:177:5 › Filter System E2E Tests › Cashflow Transactions Filters › should filter transactions by payment method 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-8a4bd-nsactions-by-payment-method-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-8a4bd-nsactions-by-payment-method-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-8a4bd-nsactions-by-payment-method-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-8a4bd-nsactions-by-payment-method-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-8a4bd-nsactions-by-payment-method-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-8a4bd-nsactions-by-payment-method-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Expenses Page Filters › should filter expenses by category" classname="filter-system-e2e.spec.ts" time="31.925">
-<failure message="filter-system-e2e.spec.ts:195:5 should filter expenses by category" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:195:5 › Filter System E2E Tests › Expenses Page Filters › should filter expenses by category 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-2e0b1-filter-expenses-by-category-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-2e0b1-filter-expenses-by-category-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-2e0b1-filter-expenses-by-category-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-2e0b1-filter-expenses-by-category-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-2e0b1-filter-expenses-by-category-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-2e0b1-filter-expenses-by-category-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Expenses Page Filters › should filter expenses by payment method" classname="filter-system-e2e.spec.ts" time="31.627">
-<failure message="filter-system-e2e.spec.ts:212:5 should filter expenses by payment method" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:212:5 › Filter System E2E Tests › Expenses Page Filters › should filter expenses by payment method 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-cc7c7--expenses-by-payment-method-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-cc7c7--expenses-by-payment-method-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-cc7c7--expenses-by-payment-method-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-cc7c7--expenses-by-payment-method-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-cc7c7--expenses-by-payment-method-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-cc7c7--expenses-by-payment-method-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Purchases Page Filters › should filter purchases by vendor" classname="filter-system-e2e.spec.ts" time="32.485">
-<failure message="filter-system-e2e.spec.ts:230:5 should filter purchases by vendor" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:230:5 › Filter System E2E Tests › Purchases Page Filters › should filter purchases by vendor 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-832dc--filter-purchases-by-vendor-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-832dc--filter-purchases-by-vendor-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-832dc--filter-purchases-by-vendor-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-832dc--filter-purchases-by-vendor-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-832dc--filter-purchases-by-vendor-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-832dc--filter-purchases-by-vendor-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Purchases Page Filters › should filter purchases by payment status" classname="filter-system-e2e.spec.ts" time="32.502">
-<failure message="filter-system-e2e.spec.ts:247:5 should filter purchases by payment status" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:247:5 › Filter System E2E Tests › Purchases Page Filters › should filter purchases by payment status 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-57f2f-purchases-by-payment-status-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-57f2f-purchases-by-payment-status-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-57f2f-purchases-by-payment-status-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-57f2f-purchases-by-payment-status-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-57f2f-purchases-by-payment-status-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-57f2f-purchases-by-payment-status-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Stock History Filters › should filter stock history by product" classname="filter-system-e2e.spec.ts" time="30.645">
-<failure message="filter-system-e2e.spec.ts:265:5 should filter stock history by product" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:265:5 › Filter System E2E Tests › Stock History Filters › should filter stock history by product 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-b9b6f-er-stock-history-by-product-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-b9b6f-er-stock-history-by-product-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-b9b6f-er-stock-history-by-product-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-b9b6f-er-stock-history-by-product-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-b9b6f-er-stock-history-by-product-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-b9b6f-er-stock-history-by-product-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Stock History Filters › should filter stock history by entry type" classname="filter-system-e2e.spec.ts" time="30.786">
-<failure message="filter-system-e2e.spec.ts:282:5 should filter stock history by entry type" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:282:5 › Filter System E2E Tests › Stock History Filters › should filter stock history by entry type 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-dbb28-stock-history-by-entry-type-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-dbb28-stock-history-by-entry-type-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-dbb28-stock-history-by-entry-type-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-dbb28-stock-history-by-entry-type-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-dbb28-stock-history-by-entry-type-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-dbb28-stock-history-by-entry-type-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Invoice Payments Filters › should filter invoice payments by customer" classname="filter-system-e2e.spec.ts" time="30.828">
-<failure message="filter-system-e2e.spec.ts:300:5 should filter invoice payments by customer" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:300:5 › Filter System E2E Tests › Invoice Payments Filters › should filter invoice payments by customer 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-f17e3-nvoice-payments-by-customer-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-f17e3-nvoice-payments-by-customer-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-f17e3-nvoice-payments-by-customer-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-f17e3-nvoice-payments-by-customer-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-f17e3-nvoice-payments-by-customer-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-f17e3-nvoice-payments-by-customer-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Invoice Payments Filters › should filter invoice payments by payment method" classname="filter-system-e2e.spec.ts" time="32.307">
-<failure message="filter-system-e2e.spec.ts:317:5 should filter invoice payments by payment method" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:317:5 › Filter System E2E Tests › Invoice Payments Filters › should filter invoice payments by payment method 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-dcd62--payments-by-payment-method-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-dcd62--payments-by-payment-method-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-dcd62--payments-by-payment-method-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-dcd62--payments-by-payment-method-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-dcd62--payments-by-payment-method-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-dcd62--payments-by-payment-method-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Purchase Payments Filters › should filter purchase payments by vendor" classname="filter-system-e2e.spec.ts" time="31.601">
-<failure message="filter-system-e2e.spec.ts:335:5 should filter purchase payments by vendor" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:335:5 › Filter System E2E Tests › Purchase Payments Filters › should filter purchase payments by vendor 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-bdde7-purchase-payments-by-vendor-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-bdde7-purchase-payments-by-vendor-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-bdde7-purchase-payments-by-vendor-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-bdde7-purchase-payments-by-vendor-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-bdde7-purchase-payments-by-vendor-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-bdde7-purchase-payments-by-vendor-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Purchase Payments Filters › should filter purchase payments by payment status" classname="filter-system-e2e.spec.ts" time="31.727">
-<failure message="filter-system-e2e.spec.ts:352:5 should filter purchase payments by payment status" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:352:5 › Filter System E2E Tests › Purchase Payments Filters › should filter purchase payments by payment status 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-bf820--payments-by-payment-status-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-bf820--payments-by-payment-status-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-bf820--payments-by-payment-status-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-bf820--payments-by-payment-status-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-bf820--payments-by-payment-status-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-bf820--payments-by-payment-status-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Integration › should maintain filter state across page navigation" classname="filter-system-e2e.spec.ts" time="30.69">
-<failure message="filter-system-e2e.spec.ts:370:5 should maintain filter state across page navigation" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:370:5 › Filter System E2E Tests › Filter System Integration › should maintain filter state across page navigation 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-cd674-tate-across-page-navigation-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-cd674-tate-across-page-navigation-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-cd674-tate-across-page-navigation-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-cd674-tate-across-page-navigation-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-cd674-tate-across-page-navigation-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-cd674-tate-across-page-navigation-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Integration › should handle multiple filter combinations" classname="filter-system-e2e.spec.ts" time="30.731">
-<failure message="filter-system-e2e.spec.ts:390:5 should handle multiple filter combinations" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:390:5 › Filter System E2E Tests › Filter System Integration › should handle multiple filter combinations 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-66163-ultiple-filter-combinations-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-66163-ultiple-filter-combinations-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-66163-ultiple-filter-combinations-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-66163-ultiple-filter-combinations-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-66163-ultiple-filter-combinations-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-66163-ultiple-filter-combinations-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Integration › should handle empty filter results gracefully" classname="filter-system-e2e.spec.ts" time="30.962">
-<failure message="filter-system-e2e.spec.ts:415:5 should handle empty filter results gracefully" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:415:5 › Filter System E2E Tests › Filter System Integration › should handle empty filter results gracefully 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-a4794-y-filter-results-gracefully-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-a4794-y-filter-results-gracefully-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-a4794-y-filter-results-gracefully-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-a4794-y-filter-results-gracefully-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-a4794-y-filter-results-gracefully-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-a4794-y-filter-results-gracefully-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Integration › should provide keyboard navigation for filters" classname="filter-system-e2e.spec.ts" time="30.913">
-<failure message="filter-system-e2e.spec.ts:430:5 should provide keyboard navigation for filters" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:430:5 › Filter System E2E Tests › Filter System Integration › should provide keyboard navigation for filters 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-3e17f-oard-navigation-for-filters-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-3e17f-oard-navigation-for-filters-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-3e17f-oard-navigation-for-filters-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-3e17f-oard-navigation-for-filters-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-3e17f-oard-navigation-for-filters-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-3e17f-oard-navigation-for-filters-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Performance › should load filters quickly" classname="filter-system-e2e.spec.ts" time="30.6">
-<failure message="filter-system-e2e.spec.ts:454:5 should load filters quickly" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:454:5 › Filter System E2E Tests › Filter System Performance › should load filters quickly 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-25624-should-load-filters-quickly-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-25624-should-load-filters-quickly-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-25624-should-load-filters-quickly-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-25624-should-load-filters-quickly-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-25624-should-load-filters-quickly-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-25624-should-load-filters-quickly-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Performance › should apply filters without significant delay" classname="filter-system-e2e.spec.ts" time="30.747">
-<failure message="filter-system-e2e.spec.ts:473:5 should apply filters without significant delay" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:473:5 › Filter System E2E Tests › Filter System Performance › should apply filters without significant delay 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-d8083-s-without-significant-delay-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-d8083-s-without-significant-delay-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-d8083-s-without-significant-delay-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-d8083-s-without-significant-delay-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-d8083-s-without-significant-delay-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-d8083-s-without-significant-delay-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Accessibility › should be keyboard navigable" classname="filter-system-e2e.spec.ts" time="30.73">
-<failure message="filter-system-e2e.spec.ts:498:5 should be keyboard navigable" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:498:5 › Filter System E2E Tests › Filter System Accessibility › should be keyboard navigable 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-dfe2a-hould-be-keyboard-navigable-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-dfe2a-hould-be-keyboard-navigable-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-dfe2a-hould-be-keyboard-navigable-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-dfe2a-hould-be-keyboard-navigable-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-dfe2a-hould-be-keyboard-navigable-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-dfe2a-hould-be-keyboard-navigable-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Accessibility › should have proper ARIA labels" classname="filter-system-e2e.spec.ts" time="31.006">
-<failure message="filter-system-e2e.spec.ts:516:5 should have proper ARIA labels" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:516:5 › Filter System E2E Tests › Filter System Accessibility › should have proper ARIA labels 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-ee684-uld-have-proper-ARIA-labels-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-ee684-uld-have-proper-ARIA-labels-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-ee684-uld-have-proper-ARIA-labels-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-ee684-uld-have-proper-ARIA-labels-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-ee684-uld-have-proper-ARIA-labels-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-ee684-uld-have-proper-ARIA-labels-chromium/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Accessibility › should announce filter changes to screen readers" classname="filter-system-e2e.spec.ts" time="30.935">
-<failure message="filter-system-e2e.spec.ts:525:5 should announce filter changes to screen readers" type="FAILURE">
-<![CDATA[  [chromium] › filter-system-e2e.spec.ts:525:5 › Filter System E2E Tests › Filter System Accessibility › should announce filter changes to screen readers 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-ff019-r-changes-to-screen-readers-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-ff019-r-changes-to-screen-readers-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-ff019-r-changes-to-screen-readers-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-ff019-r-changes-to-screen-readers-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-ff019-r-changes-to-screen-readers-chromium/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-ff019-r-changes-to-screen-readers-chromium/error-context.md]]
+[[ATTACHMENT|stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-chromium/error-context.md]]
 ]]>
 </system-out>
 </testcase>
 </testsuite>
-<testsuite name="filter-system-e2e.spec.ts" timestamp="2025-08-17T03:38:28.927Z" hostname="firefox" tests="29" failures="29" skipped="0" time="871.909" errors="0">
-<testcase name="Filter System E2E Tests › Products Page Filters › should have collapsible filter section collapsed by default" classname="filter-system-e2e.spec.ts" time="30.085">
-<failure message="filter-system-e2e.spec.ts:26:5 should have collapsible filter section collapsed by default" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:26:5 › Filter System E2E Tests › Products Page Filters › should have collapsible filter section collapsed by default 
+<testsuite name="stock-history-filter-fixes.spec.ts" timestamp="2025-08-18T14:55:46.305Z" hostname="firefox" tests="3" failures="3" skipped="0" time="90.214" errors="0">
+<testcase name="Stock History Filter Fixes › should show correct product filter when navigating from product page" classname="stock-history-filter-fixes.spec.ts" time="30.077">
+<failure message="stock-history-filter-fixes.spec.ts:17:3 should show correct product filter when navigating from product page" type="FAILURE">
+<![CDATA[  [firefox] › stock-history-filter-fixes.spec.ts:17:3 › Stock History Filter Fixes › should show correct product filter when navigating from product page 
 
     Test timeout of 30000ms exceeded while running "beforeEach" hook.
 
       2 |
-      3 | test.describe('Filter System E2E Tests', () => {
+      3 | test.describe('Stock History Filter Fixes', () => {
     > 4 |   test.beforeEach(async ({ page }) => {
         |        ^
       5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
+      6 |     await page.goto('http://localhost:5173')
       7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8
 
     Error: page.fill: Test timeout of 30000ms exceeded.
     Call log:
-      - waiting for locator('input[name="username"]')
+      - waiting for locator('[data-testid="username"]')
 
 
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
+       7 |     
+       8 |     // Login
+    >  9 |     await page.fill('[data-testid="username"]', 'admin')
          |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
+      10 |     await page.fill('[data-testid="password"]', 'admin123')
+      11 |     await page.click('[data-testid="login-button"]')
+      12 |     
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-bf779-ection-collapsed-by-default-firefox/test-failed-1.png
+    ../../test-results/stock-history-filter-fixes-af400-avigating-from-product-page-firefox/test-failed-1.png
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
     attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-bf779-ection-collapsed-by-default-firefox/video.webm
+    ../../test-results/stock-history-filter-fixes-af400-avigating-from-product-page-firefox/video.webm
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-bf779-ection-collapsed-by-default-firefox/error-context.md
+    Error Context: ../../test-results/stock-history-filter-fixes-af400-avigating-from-product-page-firefox/error-context.md
 ]]>
 </failure>
 <system-out>
 <![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-bf779-ection-collapsed-by-default-firefox/test-failed-1.png]]
+[[ATTACHMENT|stock-history-filter-fixes-af400-avigating-from-product-page-firefox/test-failed-1.png]]
 
-[[ATTACHMENT|filter-system-e2e-Filter-S-bf779-ection-collapsed-by-default-firefox/video.webm]]
+[[ATTACHMENT|stock-history-filter-fixes-af400-avigating-from-product-page-firefox/video.webm]]
 
-[[ATTACHMENT|filter-system-e2e-Filter-S-bf779-ection-collapsed-by-default-firefox/error-context.md]]
+[[ATTACHMENT|stock-history-filter-fixes-af400-avigating-from-product-page-firefox/error-context.md]]
 ]]>
 </system-out>
 </testcase>
-<testcase name="Filter System E2E Tests › Products Page Filters › should expand filter section when clicked" classname="filter-system-e2e.spec.ts" time="30.055">
-<failure message="filter-system-e2e.spec.ts:39:5 should expand filter section when clicked" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:39:5 › Filter System E2E Tests › Products Page Filters › should expand filter section when clicked 
+<testcase name="Stock History Filter Fixes › should clear all filters and show all products when Clear All is clicked" classname="stock-history-filter-fixes.spec.ts" time="30.075">
+<failure message="stock-history-filter-fixes.spec.ts:40:3 should clear all filters and show all products when Clear All is clicked" type="FAILURE">
+<![CDATA[  [firefox] › stock-history-filter-fixes.spec.ts:40:3 › Stock History Filter Fixes › should clear all filters and show all products when Clear All is clicked 
 
     Test timeout of 30000ms exceeded while running "beforeEach" hook.
 
       2 |
-      3 | test.describe('Filter System E2E Tests', () => {
+      3 | test.describe('Stock History Filter Fixes', () => {
     > 4 |   test.beforeEach(async ({ page }) => {
         |        ^
       5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
+      6 |     await page.goto('http://localhost:5173')
       7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8
 
     Error: page.fill: Test timeout of 30000ms exceeded.
     Call log:
-      - waiting for locator('input[name="username"]')
+      - waiting for locator('[data-testid="username"]')
 
 
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
+       7 |     
+       8 |     // Login
+    >  9 |     await page.fill('[data-testid="username"]', 'admin')
          |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
+      10 |     await page.fill('[data-testid="password"]', 'admin123')
+      11 |     await page.click('[data-testid="login-button"]')
+      12 |     
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-8f572-filter-section-when-clicked-firefox/test-failed-1.png
+    ../../test-results/stock-history-filter-fixes-97277-s-when-Clear-All-is-clicked-firefox/test-failed-1.png
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
     attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-8f572-filter-section-when-clicked-firefox/video.webm
+    ../../test-results/stock-history-filter-fixes-97277-s-when-Clear-All-is-clicked-firefox/video.webm
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-8f572-filter-section-when-clicked-firefox/error-context.md
+    Error Context: ../../test-results/stock-history-filter-fixes-97277-s-when-Clear-All-is-clicked-firefox/error-context.md
 ]]>
 </failure>
 <system-out>
 <![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-8f572-filter-section-when-clicked-firefox/test-failed-1.png]]
+[[ATTACHMENT|stock-history-filter-fixes-97277-s-when-Clear-All-is-clicked-firefox/test-failed-1.png]]
 
-[[ATTACHMENT|filter-system-e2e-Filter-S-8f572-filter-section-when-clicked-firefox/video.webm]]
+[[ATTACHMENT|stock-history-filter-fixes-97277-s-when-Clear-All-is-clicked-firefox/video.webm]]
 
-[[ATTACHMENT|filter-system-e2e-Filter-S-8f572-filter-section-when-clicked-firefox/error-context.md]]
+[[ATTACHMENT|stock-history-filter-fixes-97277-s-when-Clear-All-is-clicked-firefox/error-context.md]]
 ]]>
 </system-out>
 </testcase>
-<testcase name="Filter System E2E Tests › Products Page Filters › should filter products by category" classname="filter-system-e2e.spec.ts" time="30.053">
-<failure message="filter-system-e2e.spec.ts:52:5 should filter products by category" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:52:5 › Filter System E2E Tests › Products Page Filters › should filter products by category 
+<testcase name="Stock History Filter Fixes › should maintain filter state correctly when switching between filtered and unfiltered views" classname="stock-history-filter-fixes.spec.ts" time="30.062">
+<failure message="stock-history-filter-fixes.spec.ts:72:3 should maintain filter state correctly when switching between filtered and unfiltered views" type="FAILURE">
+<![CDATA[  [firefox] › stock-history-filter-fixes.spec.ts:72:3 › Stock History Filter Fixes › should maintain filter state correctly when switching between filtered and unfiltered views 
 
     Test timeout of 30000ms exceeded while running "beforeEach" hook.
 
       2 |
-      3 | test.describe('Filter System E2E Tests', () => {
+      3 | test.describe('Stock History Filter Fixes', () => {
     > 4 |   test.beforeEach(async ({ page }) => {
         |        ^
       5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
+      6 |     await page.goto('http://localhost:5173')
       7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:4:8
 
     Error: page.fill: Test timeout of 30000ms exceeded.
     Call log:
-      - waiting for locator('input[name="username"]')
+      - waiting for locator('[data-testid="username"]')
 
 
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
+       7 |     
+       8 |     // Login
+    >  9 |     await page.fill('[data-testid="username"]', 'admin')
          |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
+      10 |     await page.fill('[data-testid="password"]', 'admin123')
+      11 |     await page.click('[data-testid="login-button"]')
+      12 |     
+        at /Users/vivekm/code/ipsc/frontend/tests/e2e/stock-history-filter-fixes.spec.ts:9:16
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-125bf-filter-products-by-category-firefox/test-failed-1.png
+    ../../test-results/stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-firefox/test-failed-1.png
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
     attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-125bf-filter-products-by-category-firefox/video.webm
+    ../../test-results/stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-firefox/video.webm
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-125bf-filter-products-by-category-firefox/error-context.md
+    Error Context: ../../test-results/stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-firefox/error-context.md
 ]]>
 </failure>
 <system-out>
 <![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-125bf-filter-products-by-category-firefox/test-failed-1.png]]
+[[ATTACHMENT|stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-firefox/test-failed-1.png]]
 
-[[ATTACHMENT|filter-system-e2e-Filter-S-125bf-filter-products-by-category-firefox/video.webm]]
+[[ATTACHMENT|stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-firefox/video.webm]]
 
-[[ATTACHMENT|filter-system-e2e-Filter-S-125bf-filter-products-by-category-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Products Page Filters › should filter products by price range" classname="filter-system-e2e.spec.ts" time="30.071">
-<failure message="filter-system-e2e.spec.ts:68:5 should filter products by price range" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:68:5 › Filter System E2E Tests › Products Page Filters › should filter products by price range 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-fb177-ter-products-by-price-range-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-fb177-ter-products-by-price-range-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-fb177-ter-products-by-price-range-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-fb177-ter-products-by-price-range-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-fb177-ter-products-by-price-range-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-fb177-ter-products-by-price-range-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Products Page Filters › should show active filter count" classname="filter-system-e2e.spec.ts" time="30.054">
-<failure message="filter-system-e2e.spec.ts:84:5 should show active filter count" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:84:5 › Filter System E2E Tests › Products Page Filters › should show active filter count 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-55283-ld-show-active-filter-count-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-55283-ld-show-active-filter-count-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-55283-ld-show-active-filter-count-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-55283-ld-show-active-filter-count-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-55283-ld-show-active-filter-count-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-55283-ld-show-active-filter-count-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Products Page Filters › should clear all filters" classname="filter-system-e2e.spec.ts" time="30.075">
-<failure message="filter-system-e2e.spec.ts:99:5 should clear all filters" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:99:5 › Filter System E2E Tests › Products Page Filters › should clear all filters 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-8e832-rs-should-clear-all-filters-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-8e832-rs-should-clear-all-filters-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-8e832-rs-should-clear-all-filters-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-8e832-rs-should-clear-all-filters-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-8e832-rs-should-clear-all-filters-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-8e832-rs-should-clear-all-filters-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Invoices Page Filters › should filter invoices by payment status" classname="filter-system-e2e.spec.ts" time="30.064">
-<failure message="filter-system-e2e.spec.ts:125:5 should filter invoices by payment status" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:125:5 › Filter System E2E Tests › Invoices Page Filters › should filter invoices by payment status 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-565c9--invoices-by-payment-status-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-565c9--invoices-by-payment-status-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-565c9--invoices-by-payment-status-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-565c9--invoices-by-payment-status-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-565c9--invoices-by-payment-status-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-565c9--invoices-by-payment-status-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Invoices Page Filters › should filter invoices by amount range" classname="filter-system-e2e.spec.ts" time="30.053">
-<failure message="filter-system-e2e.spec.ts:142:5 should filter invoices by amount range" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:142:5 › Filter System E2E Tests › Invoices Page Filters › should filter invoices by amount range 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-ba08a-er-invoices-by-amount-range-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-ba08a-er-invoices-by-amount-range-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-ba08a-er-invoices-by-amount-range-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-ba08a-er-invoices-by-amount-range-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-ba08a-er-invoices-by-amount-range-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-ba08a-er-invoices-by-amount-range-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Cashflow Transactions Filters › should filter transactions by type" classname="filter-system-e2e.spec.ts" time="30.071">
-<failure message="filter-system-e2e.spec.ts:160:5 should filter transactions by type" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:160:5 › Filter System E2E Tests › Cashflow Transactions Filters › should filter transactions by type 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-01430-filter-transactions-by-type-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-01430-filter-transactions-by-type-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-01430-filter-transactions-by-type-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-01430-filter-transactions-by-type-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-01430-filter-transactions-by-type-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-01430-filter-transactions-by-type-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Cashflow Transactions Filters › should filter transactions by payment method" classname="filter-system-e2e.spec.ts" time="30.066">
-<failure message="filter-system-e2e.spec.ts:177:5 should filter transactions by payment method" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:177:5 › Filter System E2E Tests › Cashflow Transactions Filters › should filter transactions by payment method 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-8a4bd-nsactions-by-payment-method-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-8a4bd-nsactions-by-payment-method-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-8a4bd-nsactions-by-payment-method-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-8a4bd-nsactions-by-payment-method-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-8a4bd-nsactions-by-payment-method-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-8a4bd-nsactions-by-payment-method-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Expenses Page Filters › should filter expenses by category" classname="filter-system-e2e.spec.ts" time="30.093">
-<failure message="filter-system-e2e.spec.ts:195:5 should filter expenses by category" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:195:5 › Filter System E2E Tests › Expenses Page Filters › should filter expenses by category 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-2e0b1-filter-expenses-by-category-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-2e0b1-filter-expenses-by-category-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-2e0b1-filter-expenses-by-category-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-2e0b1-filter-expenses-by-category-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-2e0b1-filter-expenses-by-category-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-2e0b1-filter-expenses-by-category-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Expenses Page Filters › should filter expenses by payment method" classname="filter-system-e2e.spec.ts" time="30.062">
-<failure message="filter-system-e2e.spec.ts:212:5 should filter expenses by payment method" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:212:5 › Filter System E2E Tests › Expenses Page Filters › should filter expenses by payment method 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-cc7c7--expenses-by-payment-method-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-cc7c7--expenses-by-payment-method-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-cc7c7--expenses-by-payment-method-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-cc7c7--expenses-by-payment-method-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-cc7c7--expenses-by-payment-method-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-cc7c7--expenses-by-payment-method-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Purchases Page Filters › should filter purchases by vendor" classname="filter-system-e2e.spec.ts" time="30.059">
-<failure message="filter-system-e2e.spec.ts:230:5 should filter purchases by vendor" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:230:5 › Filter System E2E Tests › Purchases Page Filters › should filter purchases by vendor 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-832dc--filter-purchases-by-vendor-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-832dc--filter-purchases-by-vendor-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-832dc--filter-purchases-by-vendor-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-832dc--filter-purchases-by-vendor-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-832dc--filter-purchases-by-vendor-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-832dc--filter-purchases-by-vendor-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Purchases Page Filters › should filter purchases by payment status" classname="filter-system-e2e.spec.ts" time="30.054">
-<failure message="filter-system-e2e.spec.ts:247:5 should filter purchases by payment status" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:247:5 › Filter System E2E Tests › Purchases Page Filters › should filter purchases by payment status 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-57f2f-purchases-by-payment-status-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-57f2f-purchases-by-payment-status-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-57f2f-purchases-by-payment-status-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-57f2f-purchases-by-payment-status-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-57f2f-purchases-by-payment-status-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-57f2f-purchases-by-payment-status-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Stock History Filters › should filter stock history by product" classname="filter-system-e2e.spec.ts" time="30.059">
-<failure message="filter-system-e2e.spec.ts:265:5 should filter stock history by product" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:265:5 › Filter System E2E Tests › Stock History Filters › should filter stock history by product 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-b9b6f-er-stock-history-by-product-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-b9b6f-er-stock-history-by-product-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-b9b6f-er-stock-history-by-product-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-b9b6f-er-stock-history-by-product-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-b9b6f-er-stock-history-by-product-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-b9b6f-er-stock-history-by-product-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Stock History Filters › should filter stock history by entry type" classname="filter-system-e2e.spec.ts" time="30.083">
-<failure message="filter-system-e2e.spec.ts:282:5 should filter stock history by entry type" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:282:5 › Filter System E2E Tests › Stock History Filters › should filter stock history by entry type 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-dbb28-stock-history-by-entry-type-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-dbb28-stock-history-by-entry-type-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-dbb28-stock-history-by-entry-type-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-dbb28-stock-history-by-entry-type-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-dbb28-stock-history-by-entry-type-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-dbb28-stock-history-by-entry-type-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Invoice Payments Filters › should filter invoice payments by customer" classname="filter-system-e2e.spec.ts" time="30.081">
-<failure message="filter-system-e2e.spec.ts:300:5 should filter invoice payments by customer" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:300:5 › Filter System E2E Tests › Invoice Payments Filters › should filter invoice payments by customer 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-f17e3-nvoice-payments-by-customer-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-f17e3-nvoice-payments-by-customer-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-f17e3-nvoice-payments-by-customer-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-f17e3-nvoice-payments-by-customer-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-f17e3-nvoice-payments-by-customer-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-f17e3-nvoice-payments-by-customer-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Invoice Payments Filters › should filter invoice payments by payment method" classname="filter-system-e2e.spec.ts" time="30.063">
-<failure message="filter-system-e2e.spec.ts:317:5 should filter invoice payments by payment method" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:317:5 › Filter System E2E Tests › Invoice Payments Filters › should filter invoice payments by payment method 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-dcd62--payments-by-payment-method-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-dcd62--payments-by-payment-method-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-dcd62--payments-by-payment-method-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-dcd62--payments-by-payment-method-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-dcd62--payments-by-payment-method-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-dcd62--payments-by-payment-method-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Purchase Payments Filters › should filter purchase payments by vendor" classname="filter-system-e2e.spec.ts" time="30.065">
-<failure message="filter-system-e2e.spec.ts:335:5 should filter purchase payments by vendor" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:335:5 › Filter System E2E Tests › Purchase Payments Filters › should filter purchase payments by vendor 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-bdde7-purchase-payments-by-vendor-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-bdde7-purchase-payments-by-vendor-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-bdde7-purchase-payments-by-vendor-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-bdde7-purchase-payments-by-vendor-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-bdde7-purchase-payments-by-vendor-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-bdde7-purchase-payments-by-vendor-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Purchase Payments Filters › should filter purchase payments by payment status" classname="filter-system-e2e.spec.ts" time="30.075">
-<failure message="filter-system-e2e.spec.ts:352:5 should filter purchase payments by payment status" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:352:5 › Filter System E2E Tests › Purchase Payments Filters › should filter purchase payments by payment status 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-bf820--payments-by-payment-status-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-bf820--payments-by-payment-status-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-bf820--payments-by-payment-status-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-bf820--payments-by-payment-status-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-bf820--payments-by-payment-status-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-bf820--payments-by-payment-status-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Integration › should maintain filter state across page navigation" classname="filter-system-e2e.spec.ts" time="30.102">
-<failure message="filter-system-e2e.spec.ts:370:5 should maintain filter state across page navigation" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:370:5 › Filter System E2E Tests › Filter System Integration › should maintain filter state across page navigation 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-cd674-tate-across-page-navigation-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-cd674-tate-across-page-navigation-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-cd674-tate-across-page-navigation-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-cd674-tate-across-page-navigation-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-cd674-tate-across-page-navigation-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-cd674-tate-across-page-navigation-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Integration › should handle multiple filter combinations" classname="filter-system-e2e.spec.ts" time="30.057">
-<failure message="filter-system-e2e.spec.ts:390:5 should handle multiple filter combinations" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:390:5 › Filter System E2E Tests › Filter System Integration › should handle multiple filter combinations 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-66163-ultiple-filter-combinations-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-66163-ultiple-filter-combinations-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-66163-ultiple-filter-combinations-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-66163-ultiple-filter-combinations-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-66163-ultiple-filter-combinations-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-66163-ultiple-filter-combinations-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Integration › should handle empty filter results gracefully" classname="filter-system-e2e.spec.ts" time="30.051">
-<failure message="filter-system-e2e.spec.ts:415:5 should handle empty filter results gracefully" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:415:5 › Filter System E2E Tests › Filter System Integration › should handle empty filter results gracefully 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-a4794-y-filter-results-gracefully-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-a4794-y-filter-results-gracefully-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-a4794-y-filter-results-gracefully-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-a4794-y-filter-results-gracefully-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-a4794-y-filter-results-gracefully-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-a4794-y-filter-results-gracefully-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Integration › should provide keyboard navigation for filters" classname="filter-system-e2e.spec.ts" time="30.062">
-<failure message="filter-system-e2e.spec.ts:430:5 should provide keyboard navigation for filters" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:430:5 › Filter System E2E Tests › Filter System Integration › should provide keyboard navigation for filters 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-3e17f-oard-navigation-for-filters-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-3e17f-oard-navigation-for-filters-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-3e17f-oard-navigation-for-filters-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-3e17f-oard-navigation-for-filters-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-3e17f-oard-navigation-for-filters-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-3e17f-oard-navigation-for-filters-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Performance › should load filters quickly" classname="filter-system-e2e.spec.ts" time="30.057">
-<failure message="filter-system-e2e.spec.ts:454:5 should load filters quickly" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:454:5 › Filter System E2E Tests › Filter System Performance › should load filters quickly 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-25624-should-load-filters-quickly-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-25624-should-load-filters-quickly-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-25624-should-load-filters-quickly-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-25624-should-load-filters-quickly-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-25624-should-load-filters-quickly-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-25624-should-load-filters-quickly-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Performance › should apply filters without significant delay" classname="filter-system-e2e.spec.ts" time="30.061">
-<failure message="filter-system-e2e.spec.ts:473:5 should apply filters without significant delay" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:473:5 › Filter System E2E Tests › Filter System Performance › should apply filters without significant delay 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-d8083-s-without-significant-delay-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-d8083-s-without-significant-delay-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-d8083-s-without-significant-delay-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-d8083-s-without-significant-delay-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-d8083-s-without-significant-delay-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-d8083-s-without-significant-delay-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Accessibility › should be keyboard navigable" classname="filter-system-e2e.spec.ts" time="30.072">
-<failure message="filter-system-e2e.spec.ts:498:5 should be keyboard navigable" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:498:5 › Filter System E2E Tests › Filter System Accessibility › should be keyboard navigable 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-dfe2a-hould-be-keyboard-navigable-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-dfe2a-hould-be-keyboard-navigable-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-dfe2a-hould-be-keyboard-navigable-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-dfe2a-hould-be-keyboard-navigable-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-dfe2a-hould-be-keyboard-navigable-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-dfe2a-hould-be-keyboard-navigable-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Accessibility › should have proper ARIA labels" classname="filter-system-e2e.spec.ts" time="30.046">
-<failure message="filter-system-e2e.spec.ts:516:5 should have proper ARIA labels" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:516:5 › Filter System E2E Tests › Filter System Accessibility › should have proper ARIA labels 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-ee684-uld-have-proper-ARIA-labels-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-ee684-uld-have-proper-ARIA-labels-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-ee684-uld-have-proper-ARIA-labels-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-ee684-uld-have-proper-ARIA-labels-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-ee684-uld-have-proper-ARIA-labels-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-ee684-uld-have-proper-ARIA-labels-firefox/error-context.md]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Filter System E2E Tests › Filter System Accessibility › should announce filter changes to screen readers" classname="filter-system-e2e.spec.ts" time="30.06">
-<failure message="filter-system-e2e.spec.ts:525:5 should announce filter changes to screen readers" type="FAILURE">
-<![CDATA[  [firefox] › filter-system-e2e.spec.ts:525:5 › Filter System E2E Tests › Filter System Accessibility › should announce filter changes to screen readers 
-
-    Test timeout of 30000ms exceeded while running "beforeEach" hook.
-
-      2 |
-      3 | test.describe('Filter System E2E Tests', () => {
-    > 4 |   test.beforeEach(async ({ page }) => {
-        |        ^
-      5 |     // Navigate to the application
-      6 |     await page.goto('http://localhost:5174')
-      7 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:4:8
-
-    Error: page.fill: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('input[name="username"]')
-
-
-      14 |     
-      15 |     // Login if not already logged in
-    > 16 |     await page.fill('input[name="username"]', 'admin')
-         |                ^
-      17 |     await page.fill('input[name="password"]', 'admin123')
-      18 |     await page.click('button:has-text("Login")')
-      19 |     
-        at /Users/vivekm/code/ipsc/frontend/tests/e2e/filter-system-e2e.spec.ts:16:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-ff019-r-changes-to-screen-readers-firefox/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../test-results/filter-system-e2e-Filter-S-ff019-r-changes-to-screen-readers-firefox/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/filter-system-e2e-Filter-S-ff019-r-changes-to-screen-readers-firefox/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|filter-system-e2e-Filter-S-ff019-r-changes-to-screen-readers-firefox/test-failed-1.png]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-ff019-r-changes-to-screen-readers-firefox/video.webm]]
-
-[[ATTACHMENT|filter-system-e2e-Filter-S-ff019-r-changes-to-screen-readers-firefox/error-context.md]]
+[[ATTACHMENT|stock-history-filter-fixes-140ea-ltered-and-unfiltered-views-firefox/error-context.md]]
 ]]>
 </system-out>
 </testcase>

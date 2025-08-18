@@ -68,11 +68,13 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
     try {
       setLoading(true)
       setError(null)
-      const purchasesData = await apiListPurchases(searchTerm, statusFilter)
+      const effectiveSearch = searchTerm && searchTerm !== 'all' ? searchTerm : undefined
+      const effectiveStatus = statusFilter && statusFilter !== 'all' ? statusFilter : undefined
+      const purchasesData = await apiListPurchases(effectiveSearch, effectiveStatus)
       setPurchases(purchasesData)
     } catch (err: any) {
-      handleApiError(err)
-      setError('Failed to load purchases')
+      const msg = handleApiError(err)
+      setError(msg || 'Failed to load purchases')
     } finally {
       setLoading(false)
     }

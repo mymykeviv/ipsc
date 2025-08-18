@@ -106,7 +106,18 @@ function Shell() {
     if (path === '/products' && location.pathname.startsWith('/products')) {
       // Only highlight /products if we're not on a specific sub-path
       return !location.pathname.includes('/add') && 
-             !location.pathname.includes('/edit')
+             !location.pathname.includes('/edit') &&
+             !location.pathname.includes('/stock-adjustment') &&
+             !location.pathname.includes('/stock-history')
+    }
+    if (path === '/products/add' && location.pathname.startsWith('/products/add')) {
+      return true
+    }
+    if (path === '/products/stock-adjustment' && location.pathname.startsWith('/products/stock-adjustment')) {
+      return true
+    }
+    if (path === '/products/stock-history' && location.pathname.startsWith('/products/stock-history')) {
+      return true
     }
     if (path === '/customers' && location.pathname.startsWith('/customers')) {
       // Only highlight /customers if we're not on a specific sub-path
@@ -250,9 +261,6 @@ function Shell() {
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/vendors') ? 'active' : ''}`} to="/vendors">
                   Vendors
-                </Link>
-                <Link className={`nav-link sub-link ${isActive('/parties/add') ? 'active' : ''}`} to="/parties/add">
-                  Add New Party
                 </Link>
               </>
             )}

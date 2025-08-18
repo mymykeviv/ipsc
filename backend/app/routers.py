@@ -3214,8 +3214,8 @@ def stock_adjust(payload: StockAdjustmentIn, _: User = Depends(get_current_user)
         if payload.quantity < 0 or payload.quantity > 999999:
             raise HTTPException(status_code=400, detail="Quantity must be between 0 and 999999")
         
-        if payload.adjustment_type not in ["add", "reduce"]:
-            raise HTTPException(status_code=400, detail="Adjustment type must be 'add' or 'reduce'")
+        if payload.adjustment_type not in ["add", "reduce", "adjust"]:
+            raise HTTPException(status_code=400, detail="Adjustment type must be 'add', 'reduce', or 'adjust'")
         
         if payload.reference_bill_number and len(payload.reference_bill_number) > 10:
             raise HTTPException(status_code=400, detail="Reference bill number must be 10 characters or less")
@@ -3234,20 +3234,35 @@ def stock_adjust(payload: StockAdjustmentIn, _: User = Depends(get_current_user)
             raise HTTPException(status_code=404, detail='Product not found')
         
         # Calculate the delta based on adjustment type
-        delta = payload.quantity if payload.adjustment_type == "add" else -payload.quantity
-        
-        # Check if reducing stock would result in negative stock
-        if payload.adjustment_type == "reduce" and (prod.stock - payload.quantity) < 0:
-            raise HTTPException(status_code=400, detail="Cannot reduce stock below 0")
+        if payload.adjustment_type == "add":
+            delta = payload.quantity
+        elif payload.adjustment_type == "reduce":
+            delta = -payload.quantity
+            # Check if reducing stock would result in negative stock
+            if (prod.stock - payload.quantity) < 0:
+                raise HTTPException(status_code=400, detail="Cannot reduce stock below 0")
+        elif payload.adjustment_type == "adjust":
+            # For adjustments, quantity can be positive or negative
+            delta = payload.quantity
+            # Check if adjustment would result in negative stock
+            if (prod.stock + payload.quantity) < 0:
+                raise HTTPException(status_code=400, detail="Cannot adjust stock below 0")
         
         # Update product stock
         prod.stock += delta
         
-        # Add stock ledger entry
+        # Add stock ledger entry with correct entry type
+        if payload.adjustment_type == "add":
+            entry_type = 'in'
+        elif payload.adjustment_type == "reduce":
+            entry_type = 'out'
+        else:  # adjust
+            entry_type = 'adjust'
+        
         db.add(StockLedgerEntry(
             product_id=prod.id, 
             qty=delta, 
-            entry_type='adjust', 
+            entry_type=entry_type, 
             ref_type=payload.adjustment_type, 
             ref_id=0
         ))
@@ -4035,6 +4050,44 @@ class StockMovementOut(BaseModel):
         from_attributes = True
 
 
+class StockTransactionOut(BaseModel):
+    id: int
+    product_id: int
+    product_name: str
+    transaction_date: datetime
+    entry_type: str  # 'in', 'out', 'adjust'
+    quantity: float
+    unit_price: float | None
+    total_value: float | None
+    ref_type: str | None  # 'invoice', 'purchase', 'adjustment', etc.
+    ref_id: int | None
+    reference_number: str | None
+    notes: str | None
+    financial_year: str
+    running_balance: float
+
+    class Config:
+        from_attributes = True
+
+
+class StockMovementSummaryOut(BaseModel):
+    product_id: int
+    product_name: str
+    financial_year: str
+    opening_stock: float
+    opening_value: float
+    total_incoming: float
+    total_incoming_value: float
+    total_outgoing: float
+    total_outgoing_value: float
+    closing_stock: float
+    closing_value: float
+    transactions: list[StockTransactionOut]
+
+    class Config:
+        from_attributes = True
+
+
 # Advanced Invoice Features - Pydantic Models
 class RecurringInvoiceTemplateCreate(BaseModel):
     name: str
@@ -4313,13 +4366,14 @@ def get_stock_history(
     
     return result
 
-@api.get('/stock/movement-history', response_model=list[StockMovementOut])
+@api.get('/stock/movement-history', response_model=list[StockMovementSummaryOut])
 def get_stock_movement_history(
     financial_year: str | None = None,
+    product_id: int | None = None,
     _: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get stock movement history for all products by financial year"""
+    """Get stock movement history with individual transactions for all products or specific product by financial year"""
     
     # If no financial year specified, use current year
     if not financial_year:
@@ -4335,49 +4389,127 @@ def get_stock_movement_history(
     except (ValueError, IndexError):
         raise HTTPException(status_code=400, detail="Invalid financial year format. Use YYYY-YYYY")
     
-    # Get all products
-    products = db.query(Product).all()
+    # Get products (all or specific)
+    if product_id:
+        products = db.query(Product).filter(Product.id == product_id).all()
+        if not products:
+            raise HTTPException(status_code=404, detail="Product not found")
+    else:
+        products = db.query(Product).all()
+    
     movements = []
     
     for product in products:
-        # Calculate opening stock (stock at the beginning of FY)
-        opening_stock = product.stock  # Current stock as base
-        
-        # Get all stock adjustments for this product in the financial year
-        stock_adjustments = db.query(StockLedgerEntry).filter(
+        # Get all stock transactions for this product in the financial year
+        stock_transactions = db.query(StockLedgerEntry).filter(
             StockLedgerEntry.product_id == product.id,
             StockLedgerEntry.created_at >= fy_start_date,
             StockLedgerEntry.created_at <= fy_end_date
+        ).order_by(StockLedgerEntry.created_at).all()
+        
+        # Calculate opening stock (stock at the beginning of FY)
+        # Get all transactions before the financial year
+        pre_fy_transactions = db.query(StockLedgerEntry).filter(
+            StockLedgerEntry.product_id == product.id,
+            StockLedgerEntry.created_at < fy_start_date
         ).all()
         
-        # Calculate incoming and outgoing stock
-        incoming_stock = sum(
-            adj.qty for adj in stock_adjustments 
+        opening_stock = sum(
+            adj.qty for adj in pre_fy_transactions 
             if adj.entry_type == 'in'
-        )
-        outgoing_stock = sum(
-            adj.qty for adj in stock_adjustments 
+        ) - sum(
+            adj.qty for adj in pre_fy_transactions 
             if adj.entry_type == 'out'
         )
-        
-        # Calculate opening stock (current stock - net adjustments in FY)
-        net_adjustments = incoming_stock - outgoing_stock
-        opening_stock = product.stock - net_adjustments
-        
-        # Ensure opening stock is not negative
         opening_stock = max(0, opening_stock)
         
-        # Closing stock is current stock
-        closing_stock = product.stock
+        # Calculate opening value (using average cost method)
+        unit_price = product.purchase_price or product.sales_price or 0
+        unit_price_float = float(unit_price) if unit_price else 0.0
+        opening_value = opening_stock * unit_price_float
         
-        movements.append(StockMovementOut(
+        # Process individual transactions
+        transactions = []
+        running_balance = opening_stock
+        
+        for transaction in stock_transactions:
+            # Calculate unit price and total value
+            unit_price = product.purchase_price or product.sales_price or 0
+            # Convert Decimal to float for calculation
+            unit_price_float = float(unit_price) if unit_price else 0.0
+            total_value = transaction.qty * unit_price_float
+            
+            # Determine reference information
+            ref_type = None
+            ref_id = None
+            reference_number = None
+            notes = None
+            
+            if transaction.ref_type and transaction.ref_id:
+                ref_type = transaction.ref_type
+                ref_id = transaction.ref_id
+                # Try to get reference number based on ref_type
+                if ref_type == 'invoice':
+                    invoice = db.query(Invoice).filter(Invoice.id == ref_id).first()
+                    reference_number = invoice.invoice_no if invoice else None
+                elif ref_type == 'purchase':
+                    purchase = db.query(Purchase).filter(Purchase.id == ref_id).first()
+                    reference_number = purchase.purchase_no if purchase else None
+                elif ref_type == 'adjustment':
+                    reference_number = f"ADJ-{ref_id}"
+            
+            # Update running balance
+            if transaction.entry_type == 'in':
+                running_balance += transaction.qty
+            elif transaction.entry_type == 'out':
+                running_balance -= transaction.qty
+            elif transaction.entry_type == 'adjust':
+                # For adjustments: positive quantity increases stock, negative decreases
+                running_balance += transaction.qty
+            
+            transactions.append(StockTransactionOut(
+                id=transaction.id,
+                product_id=product.id,
+                product_name=product.name,
+                transaction_date=transaction.created_at,
+                entry_type=transaction.entry_type,
+                quantity=transaction.qty,
+                unit_price=unit_price,
+                total_value=total_value,
+                ref_type=ref_type,
+                ref_id=ref_id,
+                reference_number=reference_number,
+                notes=notes,
+                financial_year=financial_year,
+                running_balance=running_balance
+            ))
+        
+        # Calculate summary totals
+        # For adjustments: positive quantity = incoming, negative quantity = outgoing
+        total_incoming = sum(t.quantity for t in transactions if t.entry_type == 'in') + \
+                        sum(t.quantity for t in transactions if t.entry_type == 'adjust' and t.quantity > 0)
+        total_incoming_value = sum(t.total_value or 0 for t in transactions if t.entry_type == 'in') + \
+                              sum(t.total_value or 0 for t in transactions if t.entry_type == 'adjust' and t.quantity > 0)
+        total_outgoing = sum(t.quantity for t in transactions if t.entry_type == 'out') + \
+                        sum(abs(t.quantity) for t in transactions if t.entry_type == 'adjust' and t.quantity < 0)
+        total_outgoing_value = sum(t.total_value or 0 for t in transactions if t.entry_type == 'out') + \
+                              sum(t.total_value or 0 for t in transactions if t.entry_type == 'adjust' and t.quantity < 0)
+        closing_stock = running_balance
+        closing_value = closing_stock * unit_price_float
+        
+        movements.append(StockMovementSummaryOut(
             product_id=product.id,
             product_name=product.name,
             financial_year=financial_year,
             opening_stock=opening_stock,
-            incoming_stock=incoming_stock,
-            outgoing_stock=outgoing_stock,
-            closing_stock=closing_stock
+            opening_value=opening_value,
+            total_incoming=total_incoming,
+            total_incoming_value=total_incoming_value,
+            total_outgoing=total_outgoing,
+            total_outgoing_value=total_outgoing_value,
+            closing_stock=closing_stock,
+            closing_value=closing_value,
+            transactions=transactions
         ))
     
     return movements

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
@@ -13,6 +13,7 @@ import { EnhancedFilterDropdown } from '../components/EnhancedFilterDropdown'
 import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
 import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAdjustStock, apiListParties, Party, apiGetStockMovementHistory, StockMovement, ProductFilters } from '../lib/api'
+import { StockHistoryForm } from '../components/StockHistoryForm'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface Product {
@@ -60,7 +61,7 @@ interface ProductFormData {
 
 interface StockFormData {
   quantity: string
-  adjustmentType: 'add' | 'reduce'
+  adjustmentType: 'add' | 'reduce' | 'adjust'
   date_of_receipt: string
   reference_bill_number: string
   supplier: string
@@ -385,23 +386,61 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       if (!formData.name.trim()) {
         throw new Error('Product name is required')
       }
+      if (formData.name.length > 100) {
+        throw new Error('Product name must be 100 characters or less')
+      }
+      if (!/^[a-zA-Z0-9\s]+$/.test(formData.name)) {
+        throw new Error('Product name must be alphanumeric with spaces only')
+      }
       if (!formData.product_type) {
         throw new Error('Product type is required')
       }
       if (!formData.sales_price || parseFloat(formData.sales_price) <= 0) {
         throw new Error('Sales price must be greater than 0')
       }
+      if (parseFloat(formData.sales_price) > 999999.99) {
+        throw new Error('Sales price must be less than 999,999.99')
+      }
       if (!formData.opening_stock || parseFloat(formData.opening_stock) < 0) {
         throw new Error('Opening stock must be 0 or greater')
+      }
+      if (parseFloat(formData.opening_stock) > 999999) {
+        throw new Error('Opening stock must be less than 999,999')
       }
       if (!formData.unit.trim()) {
         throw new Error('Unit is required')
       }
+      if (formData.sku && formData.sku.length > 50) {
+        throw new Error('SKU must be 50 characters or less')
+      }
+      if (formData.sku && !/^[a-zA-Z0-9\s]+$/.test(formData.sku)) {
+        throw new Error('SKU must be alphanumeric with spaces only')
+      }
+      if (formData.description && formData.description.length > 200) {
+        throw new Error('Description must be 200 characters or less')
+      }
+      if (formData.supplier && formData.supplier.length > 100) {
+        throw new Error('Supplier must be 100 characters or less')
+      }
+      if (formData.category && formData.category.length > 100) {
+        throw new Error('Category must be 100 characters or less')
+      }
+      if (formData.purchase_price && parseFloat(formData.purchase_price) > 999999.99) {
+        throw new Error('Purchase price must be less than 999,999.99')
+      }
+
+      // Map product_type to item_type for backend compatibility
+      const itemTypeMap: { [key: string]: string } = {
+        'Goods': 'tradable',
+        'Services': 'consumable'
+      }
+      
+      const itemType = itemTypeMap[formData.product_type] || 'tradable'
 
       const payload = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
-        item_type: formData.product_type,
+        item_type: itemType,
         sales_price: parseFloat(formData.sales_price),
         purchase_price: formData.purchase_price && formData.purchase_price.trim() ? parseFloat(formData.purchase_price) : null,
         stock: parseFloat(formData.opening_stock),
@@ -432,10 +471,18 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     e.preventDefault()
     if (!currentProduct) return
     try {
+      // Map product_type to item_type for backend compatibility
+      const itemTypeMap: { [key: string]: string } = {
+        'Goods': 'tradable',
+        'Services': 'consumable'
+      }
+      
+      const itemType = itemTypeMap[formData.product_type] || 'tradable'
+
       const payload = {
         name: formData.name,
         description: formData.description,
-        item_type: formData.product_type,
+        item_type: itemType,
         sales_price: parseFloat(formData.sales_price),
         purchase_price: formData.purchase_price ? parseFloat(formData.purchase_price) : null,
         stock: parseFloat(formData.opening_stock),
@@ -1320,6 +1367,9 @@ interface StockAdjustmentFormProps {
 }
 
 function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) {
+  const [searchParams] = useSearchParams()
+  const preSelectedProductId = searchParams.get('product')
+  
   const { forceLogout } = useAuth()
   const handleApiError = createApiErrorHandler(forceLogout)
   const [products, setProducts] = useState<Product[]>([])
@@ -1335,8 +1385,9 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
     category: '',
     notes: ''
   })
-  const [selectedProductId, setSelectedProductId] = useState<string>('')
+  const [selectedProductId, setSelectedProductId] = useState<string>(preSelectedProductId || '')
   const [stockLoading, setStockLoading] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
 
   useEffect(() => {
     loadData()
@@ -1351,6 +1402,14 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
       ])
       setProducts(productsData)
       setVendors(vendorsData.filter(party => party.type === 'vendor'))
+      
+      // If product is pre-selected, set the selected product
+      if (preSelectedProductId) {
+        const product = productsData.find(p => p.id === parseInt(preSelectedProductId))
+        if (product) {
+          setSelectedProduct(product)
+        }
+      }
     } catch (err: any) {
       const errorMessage = handleApiError(err)
       setError(errorMessage)
@@ -1452,7 +1511,7 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
 
       {error && <ErrorMessage message={error} />}
 
-      <form onSubmit={handleStockSubmit} style={{ maxWidth: '800px' }}>
+      <form onSubmit={handleStockSubmit} style={{ maxWidth: '1200px' }}>
         {/* Product Selection Section */}
         <div style={formStyles.section}>
           <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('product') }}>
@@ -1462,7 +1521,11 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
             <label style={formStyles.label}>Select Product *</label>
             <select
               value={selectedProductId}
-              onChange={(e) => setSelectedProductId(e.target.value)}
+              onChange={(e) => {
+                setSelectedProductId(e.target.value)
+                const product = products.find(p => p.id === parseInt(e.target.value))
+                setSelectedProduct(product || null)
+              }}
               style={formStyles.select}
               required
             >
@@ -1474,115 +1537,164 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
               ))}
             </select>
           </div>
+          
+          {/* Product Information Display */}
+          {selectedProduct && (
+            <div style={{ 
+              backgroundColor: '#f8f9fa', 
+              padding: '16px', 
+              borderRadius: '8px', 
+              marginTop: '12px',
+              border: '1px solid #e9ecef'
+            }}>
+              <h4 style={{ margin: '0 0 12px 0', color: '#495057' }}>Product Information</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                <div>
+                  <strong>Name:</strong> {selectedProduct.name}
+                </div>
+                <div>
+                  <strong>Current Stock:</strong> {selectedProduct.stock} {selectedProduct.unit}
+                </div>
+                <div>
+                  <strong>Purchase Price:</strong> ₹{selectedProduct.purchase_price || 'N/A'}
+                </div>
+                <div>
+                  <strong>Sales Price:</strong> ₹{selectedProduct.sales_price}
+                </div>
+                <div>
+                  <strong>Category:</strong> {selectedProduct.category || 'N/A'}
+                </div>
+                <div>
+                  <strong>Supplier:</strong> {selectedProduct.supplier || 'N/A'}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Adjustment Details Section */}
-        <div style={formStyles.section}>
-          <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('adjustment') }}>
-            Adjustment Details
-          </h3>
-          <div style={formStyles.grid2Col}>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Adjustment Type *</label>
-              <select
-                value={stockFormData.adjustmentType}
-                onChange={(e) => handleStockInputChange('adjustmentType', e.target.value as 'add' | 'reduce')}
-                style={formStyles.select}
-                required
-              >
-                <option value="add">Add Stock (Incoming)</option>
-                <option value="reduce">Reduce Stock (Outgoing)</option>
-              </select>
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Quantity *</label>
-              <input
-                type="number"
-                value={stockFormData.quantity}
-                onChange={(e) => handleStockInputChange('quantity', e.target.value)}
-                style={formStyles.input}
-                min="0"
-                step="0.01"
-                required
-              />
-            </div>
-          </div>
-          <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>
-              {stockFormData.adjustmentType === 'add' ? 'Date of Receipt' : 'Date of Issue'} *
-            </label>
-            <input
-              type="date"
-              value={stockFormData.date_of_receipt}
-              onChange={(e) => handleStockInputChange('date_of_receipt', e.target.value)}
-              style={formStyles.input}
-              required
-            />
-          </div>
-        </div>
-
-        {/* Reference Information Section (only for incoming stock) */}
-        {stockFormData.adjustmentType === 'add' && (
-          <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('reference') }}>
-              Reference Information
-            </h3>
-            <div style={formStyles.grid2Col}>
+        {/* Two Column Layout for Form Sections */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          {/* Left Column */}
+          <div>
+            {/* Adjustment Details Section */}
+            <div style={formStyles.section}>
+              <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('adjustment') }}>
+                Adjustment Details
+              </h3>
               <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Reference Bill Number</label>
+                <label style={formStyles.label}>Adjustment Type *</label>
+                <select
+                  value={stockFormData.adjustmentType}
+                  onChange={(e) => handleStockInputChange('adjustmentType', e.target.value as 'add' | 'reduce' | 'adjust')}
+                  style={formStyles.select}
+                  required
+                >
+                  <option value="add">Add Stock (Incoming) - Purchases, Returns</option>
+                  <option value="reduce">Reduce Stock (Outgoing) - Sales, Consumption</option>
+                  <option value="adjust">Stock Adjustment - Corrections, Damage</option>
+                </select>
+                <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+                  <strong>When to use:</strong><br/>
+                  • <strong>Add Stock:</strong> Purchase receipts, sales returns, production<br/>
+                  • <strong>Reduce Stock:</strong> Sales, purchase returns, consumption<br/>
+                  • <strong>Adjustment:</strong> Physical count corrections, damage, write-offs
+                </div>
+              </div>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Quantity *</label>
                 <input
-                  type="text"
-                  value={stockFormData.reference_bill_number}
-                  onChange={(e) => handleStockInputChange('reference_bill_number', e.target.value)}
+                  type="number"
+                  value={stockFormData.quantity}
+                  onChange={(e) => handleStockInputChange('quantity', e.target.value)}
                   style={formStyles.input}
-                  placeholder="Enter bill/invoice number"
+                  min="0"
+                  step="0.01"
+                  required
                 />
               </div>
               <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Supplier</label>
-                <select
-                  value={stockFormData.supplier}
-                  onChange={(e) => handleStockInputChange('supplier', e.target.value)}
-                  style={formStyles.select}
-                >
-                  <option value="">Select supplier...</option>
-                  {vendors.map(vendor => (
-                    <option key={vendor.id} value={vendor.name}>
-                      {vendor.name}
-                    </option>
-                  ))}
-                </select>
+                <label style={formStyles.label}>
+                  {stockFormData.adjustmentType === 'add' ? 'Date of Receipt' : 
+                   stockFormData.adjustmentType === 'reduce' ? 'Date of Issue' : 
+                   'Date of Adjustment'} *
+                </label>
+                <input
+                  type="date"
+                  value={stockFormData.date_of_receipt}
+                  onChange={(e) => handleStockInputChange('date_of_receipt', e.target.value)}
+                  style={formStyles.input}
+                  required
+                />
               </div>
             </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Category</label>
-              <input
-                type="text"
-                value={stockFormData.category}
-                onChange={(e) => handleStockInputChange('category', e.target.value)}
-                style={formStyles.input}
-                placeholder="Enter category"
-              />
+          </div>
+
+          {/* Right Column */}
+          <div>
+            {/* Reference Information Section (for incoming stock and adjustments) */}
+            {(stockFormData.adjustmentType === 'add' || stockFormData.adjustmentType === 'adjust') && (
+              <div style={formStyles.section}>
+                <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('reference') }}>
+                  Reference Information
+                </h3>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Reference Bill Number</label>
+                  <input
+                    type="text"
+                    value={stockFormData.reference_bill_number}
+                    onChange={(e) => handleStockInputChange('reference_bill_number', e.target.value)}
+                    style={formStyles.input}
+                    placeholder="Enter bill/invoice number"
+                  />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Supplier</label>
+                  <select
+                    value={stockFormData.supplier}
+                    onChange={(e) => handleStockInputChange('supplier', e.target.value)}
+                    style={formStyles.select}
+                  >
+                    <option value="">Select supplier...</option>
+                    {vendors.map(vendor => (
+                      <option key={vendor.id} value={vendor.name}>
+                        {vendor.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Category</label>
+                  <input
+                    type="text"
+                    value={stockFormData.category}
+                    onChange={(e) => handleStockInputChange('category', e.target.value)}
+                    style={formStyles.input}
+                    placeholder="Enter category"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Notes Section */}
+            <div style={formStyles.section}>
+              <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('notes') }}>
+                Additional Information
+              </h3>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Notes</label>
+                <textarea
+                  value={stockFormData.notes}
+                  onChange={(e) => handleStockInputChange('notes', e.target.value)}
+                  style={formStyles.textarea}
+                  rows={4}
+                  placeholder="Additional notes about this stock adjustment..."
+                />
+              </div>
             </div>
           </div>
-        )}
-
-        {/* Notes Section */}
-        <div style={formStyles.section}>
-          <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('notes') }}>
-            Additional Information
-          </h3>
-          <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>Notes</label>
-            <textarea
-              value={stockFormData.notes}
-              onChange={(e) => handleStockInputChange('notes', e.target.value)}
-              style={formStyles.textarea}
-              rows={3}
-              placeholder="Additional notes about this stock adjustment..."
-            />
-          </div>
         </div>
+
+
 
         {/* Form Actions */}
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', marginTop: '24px' }}>
@@ -1608,342 +1720,5 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
 }
 
 
-// Stock History Form Component
-interface StockHistoryFormProps {
-  onSuccess: () => void
-  onCancel: () => void
-}
 
-function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
-  const [stockHistory, setStockHistory] = useState<StockMovement[]>([])
-  const [historyLoading, setHistoryLoading] = useState(false)
-  const [products, setProducts] = useState<Product[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [historySearchTerm, setHistorySearchTerm] = useState('')
-  const [historyCurrentPage, setHistoryCurrentPage] = useState(1)
-  const [historyItemsPerPage] = useState(10)
-  
-  // New filter states for Stock Movement History
-  const [productFilter, setProductFilter] = useState('all')
-  const [financialYearFilter, setFinancialYearFilter] = useState('all')
-  const [entryTypeFilter, setEntryTypeFilter] = useState('all')
-  const [dateFilter, setDateFilter] = useState('all')
-  
-  const { forceLogout } = useAuth()
-  const handleApiError = createApiErrorHandler(forceLogout)
-
-  const loadProducts = async () => {
-    try {
-      const productsData = await apiGetProducts()
-      setProducts(productsData)
-    } catch (err) {
-      const errorMessage = handleApiError(err)
-      setError(errorMessage)
-    }
-  }
-
-  const loadStockHistory = async () => {
-    try {
-      setHistoryLoading(true)
-      setError(null)
-      const history = await apiGetStockMovementHistory()
-      setStockHistory(history)
-    } catch (err) {
-      console.error('Failed to load stock history:', err)
-      const errorMessage = handleApiError(err)
-      setError(errorMessage)
-    } finally {
-      setHistoryLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadProducts()
-    loadStockHistory()
-  }, [])
-
-  // Filter and paginate stock history with enhanced filters
-  const filteredStockHistory = stockHistory.filter(movement => {
-    const matchesSearch = movement.product_name.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
-                         movement.financial_year.toString().includes(historySearchTerm)
-    
-    const matchesProduct = productFilter === 'all' || 
-                          movement.product_name === productFilter
-    
-    const matchesFinancialYear = financialYearFilter === 'all' || 
-                                 movement.financial_year.toString() === financialYearFilter
-    
-    const matchesEntryType = entryTypeFilter === 'all' || 
-                            (entryTypeFilter === 'incoming' && movement.incoming_stock > 0) ||
-                            (entryTypeFilter === 'outgoing' && movement.outgoing_stock > 0)
-    
-    return matchesSearch && matchesProduct && matchesFinancialYear && matchesEntryType
-  })
-
-  const historyTotalPages = Math.ceil(filteredStockHistory.length / historyItemsPerPage)
-  const historyStartIndex = (historyCurrentPage - 1) * historyItemsPerPage
-  const historyEndIndex = historyStartIndex + historyItemsPerPage
-  const paginatedStockHistory = filteredStockHistory.slice(historyStartIndex, historyEndIndex)
-
-  // Get unique financial years for filter
-  const financialYears = [...new Set(stockHistory.map(m => m.financial_year.toString()))].sort((a, b) => b.localeCompare(a))
-  
-  // Get unique product names for filter
-  const productNames = [...new Set(stockHistory.map(m => m.product_name))].sort()
-
-  return (
-    <div style={{ padding: '20px', maxWidth: '100%' }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '24px',
-        paddingBottom: '12px',
-        borderBottom: '2px solid #e9ecef'
-      }}>
-        <h1 style={{ 
-          margin: '0',
-          fontSize: '28px',
-          fontWeight: '600',
-          color: '#2c3e50'
-        }}>
-          Stock Movement History
-        </h1>
-        <Button 
-          onClick={onCancel}
-          variant="secondary"
-          style={{ 
-            padding: '10px 16px', 
-            fontSize: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
-        >
-          ← Back to Products
-        </Button>
-      </div>
-
-      {error && <ErrorMessage message={error} />}
-
-      {/* Enhanced Filter Bar for Stock Movement History */}
-      <EnhancedFilterBar 
-        title="Stock Movement Filters"
-        activeFiltersCount={
-          (historySearchTerm ? 1 : 0) +
-          (productFilter !== 'all' ? 1 : 0) +
-          (financialYearFilter !== 'all' ? 1 : 0) +
-          (entryTypeFilter !== 'all' ? 1 : 0) +
-          (dateFilter !== 'all' ? 1 : 0)
-        }
-        onClearAll={() => {
-          setHistorySearchTerm('')
-          setProductFilter('all')
-          setFinancialYearFilter('all')
-          setEntryTypeFilter('all')
-          setDateFilter('all')
-        }}
-        showQuickActions={true}
-        quickActions={[
-          {
-            label: 'Current FY',
-            action: () => {
-              const currentYear = new Date().getFullYear()
-              setFinancialYearFilter(`${currentYear}-${currentYear + 1}`)
-            },
-            icon: '📅'
-          },
-          {
-            label: 'Incoming Only',
-            action: () => setEntryTypeFilter('incoming'),
-            icon: '📥'
-          },
-          {
-            label: 'Outgoing Only',
-            action: () => setEntryTypeFilter('outgoing'),
-            icon: '📤'
-          }
-        ]}
-      >
-        {/* Search Bar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Search</span>
-          <input
-            type="text"
-            value={historySearchTerm}
-            onChange={(e) => setHistorySearchTerm(e.target.value)}
-            placeholder="Search by product name or financial year..."
-            style={{
-              width: '100%',
-              padding: '6px 10px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '12px',
-              outline: 'none',
-              minHeight: '32px' // Match other filter components height
-            }}
-          />
-        </div>
-
-        {/* Product Filter */}
-        <FilterDropdown
-          value={productFilter}
-          onChange={(value) => setProductFilter(Array.isArray(value) ? value[0] || 'all' : value)}
-          options={[
-            { value: 'all', label: 'All Products' },
-            ...productNames.map(name => ({ value: name, label: name }))
-          ]}
-          placeholder="Select Product"
-        />
-
-        {/* Financial Year Filter */}
-        <FilterDropdown
-          value={financialYearFilter}
-          onChange={(value) => setFinancialYearFilter(Array.isArray(value) ? value[0] || 'all' : value)}
-          options={[
-            { value: 'all', label: 'All Financial Years' },
-            ...financialYears.map(year => ({ value: year, label: year }))
-          ]}
-          placeholder="Select Financial Year"
-        />
-
-        {/* Entry Type Filter */}
-        <FilterDropdown
-          value={entryTypeFilter}
-          onChange={(value) => setEntryTypeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
-          options={[
-            { value: 'all', label: 'All Entries' },
-            { value: 'incoming', label: 'Incoming Stock' },
-            { value: 'outgoing', label: 'Outgoing Stock' }
-          ]}
-          placeholder="Select Entry Type"
-        />
-
-        {/* Date Filter */}
-        <DateFilter
-          value={dateFilter}
-          onChange={setDateFilter}
-          placeholder="Select date range"
-        />
-      </EnhancedFilterBar>
-
-      {/* Stock Movement Table */}
-      <div style={{ 
-        border: '1px solid #e9ecef', 
-        borderRadius: '8px', 
-        overflow: 'hidden',
-        backgroundColor: 'white'
-      }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #e9ecef' }}>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Product</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Financial Year</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Opening Stock</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Incoming</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Outgoing</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Closing Stock</th>
-            </tr>
-          </thead>
-          <tbody>
-            {historyLoading ? (
-              <tr>
-                <td colSpan={6} style={{ padding: '20px', textAlign: 'center', color: '#6c757d' }}>
-                  Loading stock movement history...
-                </td>
-              </tr>
-            ) : paginatedStockHistory.length > 0 ? (
-              paginatedStockHistory.map((movement, index) => (
-                <tr key={index} style={{ 
-                  borderBottom: '1px solid #e9ecef',
-                  backgroundColor: 'white'
-                }}>
-                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{movement.product_name}</td>
-                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
-                    {movement.financial_year}
-                  </td>
-                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
-                    {movement.opening_stock.toFixed(2)}
-                  </td>
-                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef', color: '#28a745' }}>
-                    {movement.incoming_stock.toFixed(2)}
-                  </td>
-                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef', color: '#dc3545' }}>
-                    {movement.outgoing_stock.toFixed(2)}
-                  </td>
-                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef', fontWeight: '600' }}>
-                    {movement.closing_stock.toFixed(2)}
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} style={{ padding: '20px', textAlign: 'center', color: '#6c757d' }}>
-                  No stock movement data available
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      {historyTotalPages > 1 && (
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginTop: '24px', 
-          padding: '16px',
-          border: '1px solid #e9ecef',
-          borderRadius: '8px',
-          backgroundColor: '#f8f9fa'
-        }}>
-          <div style={{ fontSize: '14px', color: '#495057' }}>
-            Showing {historyStartIndex + 1} to {Math.min(historyEndIndex, filteredStockHistory.length)} of {filteredStockHistory.length} movements
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <Button 
-              variant="secondary" 
-              onClick={() => setHistoryCurrentPage(Math.max(1, historyCurrentPage - 1))}
-              disabled={historyCurrentPage === 1}
-            >
-              Previous
-            </Button>
-            <span style={{ 
-              padding: '8px 12px', 
-              display: 'flex', 
-              alignItems: 'center',
-              fontSize: '14px',
-              color: '#495057',
-              fontWeight: '500'
-            }}>
-              Page {historyCurrentPage} of {historyTotalPages}
-            </span>
-            <Button 
-              variant="secondary" 
-              onClick={() => setHistoryCurrentPage(Math.min(historyTotalPages, historyCurrentPage + 1))}
-              disabled={historyCurrentPage === historyTotalPages}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <div style={{ 
-        marginTop: '20px', 
-        padding: '16px', 
-        backgroundColor: '#f8f9fa', 
-        borderRadius: '8px',
-        border: '1px solid #e9ecef'
-      }}>
-        <p style={{ color: '#6c757d', fontSize: '14px', margin: '0', textAlign: 'center' }}>
-          <strong>Note:</strong> Stock movement history shows the movement of stock for each financial year (April 1st to March 31st).
-          Opening stock, incoming, and outgoing calculations are based on stock adjustment records.
-        </p>
-      </div>
-    </div>
-  )
-}
 

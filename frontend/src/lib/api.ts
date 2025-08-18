@@ -1008,7 +1008,7 @@ export async function apiGetStockSummary(): Promise<StockRow[]> {
 export async function apiAdjustStock(
   product_id: number, 
   quantity: number, 
-  adjustmentType: 'add' | 'reduce',
+  adjustmentType: 'add' | 'reduce' | 'adjust',
   dateOfAdjustment: string,
   referenceBillNumber?: string,
   supplier?: string,
@@ -1040,19 +1040,47 @@ export async function apiAdjustStock(
   return r.json()
 }
 
+export type StockTransaction = {
+  id: number
+  product_id: number
+  product_name: string
+  transaction_date: string
+  entry_type: string
+  quantity: number
+  unit_price: number | null
+  total_value: number | null
+  ref_type: string | null
+  ref_id: number | null
+  reference_number: string | null
+  notes: string | null
+  financial_year: string
+  running_balance: number
+}
+
 export type StockMovement = {
   product_id: number
   product_name: string
   financial_year: string
   opening_stock: number
-  incoming_stock: number
-  outgoing_stock: number
+  opening_value: number
+  total_incoming: number
+  total_incoming_value: number
+  total_outgoing: number
+  total_outgoing_value: number
   closing_stock: number
+  closing_value: number
+  transactions: StockTransaction[]
 }
 
-export async function apiGetStockMovementHistory(financialYear?: string): Promise<StockMovement[]> {
-  const params = financialYear ? `?financial_year=${financialYear}` : ''
-  const r = await fetch(`/api/stock/movement-history${params}`, {
+export async function apiGetStockMovementHistory(financialYear?: string, productId?: number): Promise<StockMovement[]> {
+  const params = new URLSearchParams()
+  if (financialYear) params.append('financial_year', financialYear)
+  if (productId) params.append('product_id', productId.toString())
+  
+  const queryString = params.toString()
+  const url = `/api/stock/movement-history${queryString ? `?${queryString}` : ''}`
+  
+  const r = await fetch(url, {
     headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
   })
   

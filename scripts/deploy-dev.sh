@@ -91,6 +91,10 @@ run_tests() {
 deploy_services() {
     echo -e "${YELLOW}Deploying services...${NC}"
     
+    # Clean up compiled JavaScript files that might override TypeScript source
+    echo -e "${BLUE}🧹 Cleaning up compiled JavaScript files...${NC}"
+    cd frontend && npm run clean && cd ..
+    
     # Stop existing containers
     docker-compose down 2>/dev/null || true
     
