@@ -384,9 +384,25 @@ class TestAdvancedInvoiceAPI:
     
     def test_create_recurring_invoice_template(self, client, auth_headers, db: Session):
         """Test creating a recurring invoice template"""
-        # Create test data
-        customer = Party(name="Test Customer", type="Customer", gst_enabled=True)
-        supplier = Party(name="Test Supplier", type="Supplier", gst_enabled=True)
+        # Create test data with required fields
+        customer = Party(
+            name="Test Customer", 
+            type="Customer", 
+            gst_enabled=True,
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
+        )
+        supplier = Party(
+            name="Test Supplier", 
+            type="Supplier", 
+            gst_enabled=True,
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
+        )
         db.add_all([customer, supplier])
         db.commit()
         
@@ -423,9 +439,25 @@ class TestAdvancedInvoiceAPI:
     
     def test_get_recurring_invoice_templates(self, client, auth_headers, db: Session):
         """Test getting recurring invoice templates"""
-        # Create test data
-        customer = Party(name="Test Customer", type="Customer", gst_enabled=True)
-        supplier = Party(name="Test Supplier", type="Supplier", gst_enabled=True)
+        # Create test data with required fields
+        customer = Party(
+            name="Test Customer", 
+            type="Customer", 
+            gst_enabled=True,
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
+        )
+        supplier = Party(
+            name="Test Supplier", 
+            type="Supplier", 
+            gst_enabled=True,
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
+        )
         db.add_all([customer, supplier])
         db.commit()
         
@@ -470,8 +502,23 @@ class TestAdvancedInvoiceAPI:
 @pytest.fixture
 def auth_headers(client, db: Session):
     """Create authentication headers for testing"""
-    # Create test user
-    user = User(username="testuser", password_hash="hashed_password", role_id=1)
+    from app.auth import get_password_hash
+    from app.models import Role
+    
+    # Create test role if it doesn't exist
+    role = db.query(Role).filter_by(name="Admin").first()
+    if not role:
+        role = Role(name="Admin")
+        db.add(role)
+        db.commit()
+        db.refresh(role)
+    
+    # Create test user with proper password hashing
+    user = User(
+        username="testuser", 
+        password_hash=get_password_hash("testpassword"), 
+        role_id=role.id
+    )
     db.add(user)
     db.commit()
     

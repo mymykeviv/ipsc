@@ -291,6 +291,7 @@ class TestCashflowIntegration:
             expense_type="Office Supplies",
             category="Indirect",
             description="Stationery",
+            amount=Decimal("100.00"),  # Add required amount field
             total_amount=Decimal("100.00"),
             payment_method="Cash",
             account_head="Cash"
@@ -374,7 +375,7 @@ class TestCashflowIntegration:
 class TestCashflowBackwardCompatibility:
     """Tests to ensure backward compatibility with existing functionality"""
     
-    def test_existing_payment_flows_still_work(self, db_session: Session):
+    def test_existing_payment_flows_still_work(self, client, auth_headers, db_session: Session):
         """Test that existing payment flows still work after cashflow changes"""
         # Create test data
         customer = Party(
@@ -460,6 +461,7 @@ class TestCashflowBackwardCompatibility:
             "expense_type": "Test Expense",
             "category": "Direct",
             "description": "Test expense for compatibility",
+            "amount": 150.0,  # Add required amount field
             "total_amount": 150.0,
             "payment_method": "Cash",
             "account_head": "Cash"
