@@ -1,0 +1,182 @@
+{
+  "version": "1.40.0",
+  "timestamp": "2025-08-18T14:10:49.007555",
+  "environment": {
+    "python_version": "3.13.5 (main, Jun 11 2025, 15:36:57) [Clang 17.0.0 (clang-1700.0.13.3)]",
+    "platform": "macOS-15.6-arm64-arm-64bit-Mach-O",
+    "architecture": "64bit",
+    "processor": "arm",
+    "node_version": "v24.5.0",
+    "npm_version": "11.5.1",
+    "git_commit": "3502cc9f",
+    "working_directory": "/Users/vivekm/code/ipsc"
+  },
+  "summary": {
+    "total_tests": 5,
+    "passed": 1,
+    "failed": 4,
+    "skipped": 0,
+    "errors": 3,
+    "pass_rate": 20.0,
+    "total_duration": 3.9865384101867676,
+    "test_suites_count": 6
+  },
+  "test_suites": [
+    {
+      "name": "Backend Tests",
+      "total_tests": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 1,
+      "duration": 1.0186512470245361,
+      "results": [
+        {
+          "name": "python -m pytest tests/backend/ -v --tb=short --cov=backend --cov-report=term-missing --cov-report=html:coverage_reports/backend --junitxml=test_reports/backend-junit.xml",
+          "status": "FAILED",
+          "duration": 1.0186512470245361,
+          "error_message": null,
+          "stdout": "",
+          "stderr": "ImportError while loading conftest '/Users/vivekm/code/ipsc/tests/conftest.py'.\ntests/conftest.py:11: in <module>\n    from backend.app.main import create_app\nbackend/app/main.py:45: in <module>\n    app = create_app()\nbackend/app/main.py:38: in create_app\n    run_seed()\nbackend/app/seed.py:24: in run_seed\n    if not db.query(CompanySettings).first():\n.venv/lib/python3.13/site-packages/sqlalchemy/orm/query.py:2728: in first\n    return self.limit(1)._iter().first()  # type: ignore\n.venv/lib/python3.13/site-packages/sqlalchemy/orm/query.py:2827: in _iter\n    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(\n.venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py:2362: in execute\n    return self._execute_internal(\n.venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py:2247: in _execute_internal\n    result: Result[Any] = compile_state_cls.orm_execute_statement(\n.venv/lib/python3.13/site-packages/sqlalchemy/orm/context.py:305: in orm_execute_statement\n    result = conn.execute(\n.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py:1418: in execute\n    return meth(\n.venv/lib/python3.13/site-packages/sqlalchemy/sql/elements.py:515: in _execute_on_connection\n    return connection._execute_clauseelement(\n.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py:1640: in _execute_clauseelement\n    ret = self._execute_context(\n.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py:1846: in _execute_context\n    return self._exec_single_context(\n.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py:1986: in _exec_single_context\n    self._handle_dbapi_exception(\n.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2355: in _handle_dbapi_exception\n    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e\n.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py:1967: in _exec_single_context\n    self.dialect.do_execute(\n.venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py:941: in do_execute\n    cursor.execute(statement, parameters)\nE   sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: company_settings.gst_enabled_by_default\nE   [SQL: SELECT company_settings.id AS company_settings_id, company_settings.name AS company_settings_name, company_settings.gstin AS company_settings_gstin, company_settings.state AS company_settings_state, company_settings.state_code AS company_settings_state_code, company_settings.invoice_series AS company_settings_invoice_series, company_settings.gst_enabled_by_default AS company_settings_gst_enabled_by_default, company_settings.require_gstin_validation AS company_settings_require_gstin_validation\nE   FROM company_settings\nE    LIMIT ? OFFSET ?]\nE   [parameters: (1, 0)]\nE   (Background on this error at: https://sqlalche.me/e/20/e3q8)\n"
+        }
+      ],
+      "coverage": null
+    },
+    {
+      "name": "Frontend Tests",
+      "total_tests": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 1,
+      "duration": 0.5939230918884277,
+      "results": [
+        {
+          "name": "npm test",
+          "status": "FAILED",
+          "duration": 0.5939230918884277,
+          "error_message": null,
+          "stdout": "\n> cashflow-frontend@1.4.3 test\n> vitest --run\n\n",
+          "stderr": "sh: vitest: command not found\n"
+        }
+      ],
+      "coverage": null
+    },
+    {
+      "name": "E2E Tests",
+      "total_tests": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 1,
+      "duration": 0,
+      "results": [
+        {
+          "name": "playwright",
+          "status": "ERROR",
+          "duration": 0,
+          "error_message": "Playwright not found in PATH",
+          "stdout": null,
+          "stderr": null
+        }
+      ],
+      "coverage": null
+    },
+    {
+      "name": "Database Tests",
+      "total_tests": 2,
+      "passed": 1,
+      "failed": 1,
+      "skipped": 0,
+      "errors": 0,
+      "duration": 0.3852837085723877,
+      "results": [
+        {
+          "name": "python -c from backend.app.db import engine; print('Database connection successful')",
+          "status": "PASSED",
+          "duration": 0.19646382331848145,
+          "error_message": null,
+          "stdout": "Database connection successful\n",
+          "stderr": ""
+        },
+        {
+          "name": "python -m alembic current",
+          "status": "FAILED",
+          "duration": 0.18881988525390625,
+          "error_message": null,
+          "stdout": "  FAILED: No config file 'alembic.ini' found, or file has no '[alembic]' section\n",
+          "stderr": ""
+        }
+      ],
+      "coverage": null
+    },
+    {
+      "name": "Security Tests",
+      "total_tests": 2,
+      "passed": 0,
+      "failed": 2,
+      "skipped": 0,
+      "errors": 0,
+      "duration": 1.4180521965026855,
+      "results": [
+        {
+          "name": "python -c \nimport asyncio\nimport httpx\nfrom backend.app.main import app\n\nasync def test_auth():\n    async with httpx.AsyncClient(app=app, base_url=\"http://test\") as client:\n        # Test login endpoint\n        response = await client.post(\"/api/auth/login\", \n                                   json={\"username\": \"admin\", \"password\": \"admin123\"})\n        print(f\"Auth test: {response.status_code}\")\n        return response.status_code == 200\n\nresult = asyncio.run(test_auth())\nprint(f\"Security test result: {result}\")\n            ",
+          "status": "FAILED",
+          "duration": 0.6209220886230469,
+          "error_message": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py\", line 1967, in _exec_single_context\n    self.dialect.do_execute(\n    ~~~~~~~~~~~~~~~~~~~~~~~^\n        cursor, str_statement, effective_parameters, context\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py\", line 941, in do_execute\n    cursor.execute(statement, parameters)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^\nsqlite3.OperationalError: no such column: company_settings.gst_enabled_by_default\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"<string>\", line 4, in <module>\n    from backend.app.main import app\n  File \"/Users/vivekm/code/ipsc/backend/app/main.py\", line 45, in <module>\n    app = create_app()\n  File \"/Users/vivekm/code/ipsc/backend/app/main.py\", line 38, in create_app\n    run_seed()\n    ~~~~~~~~^^\n  File \"/Users/vivekm/code/ipsc/backend/app/seed.py\", line 24, in run_seed\n    if not db.query(CompanySettings).first():\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/orm/query.py\", line 2728, in first\n    return self.limit(1)._iter().first()  # type: ignore\n           ~~~~~~~~~~~~~~~~~~~^^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/orm/query.py\", line 2827, in _iter\n    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(\n                                                  ~~~~~~~~~~~~~~~~~~~~^\n        statement,\n        ^^^^^^^^^^\n        params,\n        ^^^^^^^\n        execution_options={\"_sa_orm_load_options\": self.load_options},\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py\", line 2362, in execute\n    return self._execute_internal(\n           ~~~~~~~~~~~~~~~~~~~~~~^\n        statement,\n        ^^^^^^^^^^\n    ...<4 lines>...\n        _add_event=_add_event,\n        ^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py\", line 2247, in _execute_internal\n    result: Result[Any] = compile_state_cls.orm_execute_statement(\n                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        self,\n        ^^^^^\n    ...<4 lines>...\n        conn,\n        ^^^^^\n    )\n    ^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/orm/context.py\", line 305, in orm_execute_statement\n    result = conn.execute(\n        statement, params or {}, execution_options=execution_options\n    )\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py\", line 1418, in execute\n    return meth(\n        self,\n        distilled_parameters,\n        execution_options or NO_OPTIONS,\n    )\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/sql/elements.py\", line 515, in _execute_on_connection\n    return connection._execute_clauseelement(\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        self, distilled_params, execution_options\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py\", line 1640, in _execute_clauseelement\n    ret = self._execute_context(\n        dialect,\n    ...<8 lines>...\n        cache_hit=cache_hit,\n    )\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py\", line 1846, in _execute_context\n    return self._exec_single_context(\n           ~~~~~~~~~~~~~~~~~~~~~~~~~^\n        dialect, context, statement, parameters\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py\", line 1986, in _exec_single_context\n    self._handle_dbapi_exception(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        e, str_statement, effective_parameters, cursor, context\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py\", line 2355, in _handle_dbapi_exception\n    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py\", line 1967, in _exec_single_context\n    self.dialect.do_execute(\n    ~~~~~~~~~~~~~~~~~~~~~~~^\n        cursor, str_statement, effective_parameters, context\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py\", line 941, in do_execute\n    cursor.execute(statement, parameters)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^\nsqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: company_settings.gst_enabled_by_default\n[SQL: SELECT company_settings.id AS company_settings_id, company_settings.name AS company_settings_name, company_settings.gstin AS company_settings_gstin, company_settings.state AS company_settings_state, company_settings.state_code AS company_settings_state_code, company_settings.invoice_series AS company_settings_invoice_series, company_settings.gst_enabled_by_default AS company_settings_gst_enabled_by_default, company_settings.require_gstin_validation AS company_settings_require_gstin_validation \nFROM company_settings\n LIMIT ? OFFSET ?]\n[parameters: (1, 0)]\n(Background on this error at: https://sqlalche.me/e/20/e3q8)\n"
+        },
+        {
+          "name": "python -m pytest tests/backend/test_rbac.py -v",
+          "status": "FAILED",
+          "duration": 0.7971301078796387,
+          "error_message": null,
+          "stdout": "",
+          "stderr": "ImportError while loading conftest '/Users/vivekm/code/ipsc/tests/conftest.py'.\ntests/conftest.py:11: in <module>\n    from backend.app.main import create_app\nbackend/app/main.py:45: in <module>\n    app = create_app()\nbackend/app/main.py:38: in create_app\n    run_seed()\nbackend/app/seed.py:24: in run_seed\n    if not db.query(CompanySettings).first():\n.venv/lib/python3.13/site-packages/sqlalchemy/orm/query.py:2728: in first\n    return self.limit(1)._iter().first()  # type: ignore\n.venv/lib/python3.13/site-packages/sqlalchemy/orm/query.py:2827: in _iter\n    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(\n.venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py:2362: in execute\n    return self._execute_internal(\n.venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py:2247: in _execute_internal\n    result: Result[Any] = compile_state_cls.orm_execute_statement(\n.venv/lib/python3.13/site-packages/sqlalchemy/orm/context.py:305: in orm_execute_statement\n    result = conn.execute(\n.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py:1418: in execute\n    return meth(\n.venv/lib/python3.13/site-packages/sqlalchemy/sql/elements.py:515: in _execute_on_connection\n    return connection._execute_clauseelement(\n.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py:1640: in _execute_clauseelement\n    ret = self._execute_context(\n.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py:1846: in _execute_context\n    return self._exec_single_context(\n.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py:1986: in _exec_single_context\n    self._handle_dbapi_exception(\n.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2355: in _handle_dbapi_exception\n    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e\n.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py:1967: in _exec_single_context\n    self.dialect.do_execute(\n.venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py:941: in do_execute\n    cursor.execute(statement, parameters)\nE   sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: company_settings.gst_enabled_by_default\nE   [SQL: SELECT company_settings.id AS company_settings_id, company_settings.name AS company_settings_name, company_settings.gstin AS company_settings_gstin, company_settings.state AS company_settings_state, company_settings.state_code AS company_settings_state_code, company_settings.invoice_series AS company_settings_invoice_series, company_settings.gst_enabled_by_default AS company_settings_gst_enabled_by_default, company_settings.require_gstin_validation AS company_settings_require_gstin_validation\nE   FROM company_settings\nE    LIMIT ? OFFSET ?]\nE   [parameters: (1, 0)]\nE   (Background on this error at: https://sqlalche.me/e/20/e3q8)\n"
+        }
+      ],
+      "coverage": null
+    },
+    {
+      "name": "Performance Tests",
+      "total_tests": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "errors": 0,
+      "duration": 0.5706281661987305,
+      "results": [
+        {
+          "name": "python -c \nimport asyncio\nimport time\nimport httpx\nfrom backend.app.main import app\n\nasync def test_performance():\n    async with httpx.AsyncClient(app=app, base_url=\"http://test\") as client:\n        start_time = time.time()\n        response = await client.get(\"/api/health\")\n        duration = time.time() - start_time\n        print(f\"Health endpoint response time: {duration:.3f}s\")\n        return duration < 1.0  # Should respond within 1 second\n\nresult = asyncio.run(test_performance())\nprint(f\"Performance test result: {result}\")\n            ",
+          "status": "FAILED",
+          "duration": 0.5706281661987305,
+          "error_message": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py\", line 1967, in _exec_single_context\n    self.dialect.do_execute(\n    ~~~~~~~~~~~~~~~~~~~~~~~^\n        cursor, str_statement, effective_parameters, context\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py\", line 941, in do_execute\n    cursor.execute(statement, parameters)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^\nsqlite3.OperationalError: no such column: company_settings.gst_enabled_by_default\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"<string>\", line 5, in <module>\n    from backend.app.main import app\n  File \"/Users/vivekm/code/ipsc/backend/app/main.py\", line 45, in <module>\n    app = create_app()\n  File \"/Users/vivekm/code/ipsc/backend/app/main.py\", line 38, in create_app\n    run_seed()\n    ~~~~~~~~^^\n  File \"/Users/vivekm/code/ipsc/backend/app/seed.py\", line 24, in run_seed\n    if not db.query(CompanySettings).first():\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/orm/query.py\", line 2728, in first\n    return self.limit(1)._iter().first()  # type: ignore\n           ~~~~~~~~~~~~~~~~~~~^^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/orm/query.py\", line 2827, in _iter\n    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(\n                                                  ~~~~~~~~~~~~~~~~~~~~^\n        statement,\n        ^^^^^^^^^^\n        params,\n        ^^^^^^^\n        execution_options={\"_sa_orm_load_options\": self.load_options},\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py\", line 2362, in execute\n    return self._execute_internal(\n           ~~~~~~~~~~~~~~~~~~~~~~^\n        statement,\n        ^^^^^^^^^^\n    ...<4 lines>...\n        _add_event=_add_event,\n        ^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py\", line 2247, in _execute_internal\n    result: Result[Any] = compile_state_cls.orm_execute_statement(\n                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        self,\n        ^^^^^\n    ...<4 lines>...\n        conn,\n        ^^^^^\n    )\n    ^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/orm/context.py\", line 305, in orm_execute_statement\n    result = conn.execute(\n        statement, params or {}, execution_options=execution_options\n    )\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py\", line 1418, in execute\n    return meth(\n        self,\n        distilled_parameters,\n        execution_options or NO_OPTIONS,\n    )\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/sql/elements.py\", line 515, in _execute_on_connection\n    return connection._execute_clauseelement(\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        self, distilled_params, execution_options\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py\", line 1640, in _execute_clauseelement\n    ret = self._execute_context(\n        dialect,\n    ...<8 lines>...\n        cache_hit=cache_hit,\n    )\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py\", line 1846, in _execute_context\n    return self._exec_single_context(\n           ~~~~~~~~~~~~~~~~~~~~~~~~~^\n        dialect, context, statement, parameters\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py\", line 1986, in _exec_single_context\n    self._handle_dbapi_exception(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        e, str_statement, effective_parameters, cursor, context\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py\", line 2355, in _handle_dbapi_exception\n    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py\", line 1967, in _exec_single_context\n    self.dialect.do_execute(\n    ~~~~~~~~~~~~~~~~~~~~~~~^\n        cursor, str_statement, effective_parameters, context\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/vivekm/code/ipsc/.venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py\", line 941, in do_execute\n    cursor.execute(statement, parameters)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^\nsqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: company_settings.gst_enabled_by_default\n[SQL: SELECT company_settings.id AS company_settings_id, company_settings.name AS company_settings_name, company_settings.gstin AS company_settings_gstin, company_settings.state AS company_settings_state, company_settings.state_code AS company_settings_state_code, company_settings.invoice_series AS company_settings_invoice_series, company_settings.gst_enabled_by_default AS company_settings_gst_enabled_by_default, company_settings.require_gstin_validation AS company_settings_require_gstin_validation \nFROM company_settings\n LIMIT ? OFFSET ?]\n[parameters: (1, 0)]\n(Background on this error at: https://sqlalche.me/e/20/e3q8)\n"
+        }
+      ],
+      "coverage": null
+    }
+  ],
+  "recommendations": [
+    "\ud83d\udd34 Low test pass rate (20.0%). Focus on fixing failing tests.",
+    "\ud83d\udd34 Test execution errors detected. Check test environment setup.",
+    "\ud83d\udd34 Backend Tests has 1 execution errors.",
+    "\u26a0\ufe0f Backend Tests has no tests. Consider adding test coverage.",
+    "\ud83d\udd34 Frontend Tests has 1 execution errors.",
+    "\u26a0\ufe0f Frontend Tests has no tests. Consider adding test coverage.",
+    "\ud83d\udd34 E2E Tests has 1 execution errors.",
+    "\u26a0\ufe0f E2E Tests has no tests. Consider adding test coverage.",
+    "\ud83d\udd34 Database Tests has 1 failing tests.",
+    "\ud83d\udd34 Security Tests has 2 failing tests.",
+    "\ud83d\udd34 Performance Tests has 1 failing tests."
+  ],
+  "critical_issues": [
+    "\ud83d\udea8 Backend Tests: 1 execution errors - test environment may be broken",
+    "\ud83d\udea8 Frontend Tests: 1 execution errors - test environment may be broken",
+    "\ud83d\udea8 E2E Tests: 1 execution errors - test environment may be broken",
+    "\ud83d\udea8 Database Tests: 1 failures - data integrity issues detected",
+    "\ud83d\udea8 Security Tests: 2 failures - security vulnerabilities detected"
+  ]
+}

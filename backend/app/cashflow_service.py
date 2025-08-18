@@ -100,6 +100,9 @@ class CashflowService:
                 "start_date": start_date_str,
                 "end_date": end_date_str
             },
+            "total_income": total_income,
+            "total_outflow": total_outflow,
+            "net_cashflow": net_cashflow,
             "income": {
                 "total_invoice_amount": total_invoice_amount,
                 "total_payments_received": total_income
@@ -120,6 +123,11 @@ class CashflowService:
         self, 
         search: Optional[str] = None,
         type_filter: Optional[str] = None,
+        transaction_type: Optional[str] = None,
+        payment_method: Optional[str] = None,
+        account_head: Optional[str] = None,
+        amount_min: Optional[float] = None,
+        amount_max: Optional[float] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         page: int = 1,

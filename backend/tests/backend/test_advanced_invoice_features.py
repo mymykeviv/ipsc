@@ -85,14 +85,22 @@ class TestRecurringInvoiceService:
         customer = Party(
             name="Test Customer",
             type="Customer",
-            gstin="22AAAAA0000A1Z5",
-            gst_enabled=True
+            gstin="27AAAAA0000A1Z5",
+            gst_enabled=True,
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
         )
         supplier = Party(
             name="Test Supplier",
             type="Supplier",
             gstin="27AAAAA0000A1Z5",
-            gst_enabled=True
+            gst_enabled=True,
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
         )
         db.add(customer)
         db.add(supplier)
@@ -129,14 +137,31 @@ class TestRecurringInvoiceService:
     def test_add_template_item(self, db: Session):
         """Test adding items to a recurring invoice template"""
         # Create test data
-        customer = Party(name="Test Customer", type="Customer", gst_enabled=True)
-        supplier = Party(name="Test Supplier", type="Supplier", gst_enabled=True)
+        customer = Party(
+            name="Test Customer", 
+            type="Customer", 
+            gst_enabled=True,
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
+        )
+        supplier = Party(
+            name="Test Supplier", 
+            type="Supplier", 
+            gst_enabled=True,
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
+        )
         product = Product(
             name="Test Product",
             description="Test Description",
             hsn="12345678",
             gst_rate=18.0,
-            stock=100.0
+            stock=100.0,
+            sales_price=100.0  # Add required sales_price field
         )
         db.add_all([customer, supplier, product])
         db.commit()
@@ -185,8 +210,24 @@ class TestRecurringInvoiceService:
     def test_get_active_templates(self, db: Session):
         """Test getting active templates"""
         # Create test data
-        customer = Party(name="Test Customer", type="Customer", gst_enabled=True)
-        supplier = Party(name="Test Supplier", type="Supplier", gst_enabled=True)
+        customer = Party(
+            name="Test Customer", 
+            type="Customer", 
+            gst_enabled=True,
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
+        )
+        supplier = Party(
+            name="Test Supplier", 
+            type="Supplier", 
+            gst_enabled=True,
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
+        )
         db.add_all([customer, supplier])
         db.commit()
         
@@ -225,10 +266,26 @@ class TestRecurringInvoiceService:
         assert active_templates[0].is_active == True
     
     def test_deactivate_template(self, db: Session):
-        """Test deactivating a template"""
+        """Test deactivating a recurring invoice template"""
         # Create test data
-        customer = Party(name="Test Customer", type="Customer", gst_enabled=True)
-        supplier = Party(name="Test Supplier", type="Supplier", gst_enabled=True)
+        customer = Party(
+            name="Test Customer", 
+            type="Customer", 
+            gst_enabled=True,
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
+        )
+        supplier = Party(
+            name="Test Supplier", 
+            type="Supplier", 
+            gst_enabled=True,
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
+        )
         db.add_all([customer, supplier])
         db.commit()
         

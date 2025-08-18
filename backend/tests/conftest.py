@@ -75,11 +75,17 @@ def client(db_session, test_user):
 
 
 @pytest.fixture
-def auth_headers():
+def auth_headers(client, test_user):
     """Create authentication headers for testing"""
-    # Create a test user token
-    access_token = create_access_token(subject="admin")
-    return {"Authorization": f"Bearer {access_token}"}
+    # Login using the actual login endpoint
+    login_data = {
+        "username": "admin",
+        "password": "admin123"
+    }
+    response = client.post("/api/auth/login", json=login_data)
+    assert response.status_code == 200
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
@@ -95,9 +101,12 @@ def test_role(db_session):
 @pytest.fixture
 def test_user(db_session, test_role):
     """Create a test user"""
+    from passlib.context import CryptContext
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    
     user = User(
         username="admin",
-        password_hash="hashed_password",  # In real tests, you'd hash this properly
+        password_hash=pwd_context.hash("admin123"),  # Properly hash the password
         role_id=test_role.id
     )
     db_session.add(user)

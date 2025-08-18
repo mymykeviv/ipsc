@@ -149,18 +149,42 @@ class TestCashflowIntegration:
     def test_cashflow_data_consistency(self, db_session: Session):
         """Test that cashflow data is consistent across different endpoints"""
         # Create test data
-        customer = Party(name="Test Customer", gstin="123456789012345", party_type="Customer")
-        vendor = Party(name="Test Vendor", gstin="987654321098765", party_type="Vendor")
+        customer = Party(
+            name="Test Customer", 
+            gstin="123456789012345", 
+            type="Customer",
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
+        )
+        vendor = Party(
+            name="Test Vendor", 
+            gstin="987654321098765", 
+            type="Vendor",
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
+        )
         db_session.add_all([customer, vendor])
         db_session.flush()
         
         # Create invoice and payment
         invoice = Invoice(
             customer_id=customer.id,
+            supplier_id=vendor.id,  # Add required supplier_id
             invoice_no="INV-001",
             grand_total=Decimal("1000.00"),
-            paid_amount=Decimal("600.00"),
-            balance_amount=Decimal("400.00")
+            due_date=datetime.utcnow(),  # Add required due_date
+            place_of_supply="Mumbai, Maharashtra",  # Add required place_of_supply
+            place_of_supply_state_code="27",  # Add required place_of_supply_state_code
+            bill_to_address="Test Bill Address",  # Add required bill_to_address
+            ship_to_address="Test Ship Address",  # Add required ship_to_address
+            taxable_value=Decimal("847.46"),  # Add required taxable_value
+            cgst=Decimal("76.27"),  # Add required cgst
+            sgst=Decimal("76.27"),  # Add required sgst
+            igst=Decimal("0.00")  # Add required igst
         )
         db_session.add(invoice)
         db_session.flush()
@@ -178,6 +202,7 @@ class TestCashflowIntegration:
             expense_type="Office Supplies",
             category="Indirect",
             description="Stationery",
+            amount=Decimal("100.00"),  # Add required amount field
             total_amount=Decimal("100.00"),
             payment_method="Cash",
             account_head="Cash"
@@ -213,16 +238,42 @@ class TestCashflowIntegration:
     def test_cashflow_with_filters(self, db_session: Session):
         """Test cashflow functionality with various filters"""
         # Create test data
-        customer = Party(name="Test Customer", gstin="123456789012345", party_type="Customer")
-        vendor = Party(name="Test Vendor", gstin="987654321098765", party_type="Vendor")
+        customer = Party(
+            name="Test Customer", 
+            gstin="123456789012345", 
+            type="Customer",
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
+        )
+        vendor = Party(
+            name="Test Vendor", 
+            gstin="987654321098765", 
+            type="Vendor",
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
+        )
         db_session.add_all([customer, vendor])
         db_session.flush()
         
         # Create invoice and payment
         invoice = Invoice(
             customer_id=customer.id,
+            supplier_id=vendor.id,  # Add required supplier_id
             invoice_no="INV-001",
-            grand_total=Decimal("1000.00")
+            grand_total=Decimal("1000.00"),
+            due_date=datetime.utcnow(),  # Add required due_date
+            place_of_supply="Mumbai, Maharashtra",  # Add required place_of_supply
+            place_of_supply_state_code="27",  # Add required place_of_supply_state_code
+            bill_to_address="Test Bill Address",  # Add required bill_to_address
+            ship_to_address="Test Ship Address",  # Add required ship_to_address
+            taxable_value=Decimal("847.46"),  # Add required taxable_value
+            cgst=Decimal("76.27"),  # Add required cgst
+            sgst=Decimal("76.27"),  # Add required sgst
+            igst=Decimal("0.00")  # Add required igst
         )
         db_session.add(invoice)
         db_session.flush()
@@ -323,19 +374,46 @@ class TestCashflowIntegration:
 class TestCashflowBackwardCompatibility:
     """Tests to ensure backward compatibility with existing functionality"""
     
-    def test_existing_payment_flows_still_work(self, client, auth_headers, db_session: Session):
+    def test_existing_payment_flows_still_work(self, db_session: Session):
         """Test that existing payment flows still work after cashflow changes"""
         # Create test data
-        customer = Party(name="Test Customer", gstin="123456789012345", party_type="Customer")
-        db_session.add(customer)
+        customer = Party(
+            name="Test Customer",
+            gstin="123456789012345",
+            type="Customer",
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
+        )
+        vendor = Party(
+            name="Test Vendor",
+            gstin="987654321098765",
+            type="Vendor",
+            billing_address_line1="Test Address Line 1",
+            billing_city="Test City",
+            billing_state="Test State",
+            billing_country="India"
+        )
+        db_session.add_all([customer, vendor])
         db_session.flush()
         
+        # Create invoice
         invoice = Invoice(
             customer_id=customer.id,
+            supplier_id=vendor.id,  # Add required supplier_id
             invoice_no="INV-002",
             grand_total=Decimal("500.00"),
-            paid_amount=Decimal("0.00"),
-            balance_amount=Decimal("500.00")
+            balance_amount=Decimal("500.00"),
+            due_date=datetime.utcnow(),  # Add required due_date
+            place_of_supply="Mumbai, Maharashtra",  # Add required place_of_supply
+            place_of_supply_state_code="27",  # Add required place_of_supply_state_code
+            bill_to_address="Test Bill Address",  # Add required bill_to_address
+            ship_to_address="Test Ship Address",  # Add required ship_to_address
+            taxable_value=Decimal("423.73"),  # Add required taxable_value
+            cgst=Decimal("38.14"),  # Add required cgst
+            sgst=Decimal("38.14"),  # Add required sgst
+            igst=Decimal("0.00")  # Add required igst
         )
         db_session.add(invoice)
         db_session.commit()
