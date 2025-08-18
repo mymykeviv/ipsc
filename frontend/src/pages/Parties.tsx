@@ -188,12 +188,24 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
     try {
       setLoading(true)
       setError(null)
-      const [customersData, vendorsData] = await Promise.all([
-        apiListCustomers(filters.search, showInactive),
-        apiListVendors(filters.search, showInactive)
-      ])
-      setCustomers(customersData)
-      setVendors(vendorsData)
+      
+      if (type === 'customer') {
+        const customersData = await apiListCustomers(filters.search, showInactive)
+        setCustomers(customersData)
+        setVendors([])
+      } else if (type === 'vendor') {
+        const vendorsData = await apiListVendors(filters.search, showInactive)
+        setVendors(vendorsData)
+        setCustomers([])
+      } else {
+        // Load both when no specific type is specified
+        const [customersData, vendorsData] = await Promise.all([
+          apiListCustomers(filters.search, showInactive),
+          apiListVendors(filters.search, showInactive)
+        ])
+        setCustomers(customersData)
+        setVendors(vendorsData)
+      }
     } catch (err) {
       console.error('Failed to load parties:', err)
       handleApiError(err)
@@ -275,6 +287,18 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
   const handleCancel = () => {
     navigate(`/${type === 'vendor' ? 'vendors' : 'customers'}`)
   }
+
+  const copyBillingAddress = () => {
+    setFormData(prev => ({
+      ...prev,
+      shipping_address_line1: prev.billing_address_line1,
+      shipping_address_line2: prev.billing_address_line2,
+      shipping_city: prev.billing_city,
+      shipping_state: prev.billing_state,
+      shipping_country: prev.billing_country,
+      shipping_pincode: prev.billing_pincode
+    }));
+  };
 
   // Filter functions
   const handleQuickFilter = (filter: PartiesFilterState['quickFilter']) => {
@@ -383,12 +407,14 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
         {error && <ErrorMessage message={error} />}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {/* Party Type Section */}
-          <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('basic') }}>
-              Party Type
-            </h3>
-            <div style={formStyles.grid2Col}>
+          {/* Row 1: Basic Information | GST Information */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+            
+            {/* Basic Information Section */}
+            <div style={formStyles.section}>
+              <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('basic') }}>
+                📋 Basic Information
+              </h3>
               <div style={formStyles.formGroup}>
                 <label style={formStyles.label}>Party Type *</label>
                 <select
@@ -401,15 +427,6 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
                   <option value="vendor">Vendor</option>
                 </select>
               </div>
-            </div>
-          </div>
-
-          {/* Basic Information Section */}
-          <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('billing') }}>
-              Basic Information
-            </h3>
-            <div style={formStyles.grid2Col}>
               <div style={formStyles.formGroup}>
                 <label style={formStyles.label}>Name *</label>
                 <input
@@ -429,8 +446,6 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
                   style={formStyles.input}
                 />
               </div>
-            </div>
-            <div style={formStyles.grid2Col}>
               <div style={formStyles.formGroup}>
                 <label style={formStyles.label}>Contact Number</label>
                 <input
@@ -450,14 +465,12 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
                 />
               </div>
             </div>
-          </div>
 
-          {/* GST Information Section */}
-          <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('shipping') }}>
-              GST Information
-            </h3>
-            <div style={formStyles.grid3Col}>
+            {/* GST Information Section */}
+            <div style={formStyles.section}>
+              <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('gst') }}>
+                🏛️ GST Information
+              </h3>
               <div style={formStyles.formGroup}>
                 <label style={formStyles.label}>GST Status *</label>
                 <select
@@ -483,8 +496,8 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
                   value={formData.gstin}
                   onChange={(e) => handleInputChange('gstin', e.target.value)}
                   style={formStyles.input}
-                  placeholder="22AAAAA0000A1Z5"
-                  disabled={formData.gst_status !== 'GST'}
+                  placeholder="15-digit GSTIN"
+                  maxLength={15}
                 />
               </div>
               <div style={formStyles.formGroup}>
@@ -503,148 +516,175 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
             </div>
           </div>
 
-          {/* Billing Address Section */}
-          <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('3') }}>
-              Billing Address
-            </h3>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Address Line 1 *</label>
-              <input
-                type="text"
-                value={formData.billing_address_line1}
-                onChange={(e) => handleInputChange('billing_address_line1', e.target.value)}
-                style={formStyles.input}
-                required
-              />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Address Line 2</label>
-              <input
-                type="text"
-                value={formData.billing_address_line2}
-                onChange={(e) => handleInputChange('billing_address_line2', e.target.value)}
-                style={formStyles.input}
-              />
-            </div>
-            <div style={formStyles.grid3Col}>
+          {/* Row 2: Billing Address | Shipping Address */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+            
+            {/* Billing Address Section */}
+            <div style={formStyles.section}>
+              <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('billing') }}>
+                📮 Billing Address
+              </h3>
               <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>City *</label>
+                <label style={formStyles.label}>Address Line 1 *</label>
                 <input
                   type="text"
-                  value={formData.billing_city}
-                  onChange={(e) => handleInputChange('billing_city', e.target.value)}
+                  value={formData.billing_address_line1}
+                  onChange={(e) => handleInputChange('billing_address_line1', e.target.value)}
                   style={formStyles.input}
                   required
                 />
               </div>
               <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>State *</label>
+                <label style={formStyles.label}>Address Line 2</label>
                 <input
                   type="text"
-                  value={formData.billing_state}
-                  onChange={(e) => handleInputChange('billing_state', e.target.value)}
+                  value={formData.billing_address_line2}
+                  onChange={(e) => handleInputChange('billing_address_line2', e.target.value)}
                   style={formStyles.input}
-                  required
+                />
+              </div>
+              <div style={formStyles.grid2Col}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>City *</label>
+                  <input
+                    type="text"
+                    value={formData.billing_city}
+                    onChange={(e) => handleInputChange('billing_city', e.target.value)}
+                    style={formStyles.input}
+                    required
+                  />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>State *</label>
+                  <input
+                    type="text"
+                    value={formData.billing_state}
+                    onChange={(e) => handleInputChange('billing_state', e.target.value)}
+                    style={formStyles.input}
+                    required
+                  />
+                </div>
+              </div>
+              <div style={formStyles.grid2Col}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Pincode *</label>
+                  <input
+                    type="text"
+                    value={formData.billing_pincode}
+                    onChange={(e) => handleInputChange('billing_pincode', e.target.value)}
+                    style={formStyles.input}
+                    required
+                  />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Country</label>
+                  <input
+                    type="text"
+                    value={formData.billing_country}
+                    onChange={(e) => handleInputChange('billing_country', e.target.value)}
+                    style={formStyles.input}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Shipping Address Section */}
+            <div style={formStyles.section}>
+              <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('shipping') }}>
+                📦 Shipping Address
+              </h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div style={{ fontSize: '14px', fontWeight: '600', color: '#495057' }}>
+                  Same as billing address?
+                </div>
+                <Button
+                  variant="secondary"
+                  onClick={copyBillingAddress}
+                  style={{ 
+                    fontSize: '12px', 
+                    padding: '6px 12px',
+                    backgroundColor: '#28a745',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  📋 Copy Billing Address
+                </Button>
+              </div>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Address Line 1</label>
+                <input
+                  type="text"
+                  value={formData.shipping_address_line1}
+                  onChange={(e) => handleInputChange('shipping_address_line1', e.target.value)}
+                  style={formStyles.input}
                 />
               </div>
               <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Pincode *</label>
+                <label style={formStyles.label}>Address Line 2</label>
                 <input
                   type="text"
-                  value={formData.billing_pincode}
-                  onChange={(e) => handleInputChange('billing_pincode', e.target.value)}
+                  value={formData.shipping_address_line2}
+                  onChange={(e) => handleInputChange('shipping_address_line2', e.target.value)}
                   style={formStyles.input}
-                  required
                 />
               </div>
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Country</label>
-              <input
-                type="text"
-                value={formData.billing_country}
-                onChange={(e) => handleInputChange('billing_country', e.target.value)}
-                style={formStyles.input}
-              />
+              <div style={formStyles.grid2Col}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>City</label>
+                  <input
+                    type="text"
+                    value={formData.shipping_city}
+                    onChange={(e) => handleInputChange('shipping_city', e.target.value)}
+                    style={formStyles.input}
+                  />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>State</label>
+                  <input
+                    type="text"
+                    value={formData.shipping_state}
+                    onChange={(e) => handleInputChange('shipping_state', e.target.value)}
+                    style={formStyles.input}
+                  />
+                </div>
+              </div>
+              <div style={formStyles.grid2Col}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Pincode</label>
+                  <input
+                    type="text"
+                    value={formData.shipping_pincode}
+                    onChange={(e) => handleInputChange('shipping_pincode', e.target.value)}
+                    style={formStyles.input}
+                  />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Country</label>
+                  <input
+                    type="text"
+                    value={formData.shipping_country}
+                    onChange={(e) => handleInputChange('shipping_country', e.target.value)}
+                    style={formStyles.input}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Shipping Address Section */}
+          {/* Row 3: Other Details */}
           <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('4') }}>
-              Shipping Address
-            </h3>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Address Line 1</label>
-              <input
-                type="text"
-                value={formData.shipping_address_line1}
-                onChange={(e) => handleInputChange('shipping_address_line1', e.target.value)}
-                style={formStyles.input}
-              />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Address Line 2</label>
-              <input
-                type="text"
-                value={formData.shipping_address_line2}
-                onChange={(e) => handleInputChange('shipping_address_line2', e.target.value)}
-                style={formStyles.input}
-              />
-            </div>
-            <div style={formStyles.grid3Col}>
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>City</label>
-                <input
-                  type="text"
-                  value={formData.shipping_city}
-                  onChange={(e) => handleInputChange('shipping_city', e.target.value)}
-                  style={formStyles.input}
-                />
-              </div>
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>State</label>
-                <input
-                  type="text"
-                  value={formData.shipping_state}
-                  onChange={(e) => handleInputChange('shipping_state', e.target.value)}
-                  style={formStyles.input}
-                />
-              </div>
-              <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Pincode</label>
-                <input
-                  type="text"
-                  value={formData.shipping_pincode}
-                  onChange={(e) => handleInputChange('shipping_pincode', e.target.value)}
-                  style={formStyles.input}
-                />
-              </div>
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Country</label>
-              <input
-                type="text"
-                value={formData.shipping_country}
-                onChange={(e) => handleInputChange('shipping_country', e.target.value)}
-                style={formStyles.input}
-              />
-            </div>
-          </div>
-
-          {/* Other Details Section */}
-          <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('5') }}>
-              Other Details
+            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('other') }}>
+              📝 Other Details
             </h3>
             <div style={formStyles.formGroup}>
               <label style={formStyles.label}>Notes</label>
               <textarea
                 value={formData.notes}
                 onChange={(e) => handleInputChange('notes', e.target.value)}
-                style={formStyles.textarea}
-                rows={3}
+                style={{ ...formStyles.input, minHeight: '80px', resize: 'vertical' }}
                 placeholder="Additional notes about this party..."
               />
             </div>
@@ -662,7 +702,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
               Cancel
             </Button>
             <Button type="submit" variant="primary" disabled={loading}>
-              {loading ? 'Saving...' : (mode === 'add' ? 'Add' : 'Update')} {type === 'customer' ? 'Customer' : 'Vendor'}
+              {loading ? `Saving ${type === 'customer' ? 'Customer' : 'Vendor'}...` : (mode === 'add' ? 'Add' : 'Update')} {type === 'customer' ? 'Customer' : 'Vendor'}
             </Button>
           </div>
         </form>
@@ -671,7 +711,9 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
   }
 
   // Render manage mode (existing list view)
-  const currentParties = activeTab === 'customers' ? customers : vendors
+  const currentParties = type === 'customer' ? customers : 
+                        type === 'vendor' ? vendors : 
+                        activeTab === 'customers' ? customers : vendors
 
   // Sorting function
   const sortedParties = [...currentParties].sort((a, b) => {
@@ -706,153 +748,147 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
       <EnhancedHeader
-        {...HeaderPatterns.parties(customers.length + vendors.length)}
+        {...HeaderPatterns.parties(type === 'customer' ? customers.length : vendors.length)}
         primaryAction={{
-          label: 'Add New Party',
-          onClick: () => navigate('/parties/add'),
-          icon: '➕'
+          label: type === 'customer' ? 'Add Customer' : 'Add Vendor',
+          onClick: () => navigate(`/${type}s/add`),
+          icon: type === 'customer' ? '👤' : '🏢'
         }}
-        secondaryActions={[
+        secondaryActions={type === 'customer' ? [
           {
-            label: 'Add Customer',
-            onClick: () => navigate('/customers/add'),
-            icon: '👤'
-          },
+            label: 'View All Parties',
+            onClick: () => navigate('/parties'),
+            icon: '📋'
+          }
+        ] : [
           {
-            label: 'Add Vendor',
-            onClick: () => navigate('/vendors/add'),
-            icon: '🏢'
+            label: 'View All Parties',
+            onClick: () => navigate('/parties'),
+            icon: '📋'
           }
         ]}
       />
 
       {error && <ErrorMessage message={error} />}
 
-      {/* Enhanced Tab Navigation */}
-      <div style={{ 
-        display: 'flex', 
-        borderBottom: '2px solid #e9ecef',
-        marginBottom: '24px',
-        backgroundColor: '#f8f9fa',
-        borderRadius: '8px 8px 0 0',
-        padding: '4px 4px 0 4px'
-      }}>
-        <button
-          onClick={() => setActiveTab('customers')}
-          style={{
-            padding: '16px 32px',
-            border: 'none',
-            backgroundColor: activeTab === 'customers' ? '#fff' : 'transparent',
-            color: activeTab === 'customers' ? '#007bff' : '#6c757d',
-            cursor: 'pointer',
-            fontSize: '16px',
-            fontWeight: activeTab === 'customers' ? '600' : '500',
-            borderRadius: '6px 6px 0 0',
-            borderBottom: activeTab === 'customers' ? '2px solid #007bff' : 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            transition: 'all 0.2s ease',
-            boxShadow: activeTab === 'customers' ? '0 -2px 4px rgba(0,0,0,0.1)' : 'none'
-          }}
-        >
-          👤 Customers
-          <span style={{ 
-            backgroundColor: activeTab === 'customers' ? '#007bff' : '#6c757d',
-            color: '#fff',
-            padding: '2px 8px',
-            borderRadius: '12px',
-            fontSize: '12px',
-            fontWeight: '600',
-            minWidth: '20px',
-            textAlign: 'center'
-          }}>
-            {customers.length}
-          </span>
-        </button>
-        <button
-          onClick={() => setActiveTab('vendors')}
-          style={{
-            padding: '16px 32px',
-            border: 'none',
-            backgroundColor: activeTab === 'vendors' ? '#fff' : 'transparent',
-            color: activeTab === 'vendors' ? '#007bff' : '#6c757d',
-            cursor: 'pointer',
-            fontSize: '16px',
-            fontWeight: activeTab === 'vendors' ? '600' : '500',
-            borderRadius: '6px 6px 0 0',
-            borderBottom: activeTab === 'vendors' ? '2px solid #007bff' : 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            transition: 'all 0.2s ease',
-            boxShadow: activeTab === 'vendors' ? '0 -2px 4px rgba(0,0,0,0.1)' : 'none'
-          }}
-        >
-          🏢 Vendors
-          <span style={{ 
-            backgroundColor: activeTab === 'vendors' ? '#007bff' : '#6c757d',
-            color: '#fff',
-            padding: '2px 8px',
-            borderRadius: '12px',
-            fontSize: '12px',
-            fontWeight: '600',
-            minWidth: '20px',
-            textAlign: 'center'
-          }}>
-            {vendors.length}
-          </span>
-        </button>
-      </div>
+      {/* Show tabs only when viewing all parties, not when on specific customer/vendor pages */}
+      {!type ? (
+        <div style={{ 
+          display: 'flex', 
+          borderBottom: '2px solid #e9ecef',
+          marginBottom: '24px',
+          backgroundColor: '#f8f9fa',
+          borderRadius: '8px 8px 0 0',
+          padding: '4px 4px 0 4px'
+        }}>
+          <button
+            onClick={() => setActiveTab('customers')}
+            style={{
+              padding: '16px 32px',
+              border: 'none',
+              backgroundColor: activeTab === 'customers' ? '#fff' : 'transparent',
+              color: activeTab === 'customers' ? '#007bff' : '#6c757d',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: activeTab === 'customers' ? '600' : '500',
+              borderRadius: '6px 6px 0 0',
+              borderBottom: activeTab === 'customers' ? '2px solid #007bff' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.2s ease',
+              boxShadow: activeTab === 'customers' ? '0 -2px 4px rgba(0,0,0,0.1)' : 'none'
+            }}
+          >
+            👤 Customers
+            <span style={{ 
+              backgroundColor: activeTab === 'customers' ? '#007bff' : '#6c757d',
+              color: '#fff',
+              padding: '2px 8px',
+              borderRadius: '12px',
+              fontSize: '12px',
+              fontWeight: '600',
+              minWidth: '20px',
+              textAlign: 'center'
+            }}>
+              {customers.length}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab('vendors')}
+            style={{
+              padding: '16px 32px',
+              border: 'none',
+              backgroundColor: activeTab === 'vendors' ? '#fff' : 'transparent',
+              color: activeTab === 'vendors' ? '#007bff' : '#6c757d',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: activeTab === 'vendors' ? '600' : '500',
+              borderRadius: '6px 6px 0 0',
+              borderBottom: activeTab === 'vendors' ? '2px solid #007bff' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.2s ease',
+              boxShadow: activeTab === 'vendors' ? '0 -2px 4px rgba(0,0,0,0.1)' : 'none'
+            }}
+          >
+            🏢 Vendors
+            <span style={{ 
+              backgroundColor: activeTab === 'vendors' ? '#007bff' : '#6c757d',
+              color: '#fff',
+              padding: '2px 8px',
+              borderRadius: '12px',
+              fontSize: '12px',
+              fontWeight: '600',
+              minWidth: '20px',
+              textAlign: 'center'
+            }}>
+              {vendors.length}
+            </span>
+          </button>
+        </div>
+      ) : null}
 
-      {/* Enhanced Quick Filters */}
+      {/* Simple Search and Basic Filters */}
       <div style={{ 
         display: 'flex', 
-        gap: '8px', 
+        gap: '16px', 
         marginBottom: '20px',
-        flexWrap: 'wrap',
         alignItems: 'center',
         padding: '16px',
         backgroundColor: '#f8f9fa',
         borderRadius: '8px',
         border: '1px solid #e9ecef'
       }}>
-        <span style={{ 
-          fontSize: '14px', 
-          fontWeight: '600', 
-          color: '#495057',
-          marginRight: '8px'
-        }}>
-          🎯 Quick Filters:
-        </span>
-        <div style={{ 
-          display: 'flex', 
-          gap: '6px', 
-          flexWrap: 'wrap',
-          flex: 1
-        }}>
-          {getQuickFilterOptions().map((option) => (
-            <Button
-              key={option.value}
-              variant={filters.quickFilter === option.value ? 'primary' : 'secondary'}
-              onClick={() => handleQuickFilter(option.value as PartiesFilterState['quickFilter'])}
-              style={{ 
-                fontSize: '12px', 
-                padding: '8px 12px',
-                whiteSpace: 'nowrap',
-                borderRadius: '20px',
-                border: filters.quickFilter === option.value ? 'none' : '1px solid #dee2e6',
-                backgroundColor: filters.quickFilter === option.value ? '#007bff' : '#fff',
-                color: filters.quickFilter === option.value ? '#fff' : '#495057',
-                fontWeight: filters.quickFilter === option.value ? '600' : '500',
-                transition: 'all 0.2s ease',
-                boxShadow: filters.quickFilter === option.value ? '0 2px 4px rgba(0,123,255,0.3)' : 'none'
-              }}
-            >
-              {option.label}
-            </Button>
-          ))}
+        <div style={{ flex: 1 }}>
+          <SearchBar
+            placeholder="Search parties by name, contact, email..."
+            value={filters.search}
+            onChange={(value) => handleFilterChange('search', value)}
+          />
         </div>
+        <FilterDropdown
+          value={filters.status}
+          onChange={(value) => handleFilterChange('status', value)}
+          options={[
+            { value: 'all', label: 'All Status' },
+            { value: 'active', label: 'Active' },
+            { value: 'inactive', label: 'Inactive' }
+          ]}
+          placeholder="Status"
+        />
+        <FilterDropdown
+          value={filters.gstStatus}
+          onChange={(value) => handleFilterChange('gstStatus', value)}
+          options={[
+            { value: '', label: 'All GST Status' },
+            { value: 'GST', label: 'GST' },
+            { value: 'Non-GST', label: 'Non-GST' },
+            { value: 'Exempted', label: 'Exempted' }
+          ]}
+          placeholder="GST Status"
+        />
         <Button
           variant="secondary"
           onClick={clearAllFilters}
@@ -863,11 +899,10 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
             color: '#fff',
             border: 'none',
             borderRadius: '6px',
-            fontWeight: '500',
-            transition: 'background-color 0.2s ease'
+            fontWeight: '500'
           }}
         >
-          🗑️ Clear All
+          🗑️ Clear
         </Button>
       </div>
 
@@ -900,11 +935,6 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
               🔍 Search & Contact
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-              <SearchBar
-                placeholder="Search by name..."
-                value={filters.search}
-                onChange={(value) => handleFilterChange('search', value)}
-              />
               <SearchBar
                 placeholder="Contact person..."
                 value={filters.contactPerson}
@@ -980,20 +1010,6 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
               <div>
-                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>GST Status</div>
-                <FilterDropdown
-                  value={filters.gstStatus}
-                  onChange={(value) => handleFilterChange('gstStatus', value)}
-                  options={[
-                    { value: '', label: 'All GST Status' },
-                    { value: 'GST', label: 'GST' },
-                    { value: 'Non-GST', label: 'Non-GST' },
-                    { value: 'Exempted', label: 'Exempted' }
-                  ]}
-                  placeholder="Select GST Status"
-                />
-              </div>
-              <div>
                 <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>GST Registration</div>
                 <FilterDropdown
                   value={filters.gstRegistration}
@@ -1045,19 +1061,6 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
                     { value: 'vendor', label: 'Vendors Only' }
                   ]}
                   placeholder="Select Party Type"
-                />
-              </div>
-              <div>
-                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Status</div>
-                <FilterDropdown
-                  value={filters.status}
-                  onChange={(value) => handleFilterChange('status', value)}
-                  options={[
-                    { value: 'all', label: 'All Status' },
-                    { value: 'active', label: 'Active Only' },
-                    { value: 'inactive', label: 'Inactive Only' }
-                  ]}
-                  placeholder="Select Status"
                 />
               </div>
               <div>

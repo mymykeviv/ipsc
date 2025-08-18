@@ -156,7 +156,10 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
         </div>
         
         <PurchaseForm 
-          onSuccess={() => navigate('/purchases')}
+          onSuccess={() => {
+            loadPurchases() // Reload purchases data
+            navigate('/purchases')
+          }}
           onCancel={() => navigate('/purchases')}
           purchaseId={mode === 'edit' ? parseInt(id!) : undefined}
           initialData={mode === 'edit' ? currentPurchase : undefined}
@@ -232,6 +235,20 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
         return purchase.grand_total >= min
       }
     })()
+    
+    // Debug logging to help identify filtering issues
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Purchase filtering:', {
+        purchase_no: purchase.purchase_no,
+        status: purchase.status,
+        statusFilter,
+        matchesStatus,
+        matchesSearch,
+        matchesVendor,
+        matchesPaymentStatus,
+        matchesAmountRange
+      })
+    }
     
     return matchesSearch && matchesStatus && matchesVendor && matchesPaymentStatus && matchesAmountRange
   })

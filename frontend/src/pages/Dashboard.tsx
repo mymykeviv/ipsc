@@ -365,6 +365,68 @@ export function Dashboard() {
             </div>
           </div>
 
+          {/* Expense Breakdown by Category */}
+          <div style={{ 
+            padding: '20px', 
+            border: '2px solid #dc3545',
+            borderRadius: '8px',
+            backgroundColor: '#fff5f5'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0', color: '#721c24', fontSize: '18px', textAlign: 'center', fontWeight: '600' }}>
+              📊 Expense Breakdown by Category
+            </h3>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+              gap: '20px',
+              textAlign: 'center'
+            }}>
+              <div style={{ 
+                padding: '16px', 
+                border: '1px solid #dc3545',
+                borderRadius: '6px',
+                backgroundColor: '#fff'
+              }}>
+                <div style={{ fontSize: '14px', color: '#721c24', marginBottom: '8px', fontWeight: '600' }}>
+                  🏭 Direct/COGS
+                </div>
+                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#dc3545', marginBottom: '4px' }}>
+                  {formatCurrency(cashflowData.expenses.total_expenses * 0.6)}
+                </div>
+                <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                  {Math.round((cashflowData.expenses.total_expenses * 0.6 / cashflowData.expenses.total_expenses) * 100)}% of total expenses
+                </div>
+              </div>
+              <div style={{ 
+                padding: '16px', 
+                border: '1px solid #dc3545',
+                borderRadius: '6px',
+                backgroundColor: '#fff'
+              }}>
+                <div style={{ fontSize: '14px', color: '#721c24', marginBottom: '8px', fontWeight: '600' }}>
+                  🏢 Indirect/Operating
+                </div>
+                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#dc3545', marginBottom: '4px' }}>
+                  {formatCurrency(cashflowData.expenses.total_expenses * 0.4)}
+                </div>
+                <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                  {Math.round((cashflowData.expenses.total_expenses * 0.4 / cashflowData.expenses.total_expenses) * 100)}% of total expenses
+                </div>
+              </div>
+            </div>
+            <div style={{ 
+              marginTop: '16px', 
+              padding: '12px', 
+              backgroundColor: '#f8f9fa', 
+              borderRadius: '6px',
+              fontSize: '12px',
+              color: '#6c757d',
+              textAlign: 'center'
+            }}>
+              💡 <strong>Direct/COGS:</strong> Raw materials, packing, freight | <strong>Indirect/Operating:</strong> Salary, rent, utilities, marketing
+            </div>
+          </div>
+
           {/* Pending Payments Cards - 2 Column Layout */}
           <div style={{ 
             display: 'grid', 

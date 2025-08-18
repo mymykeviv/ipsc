@@ -400,13 +400,25 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
     setError('')
 
     try {
+      // Validate required fields
+      if (!formData.customer_id) {
+        throw new Error('Customer is required')
+      }
+      if (!formData.date) {
+        throw new Error('Invoice date is required')
+      }
+      if (formData.items.length === 0) {
+        throw new Error('At least one item is required')
+      }
+
       await apiCreateInvoice({
-        customer_id: formData.customer_id!,
+        customer_id: formData.customer_id,
         supplier_id: 1, // Use company settings (assuming company is supplier ID 1)
         invoice_no: formData.invoice_no,
-        date: formData.date,
+        date: formData.date, // Add the missing required date field
+        due_date: formData.due_date,
         terms: formData.terms,
-        template_id: formData.template_id, // Include template selection
+        template_id: formData.template_id,
         place_of_supply: formData.place_of_supply,
         place_of_supply_state_code: formData.place_of_supply_state_code,
         eway_bill_number: formData.eway_bill_number,
@@ -427,6 +439,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
       })
       onSuccess()
     } catch (err: any) {
+      console.error('Invoice creation error:', err)
       setError(err.message || 'Failed to create invoice')
     } finally {
       setLoading(false)

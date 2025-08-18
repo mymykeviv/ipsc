@@ -378,21 +378,40 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError(null)
+    
     try {
+      // Validate required fields
+      if (!formData.name.trim()) {
+        throw new Error('Product name is required')
+      }
+      if (!formData.product_type) {
+        throw new Error('Product type is required')
+      }
+      if (!formData.sales_price || parseFloat(formData.sales_price) <= 0) {
+        throw new Error('Sales price must be greater than 0')
+      }
+      if (!formData.opening_stock || parseFloat(formData.opening_stock) < 0) {
+        throw new Error('Opening stock must be 0 or greater')
+      }
+      if (!formData.unit.trim()) {
+        throw new Error('Unit is required')
+      }
+
       const payload = {
-        name: formData.name,
-        description: formData.description,
+        name: formData.name.trim(),
+        description: formData.description.trim() || null,
         item_type: formData.product_type,
         sales_price: parseFloat(formData.sales_price),
-        purchase_price: formData.purchase_price ? parseFloat(formData.purchase_price) : null,
+        purchase_price: formData.purchase_price && formData.purchase_price.trim() ? parseFloat(formData.purchase_price) : null,
         stock: parseFloat(formData.opening_stock),
-        sku: formData.sku,
-        unit: formData.unit,
-        supplier: formData.supplier,
-        category: formData.category,
-        notes: formData.notes,
-        hsn: formData.hsn_code,
-        gst_rate: formData.gst_rate && formData.gst_rate !== '' ? parseFloat(formData.gst_rate) : null
+        sku: formData.sku.trim() || null,
+        unit: formData.unit.trim(),
+        supplier: formData.supplier.trim() || null,
+        category: formData.category.trim() || null,
+        notes: formData.notes.trim() || null,
+        hsn: formData.hsn_code.trim() || null,
+        gst_rate: formData.gst_rate && formData.gst_rate.trim() !== '' ? parseFloat(formData.gst_rate) : null
       }
       
       await apiCreateProduct(payload)
