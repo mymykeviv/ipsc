@@ -342,10 +342,13 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <Button 
                           variant="secondary"
-                          onClick={() => navigate(`/payments/invoice/edit/${payment.id}`)}
+                          onClick={() => {
+                            // Show payment details in a modal or alert
+                            alert(`Payment Details:\n\nInvoice: ${getInvoiceNumber(payment.invoice_id)}\nDate: ${new Date(payment.payment_date).toLocaleDateString()}\nAmount: ₹${payment.payment_amount.toFixed(2)}\nMethod: ${payment.payment_method}\nReference: ${payment.reference_number || 'N/A'}\nNotes: ${payment.notes || 'N/A'}`)
+                          }}
                           style={{ fontSize: '14px', padding: '6px 12px' }}
                         >
-                          Edit
+                          View
                         </Button>
                       </div>
                     </td>

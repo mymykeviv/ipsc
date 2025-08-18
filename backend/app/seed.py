@@ -151,14 +151,18 @@ def run_seed():
         # Opening stock
         msb = db.query(Product).filter_by(sku="MSB-001").first()
         hxb = db.query(Product).filter_by(sku="HXB-M10").first()
+        
+        # Only create stock entries if products exist and no stock entries exist
         if db.query(StockLedgerEntry).count() == 0:
-            db.add_all(
-                [
-                    StockLedgerEntry(product_id=msb.id, qty=100, entry_type="in", ref_type="seed", ref_id=0),
-                    StockLedgerEntry(product_id=hxb.id, qty=1000, entry_type="in", ref_type="seed", ref_id=0),
-                ]
-            )
-            db.commit()
+            stock_entries = []
+            if msb:
+                stock_entries.append(StockLedgerEntry(product_id=msb.id, qty=100, entry_type="in", ref_type="seed", ref_id=0))
+            if hxb:
+                stock_entries.append(StockLedgerEntry(product_id=hxb.id, qty=1000, entry_type="in", ref_type="seed", ref_id=0))
+            
+            if stock_entries:
+                db.add_all(stock_entries)
+                db.commit()
     finally:
         db.close()
 

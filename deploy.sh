@@ -1,10 +1,9 @@
 #!/bin/bash
 
-# CASHFLOW Deployment Script
-# Version: 1.0.0
-# Build Date: 2024-01-15
+# Simple Deployment Script for Cashflow
+# Usage: ./deploy.sh [dev|staging|prod] [--clean] [--test] [--skip-tests]
 
-set -e
+set -e  # Exit on any error
 
 # Colors for output
 RED='\033[0;31m'
@@ -13,130 +12,167 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Version information
-VERSION="1.0.0"
-BUILD_DATE=$(date +"%Y-%m-%d %H:%M:%S")
-GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+# Default values
+ENVIRONMENT=${1:-dev}
+CLEAN_BUILD=false
+RUN_TESTS=true
+SKIP_TESTS=false
 
-echo -e "${BLUE}================================${NC}"
-echo -e "${BLUE}  IPSC Deployment v${VERSION}${NC}"
-echo -e "${BLUE}  Build: ${BUILD_DATE}${NC}"
-echo -e "${BLUE}  Commit: ${GIT_COMMIT}${NC}"
-echo -e "${BLUE}================================${NC}"
+# Parse arguments
+for arg in "$@"; do
+    case $arg in
+        --clean)
+            CLEAN_BUILD=true
+            shift
+            ;;
+        --test)
+            RUN_TESTS=true
+            shift
+            ;;
+        --skip-tests)
+            SKIP_TESTS=true
+            RUN_TESTS=false
+            shift
+            ;;
+    esac
+done
 
-# Function to log messages
-log() {
-    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
-}
-
-warn() {
-    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARNING: $1${NC}"
-}
-
-error() {
-    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}"
+# Validate environment
+if [[ ! "$ENVIRONMENT" =~ ^(dev|staging|prod)$ ]]; then
+    echo -e "${RED}Error: Invalid environment. Use: dev, staging, or prod${NC}"
     exit 1
+fi
+
+echo -e "${BLUE}🚀 Starting Cashflow Deployment${NC}"
+echo -e "${BLUE}Environment: $ENVIRONMENT${NC}"
+echo -e "${BLUE}Clean Build: $CLEAN_BUILD${NC}"
+echo -e "${BLUE}Run Tests: $RUN_TESTS${NC}"
+echo "=================================="
+
+# Function to check prerequisites
+check_prerequisites() {
+    echo -e "${YELLOW}Checking prerequisites...${NC}"
+    
+    # Check Docker
+    if ! command -v docker &> /dev/null; then
+        echo -e "${RED}Error: Docker is not installed${NC}"
+        exit 1
+    fi
+    
+    # Check Docker Compose
+    if ! command -v docker-compose &> /dev/null; then
+        echo -e "${RED}Error: Docker Compose is not installed${NC}"
+        exit 1
+    fi
+    
+    # Check Git
+    if ! command -v git &> /dev/null; then
+        echo -e "${RED}Error: Git is not installed${NC}"
+        exit 1
+    fi
+    
+    echo -e "${GREEN}✅ Prerequisites check passed${NC}"
 }
 
-# Check if Docker is running
-if ! docker info > /dev/null 2>&1; then
-    error "Docker is not running. Please start Docker and try again."
-fi
-
-# Check if Docker Compose is available
-if ! command -v docker compose &> /dev/null; then
-    error "Docker Compose is not installed or not in PATH."
-fi
-
-# Create build info file
-log "Creating build information..."
-cat > build-info.json << EOF
-{
-  "version": "${VERSION}",
-  "build_date": "${BUILD_DATE}",
-  "git_commit": "${GIT_COMMIT}",
-  "deployment_date": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-  "services": {
-    "backend": "FastAPI v1.0.0",
-    "frontend": "React v1.0.0",
-    "database": "PostgreSQL 16",
-    "mailhog": "MailHog v1.0.1"
-  }
+# Function to clean environment
+clean_environment() {
+    if [ "$CLEAN_BUILD" = true ]; then
+        echo -e "${YELLOW}Cleaning environment...${NC}"
+        docker-compose down --volumes --remove-orphans 2>/dev/null || true
+        docker system prune -f 2>/dev/null || true
+        echo -e "${GREEN}✅ Environment cleaned${NC}"
+    fi
 }
-EOF
 
-# Stop existing containers
-log "Stopping existing containers..."
-docker compose down --remove-orphans
+# Function to run tests
+run_tests() {
+    if [ "$RUN_TESTS" = true ] && [ "$SKIP_TESTS" = false ]; then
+        echo -e "${YELLOW}Running tests...${NC}"
+        
+        # Backend tests
+        echo -e "${BLUE}Running backend tests...${NC}"
+        cd backend
+        python3 -m pytest tests/ -v --tb=short || {
+            echo -e "${RED}❌ Backend tests failed${NC}"
+            exit 1
+        }
+        cd ..
+        
+        # Frontend tests
+        echo -e "${BLUE}Running frontend tests...${NC}"
+        cd frontend
+        npm test -- --run --reporter=verbose || {
+            echo -e "${RED}❌ Frontend tests failed${NC}"
+            exit 1
+        }
+        cd ..
+        
+        echo -e "${GREEN}✅ All tests passed${NC}"
+    else
+        echo -e "${YELLOW}Skipping tests${NC}"
+    fi
+}
 
-# Remove old images to ensure fresh build
-log "Removing old images..."
-docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || true
+# Function to build and deploy
+build_and_deploy() {
+    echo -e "${YELLOW}Building and deploying services...${NC}"
+    
+    # Build and start services
+    if [ "$ENVIRONMENT" = "prod" ]; then
+        docker-compose -f docker-compose.optimized.yml up -d --build
+    else
+        docker-compose up -d --build
+    fi
+    
+    echo -e "${GREEN}✅ Services deployed successfully${NC}"
+}
 
-# Build and start services
-log "Building and starting services..."
-docker compose up -d --build
+# Function to check service health
+check_health() {
+    echo -e "${YELLOW}Checking service health...${NC}"
+    
+    # Wait for services to start
+    sleep 10
+    
+    # Check backend health
+    if curl -f http://localhost:8000/health >/dev/null 2>&1; then
+        echo -e "${GREEN}✅ Backend is healthy${NC}"
+    else
+        echo -e "${RED}❌ Backend health check failed${NC}"
+        exit 1
+    fi
+    
+    # Check frontend health
+    if curl -f http://localhost:3000 >/dev/null 2>&1; then
+        echo -e "${GREEN}✅ Frontend is healthy${NC}"
+    else
+        echo -e "${RED}❌ Frontend health check failed${NC}"
+        exit 1
+    fi
+    
+    echo -e "${GREEN}✅ All services are healthy${NC}"
+}
 
-# Wait for services to be ready
-log "Waiting for services to be ready..."
-sleep 10
+# Function to show deployment info
+show_info() {
+    echo -e "${BLUE}==================================${NC}"
+    echo -e "${GREEN}🎉 Deployment completed successfully!${NC}"
+    echo -e "${BLUE}Environment: $ENVIRONMENT${NC}"
+    echo -e "${BLUE}Backend: http://localhost:8000${NC}"
+    echo -e "${BLUE}Frontend: http://localhost:3000${NC}"
+    echo -e "${BLUE}API Docs: http://localhost:8000/docs${NC}"
+    echo -e "${BLUE}==================================${NC}"
+}
 
-# Check service health
-log "Checking service health..."
+# Main deployment flow
+main() {
+    check_prerequisites
+    clean_environment
+    run_tests
+    build_and_deploy
+    check_health
+    show_info
+}
 
-# Check backend health
-if curl -f http://localhost:8000/health > /dev/null 2>&1; then
-    log "✅ Backend is healthy"
-    BACKEND_VERSION=$(curl -s http://localhost:8000/version | jq -r '.version' 2>/dev/null || echo "unknown")
-    log "   Backend version: ${BACKEND_VERSION}"
-else
-    error "❌ Backend health check failed"
-fi
-
-# Check frontend
-if curl -f http://localhost:5173 > /dev/null 2>&1; then
-    log "✅ Frontend is accessible"
-else
-    warn "⚠️  Frontend health check failed (may still be starting)"
-fi
-
-# Check database
-if docker compose exec -T db pg_isready -U ipsc > /dev/null 2>&1; then
-    log "✅ Database is ready"
-else
-    error "❌ Database health check failed"
-fi
-
-# Check mailhog
-if curl -f http://localhost:8025 > /dev/null 2>&1; then
-    log "✅ MailHog is accessible"
-else
-    warn "⚠️  MailHog health check failed"
-fi
-
-# Display deployment summary
-echo -e "${BLUE}================================${NC}"
-echo -e "${BLUE}  Deployment Summary${NC}"
-echo -e "${BLUE}================================${NC}"
-echo -e "${GREEN}✅ Deployment completed successfully!${NC}"
-echo ""
-echo -e "${BLUE}Service URLs:${NC}"
-echo -e "  Frontend: ${GREEN}http://localhost:5173${NC}"
-echo -e "  Backend API: ${GREEN}http://localhost:8000${NC}"
-echo -e "  API Docs: ${GREEN}http://localhost:8000/docs${NC}"
-echo -e "  MailHog: ${GREEN}http://localhost:8025${NC}"
-echo ""
-echo -e "${BLUE}Default Login:${NC}"
-echo -e "  Username: ${GREEN}admin${NC}"
-echo -e "  Password: ${GREEN}admin123${NC}"
-echo ""
-echo -e "${BLUE}Version Information:${NC}"
-echo -e "  Application: ${GREEN}v${VERSION}${NC}"
-echo -e "  Build Date: ${GREEN}${BUILD_DATE}${NC}"
-echo -e "  Git Commit: ${GREEN}${GIT_COMMIT}${NC}"
-echo ""
-echo -e "${BLUE}Useful Commands:${NC}"
-echo -e "  View logs: ${GREEN}docker compose logs -f${NC}"
-echo -e "  Stop services: ${GREEN}docker compose down${NC}"
-echo -e "  Restart services: ${GREEN}docker compose restart${NC}"
-echo -e "${BLUE}================================${NC}"
+# Run main function
+main "$@"

@@ -1,0 +1,117 @@
+version: '3.8'
+
+services:
+  # Optimized Backend Service
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.optimized
+      target: runtime
+    container_name: cashflow-backend-optimized
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./cashflow.db
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./backend/cashflow.db:/app/cashflow.db
+      - ./logs:/app/logs
+    networks:
+      - cashflow-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optimized Frontend Service
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile.optimized
+      target: production
+    container_name: cashflow-frontend-optimized
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - cashflow-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Lightweight Database (SQLite for low-resource environments)
+  database:
+    image: alpine:latest
+    container_name: cashflow-database-optimized
+    restart: unless-stopped
+    volumes:
+      - ./backend/cashflow.db:/data/cashflow.db
+    networks:
+      - cashflow-network
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: '0.1'
+        reservations:
+          memory: 32M
+          cpus: '0.05'
+    command: ["sh", "-c", "echo 'SQLite database initialized' && tail -f /dev/null"]
+
+  # Optional: Lightweight Email Service (only for development)
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: cashflow-mailhog-optimized
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - cashflow-network
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.1'
+        reservations:
+          memory: 64M
+          cpus: '0.05'
+    profiles:
+      - development
+
+networks:
+  cashflow-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  database_data:
+    driver: local

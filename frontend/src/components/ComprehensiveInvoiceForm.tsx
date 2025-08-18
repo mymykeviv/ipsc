@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { apiCreateInvoice, apiListCustomers, apiListVendors, apiGetProducts, apiGetCompanySettings, Party, Product, CompanySettings } from '../lib/api'
+import { apiCreateInvoice, apiListCustomers, apiListVendors, apiGetProducts, apiGetCompanySettings, apiGetInvoiceTemplates, Party, Product, CompanySettings, InvoiceTemplate } from '../lib/api'
 import { Button } from './Button'
 import { ErrorMessage } from './ErrorMessage'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
@@ -32,6 +32,7 @@ interface InvoiceFormData {
   invoice_type: string
   currency: string
   terms: string
+  template_id: number | null // Add template selection
   
   // Supplier Details
   supplier_id: number | null
@@ -133,6 +134,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
   const [suppliers, setSuppliers] = useState<Party[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null)
+  const [templates, setTemplates] = useState<InvoiceTemplate[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -146,6 +148,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
     invoice_type: 'Invoice',
     currency: 'INR',
     terms: 'Immediate',
+    template_id: null, // Initialize template_id
     
     // Supplier Details
     supplier_id: null,
@@ -195,21 +198,24 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
   const loadData = async () => {
     try {
       console.log('Starting to load data...')
-      const [customersData, suppliersData, productsData, companySettingsData] = await Promise.all([
+      const [customersData, suppliersData, productsData, companySettingsData, templatesData] = await Promise.all([
         apiListCustomers('', true), // Include inactive customers
         apiListVendors('', true),   // Include inactive vendors
         apiGetProducts(),
-        apiGetCompanySettings()
+        apiGetCompanySettings(),
+        apiGetInvoiceTemplates()
       ])
       console.log('Loaded customers:', customersData)
       console.log('Loaded suppliers:', suppliersData)
       console.log('Loaded products:', productsData)
       console.log('Loaded company settings:', companySettingsData)
+      console.log('Loaded templates:', templatesData)
       console.log('Suppliers length:', suppliersData?.length || 0)
       setCustomers(customersData)
       setSuppliers(suppliersData)
       setProducts(productsData)
       setCompanySettings(companySettingsData)
+      setTemplates(templatesData)
     } catch (err: any) {
       console.error('Error loading data:', err)
       setError(err.message || 'Failed to load data')
@@ -400,6 +406,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
         invoice_no: formData.invoice_no,
         date: formData.date,
         terms: formData.terms,
+        template_id: formData.template_id, // Include template selection
         place_of_supply: formData.place_of_supply,
         place_of_supply_state_code: formData.place_of_supply_state_code,
         eway_bill_number: formData.eway_bill_number,
@@ -494,26 +501,49 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
                 type="text"
                 value={formData.status}
                 readOnly
-                style={{ ...formStyles.input, backgroundColor: '#f9f9f9' }}
+                style={{...formStyles.input, backgroundColor: '#f8f9fa'}}
               />
             </div>
             <div style={formStyles.formGroup}>
               <label style={formStyles.label}>Invoice Type</label>
-              <input
-                type="text"
+              <select
                 value={formData.invoice_type}
-                readOnly
-                style={{ ...formStyles.input, backgroundColor: '#f9f9f9' }}
-              />
+                onChange={(e) => setFormData({...formData, invoice_type: e.target.value})}
+                style={formStyles.select}
+              >
+                {INVOICE_TYPES.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
             </div>
             <div style={formStyles.formGroup}>
               <label style={formStyles.label}>Invoice Currency</label>
-              <input
-                type="text"
+              <select
                 value={formData.currency}
-                readOnly
-                style={{ ...formStyles.input, backgroundColor: '#f9f9f9' }}
-              />
+                onChange={(e) => setFormData({...formData, currency: e.target.value})}
+                style={formStyles.select}
+              >
+                {CURRENCIES.map(currency => (
+                  <option key={currency} value={currency}>{currency}</option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Row 4: Template Selection */}
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Invoice Template</label>
+              <select
+                value={formData.template_id || ''}
+                onChange={(e) => setFormData({...formData, template_id: e.target.value ? parseInt(e.target.value) : null})}
+                style={formStyles.select}
+              >
+                <option value="">Use Default Template</option>
+                {templates.map(template => (
+                  <option key={template.id} value={template.id}>
+                    {template.name} {template.is_default ? '(Default)' : ''}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

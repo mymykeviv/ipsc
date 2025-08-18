@@ -1,0 +1,133 @@
+{
+  "deployment": {
+    "version": "1.48.1",
+    "timestamp": "2025-08-18T10:55:57.959430",
+    "duration": "0:00:23.058918",
+    "status": "success"
+  },
+  "test_results": {
+    "timestamp": "2025-08-18T10:55:48.242602",
+    "duration": "0:00:12.520261",
+    "total_tests": 15,
+    "passed_tests": 14,
+    "failed_tests": 1,
+    "success_rate": 93.33333333333333,
+    "results": [
+      {
+        "test": "Backend Accessibility",
+        "success": true,
+        "details": "Status: 200",
+        "timestamp": "2025-08-18T10:55:35.739003"
+      },
+      {
+        "test": "Frontend Build",
+        "success": true,
+        "details": "",
+        "timestamp": "2025-08-18T10:55:39.080998"
+      },
+      {
+        "test": "Backend Server Running",
+        "success": true,
+        "details": "",
+        "timestamp": "2025-08-18T10:55:39.086392"
+      },
+      {
+        "test": "Authentication",
+        "success": true,
+        "details": "",
+        "timestamp": "2025-08-18T10:55:39.349059"
+      },
+      {
+        "test": "Invoice Templates API",
+        "success": true,
+        "details": "Found 5 templates",
+        "timestamp": "2025-08-18T10:55:39.356369"
+      },
+      {
+        "test": "Invoices API",
+        "success": true,
+        "details": "Found 5 invoices",
+        "timestamp": "2025-08-18T10:55:39.364644"
+      },
+      {
+        "test": "Products API",
+        "success": true,
+        "details": "Found 10 products",
+        "timestamp": "2025-08-18T10:55:39.369106"
+      },
+      {
+        "test": "Parties API",
+        "success": true,
+        "details": "Found 15 parties",
+        "timestamp": "2025-08-18T10:55:39.373842"
+      },
+      {
+        "test": "PDF Generation",
+        "success": true,
+        "details": "Generated PDF for invoice 1",
+        "timestamp": "2025-08-18T10:55:39.391434"
+      },
+      {
+        "test": "Frontend Build",
+        "success": true,
+        "details": "",
+        "timestamp": "2025-08-18T10:55:44.546043"
+      },
+      {
+        "test": "TypeScript Compilation",
+        "success": true,
+        "details": "",
+        "timestamp": "2025-08-18T10:55:47.758222"
+      },
+      {
+        "test": "Frontend Linting",
+        "success": false,
+        "details": "Linting issues found (non-critical): ...",
+        "timestamp": "2025-08-18T10:55:48.190979"
+      },
+      {
+        "test": "Template Creation",
+        "success": true,
+        "details": "Created template 18",
+        "timestamp": "2025-08-18T10:55:48.215575"
+      },
+      {
+        "test": "Template PDF Generation",
+        "success": true,
+        "details": "Generated PDF with template 18",
+        "timestamp": "2025-08-18T10:55:48.236196"
+      },
+      {
+        "test": "Template Cleanup",
+        "success": true,
+        "details": "Deleted template 18",
+        "timestamp": "2025-08-18T10:55:48.242491"
+      }
+    ]
+  },
+  "log": [
+    "[10:55:34] START: \ud83d\ude80 Starting deployment process...",
+    "[10:55:34] INFO: Timestamp: 2025-08-18 10:55:34",
+    "[10:55:34] CHECK: \ud83d\udd0d Checking prerequisites...",
+    "[10:55:34] SUCCESS: \u2705 Python: Python 3.13.5",
+    "[10:55:35] SUCCESS: \u2705 Node.js: v24.5.0",
+    "[10:55:35] SUCCESS: \u2705 npm: 11.5.1",
+    "[10:55:35] SUCCESS: \u2705 Git: git version 2.50.1",
+    "[10:55:35] TEST: \ud83e\uddea Running comprehensive test suite...",
+    "[10:55:48] SUCCESS: \u2705 All tests passed!",
+    "[10:55:48] INFO: \ud83d\udcca Test Results: 14/15 passed",
+    "[10:55:48] BUILD: \ud83c\udfd7\ufe0f Building frontend...",
+    "[10:55:53] SUCCESS: \u2705 Frontend build successful",
+    "[10:55:53] BUILD: \ud83c\udfd7\ufe0f Building backend...",
+    "[10:55:53] INFO: \ud83d\udce6 Installing backend dependencies...",
+    "[10:55:53] SUCCESS: \u2705 Backend build successful",
+    "[10:55:53] DB: \ud83d\uddc4\ufe0f Running database migrations...",
+    "[10:55:54] ERROR: \u274c Database migration failed",
+    "[10:55:54] ERROR: Migration error: ",
+    "[10:55:54] WARNING: \u26a0\ufe0f Database migration failed - continuing with deployment",
+    "[10:55:54] VERSION: \ud83d\udcdd Updating version...",
+    "[10:55:54] SUCCESS: \u2705 Version updated to 1.48.1",
+    "[10:55:54] GIT: \ud83d\udcdd Committing changes...",
+    "[10:55:57] SUCCESS: \u2705 Changes committed successfully"
+  ]
+}

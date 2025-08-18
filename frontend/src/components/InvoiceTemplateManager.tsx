@@ -11,6 +11,10 @@ import {
   apiUpdateInvoiceTemplate, 
   apiDeleteInvoiceTemplate, 
   apiSetDefaultInvoiceTemplate,
+  apiUploadLogo,
+  apiImportInvoiceTemplate,
+  apiExportInvoiceTemplate,
+  apiGetPresetThemes,
   InvoiceTemplate, 
   InvoiceTemplateCreate, 
   InvoiceTemplateUpdate 
@@ -33,6 +37,9 @@ export function InvoiceTemplateManager({ isOpen, onClose }: InvoiceTemplateManag
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [showPreview, setShowPreview] = useState(false) // Add preview state
+  const [presetThemes, setPresetThemes] = useState<Record<string, any>>({})
+  const [logoUrl, setLogoUrl] = useState<string>('')
   
   // Form state
   const [formData, setFormData] = useState<InvoiceTemplateCreate>({
@@ -68,8 +75,12 @@ export function InvoiceTemplateManager({ isOpen, onClose }: InvoiceTemplateManag
   const loadTemplates = async () => {
     try {
       setLoading(true)
-      const data = await apiGetInvoiceTemplates()
+      const [data, presets] = await Promise.all([
+        apiGetInvoiceTemplates(),
+        apiGetPresetThemes()
+      ])
       setTemplates(data)
+      setPresetThemes(presets)
     } catch (err: any) {
       const errorMessage = handleApiError(err)
       setError(errorMessage)
@@ -80,6 +91,68 @@ export function InvoiceTemplateManager({ isOpen, onClose }: InvoiceTemplateManag
 
   const handleInputChange = (field: keyof InvoiceTemplateCreate, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleLogoUpload = async (file: File) => {
+    try {
+      setLoading(true)
+      const result = await apiUploadLogo(file)
+      setLogoUrl(result.logo_url)
+      setSuccess('Logo uploaded successfully!')
+    } catch (err: any) {
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleImportTemplate = async (file: File) => {
+    try {
+      setLoading(true)
+      const result = await apiImportInvoiceTemplate(file)
+      setSuccess(result.message)
+      loadTemplates() // Reload templates
+    } catch (err: any) {
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleExportTemplate = async (templateId: number) => {
+    try {
+      setLoading(true)
+      const blob = await apiExportInvoiceTemplate(templateId)
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `template_${templateId}.json`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      setSuccess('Template exported successfully!')
+    } catch (err: any) {
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePresetTheme = (themeType: string) => {
+    const preset = presetThemes[themeType]
+    if (preset) {
+      setFormData(prev => ({
+        ...prev,
+        ...preset,
+        name: `${preset.name} Template`,
+        description: preset.description
+      }))
+      setSuccess(`Applied ${preset.name} theme!`)
+    }
   }
 
   const handleCreateNew = () => {
@@ -393,7 +466,7 @@ export function InvoiceTemplateManager({ isOpen, onClose }: InvoiceTemplateManag
             <label style={formStyles.label}>Body Font Size</label>
             <input
               type="number"
-              value={formData.body_font_size}
+              value={formData.body_font_size ?? 10}
               onChange={(e) => handleInputChange('body_font_size', parseInt(e.target.value))}
               style={formStyles.input}
               min="8"
@@ -419,6 +492,30 @@ export function InvoiceTemplateManager({ isOpen, onClose }: InvoiceTemplateManag
               <option value="top-right">Top Right</option>
               <option value="center">Center</option>
             </select>
+          </div>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Logo Upload</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) {
+                  // Handle logo upload - for now just show a preview
+                  const reader = new FileReader()
+                  reader.onload = (event) => {
+                    // In a real implementation, you would upload to server
+                    console.log('Logo uploaded:', file.name)
+                    // You could store the logo URL in formData
+                  }
+                  reader.readAsDataURL(file)
+                }
+              }}
+              style={{ ...formStyles.input, padding: '6px' }}
+            />
+            <small style={{ color: '#6c757d', fontSize: '12px' }}>
+              Supported formats: JPG, PNG, GIF (Max 2MB)
+            </small>
           </div>
         </div>
         
@@ -553,10 +650,172 @@ export function InvoiceTemplateManager({ isOpen, onClose }: InvoiceTemplateManag
         <Button onClick={handleCreateNew} variant="secondary" disabled={loading}>
           Cancel
         </Button>
+        <Button onClick={() => setShowPreview(!showPreview)} variant="secondary" disabled={loading}>
+          {showPreview ? 'Hide Preview' : 'Show Preview'}
+        </Button>
         <Button onClick={handleSubmit} variant="primary" disabled={loading || !formData.name}>
           {loading ? <LoadingSpinner size="small" /> : (isEditMode ? 'Update Template' : 'Create Template')}
         </Button>
       </div>
+      
+      {/* Live Preview Section */}
+      {showPreview && (
+        <div style={{ 
+          marginTop: '24px', 
+          border: '1px solid #e9ecef', 
+          borderRadius: '8px', 
+          padding: '20px',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <h4 style={{ 
+            margin: '0 0 16px 0', 
+            color: getSectionHeaderColor('preview'),
+            fontSize: '16px',
+            fontWeight: '600'
+          }}>
+            📄 Live Template Preview
+          </h4>
+          <div style={{
+            backgroundColor: 'white',
+            border: '1px solid #dee2e6',
+            borderRadius: '6px',
+            padding: '24px',
+            maxWidth: '600px',
+            margin: '0 auto',
+            fontFamily: formData.body_font === 'Helvetica' ? 'Arial, sans-serif' : 'Times New Roman, serif'
+          }}>
+            {/* Header */}
+            <div style={{
+              borderBottom: `2px solid ${formData.primary_color}`,
+              paddingBottom: '16px',
+              marginBottom: '20px',
+              textAlign: formData.logo_position === 'center' ? 'center' : 'left'
+            }}>
+              <h1 style={{
+                color: formData.primary_color,
+                fontSize: `${formData.header_font_size}px`,
+                fontWeight: 'bold',
+                margin: '0 0 8px 0',
+                fontFamily: formData.header_font === 'Helvetica-Bold' ? 'Arial, sans-serif' : 'Times New Roman, serif'
+              }}>
+                {formData.header_text}
+              </h1>
+              {formData.show_company_details && (
+                <div style={{ color: formData.secondary_color, fontSize: `${formData.body_font_size || 10}px` }}>
+                  <div><strong>Sample Company Ltd.</strong></div>
+                  <div>123 Business Street, City, State 12345</div>
+                  <div>GSTIN: 12ABCDE1234F1Z5</div>
+                </div>
+              )}
+            </div>
+            
+            {/* Invoice Details */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+              <div>
+                <h3 style={{
+                  color: formData.primary_color,
+                  fontSize: `${formData.body_font_size ?? 10 + 2}px`,
+                  margin: '0 0 8px 0'
+                }}>
+                  Invoice Details
+                </h3>
+                <div style={{ fontSize: `${formData.body_font_size || 10}px` }}>
+                  <div><strong>Invoice No:</strong> INV-2024-001</div>
+                  <div><strong>Date:</strong> 18/08/2024</div>
+                  <div><strong>Due Date:</strong> 17/09/2024</div>
+                </div>
+              </div>
+              
+              {formData.show_customer_details && (
+                <div>
+                  <h3 style={{
+                    color: formData.primary_color,
+                    fontSize: `${formData.body_font_size ?? 10 + 2}px`,
+                    margin: '0 0 8px 0'
+                  }}>
+                    Bill To
+                  </h3>
+                  <div style={{ fontSize: `${formData.body_font_size || 10}px` }}>
+                    <div><strong>Customer Name</strong></div>
+                    <div>456 Customer Avenue</div>
+                    <div>Customer City, CS 67890</div>
+                    <div>GSTIN: 98FEDCB9876Z9X8</div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Items Table */}
+            <div style={{ marginBottom: '20px' }}>
+              <table style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                fontSize: `${formData.body_font_size || 10}px`
+              }}>
+                <thead>
+                  <tr style={{ backgroundColor: formData.secondary_color, color: 'white' }}>
+                    <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #dee2e6' }}>Item</th>
+                    <th style={{ padding: '8px', textAlign: 'right', border: '1px solid #dee2e6' }}>Qty</th>
+                    <th style={{ padding: '8px', textAlign: 'right', border: '1px solid #dee2e6' }}>Rate</th>
+                    <th style={{ padding: '8px', textAlign: 'right', border: '1px solid #dee2e6' }}>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>Sample Product</td>
+                    <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #dee2e6' }}>2</td>
+                    <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #dee2e6' }}>₹500.00</td>
+                    <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #dee2e6' }}>₹1,000.00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Totals */}
+            <div style={{ 
+              textAlign: 'right', 
+              marginBottom: '20px',
+              fontSize: `${formData.body_font_size || 10}px`
+            }}>
+              <div><strong>Subtotal:</strong> ₹1,000.00</div>
+              <div><strong>CGST (9%):</strong> ₹90.00</div>
+              <div><strong>SGST (9%):</strong> ₹90.00</div>
+              <div style={{ 
+                borderTop: `1px solid ${formData.accent_color}`, 
+                paddingTop: '8px',
+                fontSize: `${formData.body_font_size ?? 10 + 2}px`,
+                fontWeight: 'bold',
+                color: formData.accent_color
+              }}>
+                <strong>Total:</strong> ₹1,180.00
+              </div>
+            </div>
+            
+            {/* Terms and Footer */}
+            {formData.show_terms && (
+              <div style={{ 
+                marginBottom: '16px',
+                fontSize: `${formData.body_font_size || 10}px`,
+                color: formData.secondary_color
+              }}>
+                <strong>Terms:</strong> {formData.terms_text}
+              </div>
+            )}
+            
+            {formData.show_footer && (
+              <div style={{ 
+                textAlign: 'center',
+                fontSize: `${formData.body_font_size || 10}px`,
+                color: formData.secondary_color,
+                borderTop: `1px solid ${formData.primary_color}`,
+                paddingTop: '16px'
+              }}>
+                {formData.footer_text}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 

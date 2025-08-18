@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request, UploadFile, File
 from pydantic import BaseModel, validator
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, and_, or_
 import re
 from datetime import datetime, timedelta, date
 
@@ -34,6 +34,8 @@ from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.colors import black, white, grey, darkblue
+import os
+import base64
 
 
 # Indian States for GST Compliance
@@ -1135,15 +1137,29 @@ def update_invoice_status(invoice_id: int, status: str, _: User = Depends(get_cu
 
 @api.delete('/invoices/{invoice_id}')
 def delete_invoice(invoice_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
-    if not inv:
-        raise HTTPException(status_code=404, detail='Invoice not found')
-    
-    # Delete related items first
-    db.query(InvoiceItem).filter(InvoiceItem.invoice_id == invoice_id).delete()
-    db.delete(inv)
-    db.commit()
-    return {"message": "Invoice deleted successfully"}
+    try:
+        inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+        if not inv:
+            raise HTTPException(status_code=404, detail='Invoice not found')
+        
+        # Check if invoice has payments
+        payments = db.query(Payment).filter(Payment.invoice_id == invoice_id).first()
+        if payments:
+            raise HTTPException(status_code=400, detail='Cannot delete invoice with existing payments. Please delete payments first.')
+        
+        # Delete related items first (cascade delete)
+        db.query(InvoiceItem).filter(InvoiceItem.invoice_id == invoice_id).delete()
+        
+        # Delete the invoice
+        db.delete(inv)
+        db.commit()
+        
+        return {"message": "Invoice deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to delete invoice: {str(e)}")
 
 
 # Payment Management Endpoints
@@ -5207,6 +5223,58 @@ def create_invoice_template(
     return template
 
 
+@api.get('/invoice-templates/presets')
+def get_preset_themes():
+    """Get preset theme configurations"""
+    presets = {
+        "professional": {
+            "name": "Professional Blue",
+            "description": "Clean and professional blue theme",
+            "primary_color": "#2c3e50",
+            "secondary_color": "#3498db",
+            "accent_color": "#e74c3c",
+            "header_font": "Helvetica-Bold",
+            "body_font": "Helvetica",
+            "header_font_size": 18,
+            "body_font_size": 10
+        },
+        "modern": {
+            "name": "Modern Dark",
+            "description": "Sleek modern dark theme",
+            "primary_color": "#1a1a1a",
+            "secondary_color": "#4a90e2",
+            "accent_color": "#f39c12",
+            "header_font": "Arial-Bold",
+            "body_font": "Arial",
+            "header_font_size": 20,
+            "body_font_size": 11
+        },
+        "classic": {
+            "name": "Classic Elegant",
+            "description": "Timeless classic theme",
+            "primary_color": "#2f4f4f",
+            "secondary_color": "#708090",
+            "accent_color": "#8b4513",
+            "header_font": "Times-Bold",
+            "body_font": "Times",
+            "header_font_size": 16,
+            "body_font_size": 10
+        },
+        "minimal": {
+            "name": "Minimal Clean",
+            "description": "Minimalist clean theme",
+            "primary_color": "#333333",
+            "secondary_color": "#666666",
+            "accent_color": "#999999",
+            "header_font": "Helvetica",
+            "body_font": "Helvetica",
+            "header_font_size": 14,
+            "body_font_size": 9
+        }
+    }
+    return presets
+
+
 @api.get('/invoice-templates', response_model=list[InvoiceTemplateOut])
 def get_invoice_templates(
     _: User = Depends(get_current_user),
@@ -5342,4 +5410,154 @@ def set_default_invoice_template(
     db.commit()
     
     return {"message": "Default template updated successfully"}
+
+
+@api.post('/upload-logo')
+async def upload_logo(
+    file: UploadFile = File(...),
+    _: User = Depends(get_current_user)
+):
+    """Upload logo for invoice templates"""
+    
+    # Validate file type
+    if not file.content_type.startswith('image/'):
+        raise HTTPException(
+            status_code=400, 
+            detail="Only image files are allowed"
+        )
+    
+    # Validate file size (max 2MB)
+    if file.size and file.size > 2 * 1024 * 1024:
+        raise HTTPException(
+            status_code=400, 
+            detail="File size must be less than 2MB"
+        )
+    
+    try:
+        # Read file content
+        content = await file.read()
+        
+        # Convert to base64 for storage
+        base64_content = base64.b64encode(content).decode('utf-8')
+        
+        # Create logo data
+        logo_data = {
+            "filename": file.filename,
+            "content_type": file.content_type,
+            "size": len(content),
+            "data": base64_content
+        }
+        
+        # In a production environment, you would save to a file system or cloud storage
+        # For now, we'll return the base64 data
+        return {
+            "success": True,
+            "logo_url": f"data:{file.content_type};base64,{base64_content}",
+            "filename": file.filename,
+            "size": len(content)
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to upload logo: {str(e)}"
+        )
+
+
+@api.post('/invoice-templates/import')
+async def import_invoice_template(
+    file: UploadFile = File(...),
+    _: User = Depends(require_role("Admin")),
+    db: Session = Depends(get_db)
+):
+    """Import invoice template from JSON file"""
+    
+    if not file.filename.endswith('.json'):
+        raise HTTPException(
+            status_code=400,
+            detail="Only JSON files are allowed"
+        )
+    
+    try:
+        content = await file.read()
+        template_data = json.loads(content.decode('utf-8'))
+        
+        # Validate required fields
+        required_fields = ['name', 'description', 'template_type']
+        for field in required_fields:
+            if field not in template_data:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Missing required field: {field}"
+                )
+        
+        # Create new template
+        template = InvoiceTemplate(**template_data)
+        template.is_default = False  # Imported templates are not default
+        template.is_active = True
+        
+        db.add(template)
+        db.commit()
+        db.refresh(template)
+        
+        return {
+            "success": True,
+            "message": "Template imported successfully",
+            "template_id": template.id
+        }
+        
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid JSON format"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to import template: {str(e)}"
+        )
+
+
+@api.get('/invoice-templates/{template_id}/export')
+def export_invoice_template(
+    template_id: int,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Export invoice template as JSON file"""
+    
+    template = db.query(InvoiceTemplate).filter(InvoiceTemplate.id == template_id).first()
+    if not template:
+        raise HTTPException(status_code=404, detail='Invoice template not found')
+    
+    # Convert template to dict, excluding internal fields
+    template_dict = {
+        "name": template.name,
+        "description": template.description,
+        "template_type": template.template_type,
+        "primary_color": template.primary_color,
+        "secondary_color": template.secondary_color,
+        "accent_color": template.accent_color,
+        "header_font": template.header_font,
+        "body_font": template.body_font,
+        "header_font_size": template.header_font_size,
+        "body_font_size": template.body_font_size,
+        "show_logo": template.show_logo,
+        "logo_position": template.logo_position,
+        "show_company_details": template.show_company_details,
+        "show_customer_details": template.show_customer_details,
+        "show_supplier_details": template.show_supplier_details,
+        "show_terms": template.show_terms,
+        "show_notes": template.show_notes,
+        "show_footer": template.show_footer,
+        "header_text": template.header_text,
+        "footer_text": template.footer_text,
+        "terms_text": template.terms_text
+    }
+    
+    return Response(
+        content=json.dumps(template_dict, indent=2),
+        media_type="application/json",
+        headers={"Content-Disposition": f"attachment; filename=template_{template_id}.json"}
+    )
 

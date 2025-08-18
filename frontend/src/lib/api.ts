@@ -327,6 +327,7 @@ export type InvoiceCreate = {
   // Invoice Details
   invoice_type?: string
   currency?: string
+  template_id?: number | null // Add template selection support
   
   // GST Compliance Fields
   place_of_supply: string
@@ -401,8 +402,8 @@ export type Payment = {
 }
 
 export type PaymentCreate = {
-  amount: number
-  method: string
+  payment_amount: number
+  payment_method: string
   account_head: string
   reference_number?: string
   notes?: string
@@ -1486,6 +1487,84 @@ export async function apiSetDefaultInvoiceTemplate(templateId: number): Promise<
       throw new Error(`HTTP ${r.status}: ${r.statusText}`)
     }
   }
+}
+
+export async function apiUploadLogo(file: File): Promise<{success: boolean, logo_url: string, filename: string, size: number}> {
+  const formData = new FormData()
+  formData.append('file', file)
+  
+  const r = await fetch('/api/upload-logo', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
+    body: formData
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiImportInvoiceTemplate(file: File): Promise<{success: boolean, message: string, template_id: number}> {
+  const formData = new FormData()
+  formData.append('file', file)
+  
+  const r = await fetch('/api/invoice-templates/import', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
+    body: formData
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiExportInvoiceTemplate(templateId: number): Promise<Blob> {
+  const r = await fetch(`/api/invoice-templates/${templateId}/export`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.blob()
+}
+
+export async function apiGetPresetThemes(): Promise<Record<string, any>> {
+  const r = await fetch('/api/invoice-templates/presets', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
 }
 
 export async function apiGetInvoicePDF(invoiceId: number, templateId?: number): Promise<Blob> {
