@@ -20,6 +20,7 @@ import { Expenses } from '../pages/Expenses'
 import { Cashflow } from '../pages/Cashflow'
 import { Payments } from '../pages/Payments'
 import { PurchasePayments } from '../pages/PurchasePayments'
+import TemplateManagement from '../pages/TemplateManagement'
 
 import { Logo } from '../components/Logo'
 import { SessionTimer } from '../components/SessionTimer'
@@ -362,6 +363,9 @@ function Shell() {
                 <Link className={`nav-link sub-link ${isActive('/settings/invoice') ? 'active' : ''}`} to="/settings/invoice">
                   Invoice Settings
                 </Link>
+                <Link className={`nav-link sub-link ${isActive('/templates') ? 'active' : ''}`} to="/templates">
+                  Template Management
+                </Link>
               </>
             )}
           </div>
@@ -447,6 +451,9 @@ function Shell() {
           <Route path="/settings/users" element={<Settings section="users" />} />
           <Route path="/settings/email" element={<Settings section="email" />} />
           <Route path="/settings/invoice" element={<Settings section="invoice" />} />
+          
+          {/* Template Management Routes */}
+          <Route path="/templates" element={<TemplateManagement />} />
           
           {/* Expenses Routes */}
           <Route path="/expenses" element={<Expenses />} />
