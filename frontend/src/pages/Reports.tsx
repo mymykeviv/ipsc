@@ -16,14 +16,13 @@ export function Reports({ section }: ReportsProps) {
   const [gstReport, setGstReport] = useState<GstFilingReport | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [from, setFrom] = useState<string>(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0,10))
-  const [to, setTo] = useState<string>(() => new Date().toISOString().slice(0,10))
+  const [from, setFrom] = useState<string>(() => new Date(2024, 11, 1).toISOString().slice(0,10)) // December 1, 2024
+  const [to, setTo] = useState<string>(() => new Date(2024, 11, 31).toISOString().slice(0,10)) // December 31, 2024
   
   // GST Filing Report State
   const [periodType, setPeriodType] = useState<'month' | 'quarter' | 'year'>('month')
   const [periodValue, setPeriodValue] = useState<string>(() => {
-    const now = new Date()
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    return '2024-12' // December 2024
   })
   const [reportType, setReportType] = useState<'gstr1' | 'gstr2' | 'gstr3b'>('gstr1')
   

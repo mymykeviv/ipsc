@@ -1805,8 +1805,17 @@ def list_invoices(
 @api.get('/reports/gst-summary')
 def gst_summary(from_: str = Query(alias='from'), to: str = Query(alias='to'), _: User = Depends(get_current_user), db: Session = Depends(get_db)):
     # naive impl: aggregate all invoices between dates
-    from sqlalchemy import func
-    q = db.query(Invoice).filter(func.date(Invoice.date) >= from_, func.date(Invoice.date) <= to)
+    from sqlalchemy import func, cast, Date
+    from datetime import datetime
+    
+    # Convert string dates to proper date objects
+    from_date = datetime.strptime(from_, '%Y-%m-%d').date()
+    to_date = datetime.strptime(to, '%Y-%m-%d').date()
+    
+    q = db.query(Invoice).filter(
+        cast(Invoice.date, Date) >= from_date,
+        cast(Invoice.date, Date) <= to_date
+    )
     invoices = q.all()
     taxable = sum([float(i.taxable_value) for i in invoices], 0.0)
     cgst = sum([float(i.cgst) for i in invoices], 0.0)
@@ -1820,7 +1829,10 @@ def gst_summary(from_: str = Query(alias='from'), to: str = Query(alias='to'), _
         select(Product.gst_rate, func.sum(InvoiceItem.taxable_value))
         .join(Product, Product.id == InvoiceItem.product_id)
         .join(Invoice, Invoice.id == InvoiceItem.invoice_id)
-        .filter(func.date(Invoice.date) >= from_, func.date(Invoice.date) <= to)
+        .filter(
+            cast(Invoice.date, Date) >= from_date,
+            cast(Invoice.date, Date) <= to_date
+        )
         .group_by(Product.gst_rate)
     ).all()
     rate_breakup = [{"rate": float(r[0]), "taxable_value": float(r[1])} for r in rows]
@@ -2505,13 +2517,18 @@ def _calculate_period_dates(period_type: str, period_value: str) -> tuple[str, s
 
 def _generate_gstr1_report(start_date: str, end_date: str, format: str, db: Session):
     """Generate GSTR-1 (Outward Supplies) report"""
-    from sqlalchemy import func, select
+    from sqlalchemy import func, select, cast, Date
     from .models import Invoice, InvoiceItem, Product, Party
+    from datetime import datetime
+    
+    # Convert string dates to proper date objects
+    start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+    end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
     
     # Get all invoices in the period
     invoices = db.query(Invoice).filter(
-        func.date(Invoice.date) >= func.date(start_date),
-        func.date(Invoice.date) <= func.date(end_date)
+        cast(Invoice.date, Date) >= start_date_obj,
+        cast(Invoice.date, Date) <= end_date_obj
     ).all()
     
     gstr1_data = {
@@ -2578,7 +2595,10 @@ def _generate_gstr1_report(start_date: str, end_date: str, format: str, db: Sess
         select(Product.gst_rate, func.sum(InvoiceItem.taxable_value), func.sum(InvoiceItem.cgst), func.sum(InvoiceItem.sgst), func.sum(InvoiceItem.igst))
         .join(Product, Product.id == InvoiceItem.product_id)
         .join(Invoice, Invoice.id == InvoiceItem.invoice_id)
-        .filter(func.date(Invoice.date) >= func.date(start_date), func.date(Invoice.date) <= func.date(end_date))
+        .filter(
+            cast(Invoice.date, Date) >= start_date_obj,
+            cast(Invoice.date, Date) <= end_date_obj
+        )
         .group_by(Product.gst_rate)
     ).all()
     
@@ -2596,13 +2616,18 @@ def _generate_gstr1_report(start_date: str, end_date: str, format: str, db: Sess
 
 def _generate_gstr2_report(start_date: str, end_date: str, format: str, db: Session):
     """Generate GSTR-2 (Inward Supplies) report"""
-    from sqlalchemy import func, select
+    from sqlalchemy import func, select, cast, Date
     from .models import Purchase, PurchaseItem, Product, Party
+    from datetime import datetime
+    
+    # Convert string dates to proper date objects
+    start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+    end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
     
     # Get all purchases in the period
     purchases = db.query(Purchase).filter(
-        func.date(Purchase.date) >= func.date(start_date),
-        func.date(Purchase.date) <= func.date(end_date)
+        cast(Purchase.date, Date) >= start_date_obj,
+        cast(Purchase.date, Date) <= end_date_obj
     ).all()
     
     gstr2_data = {
@@ -2678,8 +2703,13 @@ def _generate_gstr2_report(start_date: str, end_date: str, format: str, db: Sess
 
 def _generate_gstr3b_report(start_date: str, end_date: str, format: str, db: Session):
     """Generate GSTR-3B (Summary) report"""
-    from sqlalchemy import func, select
+    from sqlalchemy import func, select, cast, Date
     from .models import Invoice, Purchase, InvoiceItem, PurchaseItem, Product
+    from datetime import datetime
+    
+    # Convert string dates to proper date objects
+    start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+    end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
     
     gstr3b_data = {
         "period": f"{start_date} to {end_date}",
@@ -2694,8 +2724,8 @@ def _generate_gstr3b_report(start_date: str, end_date: str, format: str, db: Ses
     
     # Outward supplies (GSTR-1 data)
     invoices = db.query(Invoice).filter(
-        func.date(Invoice.date) >= func.date(start_date),
-        func.date(Invoice.date) <= func.date(end_date)
+        cast(Invoice.date, Date) >= start_date_obj,
+        cast(Invoice.date, Date) <= end_date_obj
     ).all()
     
     outward_taxable = sum([float(i.taxable_value) for i in invoices], 0.0)
@@ -2713,8 +2743,8 @@ def _generate_gstr3b_report(start_date: str, end_date: str, format: str, db: Ses
     
     # Inward supplies (GSTR-2 data)
     purchases = db.query(Purchase).filter(
-        func.date(Purchase.date) >= func.date(start_date),
-        func.date(Purchase.date) <= func.date(end_date)
+        cast(Purchase.date, Date) >= start_date_obj,
+        cast(Purchase.date, Date) <= end_date_obj
     ).all()
     
     inward_taxable = sum([float(p.taxable_value) for p in purchases], 0.0)
