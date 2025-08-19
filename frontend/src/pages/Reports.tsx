@@ -58,6 +58,50 @@ export function Reports({ section }: ReportsProps) {
     }
   }
 
+  const downloadJsonReport = () => {
+    if (!gstReport) {
+      setError('Please generate a report first')
+      return
+    }
+    
+    try {
+      const jsonString = JSON.stringify(gstReport, null, 2)
+      const blob = new Blob([jsonString], { type: 'application/json' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `gst_${reportType}_${periodValue}.json`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (err) {
+      setError('Failed to download JSON file')
+    }
+  }
+
+  const downloadSummaryJson = () => {
+    if (!summary) {
+      setError('Please load summary data first')
+      return
+    }
+    
+    try {
+      const jsonString = JSON.stringify(summary, null, 2)
+      const blob = new Blob([jsonString], { type: 'application/json' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `gst_summary_${from}_to_${to}.json`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (err) {
+      setError('Failed to download JSON file')
+    }
+  }
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -228,6 +272,19 @@ export function Reports({ section }: ReportsProps) {
               />
             </div>
           </div>
+
+          {/* Action Buttons for Summary */}
+          {summary && (
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+              <Button 
+                variant="secondary" 
+                onClick={downloadSummaryJson}
+                disabled={!summary}
+              >
+                Download JSON
+              </Button>
+            </div>
+          )}
 
           {summary && (
             <div style={{ display: 'grid', gap: '20px' }}>
@@ -416,6 +473,13 @@ export function Reports({ section }: ReportsProps) {
               disabled={loading}
             >
               {loading ? 'Generating...' : 'Generate Report'}
+            </Button>
+            <Button 
+              variant="secondary" 
+              onClick={downloadJsonReport}
+              disabled={!gstReport || loading}
+            >
+              Download JSON
             </Button>
             <Button 
               variant="secondary" 
