@@ -15,7 +15,7 @@ from .models import Product, User, Party, CompanySettings, Invoice, InvoiceItem,
 from .audit import AuditService
 from .gst import money, split_gst
 from .gst_reports import generate_gstr1_report, generate_gstr3b_report
-from .currency import get_exchange_rate, get_supported_currencies, format_currency
+from .currency import get_exchange_rate, get_supported_currencies, format_currency, format_currency_for_pdf
 from .recurring_invoices import RecurringInvoiceService, generate_recurring_invoices
 from .purchase_orders import PurchaseOrderService, convert_po_to_purchase
 from .cashflow_service import CashflowService
@@ -926,12 +926,12 @@ def invoice_pdf(invoice_id: int, template_id: int | None = None, _: User = Depen
             description,
             item.hsn_code or '',
             str(item.qty),
-            f"₹{float(item.rate):.2f}",
-            f"₹{float(item.taxable_value):.2f}",
+            format_currency_for_pdf(float(item.rate), inv.currency),
+            format_currency_for_pdf(float(item.taxable_value), inv.currency),
             f"{item.gst_rate}%",
-            f"₹{float(item.cgst):.2f}",
-            f"₹{float(item.sgst):.2f}",
-            f"₹{float(item.amount):.2f}"
+            format_currency_for_pdf(float(item.cgst), inv.currency),
+            format_currency_for_pdf(float(item.sgst), inv.currency),
+            format_currency_for_pdf(float(item.amount), inv.currency)
         ]
         table_data.append(row)
     
@@ -953,11 +953,11 @@ def invoice_pdf(invoice_id: int, template_id: int | None = None, _: User = Depen
     
     # Totals Table
     totals_data = [
-        ['Subtotal:', f"₹{float(inv.taxable_value):.2f}"],
-        ['CGST:', f"₹{float(inv.cgst):.2f}"],
-        ['SGST:', f"₹{float(inv.sgst):.2f}"],
-        ['IGST:', f"₹{float(inv.igst):.2f}"],
-        ['Total:', f"₹{float(inv.grand_total):.2f}"]
+        ['Subtotal:', format_currency_for_pdf(float(inv.taxable_value), inv.currency)],
+        ['CGST:', format_currency_for_pdf(float(inv.cgst), inv.currency)],
+        ['SGST:', format_currency_for_pdf(float(inv.sgst), inv.currency)],
+        ['IGST:', format_currency_for_pdf(float(inv.igst), inv.currency)],
+        ['Total:', format_currency_for_pdf(float(inv.grand_total), inv.currency)]
     ]
     
     totals_table = Table(totals_data, colWidths=[4*cm, 2*cm])
@@ -4276,12 +4276,12 @@ def purchase_pdf(purchase_id: int, _: User = Depends(get_current_user), db: Sess
             description,
             item.hsn_code or '',
             str(item.qty),
-            f"₹{float(item.rate):.2f}",
-            f"₹{float(item.taxable_value):.2f}",
+            format_currency_for_pdf(float(item.rate), purchase.currency),
+            format_currency_for_pdf(float(item.taxable_value), purchase.currency),
             f"{item.gst_rate}%",
-            f"₹{float(item.cgst):.2f}",
-            f"₹{float(item.sgst):.2f}",
-            f"₹{float(item.amount):.2f}"
+            format_currency_for_pdf(float(item.cgst), purchase.currency),
+            format_currency_for_pdf(float(item.sgst), purchase.currency),
+            format_currency_for_pdf(float(item.amount), purchase.currency)
         ]
         table_data.append(row)
     
@@ -4303,11 +4303,11 @@ def purchase_pdf(purchase_id: int, _: User = Depends(get_current_user), db: Sess
     
     # Totals Table
     totals_data = [
-        ['Subtotal:', f"₹{float(purchase.taxable_value):.2f}"],
-        ['CGST:', f"₹{float(purchase.cgst):.2f}"],
-        ['SGST:', f"₹{float(purchase.sgst):.2f}"],
-        ['IGST:', f"₹{float(purchase.igst):.2f}"],
-        ['Total:', f"₹{float(purchase.grand_total):.2f}"]
+        ['Subtotal:', format_currency_for_pdf(float(purchase.taxable_value), purchase.currency)],
+        ['CGST:', format_currency_for_pdf(float(purchase.cgst), purchase.currency)],
+        ['SGST:', format_currency_for_pdf(float(purchase.sgst), purchase.currency)],
+        ['IGST:', format_currency_for_pdf(float(purchase.igst), purchase.currency)],
+        ['Total:', format_currency_for_pdf(float(purchase.grand_total), purchase.currency)]
     ]
     
     totals_table = Table(totals_data, colWidths=[4*cm, 2*cm])
@@ -5161,8 +5161,8 @@ def get_stock_movement_history_pdf(
             ['SKU:', product.sku or 'N/A'],
             ['Category:', product.category or 'N/A'],
             ['Unit:', product.unit or 'N/A'],
-            ['Purchase Price:', f"₹{float(product.purchase_price or 0):.2f}"],
-            ['Sales Price:', f"₹{float(product.sales_price or 0):.2f}"]
+            ['Purchase Price:', format_currency_for_pdf(float(product.purchase_price or 0), 'INR')],
+            ['Sales Price:', format_currency_for_pdf(float(product.sales_price or 0), 'INR')]
         ]
         
         product_table = Table(product_details, colWidths=[3*cm, 8*cm])
@@ -5518,8 +5518,8 @@ def get_stock_movement_history_pdf_preview(
             ['SKU:', product.sku or 'N/A'],
             ['Category:', product.category or 'N/A'],
             ['Unit:', product.unit or 'N/A'],
-            ['Purchase Price:', f"₹{float(product.purchase_price or 0):.2f}"],
-            ['Sales Price:', f"₹{float(product.sales_price or 0):.2f}"]
+            ['Purchase Price:', format_currency_for_pdf(float(product.purchase_price or 0), 'INR')],
+            ['Sales Price:', format_currency_for_pdf(float(product.sales_price or 0), 'INR')]
         ]
         
         product_table = Table(product_details, colWidths=[3*cm, 8*cm])
