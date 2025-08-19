@@ -5,6 +5,16 @@ import { apiGetCashflowSummary, CashflowSummary, apiGetInventoryDashboard, Inven
 import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
 
+// GST Summary Types
+interface GstSummary {
+  taxable_value: number
+  cgst: number
+  sgst: number
+  igst: number
+  grand_total: number
+  rate_breakup: { rate: number; taxable_value: number }[]
+}
+
 // Enhanced Analytics Components
 interface AnalyticsData {
   salesTrend: { date: string; amount: number }[]
@@ -22,6 +32,7 @@ export function Dashboard() {
   const [cashflowData, setCashflowData] = useState<CashflowSummary | null>(null)
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
   const [inventoryData, setInventoryData] = useState<InventoryDashboardMetrics | null>(null)
+  const [gstData, setGstData] = useState<GstSummary | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
@@ -42,6 +53,7 @@ export function Dashboard() {
     loadCashflowData()
     loadAnalyticsData()
     loadInventoryData()
+    loadGstData()
   }, [token, startDate, endDate, navigate])
 
   const loadCashflowData = async () => {
@@ -87,6 +99,23 @@ export function Dashboard() {
     } catch (err) {
       console.error('Failed to load inventory data:', err)
       // Don't show error for inventory data, just log it
+    }
+  }
+
+  const loadGstData = async () => {
+    try {
+      const response = await fetch(`/api/reports/gst-summary?from=${startDate}&to=${endDate}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setGstData(data)
+      } else {
+        console.error('Failed to load GST data:', response.statusText)
+      }
+    } catch (err) {
+      console.error('Failed to load GST data:', err)
+      // Don't show error for GST data, just log it
     }
   }
 
@@ -147,6 +176,8 @@ export function Dashboard() {
   const handleRefresh = () => {
     loadCashflowData()
     loadAnalyticsData()
+    loadInventoryData()
+    loadGstData()
   }
 
   // Auto-refresh data when custom dates change
@@ -154,6 +185,8 @@ export function Dashboard() {
     if (periodType === 'custom' && token) {
       loadCashflowData()
       loadAnalyticsData()
+      loadInventoryData()
+      loadGstData()
     }
   }, [startDate, endDate, periodType, token])
 
@@ -658,6 +691,170 @@ export function Dashboard() {
           </Button>
         </div>
       </div>
+
+      {/* GST Summary Widget */}
+      {gstData && (
+        <div style={{ 
+          padding: '24px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          marginBottom: '24px',
+          border: '1px solid #e9ecef'
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            marginBottom: '20px'
+          }}>
+            <h3 style={{ 
+              margin: '0', 
+              fontSize: '20px', 
+              fontWeight: '600', 
+              color: '#2c3e50',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              🏛️ GST Summary ({getPeriodLabel()})
+            </h3>
+            <Button 
+              onClick={() => navigate('/reports')}
+              variant="secondary"
+              style={{ 
+                padding: '8px 16px',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                fontWeight: '500',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '12px'
+              }}
+            >
+              View Reports
+            </Button>
+          </div>
+          
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+            gap: '16px'
+          }}>
+            {/* Total Taxable Value */}
+            <div style={{ 
+              padding: '16px',
+              backgroundColor: '#e8f5e8',
+              borderRadius: '8px',
+              border: '1px solid #c8e6c9'
+            }}>
+              <div style={{ fontSize: '14px', color: '#2e7d32', fontWeight: '500', marginBottom: '4px' }}>
+                Taxable Value
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2e7d32' }}>
+                {formatCurrency(gstData.taxable_value)}
+              </div>
+            </div>
+
+            {/* CGST */}
+            <div style={{ 
+              padding: '16px',
+              backgroundColor: '#e3f2fd',
+              borderRadius: '8px',
+              border: '1px solid #bbdefb'
+            }}>
+              <div style={{ fontSize: '14px', color: '#1976d2', fontWeight: '500', marginBottom: '4px' }}>
+                CGST
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1976d2' }}>
+                {formatCurrency(gstData.cgst)}
+              </div>
+            </div>
+
+            {/* SGST */}
+            <div style={{ 
+              padding: '16px',
+              backgroundColor: '#fff3e0',
+              borderRadius: '8px',
+              border: '1px solid #ffe0b2'
+            }}>
+              <div style={{ fontSize: '14px', color: '#f57c00', fontWeight: '500', marginBottom: '4px' }}>
+                SGST
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f57c00' }}>
+                {formatCurrency(gstData.sgst)}
+              </div>
+            </div>
+
+            {/* IGST */}
+            <div style={{ 
+              padding: '16px',
+              backgroundColor: '#f3e5f5',
+              borderRadius: '8px',
+              border: '1px solid #e1bee7'
+            }}>
+              <div style={{ fontSize: '14px', color: '#7b1fa2', fontWeight: '500', marginBottom: '4px' }}>
+                IGST
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#7b1fa2' }}>
+                {formatCurrency(gstData.igst)}
+              </div>
+            </div>
+
+            {/* Grand Total */}
+            <div style={{ 
+              padding: '16px',
+              backgroundColor: '#e8f4fd',
+              borderRadius: '8px',
+              border: '1px solid #b3d9ff'
+            }}>
+              <div style={{ fontSize: '14px', color: '#0066cc', fontWeight: '500', marginBottom: '4px' }}>
+                Grand Total
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#0066cc' }}>
+                {formatCurrency(gstData.grand_total)}
+              </div>
+            </div>
+          </div>
+
+          {/* Rate-wise Breakdown */}
+          {gstData.rate_breakup && gstData.rate_breakup.length > 0 && (
+            <div style={{ marginTop: '20px' }}>
+              <h4 style={{ 
+                margin: '0 0 12px 0', 
+                fontSize: '16px', 
+                fontWeight: '600', 
+                color: '#495057'
+              }}>
+                Rate-wise Breakdown
+              </h4>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+                gap: '12px'
+              }}>
+                {gstData.rate_breakup.map((rate, index) => (
+                  <div key={index} style={{ 
+                    padding: '12px',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '6px',
+                    border: '1px solid #dee2e6',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>
+                      {rate.rate}% GST
+                    </div>
+                    <div style={{ fontSize: '16px', fontWeight: '600', color: '#495057' }}>
+                      {formatCurrency(rate.taxable_value)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Status Dashboard */}
       <div style={{ 
