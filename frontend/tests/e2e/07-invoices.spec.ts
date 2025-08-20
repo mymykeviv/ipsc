@@ -11,27 +11,8 @@ test.describe('Invoices Management', () => {
     await page.goto('/invoices');
   });
 
-  test('should display invoices list page', async ({ page }) => {
-    // Wait for page to load
-    await page.waitForTimeout(2000);
-    
-    // Check if we're on dashboard and navigate if needed
-    const dashboardHeading = page.locator('h1:has-text("📊 ProfitPath Dashboard")');
-    const invoicesHeading = page.locator('h1:has-text("Manage Invoices")');
-    
-    const isDashboard = await dashboardHeading.isVisible();
-    if (isDashboard) {
-      // Navigate to invoices page
-      await page.click('a[href="/invoices"]');
-      await page.waitForTimeout(2000);
-    }
-    
-
-    
-        // Check for invoices page elements
-    await expect(page.locator('h1:has-text("📄 Invoices Management")')).toBeVisible();
-    
-    // Listen for console logs to debug API calls
+    test('should display invoices list page', async ({ page }) => {
+    // Listen for console logs and network requests from the beginning
     page.on('console', msg => console.log('Browser console:', msg.text()));
     page.on('pageerror', error => console.log('Browser error:', error.message));
     
@@ -47,6 +28,23 @@ test.describe('Invoices Management', () => {
         console.log('API Response:', response.status(), response.url());
       }
     });
+    
+    // Wait for page to load
+    await page.waitForTimeout(2000);
+    
+    // Check if we're on dashboard and navigate if needed
+    const dashboardHeading = page.locator('h1:has-text("📊 ProfitPath Dashboard")');
+    const invoicesHeading = page.locator('h1:has-text("Manage Invoices")');
+    
+    const isDashboard = await dashboardHeading.isVisible();
+    if (isDashboard) {
+      // Navigate to invoices page
+      await page.click('a[href="/invoices"]');
+      await page.waitForTimeout(2000);
+    }
+    
+    // Check for invoices page elements
+    await expect(page.locator('h1:has-text("📄 Invoices Management")')).toBeVisible();
     
     // Wait for invoices to load
     await page.waitForTimeout(3000);
