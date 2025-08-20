@@ -205,8 +205,8 @@ test.describe('Customers Management', () => {
   });
 
   test('should display customer details in table', async ({ page }) => {
-    // Ensure we're on the parties page
-    await page.goto('/parties');
+    // Ensure we're on the customers page
+    await page.goto('/customers');
     await page.waitForTimeout(3000);
     
     // Check if we're on dashboard and navigate if needed
@@ -215,7 +215,7 @@ test.describe('Customers Management', () => {
     
     const isDashboard = await dashboardHeading.isVisible();
     if (isDashboard) {
-      await page.click('a[href="/parties"]');
+      await page.click('a[href="/customers"]');
       await page.waitForTimeout(2000);
     }
     

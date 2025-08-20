@@ -1,6 +1,6 @@
 {
-  "timestamp": "2025-08-20T18:32:19.399861",
-  "duration": "0:00:12.448935",
+  "timestamp": "2025-08-20T18:32:56.841919",
+  "duration": "0:00:16.379739",
   "total_tests": 15,
   "passed_tests": 14,
   "failed_tests": 1,
@@ -10,91 +10,91 @@
       "test": "Backend Accessibility",
       "success": true,
       "details": "Status: 200",
-      "timestamp": "2025-08-20T18:32:06.970678"
+      "timestamp": "2025-08-20T18:32:40.495637"
     },
     {
       "test": "Frontend Build",
       "success": true,
       "details": "",
-      "timestamp": "2025-08-20T18:32:11.494821"
+      "timestamp": "2025-08-20T18:32:45.826258"
     },
     {
       "test": "Backend Server Running",
       "success": true,
       "details": "",
-      "timestamp": "2025-08-20T18:32:11.516562"
+      "timestamp": "2025-08-20T18:32:45.847354"
     },
     {
       "test": "Authentication",
       "success": true,
       "details": "",
-      "timestamp": "2025-08-20T18:32:11.806750"
+      "timestamp": "2025-08-20T18:32:46.068341"
     },
     {
       "test": "Invoice Templates API",
       "success": true,
       "details": "Found 2 templates",
-      "timestamp": "2025-08-20T18:32:11.813834"
+      "timestamp": "2025-08-20T18:32:46.076205"
     },
     {
       "test": "Invoices API",
       "success": true,
       "details": "Found 2 invoices",
-      "timestamp": "2025-08-20T18:32:11.822234"
+      "timestamp": "2025-08-20T18:32:46.086879"
     },
     {
       "test": "Products API",
       "success": true,
       "details": "Found 5 products",
-      "timestamp": "2025-08-20T18:32:11.826742"
+      "timestamp": "2025-08-20T18:32:46.093098"
     },
     {
       "test": "Parties API",
       "success": true,
       "details": "Found 4 parties",
-      "timestamp": "2025-08-20T18:32:11.832533"
+      "timestamp": "2025-08-20T18:32:46.099748"
     },
     {
       "test": "PDF Generation",
       "success": true,
       "details": "Generated PDF for invoice 2",
-      "timestamp": "2025-08-20T18:32:11.851792"
+      "timestamp": "2025-08-20T18:32:46.119539"
     },
     {
       "test": "Frontend Build",
       "success": true,
       "details": "",
-      "timestamp": "2025-08-20T18:32:16.100098"
+      "timestamp": "2025-08-20T18:32:50.395888"
     },
     {
       "test": "TypeScript Compilation",
       "success": true,
       "details": "",
-      "timestamp": "2025-08-20T18:32:18.921554"
+      "timestamp": "2025-08-20T18:32:55.808229"
     },
     {
       "test": "Frontend Linting",
       "success": false,
       "details": "Linting issues found (non-critical): ...",
-      "timestamp": "2025-08-20T18:32:19.290239"
+      "timestamp": "2025-08-20T18:32:56.621842"
     },
     {
       "test": "Template Creation",
       "success": true,
-      "details": "Created template 4",
-      "timestamp": "2025-08-20T18:32:19.321815"
+      "details": "Created template 5",
+      "timestamp": "2025-08-20T18:32:56.662577"
     },
     {
       "test": "Template PDF Generation",
       "success": true,
-      "details": "Generated PDF with template 4",
-      "timestamp": "2025-08-20T18:32:19.394072"
+      "details": "Generated PDF with template 5",
+      "timestamp": "2025-08-20T18:32:56.813574"
     },
     {
       "test": "Template Cleanup",
       "success": true,
-      "details": "Deleted template 4",
-      "timestamp": "2025-08-20T18:32:19.399746"
+      "details": "Deleted template 5",
+      "timestamp": "2025-08-20T18:32:56.841800"
     }
   ]
 }
