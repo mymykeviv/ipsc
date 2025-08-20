@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime
-from app.models import Product, StockMovement, StockAdjustment
+from app.models import Product, StockLedgerEntry
 
 
 class TestStockCRUD:

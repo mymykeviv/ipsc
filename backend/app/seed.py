@@ -1,14 +1,14 @@
 from sqlalchemy.orm import Session
-from .db import engine
+from .db import legacy_engine
 from .models import Base, Role, User, CompanySettings, Product, Party, StockLedgerEntry
 from .auth import get_password_hash
 
 
 def run_seed():
-    Base.metadata.create_all(bind=engine)
-    from .db import SessionLocal
+    Base.metadata.create_all(bind=legacy_engine)
+    from .db import LegacySessionLocal
 
-    db: Session = SessionLocal()
+    db: Session = LegacySessionLocal()
     try:
         if not db.query(Role).first():
             roles = [Role(name=r) for r in ["Admin", "Sales", "Accountant", "Store"]]

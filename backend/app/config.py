@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     
     # Database Settings - PostgreSQL Only
-    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/profitpath"
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/cashflow"
     database_pool_size: int = 10
     database_max_overflow: int = 20
     database_pool_timeout: int = 30
@@ -82,7 +82,7 @@ class DevelopmentSettings(Settings):
     environment: str = "development"
     log_level: str = "DEBUG"
     reload: bool = True
-    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/profitpath"
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/cashflow"
 
 
 class ProductionSettings(Settings):

@@ -422,7 +422,18 @@ def create_app(database_engine=None) -> FastAPI:
     # DB init for dev (only if not in testing)
     if not settings.environment == "testing":
         if MULTI_TENANT_ENABLED:
-            # Initialize tenant databases
+            # Initialize tenant databases - will be done on startup
+            logger.info("Multi-tenant mode: Database initialization will be done on startup")
+        else:
+            # Legacy single-tenant initialization
+            Base.metadata.create_all(bind=db_engine)
+            # Seed database
+            run_seed()
+
+    @app.on_event("startup")
+    async def startup_event():
+        """Initialize multi-tenant databases on startup"""
+        if MULTI_TENANT_ENABLED and not settings.environment == "testing":
             try:
                 tenants = await tenant_config_manager.list_tenants()
                 for tenant_id in tenants:
@@ -439,11 +450,6 @@ def create_app(database_engine=None) -> FastAPI:
                             logger.info(f"Optimized database for tenant: {tenant_id}")
             except Exception as e:
                 logger.error(f"Error initializing tenant databases: {e}")
-        else:
-            # Legacy single-tenant initialization
-            Base.metadata.create_all(bind=db_engine)
-            # Seed database
-            run_seed()
 
     app.include_router(api, prefix="/api")
 
