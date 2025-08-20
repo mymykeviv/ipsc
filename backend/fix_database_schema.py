@@ -36,8 +36,8 @@ def detect_database_type():
     elif os.path.exists("app.db"):
         return 'sqlite', "app.db"
     
-    # Default to SQLite if no database found
-    return 'sqlite', "cashflow.db"
+    # Default to PostgreSQL if no database found
+    return 'postgresql', "postgresql://postgres:postgres@localhost:5432/profitpath"
 
 def connect_db():
     """Connect to the database based on type"""

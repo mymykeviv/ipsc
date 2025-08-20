@@ -13,7 +13,7 @@ from backend.app.db import get_db
 from fastapi import Depends
 
 # Use in-memory database for tests
-TEST_DATABASE_URL = "sqlite:///:memory:"
+TEST_DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/profitpath_test"
 
 # Create test database engine
 test_engine = create_engine(TEST_DATABASE_URL, echo=False)

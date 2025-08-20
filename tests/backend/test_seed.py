@@ -4,9 +4,8 @@ from backend.app.models import Base, User, Role, Product, Party, CompanySettings
 
 
 def test_seed_creates_minimum_data(tmp_path, monkeypatch):
-    # Use a temp sqlite file
-    db_path = tmp_path / "ipsc_test.db"
-    monkeypatch.setenv("DATABASE_URL", f"sqlite+pysqlite:///{db_path}")
+    # Use PostgreSQL test database
+    monkeypatch.setenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/profitpath_test")
 
     # Recreate db with new engine
     Base.metadata.drop_all(bind=engine)

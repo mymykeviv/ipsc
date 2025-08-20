@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Database configurations
-SQLITE_DB_PATH = "cashflow.db"
+SQLITE_DB_PATH = "cashflow.db"  # Legacy reference - no longer used
 POSTGRES_CONFIG = {
     'host': 'localhost',
     'port': 5432,

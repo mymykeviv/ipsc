@@ -19,12 +19,11 @@ from app.config import TestingSettings
 import os
 
 
-# Test database configuration
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+# Test database configuration - Using PostgreSQL for tests
+SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/profitpath_test"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
