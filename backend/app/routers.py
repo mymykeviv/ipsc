@@ -24,6 +24,7 @@ from .inventory_manager import InventoryManager, StockValuationMethod
 from .financial_reports import FinancialReports, ReportType
 from .branding import router as branding_router
 from .dental import router as dental_router
+from .manufacturing import router as manufacturing_router
 from decimal import Decimal
 from .emailer import send_email, create_invoice_email_template, create_purchase_email_template
 from fastapi import Query
@@ -8027,6 +8028,9 @@ api.include_router(branding_router)
 
 # Include dental router
 api.include_router(dental_router)
+
+# Include manufacturing router
+api.include_router(manufacturing_router)
 
 
 
