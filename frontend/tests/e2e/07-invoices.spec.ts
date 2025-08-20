@@ -12,22 +12,7 @@ test.describe('Invoices Management', () => {
   });
 
     test('should display invoices list page', async ({ page }) => {
-    // Listen for console logs and network requests from the beginning
-    page.on('console', msg => console.log('Browser console:', msg.text()));
-    page.on('pageerror', error => console.log('Browser error:', error.message));
-    
-    // Listen for network requests to debug API calls
-    page.on('request', request => {
-      if (request.url().includes('/api/')) {
-        console.log('API Request:', request.method(), request.url());
-      }
-    });
-    
-    page.on('response', response => {
-      if (response.url().includes('/api/')) {
-        console.log('API Response:', response.status(), response.url());
-      }
-    });
+
     
     // Wait for page to load
     await page.waitForTimeout(2000);
@@ -48,19 +33,6 @@ test.describe('Invoices Management', () => {
     
     // Wait for invoices to load
     await page.waitForTimeout(3000);
-    
-    // Check if invoices are loaded in the table
-    const tableRows = await page.locator('tbody tr').all();
-    console.log('Number of invoice rows:', tableRows.length);
-    
-    // If we have invoices, check for action buttons
-    if (tableRows.length > 0) {
-      console.log('Invoices found! Checking for action buttons...');
-      const actionButtons = await page.locator('button:has-text("⋯")').all();
-      console.log('Number of action buttons:', actionButtons.length);
-    } else {
-      console.log('No invoices found in table');
-    }
     
     // Check for add invoice button
     await expect(page.locator('button:has-text("📄Add Invoice")')).toBeVisible();

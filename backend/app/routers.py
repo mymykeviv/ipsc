@@ -1716,10 +1716,10 @@ def list_invoices(
         query = query.filter(Invoice.customer_id == customer_id)
     
     if date_from:
-        query = query.filter(Invoice.date >= date_from)
+        query = query.filter(Invoice.date >= datetime.fromisoformat(date_from))
     
     if date_to:
-        query = query.filter(Invoice.date <= date_to)
+        query = query.filter(Invoice.date <= datetime.fromisoformat(date_to))
     
     if amount_min is not None:
         query = query.filter(Invoice.grand_total >= amount_min)
@@ -4303,10 +4303,10 @@ def list_purchases(
         query = query.filter(Purchase.place_of_supply.ilike(f"%{place_of_supply}%"))
     
     if date_from:
-        query = query.filter(Purchase.date >= date_from)
+        query = query.filter(Purchase.date >= datetime.fromisoformat(date_from))
     
     if date_to:
-        query = query.filter(Purchase.date <= date_to)
+        query = query.filter(Purchase.date <= datetime.fromisoformat(date_to))
     
     purchases = query.order_by(Purchase.date.desc()).all()
     
