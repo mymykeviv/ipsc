@@ -22,6 +22,7 @@ from .cashflow_service import CashflowService
 from .payment_scheduler import PaymentScheduler, PaymentStatus, PaymentReminderType
 from .inventory_manager import InventoryManager, StockValuationMethod
 from .financial_reports import FinancialReports, ReportType
+from .branding import router as branding_router
 from decimal import Decimal
 from .emailer import send_email, create_invoice_email_template, create_purchase_email_template
 from fastapi import Query
@@ -8018,6 +8019,10 @@ def export_invoice_template(
         media_type="application/json",
         headers={"Content-Disposition": f"attachment; filename=template_{template_id}.json"}
     )
+
+
+# Include branding router
+api.include_router(branding_router)
 
 
 

@@ -9,6 +9,7 @@ from .middleware.security import security_middleware, audit_middleware
 from .tenant_config import tenant_config_manager
 from .database_optimizer import database_optimizer
 from .security_manager import security_manager
+from .branding_manager import branding_manager
 from .monitoring import (
     MonitoringMiddleware, SystemMonitor, HealthChecker,
     get_metrics_response, record_invoice_created, record_payment_processed,
@@ -276,6 +277,64 @@ def create_app(database_engine=None) -> FastAPI:
             except Exception as e:
                 logger.error(f"Error optimizing all databases: {e}")
                 return {"error": "Failed to optimize databases"}
+
+    # Branding endpoints
+    @app.get("/api/branding/status")
+    async def branding_status():
+        """Get branding system status"""
+        try:
+            return {
+                "branding_enabled": True,
+                "templates_available": True,
+                "pdf_generation_enabled": True,
+                "qr_code_generation_enabled": True,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        except Exception as e:
+            logger.error(f"Error getting branding status: {e}")
+            return {"error": "Failed to get branding status"}
+
+        @app.get("/api/branding/templates")
+        async def get_available_templates():
+            """Get available branding templates"""
+            try:
+                templates = {
+                    'dental': {
+                        'name': 'Dental Clinic',
+                        'description': 'Professional medical branding for dental clinics',
+                        'colors': {
+                            'primary': '#2E86AB',
+                            'secondary': '#A23B72',
+                            'accent': '#F18F01'
+                        }
+                    },
+                    'manufacturing': {
+                        'name': 'Manufacturing',
+                        'description': 'Industrial branding for manufacturing companies',
+                        'colors': {
+                            'primary': '#1B4332',
+                            'secondary': '#2D3748',
+                            'accent': '#E53E3E'
+                        }
+                    },
+                    'default': {
+                        'name': 'Default',
+                        'description': 'Standard business branding',
+                        'colors': {
+                            'primary': '#2E86AB',
+                            'secondary': '#A23B72',
+                            'accent': '#F18F01'
+                        }
+                    }
+                }
+                
+                return {
+                    "templates": templates,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            except Exception as e:
+                logger.error(f"Error getting templates: {e}")
+                return {"error": "Failed to get templates"}
 
     # Monitoring endpoints
     @app.get("/metrics")
