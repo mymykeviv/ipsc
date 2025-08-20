@@ -66,6 +66,16 @@ test.describe('Purchases Management', () => {
     await page.goto('/purchases');
     await page.waitForTimeout(3000);
     
+    // Check if we're on dashboard and navigate if needed
+    const dashboardHeading = page.locator('h1:has-text("📊 ProfitPath Dashboard")');
+    const purchasesHeading = page.locator('h1:has-text("📦 Purchases Management")');
+    
+    const isDashboard = await dashboardHeading.isVisible();
+    if (isDashboard) {
+      await page.click('a[href="/purchases"]');
+      await page.waitForTimeout(2000);
+    }
+    
     // Verify that edit functionality is accessible
     await expect(page.locator('h1:has-text("📦 Purchases Management")')).toBeVisible();
     
@@ -76,6 +86,16 @@ test.describe('Purchases Management', () => {
     // Ensure we're on the purchases page
     await page.goto('/purchases');
     await page.waitForTimeout(3000);
+    
+    // Check if we're on dashboard and navigate if needed
+    const dashboardHeading = page.locator('h1:has-text("📊 ProfitPath Dashboard")');
+    const purchasesHeading = page.locator('h1:has-text("📦 Purchases Management")');
+    
+    const isDashboard = await dashboardHeading.isVisible();
+    if (isDashboard) {
+      await page.click('a[href="/purchases"]');
+      await page.waitForTimeout(2000);
+    }
     
     // Verify that cancel functionality is accessible
     await expect(page.locator('h1:has-text("📦 Purchases Management")')).toBeVisible();
@@ -88,6 +108,16 @@ test.describe('Purchases Management', () => {
     await page.goto('/purchases');
     await page.waitForTimeout(3000);
     
+    // Check if we're on dashboard and navigate if needed
+    const dashboardHeading = page.locator('h1:has-text("📊 ProfitPath Dashboard")');
+    const purchasesHeading = page.locator('h1:has-text("📦 Purchases Management")');
+    
+    const isDashboard = await dashboardHeading.isVisible();
+    if (isDashboard) {
+      await page.click('a[href="/purchases"]');
+      await page.waitForTimeout(2000);
+    }
+    
     // Verify that payment functionality is accessible
     await expect(page.locator('h1:has-text("📦 Purchases Management")')).toBeVisible();
     
@@ -98,6 +128,16 @@ test.describe('Purchases Management', () => {
     // Ensure we're on the purchases page
     await page.goto('/purchases');
     await page.waitForTimeout(3000);
+    
+    // Check if we're on dashboard and navigate if needed
+    const dashboardHeading = page.locator('h1:has-text("📊 ProfitPath Dashboard")');
+    const purchasesHeading = page.locator('h1:has-text("📦 Purchases Management")');
+    
+    const isDashboard = await dashboardHeading.isVisible();
+    if (isDashboard) {
+      await page.click('a[href="/purchases"]');
+      await page.waitForTimeout(2000);
+    }
     
     // Verify that payment functionality is accessible
     await expect(page.locator('h1:has-text("📦 Purchases Management")')).toBeVisible();
@@ -110,6 +150,16 @@ test.describe('Purchases Management', () => {
     await page.goto('/purchases');
     await page.waitForTimeout(3000);
     
+    // Check if we're on dashboard and navigate if needed
+    const dashboardHeading = page.locator('h1:has-text("📊 ProfitPath Dashboard")');
+    const purchasesHeading = page.locator('h1:has-text("📦 Purchases Management")');
+    
+    const isDashboard = await dashboardHeading.isVisible();
+    if (isDashboard) {
+      await page.click('a[href="/purchases"]');
+      await page.waitForTimeout(2000);
+    }
+    
     // Verify that payment history functionality is accessible
     await expect(page.locator('h1:has-text("📦 Purchases Management")')).toBeVisible();
     
@@ -121,6 +171,16 @@ test.describe('Purchases Management', () => {
     await page.goto('/purchases');
     await page.waitForTimeout(3000);
     
+    // Check if we're on dashboard and navigate if needed
+    const dashboardHeading = page.locator('h1:has-text("📊 ProfitPath Dashboard")');
+    const purchasesHeading = page.locator('h1:has-text("📦 Purchases Management")');
+    
+    const isDashboard = await dashboardHeading.isVisible();
+    if (isDashboard) {
+      await page.click('a[href="/purchases"]');
+      await page.waitForTimeout(2000);
+    }
+    
     // Verify that search functionality is accessible
     await expect(page.locator('h1:has-text("📦 Purchases Management")')).toBeVisible();
     
@@ -131,6 +191,16 @@ test.describe('Purchases Management', () => {
     // Ensure we're on the purchases page
     await page.goto('/purchases');
     await page.waitForTimeout(3000);
+    
+    // Check if we're on dashboard and navigate if needed
+    const dashboardHeading = page.locator('h1:has-text("📊 ProfitPath Dashboard")');
+    const purchasesHeading = page.locator('h1:has-text("📦 Purchases Management")');
+    
+    const isDashboard = await dashboardHeading.isVisible();
+    if (isDashboard) {
+      await page.click('a[href="/purchases"]');
+      await page.waitForTimeout(2000);
+    }
     
     // Verify that table functionality is accessible
     await expect(page.locator('h1:has-text("📦 Purchases Management")')).toBeVisible();
