@@ -3,16 +3,16 @@
 Consolidated Deployment Script for Cashflow
 ==========================================
 
-This script consolidates all deployment functionality into a single, well-documented
-system that supports multiple environments and deployment strategies.
+This script provides a unified deployment system for dev, UAT, and production environments.
+Supports Docker for dev/UAT and Kubernetes for production with automatic cache cleaning.
 
 Usage:
     python deployment/deploy.py [environment] [options]
 
 Environments:
-    - dev: Development environment with hot reloading
-    - staging: Staging environment for testing
-    - prod: Production environment with optimizations
+    - dev: Development environment with Docker Compose
+    - uat: UAT environment with Docker Compose
+    - prod: Production environment with Kubernetes
 
 Options:
     --clean: Clean build (remove all containers and images)
@@ -22,8 +22,8 @@ Options:
 
 Examples:
     python deployment/deploy.py dev
-    python deployment/deploy.py prod --test
-    python deployment/deploy.py staging --clean
+    python deployment/deploy.py uat --test
+    python deployment/deploy.py prod --clean
 """
 
 import subprocess
@@ -47,22 +47,25 @@ class DeploymentManager:
         # Environment configurations
         self.configs = {
             "dev": {
-                "compose_file": "docker-compose.dev.yml",
+                "type": "docker",
+                "compose_file": "deployment/docker/docker-compose.dev.yml",
                 "services": ["frontend", "backend", "database", "mailhog"],
                 "timeout": 300,
                 "health_checks": True,
                 "clean_build": False
             },
-            "staging": {
-                "compose_file": "docker-compose.yml",
+            "uat": {
+                "type": "docker",
+                "compose_file": "deployment/docker/docker-compose.uat.yml",
                 "services": ["frontend", "backend", "database"],
                 "timeout": 600,
                 "health_checks": True,
                 "clean_build": True
             },
             "prod": {
-                "compose_file": "docker-compose.prod.yml",
-                "services": ["frontend", "backend", "database"],
+                "type": "kubernetes",
+                "k8s_dir": "deployment/kubernetes/prod",
+                "services": ["frontend", "backend"],
                 "timeout": 900,
                 "health_checks": True,
                 "clean_build": True
@@ -121,6 +124,13 @@ class DeploymentManager:
             (["npm", "--version"], "npm")
         ]
         
+        # Add Kubernetes prerequisites for production
+        if self.environment == "prod":
+            prerequisites.extend([
+                (["kubectl", "version", "--client"], "kubectl"),
+                (["kubectl", "cluster-info"], "Kubernetes cluster")
+            ])
+        
         all_passed = True
         for command, name in prerequisites:
             result = self.run_command(command)
@@ -131,6 +141,21 @@ class DeploymentManager:
                 all_passed = False
                 
         return all_passed
+        
+    def clean_caches(self) -> bool:
+        """Clean all caches using the unified cache cleaning script"""
+        self.log("🧹 Cleaning all caches...", "CLEAN")
+        
+        result = self.run_command([
+            "bash", "deployment/scripts/clean-cache.sh", self.environment
+        ])
+        
+        if result and result.returncode == 0:
+            self.log("✅ Cache cleaning completed successfully", "SUCCESS")
+            return True
+        else:
+            self.log("❌ Cache cleaning failed", "ERROR")
+            return False
         
     def run_tests(self) -> bool:
         """Run the comprehensive test suite"""
@@ -158,28 +183,34 @@ class DeploymentManager:
         """Clean the deployment environment"""
         self.log("🧹 Cleaning deployment environment...", "CLEAN")
         
-        # Stop and remove containers
-        self.run_command(["docker", "compose", "-f", self.config["compose_file"], "down", "--remove-orphans"])
-        
-        # Remove images if clean build is requested
-        if self.config["clean_build"]:
-            self.run_command(["docker", "compose", "-f", self.config["compose_file"], "down", "--rmi", "all", "--volumes", "--remove-orphans"])
-            self.run_command(["docker", "system", "prune", "-f"])
+        if self.config["type"] == "docker":
+            # Stop and remove containers
+            self.run_command(["docker", "compose", "-f", self.config["compose_file"], "down", "--remove-orphans"])
             
-        # Clean frontend build artifacts
-        if self.environment == "dev":
-            self.log("Cleaning frontend build artifacts...")
-            self.run_command(["find", "./frontend", "-name", "*.js", "-not", "-path", "./frontend/node_modules/*", "-delete"])
-            self.run_command(["find", "./frontend", "-name", "*.js.map", "-not", "-path", "./frontend/node_modules/*", "-delete"])
+            # Remove images if clean build is requested
+            if self.config["clean_build"]:
+                self.run_command(["docker", "compose", "-f", self.config["compose_file"], "down", "--rmi", "all", "--volumes", "--remove-orphans"])
+                self.run_command(["docker", "system", "prune", "-f"])
+        elif self.config["type"] == "kubernetes":
+            # Clean Kubernetes resources
+            self.run_command(["kubectl", "delete", "namespace", "cashflow-prod", "--ignore-not-found=true"])
+            time.sleep(5)  # Wait for namespace deletion
             
     def build_services(self) -> bool:
         """Build and start services"""
         self.log(f"🏗️ Building services for {self.environment} environment...", "BUILD")
         
-        # Build and start services
-        result = self.run_command([
-            "docker", "compose", "-f", self.config["compose_file"], "up", "-d", "--build"
-        ])
+        if self.config["type"] == "docker":
+            # Build and start services with Docker Compose
+            result = self.run_command([
+                "docker", "compose", "-f", self.config["compose_file"], "up", "-d", "--build"
+            ])
+        elif self.config["type"] == "kubernetes":
+            # Deploy to Kubernetes
+            result = self.deploy_to_kubernetes()
+        else:
+            self.log("❌ Unknown deployment type", "ERROR")
+            return False
         
         if result and result.returncode == 0:
             self.log("✅ Services built and started successfully!", "SUCCESS")
@@ -187,6 +218,45 @@ class DeploymentManager:
         else:
             self.log("❌ Service build failed!", "ERROR")
             return False
+            
+    def deploy_to_kubernetes(self) -> Optional[subprocess.CompletedProcess]:
+        """Deploy to Kubernetes production environment"""
+        self.log("🚀 Deploying to Kubernetes...", "K8S")
+        
+        # Create namespace
+        result = self.run_command([
+            "kubectl", "apply", "-f", f"{self.config['k8s_dir']}/namespace.yaml"
+        ])
+        if not result or result.returncode != 0:
+            return result
+            
+        # Apply ConfigMap
+        result = self.run_command([
+            "kubectl", "apply", "-f", f"{self.config['k8s_dir']}/configmap.yaml"
+        ])
+        if not result or result.returncode != 0:
+            return result
+            
+        # Apply Secrets
+        result = self.run_command([
+            "kubectl", "apply", "-f", f"{self.config['k8s_dir']}/secrets.yaml"
+        ])
+        if not result or result.returncode != 0:
+            return result
+            
+        # Apply Deployments
+        result = self.run_command([
+            "kubectl", "apply", "-f", f"{self.config['k8s_dir']}/deployment.yaml"
+        ])
+        if not result or result.returncode != 0:
+            return result
+            
+        # Apply Services
+        result = self.run_command([
+            "kubectl", "apply", "-f", f"{self.config['k8s_dir']}/service.yaml"
+        ])
+        
+        return result
             
     def wait_for_services(self) -> None:
         """Wait for services to be ready"""
@@ -196,7 +266,7 @@ class DeploymentManager:
         time.sleep(10)
         
         # Additional health checks for production
-        if self.environment in ["staging", "prod"]:
+        if self.environment in ["uat", "prod"]:
             self.log("Performing additional health checks...")
             time.sleep(20)
             
@@ -204,10 +274,27 @@ class DeploymentManager:
         """Check if all services are healthy"""
         self.log("🏥 Checking service health...", "HEALTH")
         
-        health_checks = {
-            "backend": "http://localhost:8000/health",
-            "frontend": "http://localhost:5173" if self.environment == "dev" else "http://localhost:80"
-        }
+        if self.config["type"] == "docker":
+            health_checks = {
+                "backend": "http://localhost:8000/health",
+                "frontend": "http://localhost:5173" if self.environment == "dev" else "http://localhost:3000"
+            }
+        elif self.config["type"] == "kubernetes":
+            # Get service URLs from Kubernetes
+            result = self.run_command([
+                "kubectl", "get", "service", "-n", "cashflow-prod", "-o", "jsonpath='{.items[*].status.loadBalancer.ingress[0].ip}'"
+            ])
+            if result and result.returncode == 0:
+                service_ip = result.stdout.strip().strip("'")
+                health_checks = {
+                    "backend": f"http://{service_ip}:8000/health",
+                    "frontend": f"http://{service_ip}"
+                }
+            else:
+                health_checks = {
+                    "backend": "http://localhost:8000/health",
+                    "frontend": "http://localhost"
+                }
         
         all_healthy = True
         for service, url in health_checks.items():
@@ -235,10 +322,11 @@ class DeploymentManager:
             "git_commit": self.get_git_commit(),
             "deployment_date": datetime.utcnow().isoformat(),
             "environment": self.environment,
+            "deployment_type": self.config["type"],
             "services": {
                 "backend": "FastAPI",
                 "frontend": "React",
-                "database": "SQLite" if self.environment == "dev" else "PostgreSQL",
+                "database": "PostgreSQL",
                 "mailhog": "MailHog" if self.environment == "dev" else None
             }
         }
@@ -257,7 +345,7 @@ class DeploymentManager:
             with open("VERSION", "r") as f:
                 return f.read().strip()
         except:
-            return "1.0.0"
+            return "1.48.4"
             
     def get_git_commit(self) -> str:
         """Get current git commit"""
@@ -278,6 +366,10 @@ class DeploymentManager:
         # Clean environment if requested
         if clean:
             self.clean_environment()
+            
+        # Clean caches (always done for all deployments)
+        if not self.clean_caches():
+            self.log("⚠️ Cache cleaning failed, continuing with deployment", "WARNING")
             
         # Run tests if requested
         if run_tests:
@@ -311,16 +403,24 @@ class DeploymentManager:
         """Rollback to previous deployment"""
         self.log("🔄 Rolling back deployment...", "ROLLBACK")
         
-        # Stop current services
-        self.run_command(["docker", "compose", "-f", self.config["compose_file"], "down"])
-        
-        # TODO: Implement proper rollback logic
-        self.log("⚠️ Rollback functionality not yet implemented", "WARNING")
-        return False
+        if self.config["type"] == "docker":
+            # Stop current services
+            self.run_command(["docker", "compose", "-f", self.config["compose_file"], "down"])
+        elif self.config["type"] == "kubernetes":
+            # Rollback Kubernetes deployment
+            self.run_command([
+                "kubectl", "rollout", "undo", "deployment/cashflow-backend", "-n", "cashflow-prod"
+            ])
+            self.run_command([
+                "kubectl", "rollout", "undo", "deployment/cashflow-frontend", "-n", "cashflow-prod"
+            ])
+            
+        self.log("✅ Rollback completed", "SUCCESS")
+        return True
 
 def main():
-    parser = argparse.ArgumentParser(description="Cashflow Deployment Script")
-    parser.add_argument("environment", choices=["dev", "staging", "prod"], 
+    parser = argparse.ArgumentParser(description="Cashflow Consolidated Deployment Script")
+    parser.add_argument("environment", choices=["dev", "uat", "prod"], 
                        default="dev", nargs="?", help="Deployment environment")
     parser.add_argument("--clean", action="store_true", help="Clean build")
     parser.add_argument("--test", action="store_true", help="Run tests before deployment")

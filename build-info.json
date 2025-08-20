@@ -1,8 +1,12 @@
 {
-  "version": "1.48.4",
-  "build_date": "2025-08-20T18:33:05.005857",
-  "changes": [
-    "Comprehensive UX improvements for Parties page and navigation",
+  "version": "1.48.5",
+      "build_date": "2025-08-20T18:50:00.000000",
+      "changes": [
+      "Consolidated deployment system with Docker for dev/UAT and Kubernetes for production",
+      "Automatic cache cleaning integrated into all deployment processes",
+      "Removed 7 redundant deployment scripts and consolidated into unified system",
+      "Enhanced deployment documentation with comprehensive guides",
+      "Comprehensive UX improvements for Parties page and navigation",
     "Renamed side menu 'Customers / Vendors' to 'Parties' for better clarity",
     "Simplified side menu structure with 'Add New Party' quick action",
     "Enhanced quick filters with consistent labels and visual icons",
@@ -47,6 +51,8 @@
     "Implemented default template system with fallback handling"
   ],
   "features": {
+    "deployment_system": "Consolidated deployment with Docker and Kubernetes support",
+    "cache_cleaning": "Automatic cache cleaning for all deployment environments",
     "filter_system": "Enhanced with improved UX and bug fixes",
     "documentation": "Comprehensive organization and structure",
     "testing": "Enhanced test coverage for all fixes",

@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: cashflow_uat
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    volumes:
+      - uat_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cashflow-uat-network
+
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+      target: production
+    environment:
+      ENVIRONMENT: uat
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/cashflow_uat
+      SECRET_KEY: ${SECRET_KEY:-uat-secret-key-change-in-production}
+      DEBUG: "false"
+      LOG_LEVEL: INFO
+      CORS_ORIGINS: ${CORS_ORIGINS:-"http://localhost:3000,http://127.0.0.1:3000"}
+    env_file:
+      - ../../backend/env.example
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8001:8000"  # Different port to avoid conflicts
+    volumes:
+      - backend_uat_logs:/app/logs
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - cashflow-uat-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "3000:80"  # Different port to avoid conflicts
+    environment:
+      VITE_API_URL: http://localhost:8001
+      VITE_APP_ENV: uat
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - cashflow-uat-network
+    restart: unless-stopped
+
+volumes:
+  uat_db_data:
+  backend_uat_logs:
+
+networks:
+  cashflow-uat-network:
+    driver: bridge

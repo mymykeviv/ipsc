@@ -1,263 +1,332 @@
-# Cashflow Deployment Guide
+# Deployment Guide
 
 ## Overview
 
-This guide covers the deployment process for the Cashflow application, including both Docker and local development environments. The deployment system has been enhanced to automatically handle file cleanup and ensure TypeScript files are always used.
+This document describes the consolidated deployment system for Cashflow, which supports three environments:
+- **Development (dev)**: Docker Compose with hot reloading
+- **UAT**: Docker Compose with production-like settings
+- **Production (prod)**: Kubernetes with high availability
 
-## 🚀 Quick Start
+## Quick Start
 
-### Docker Development (Recommended)
+### Prerequisites
+
+- Docker and Docker Compose
+- Node.js 18+ (for local development)
+- kubectl (for production deployments)
+- Kubernetes cluster (for production)
+
+### Basic Deployment Commands
 
 ```bash
-# Deploy with automatic file cleanup
-./scripts/deploy-dev.sh
+# Development environment
+python deployment/deploy.py dev
 
-# Deploy with Docker cache cleanup
-./scripts/deploy-dev.sh --clean-cache
+# UAT environment
+python deployment/deploy.py uat --test
+
+# Production environment
+python deployment/deploy.py prod --clean
 ```
 
-### Local Development
+## Environment Configurations
 
-```bash
-# Start local development with automatic cleanup
-./scripts/local-dev-clean.sh
+### Development Environment
 
-# Or use the standard local development script
-./scripts/local-dev.sh
-```
-
-## 🔧 Deployment Solutions
-
-### Problem Solved
-
-**Issue**: Old compiled JavaScript files were interfering with TypeScript source files, causing UI changes to not reflect in the browser.
-
-**Root Cause**: 
-- Docker containers contained old `.js` files alongside updated `.tsx` files
-- Vite was serving cached compiled files instead of TypeScript source
-- Manual file cleanup was required for each deployment
-
-### Permanent Solutions Implemented
-
-#### 1. **Docker Development Environment**
-
-**Enhanced Dockerfile** (`frontend/Dockerfile`):
-- Multi-stage build with development and production targets
-- Automatic cleanup of old compiled files during build
-- Force flag to ensure TypeScript files are used
-- Proper `.dockerignore` to prevent old files from being copied
-
-**Updated Docker Compose** (`docker-compose.dev.yml`):
-- Development target specification
-- Automatic file cleanup on container startup
-- Enhanced volume mounts to prevent file conflicts
-- Polling configuration for better file watching
-
-#### 2. **Local Development Environment**
-
-**Enhanced Local Scripts**:
-- Automatic cleanup of old compiled files
-- TypeScript-first approach
-- Proper dependency management
-- Health checks and validation
-
-#### 3. **Vite Configuration**
-
-**Updated Vite Config** (`frontend/vite.config.docker.ts`):
-- Force flag to clear cache on startup
-- TypeScript loader configuration
-- Enhanced HMR (Hot Module Replacement)
-- Proper proxy configuration
-
-#### 4. **File Management**
-
-**`.dockerignore`**:
-- Excludes compiled JavaScript files
-- Prevents build artifacts from being copied
-- Ensures clean container builds
-
-## 📋 Deployment Scripts
-
-### `scripts/deploy-dev.sh`
-
-**Purpose**: Automated Docker development deployment with file cleanup
+**Purpose**: Local development with hot reloading and debugging capabilities
 
 **Features**:
-- ✅ Automatic cleanup of old compiled files
-- ✅ Docker container rebuilding
-- ✅ Service health verification
-- ✅ API connectivity testing
-- ✅ Comprehensive status reporting
+- Hot reloading for both frontend and backend
+- MailHog for email testing
+- Debug logging enabled
+- Volume mounts for live code changes
 
-**Usage**:
-```bash
-# Standard deployment
-./scripts/deploy-dev.sh
+**Access Points**:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+- Database: localhost:5432
+- MailHog: http://localhost:8025
 
-# Deployment with Docker cache cleanup
-./scripts/deploy-dev.sh --clean-cache
-```
+**Configuration**: `deployment/docker/docker-compose.dev.yml`
 
-### `scripts/local-dev-clean.sh`
+### UAT Environment
 
-**Purpose**: Local development with automatic file cleanup
+**Purpose**: User Acceptance Testing with production-like settings
 
 **Features**:
-- ✅ Automatic cleanup of old compiled files
-- ✅ Python virtual environment setup
-- ✅ Node.js dependency management
-- ✅ Backend and frontend startup
-- ✅ Health checks and validation
-- ✅ Graceful shutdown handling
+- Production-like configuration
+- Separate database instance
+- Health checks enabled
+- Optimized for testing
 
-**Usage**:
-```bash
-./scripts/local-dev-clean.sh
-```
+**Access Points**:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8001
+- Database: localhost:5433
 
-### `scripts/local-dev.sh`
+**Configuration**: `deployment/docker/docker-compose.uat.yml`
 
-**Purpose**: Standard local development (enhanced with cleanup)
+### Production Environment
+
+**Purpose**: High-availability production deployment
 
 **Features**:
-- ✅ Enhanced with automatic file cleanup
-- ✅ All original local development features
-- ✅ MailHog integration
-- ✅ SQLite database setup
+- Kubernetes orchestration
+- Multiple replicas for high availability
+- Resource limits and requests
+- Health checks and auto-scaling
+- Secrets management
 
-## 🔍 Verification Process
+**Configuration**: `deployment/kubernetes/prod/`
 
-### Automatic Health Checks
+## Deployment Options
 
-All deployment scripts include comprehensive health checks:
+### Cache Cleaning
 
-1. **Container Status**: Verify all containers are running
-2. **Frontend Accessibility**: Test frontend on port 5173
-3. **Backend Health**: Test backend health endpoint
-4. **API Proxy**: Test API connectivity through frontend
-5. **Database Connectivity**: Verify database connections
+All deployments automatically clean caches to ensure clean builds:
 
-### Manual Verification
+```bash
+# Manual cache cleaning
+bash deployment/scripts/clean-cache.sh [environment]
 
-After deployment, verify the following:
+# Cache cleaning is automatic during deployment
+python deployment/deploy.py dev
+```
 
-1. **Frontend**: `http://localhost:5173`
-2. **Backend**: `http://localhost:8000/health`
-3. **API Docs**: `http://localhost:8000/docs`
-4. **Invoice Form**: `http://localhost:5173/invoices/add`
-5. **Product Form**: `http://localhost:5173/products/add`
+### Testing
 
-## 🛠️ Troubleshooting
+Run tests before deployment:
+
+```bash
+# Run tests before deployment
+python deployment/deploy.py uat --test
+
+# Skip tests
+python deployment/deploy.py prod --skip-tests
+```
+
+### Clean Builds
+
+Perform clean builds (removes all containers and images):
+
+```bash
+# Clean build for any environment
+python deployment/deploy.py dev --clean
+python deployment/deploy.py uat --clean
+python deployment/deploy.py prod --clean
+```
+
+### Rollback
+
+Rollback to previous deployment:
+
+```bash
+# Rollback production deployment
+python deployment/deploy.py prod --rollback
+```
+
+## Advanced Configuration
+
+### Environment Variables
+
+#### Development
+```bash
+# Default values (no additional setup required)
+ENVIRONMENT=development
+DEBUG=true
+LOG_LEVEL=DEBUG
+```
+
+#### UAT
+```bash
+# Optional environment variables
+export POSTGRES_USER=your_user
+export POSTGRES_PASSWORD=your_password
+export SECRET_KEY=your_secret_key
+export CORS_ORIGINS=http://localhost:3000
+```
+
+#### Production
+```bash
+# Required environment variables
+export POSTGRES_USER=your_prod_user
+export POSTGRES_PASSWORD=your_prod_password
+export POSTGRES_DB=cashflow_prod
+export SECRET_KEY=your_prod_secret_key
+export CORS_ORIGINS=https://yourdomain.com
+export API_URL=https://api.yourdomain.com
+```
+
+### Kubernetes Production Setup
+
+1. **Create namespace**:
+   ```bash
+   kubectl apply -f deployment/kubernetes/prod/namespace.yaml
+   ```
+
+2. **Apply configuration**:
+   ```bash
+   kubectl apply -f deployment/kubernetes/prod/configmap.yaml
+   kubectl apply -f deployment/kubernetes/prod/secrets.yaml
+   ```
+
+3. **Deploy services**:
+   ```bash
+   kubectl apply -f deployment/kubernetes/prod/deployment.yaml
+   kubectl apply -f deployment/kubernetes/prod/service.yaml
+   ```
+
+4. **Check deployment status**:
+   ```bash
+   kubectl get pods -n cashflow-prod
+   kubectl get services -n cashflow-prod
+   ```
+
+## Monitoring and Health Checks
+
+### Health Check Endpoints
+
+- **Backend**: `http://localhost:8000/health`
+- **Frontend**: `http://localhost:5173` (dev) or `http://localhost:3000` (uat)
+
+### Logs
+
+```bash
+# Docker Compose logs
+docker compose -f deployment/docker/docker-compose.dev.yml logs -f
+
+# Kubernetes logs
+kubectl logs -f deployment/cashflow-backend -n cashflow-prod
+kubectl logs -f deployment/cashflow-frontend -n cashflow-prod
+```
+
+### Resource Monitoring
+
+```bash
+# Docker resource usage
+docker stats
+
+# Kubernetes resource usage
+kubectl top pods -n cashflow-prod
+kubectl top nodes
+```
+
+## Troubleshooting
 
 ### Common Issues
 
-#### 1. **Old UI Still Visible**
-
-**Symptoms**: Changes not reflecting in browser
-
-**Solutions**:
-```bash
-# Clear browser cache
-Ctrl+F5 (Windows/Linux) or Cmd+Shift+R (Mac)
-
-# Rebuild containers
-./scripts/deploy-dev.sh --clean-cache
-
-# Check file timestamps
-docker exec cashflow-frontend-dev ls -la /app/src/components/
-```
-
-#### 2. **Container Build Failures**
-
-**Symptoms**: Docker build errors
-
-**Solutions**:
-```bash
-# Clean Docker cache
-docker system prune -f
-
-# Rebuild with no cache
-docker-compose -f docker-compose.dev.yml build --no-cache
-
-# Use deployment script
-./scripts/deploy-dev.sh --clean-cache
-```
-
-#### 3. **API Connection Issues**
-
-**Symptoms**: Frontend can't connect to backend
-
-**Solutions**:
-```bash
-# Check container status
-docker ps
-
-# Check backend logs
-docker logs cashflow-backend-dev
-
-# Verify network connectivity
-docker exec cashflow-frontend-dev curl http://backend:8000/health
-```
+1. **Port conflicts**: Ensure ports are not in use by other services
+2. **Database connection**: Check database credentials and connectivity
+3. **Cache issues**: Run manual cache cleaning if needed
+4. **Kubernetes cluster**: Ensure kubectl is configured correctly
 
 ### Debug Commands
 
 ```bash
-# Check container logs
-docker logs cashflow-frontend-dev --tail 50
-docker logs cashflow-backend-dev --tail 50
+# Check service status
+docker compose -f deployment/docker/docker-compose.dev.yml ps
 
-# Check file timestamps
-docker exec cashflow-frontend-dev find /app/src -name "*.tsx" -exec ls -la {} \;
+# Check Kubernetes resources
+kubectl get all -n cashflow-prod
 
-# Test API connectivity
-curl -X POST http://localhost:5173/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
+# View detailed logs
+docker compose -f deployment/docker/docker-compose.dev.yml logs [service-name]
 
-# Check Vite configuration
-docker exec cashflow-frontend-dev cat /app/vite.config.docker.ts
+# Check health endpoints
+curl http://localhost:8000/health
+curl http://localhost:5173
 ```
 
-## 📊 Performance Considerations
+### Rollback Procedures
 
-### Docker Development
-- **Build Time**: ~2-3 minutes for initial build
-- **Startup Time**: ~30 seconds for containers
-- **Hot Reload**: ~1-2 seconds for file changes
+1. **Docker Compose rollback**:
+   ```bash
+   docker compose -f deployment/docker/docker-compose.dev.yml down
+   git checkout HEAD~1
+   python deployment/deploy.py dev
+   ```
 
-### Local Development
-- **Setup Time**: ~1-2 minutes for initial setup
-- **Startup Time**: ~15 seconds for services
-- **Hot Reload**: ~500ms for file changes
+2. **Kubernetes rollback**:
+   ```bash
+   python deployment/deploy.py prod --rollback
+   ```
 
-## 🔒 Security Notes
+## Security Considerations
 
-- Development environment uses default credentials
-- Production deployments should use proper secrets management
-- Database connections use development settings
-- API endpoints are exposed for development convenience
+### Development
+- Uses default credentials (change for production)
+- Debug mode enabled
+- CORS allows localhost
 
-## 📝 Best Practices
+### UAT
+- Separate database instance
+- Production-like security settings
+- Limited CORS origins
 
-1. **Always use deployment scripts** instead of manual commands
-2. **Clear browser cache** after deployment
-3. **Check health endpoints** before testing
-4. **Use `--clean-cache`** when experiencing issues
-5. **Monitor container logs** for debugging
-6. **Keep dependencies updated** regularly
+### Production
+- Kubernetes secrets management
+- Resource limits and requests
+- Health checks and auto-scaling
+- Secure CORS configuration
 
-## 🚀 Production Deployment
+## Performance Optimization
 
-For production deployments, use the production Docker Compose configuration:
+### Development
+- Hot reloading for fast development
+- Volume mounts for live changes
+- Debug logging for troubleshooting
 
+### UAT
+- Production-like performance settings
+- Optimized builds
+- Health checks enabled
+
+### Production
+- Multiple replicas for high availability
+- Resource limits and requests
+- Auto-scaling capabilities
+- Optimized container images
+
+## Version Management
+
+The deployment system automatically:
+- Updates build information
+- Tracks deployment timestamps
+- Records git commit hashes
+- Maintains version history
+
+Check current version:
 ```bash
-# Production deployment
-./scripts/docker-prod.sh
+# Backend version
+curl http://localhost:8000/version
 
-# Kubernetes deployment
-./scripts/k8s-deploy.sh
+# Build info
+cat build-info.json
 ```
 
----
+## Migration from Old System
 
-**Note**: This deployment system ensures that TypeScript changes are always reflected immediately without manual intervention.
+If migrating from the old deployment system:
+
+1. **Backup current deployment**:
+   ```bash
+   cp -r scripts scripts_backup
+   cp -r docker-compose*.yml docker_backup/
+   ```
+
+2. **Update CI/CD pipelines** to use new deployment commands
+
+3. **Test new deployment system** in development environment
+
+4. **Update documentation** and team training
+
+5. **Remove old deployment scripts** after successful migration
+
+## Support
+
+For deployment issues:
+1. Check the troubleshooting section
+2. Review logs for error messages
+3. Verify environment variables
+4. Test in development environment first
+5. Contact the DevOps team for production issues

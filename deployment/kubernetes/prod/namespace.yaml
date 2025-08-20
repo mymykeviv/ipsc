@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cashflow-prod
+  labels:
+    name: cashflow-prod
+    environment: production
+    app: cashflow

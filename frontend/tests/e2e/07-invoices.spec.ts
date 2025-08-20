@@ -12,14 +12,28 @@ test.describe('Invoices Management', () => {
   });
 
   test('should display invoices list page', async ({ page }) => {
-    // Verify invoices page heading
-    await expect(page.locator('h1:has-text("Invoices")')).toBeVisible();
+    // Wait for page to load
+    await page.waitForTimeout(2000);
+    
+    // Check if we're on dashboard and navigate if needed
+    const dashboardHeading = page.locator('h1:has-text("📊 ProfitPath Dashboard")');
+    const invoicesHeading = page.locator('h1:has-text("Manage Invoices")');
+    
+    const isDashboard = await dashboardHeading.isVisible();
+    if (isDashboard) {
+      // Navigate to invoices page
+      await page.click('a[href="/invoices"]');
+      await page.waitForTimeout(2000);
+    }
+    
+    // Check for invoices page elements
+    await expect(page.locator('h1:has-text("Manage Invoices")')).toBeVisible();
     
     // Check for add invoice button
-    await expect(page.locator('button:has-text("Add Invoice")')).toBeVisible();
+    await expect(page.locator('button:has-text("📄 Add Invoice")')).toBeVisible();
     
     // Check for search functionality
-    await expect(page.locator('input[placeholder*="search"]')).toBeVisible();
+    await expect(page.locator('input[placeholder="Search invoices by number, customer..."]')).toBeVisible();
   });
 
   test('should add a new invoice', async ({ page }) => {
