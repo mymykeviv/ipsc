@@ -1,11 +1,11 @@
 """
-Tenant Middleware for Multi-Tenant Architecture
-Handles tenant identification, routing, and context injection
+Multi-Tenant Middleware System
+Handles tenant routing, feature access control, and tenant context management
 """
 
 import re
 from typing import Optional
-from fastapi import Request, HTTPException
+from fastapi import Request, HTTPException, Response
 from fastapi.responses import JSONResponse
 import logging
 from ..tenant_config import tenant_config_manager
@@ -14,102 +14,95 @@ logger = logging.getLogger(__name__)
 
 
 class TenantMiddleware:
-    """Middleware for tenant identification and routing"""
+    """Middleware for tenant routing and context management"""
     
     def __init__(self):
-        self.tenant_routing_enabled = True  # Can be controlled via environment variable
-        
+        self.subdomain_pattern = re.compile(r'^([^.]+)\.')
+    
     async def __call__(self, request: Request, call_next):
-        """Process request and inject tenant context"""
-        if not self.tenant_routing_enabled:
-            return await call_next(request)
-        
+        """Extract tenant ID and set tenant context"""
         try:
-            # Extract tenant ID from request
+            # Extract tenant ID from various sources
             tenant_id = self.extract_tenant_id(request)
             
             if not tenant_id:
-                # For public endpoints, allow without tenant
+                # For non-tenant-specific endpoints (health check, etc.)
                 if self.is_public_endpoint(request.url.path):
                     return await call_next(request)
-                
-                raise HTTPException(
-                    status_code=400, 
-                    detail="Tenant ID required. Please provide X-Tenant-ID header or use subdomain."
-                )
+                else:
+                    return JSONResponse(
+                        status_code=400,
+                        content={"error": "Tenant ID required", "detail": "Please provide tenant ID via subdomain or X-Tenant-ID header"}
+                    )
             
-            # Validate tenant exists and is active
+            # Validate tenant exists
             tenant_config = await tenant_config_manager.get_tenant_config(tenant_id)
             if not tenant_config:
-                raise HTTPException(
-                    status_code=404, 
-                    detail=f"Tenant '{tenant_id}' not found"
+                return JSONResponse(
+                    status_code=404,
+                    content={"error": "Tenant not found", "detail": f"Tenant {tenant_id} does not exist"}
                 )
             
             if not tenant_config.is_active:
-                raise HTTPException(
-                    status_code=403, 
-                    detail=f"Tenant '{tenant_id}' is inactive"
+                return JSONResponse(
+                    status_code=403,
+                    content={"error": "Tenant inactive", "detail": f"Tenant {tenant_id} is not active"}
                 )
             
-            # Inject tenant context into request state
+            # Set tenant context
             request.state.tenant_id = tenant_id
             request.state.tenant_config = tenant_config
             
-            # Add tenant info to response headers for debugging
+            # Continue with request processing
             response = await call_next(request)
+            
+            # Add tenant info to response headers for debugging
             response.headers["X-Tenant-ID"] = tenant_id
             response.headers["X-Tenant-Domain"] = tenant_config.domain
             
             return response
             
-        except HTTPException:
-            # Re-raise HTTP exceptions
-            raise
         except Exception as e:
             logger.error(f"Tenant middleware error: {e}")
             return JSONResponse(
                 status_code=500,
-                content={"detail": "Internal server error in tenant routing"}
+                content={"error": "Internal server error", "detail": "Tenant routing failed"}
             )
     
     def extract_tenant_id(self, request: Request) -> Optional[str]:
-        """Extract tenant ID from request headers or subdomain"""
-        
-        # Method 1: Extract from X-Tenant-ID header
-        tenant_header = request.headers.get("X-Tenant-ID")
-        if tenant_header:
-            return tenant_header.strip()
-        
-        # Method 2: Extract from subdomain
+        """Extract tenant ID from request"""
+        # Method 1: Extract from subdomain
         host = request.headers.get("host", "")
         if "." in host:
-            subdomain = host.split(".")[0]
-            # Validate subdomain format
-            if re.match(r"^[a-zA-Z0-9_-]+$", subdomain):
-                return subdomain
+            subdomain_match = self.subdomain_pattern.match(host)
+            if subdomain_match:
+                tenant_id = subdomain_match.group(1)
+                if tenant_id not in ["www", "api", "localhost"]:
+                    return tenant_id
         
-        # Method 3: Extract from query parameter (for testing)
-        tenant_param = request.query_params.get("tenant_id")
-        if tenant_param:
-            return tenant_param.strip()
+        # Method 2: Extract from X-Tenant-ID header
+        tenant_id = request.headers.get("X-Tenant-ID")
+        if tenant_id:
+            return tenant_id
+        
+        # Method 3: Extract from query parameter (for development/testing)
+        tenant_id = request.query_params.get("tenant_id")
+        if tenant_id:
+            return tenant_id
         
         return None
     
     def is_public_endpoint(self, path: str) -> bool:
         """Check if endpoint is public (doesn't require tenant)"""
         public_paths = [
-            "/docs",
-            "/redoc", 
-            "/openapi.json",
             "/health",
+            "/docs",
+            "/openapi.json",
+            "/favicon.ico",
             "/api/health",
-            "/api/version",
-            "/api/auth/login",
-            "/api/auth/register",
-            "/api/tenants/list"  # Allow listing tenants
+            "/api/docs",
+            "/api/openapi.json"
         ]
-        
         return any(path.startswith(public_path) for public_path in public_paths)
 
 
@@ -117,49 +110,90 @@ class FeatureAccessMiddleware:
     """Middleware for feature access control"""
     
     def __init__(self):
-        self.feature_path_mapping = {
-            # Dental features
-            "/api/patients": ["patient_management"],
-            "/api/treatments": ["treatment_tracking"],
-            "/api/dental-supplies": ["dental_supplies"],
-            
-            # Manufacturing features
-            "/api/bom": ["bom_management"],
-            "/api/production": ["production_tracking"],
-            "/api/materials": ["material_management"],
-            
-            # Common features (available to all)
-            "/api/products": [],
-            "/api/invoices": [],
-            "/api/purchases": [],
-            "/api/payments": [],
-            "/api/expenses": [],
-            "/api/parties": [],
-            "/api/reports": [],
+        # Define feature-to-path mappings
+        self.feature_paths = {
+            'patient_management': [
+                '/api/patients',
+                '/api/treatments',
+                '/api/appointments'
+            ],
+            'treatment_tracking': [
+                '/api/treatments',
+                '/api/treatment-history',
+                '/api/patient-treatments'
+            ],
+            'dental_supplies': [
+                '/api/dental-supplies',
+                '/api/supply-inventory',
+                '/api/supply-orders'
+            ],
+            'bom_management': [
+                '/api/bom',
+                '/api/bill-of-materials',
+                '/api/bom-components'
+            ],
+            'production_tracking': [
+                '/api/production',
+                '/api/production-orders',
+                '/api/production-status'
+            ],
+            'material_management': [
+                '/api/materials',
+                '/api/material-requirements',
+                '/api/material-inventory'
+            ]
         }
     
     async def __call__(self, request: Request, call_next):
         """Check feature access for tenant"""
-        tenant_id = getattr(request.state, 'tenant_id', None)
-        if not tenant_id:
-            return await call_next(request)
-        
-        path = request.url.path
-        
-        # Check if path requires specific features
-        required_features = self.feature_path_mapping.get(path, [])
-        
-        if required_features:
-            # Check if tenant has access to required features
-            for feature in required_features:
-                has_access = await tenant_config_manager.has_feature(tenant_id, feature)
+        try:
+            # Skip for public endpoints
+            if self.is_public_endpoint(request.url.path):
+                return await call_next(request)
+            
+            # Get tenant context
+            tenant_id = getattr(request.state, 'tenant_id', None)
+            if not tenant_id:
+                return await call_next(request)
+            
+            # Check if path requires feature access
+            required_feature = self.get_required_feature(request.url.path)
+            if required_feature:
+                has_access = await tenant_config_manager.has_feature(tenant_id, required_feature)
                 if not has_access:
-                    raise HTTPException(
+                    return JSONResponse(
                         status_code=403,
-                        detail=f"Feature '{feature}' not available for tenant '{tenant_id}'"
+                        content={
+                            "error": "Feature not available",
+                            "detail": f"Feature '{required_feature}' is not available for this tenant"
+                        }
                     )
-        
-        return await call_next(request)
+            
+            return await call_next(request)
+            
+        except Exception as e:
+            logger.error(f"Feature access middleware error: {e}")
+            return await call_next(request)
+    
+    def get_required_feature(self, path: str) -> Optional[str]:
+        """Get required feature for path"""
+        for feature, paths in self.feature_paths.items():
+            if any(path.startswith(feature_path) for feature_path in paths):
+                return feature
+        return None
+    
+    def is_public_endpoint(self, path: str) -> bool:
+        """Check if endpoint is public"""
+        public_paths = [
+            "/health",
+            "/docs",
+            "/openapi.json",
+            "/favicon.ico",
+            "/api/health",
+            "/api/docs",
+            "/api/openapi.json"
+        ]
+        return any(path.startswith(public_path) for public_path in public_paths)
 
 
 # Global middleware instances
