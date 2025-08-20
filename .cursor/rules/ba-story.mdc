@@ -152,7 +152,7 @@ For each epic, provide detailed user stories using the comprehensive template be
 ---
 
 ## Instructions:
-Given the client problem statement, analyze the business requirements, break them down into logical epics, and create detailed user stories using the template above. Ensure each story is:
+Given the client problem statement, analyze the business requirements, if required break them down into logical epics, and create detailed user stories using the template above. Ensure each story is:
 - Focused on a single user need
 - Appropriately sized for a single sprint
 - Clear and unambiguous

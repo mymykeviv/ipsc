@@ -759,19 +759,6 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
           onClick: () => navigate(`/${type}s/add`),
           icon: type === 'customer' ? '👤' : '🏢'
         }}
-        secondaryActions={type === 'customer' ? [
-          {
-            label: 'View All Parties',
-            onClick: () => navigate('/parties'),
-            icon: '📋'
-          }
-        ] : [
-          {
-            label: 'View All Parties',
-            onClick: () => navigate('/parties'),
-            icon: '📋'
-          }
-        ]}
       />
 
       {error && <ErrorMessage message={error} />}
