@@ -41,7 +41,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
   // Force reload state
   const [forceReload, setForceReload] = useState(0)
   
-  // Debounce state
+  // Debounce state for real-time updates
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null)
   
   // PDF download state
@@ -71,6 +71,18 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
 
   const loadStockHistory = useCallback(async () => {
     try {
+      console.log('Loading stock history with filters:', {
+        financialYearFilter,
+        productId,
+        forceReload,
+        productFilter,
+        categoryFilter,
+        supplierFilter,
+        stockLevelFilter,
+        entryTypeFilter,
+        dateRangeFilter
+      })
+      
       setHistoryLoading(true)
       setError(null)
       
@@ -81,6 +93,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
       const productIdNum = (productId && forceReload === 0) ? parseInt(productId) : undefined
       
       const history = await apiGetStockMovementHistory(fy, productIdNum)
+      console.log('Stock history loaded:', history)
       setStockHistory(history)
     } catch (err) {
       console.error('Failed to load stock history:', err)
@@ -89,7 +102,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
     } finally {
       setHistoryLoading(false)
     }
-  }, [financialYearFilter, productId, forceReload])
+  }, [financialYearFilter, productId, forceReload, productFilter, categoryFilter, supplierFilter, stockLevelFilter, entryTypeFilter, dateRangeFilter])
 
   // Set product filter when productId is present in URL
   useEffect(() => {
@@ -97,12 +110,20 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
       const selectedProduct = products.find(p => p.id === parseInt(productId))
       if (selectedProduct) {
         setProductFilter(selectedProduct.name)
+      } else {
+        // Product not found - show error and reset filter
+        setError(`Product with ID ${productId} not found`)
+        setProductFilter('all')
+        // Remove invalid product ID from URL
+        const newSearchParams = new URLSearchParams(searchParams)
+        newSearchParams.delete('product')
+        setSearchParams(newSearchParams)
       }
     } else if (!productId) {
       // If no productId in URL, reset product filter to 'all'
       setProductFilter('all')
     }
-  }, [productId, products])
+  }, [productId, products, searchParams, setSearchParams])
 
   useEffect(() => {
     loadProducts()
@@ -111,6 +132,15 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
   useEffect(() => {
     loadStockHistory()
   }, [financialYearFilter, productId, forceReload, loadStockHistory]) // Only reload when these specific values change
+
+  // Additional effect to handle filter changes that require data reload
+  useEffect(() => {
+    // When any filter changes, we need to reload the data
+    // This ensures the API gets the latest filter state
+    if (forceReload > 0) {
+      loadStockHistory()
+    }
+  }, [forceReload, loadStockHistory])
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
@@ -121,17 +151,62 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
     }
   }, [debounceTimer])
 
+  // Real-time filter update handler with debouncing
+  const handleFilterChange = useCallback((filters: Record<string, any>) => {
+    console.log('Filter change detected:', filters)
+    
+    // Clear existing debounce timer
+    if (debounceTimer) {
+      clearTimeout(debounceTimer)
+    }
+    
+    // Update individual filter states based on unified filter values
+    let hasChanges = false
+    
+    if (filters.financialYear !== undefined && filters.financialYear !== financialYearFilter) {
+      setFinancialYearFilter(filters.financialYear)
+      hasChanges = true
+    }
+    if (filters.product !== undefined && filters.product !== productFilter) {
+      setProductFilter(filters.product)
+      hasChanges = true
+    }
+    if (filters.category !== undefined && filters.category !== categoryFilter) {
+      setCategoryFilter(filters.category)
+      hasChanges = true
+    }
+    if (filters.supplier !== undefined && filters.supplier !== supplierFilter) {
+      setSupplierFilter(filters.supplier)
+      hasChanges = true
+    }
+    if (filters.stockLevel !== undefined && filters.stockLevel !== stockLevelFilter) {
+      setStockLevelFilter(filters.stockLevel)
+      hasChanges = true
+    }
+    if (filters.entryType !== undefined && filters.entryType !== entryTypeFilter) {
+      setEntryTypeFilter(filters.entryType)
+      hasChanges = true
+    }
+    if (filters.dateRange !== undefined && 
+        (filters.dateRange.startDate !== dateRangeFilter.startDate || 
+         filters.dateRange.endDate !== dateRangeFilter.endDate)) {
+      setDateRangeFilter(filters.dateRange)
+      hasChanges = true
+    }
+    
+    // Only trigger reload if there are actual changes
+    if (hasChanges) {
+      // Debounce the reload to prevent rapid API calls
+      const timer = setTimeout(() => {
+        console.log('Triggering data reload due to filter changes:', filters)
+        setForceReload(prev => prev + 1)
+      }, 500) // 500ms delay
+      
+      setDebounceTimer(timer)
+    }
+  }, [debounceTimer, financialYearFilter, productFilter, categoryFilter, supplierFilter, stockLevelFilter, entryTypeFilter, dateRangeFilter])
+
   // Filter stock history based on all filters
-  console.log('Applying filters:', {
-    productFilter,
-    categoryFilter,
-    supplierFilter,
-    stockLevelFilter,
-    entryTypeFilter,
-    dateRangeFilter,
-    productId
-  })
-  
   const filteredStockHistory = stockHistory.filter(movement => {
     // Product filter - if productId is present, always include that product
     const matchesProduct = (productId && movement.product_id === parseInt(productId)) ||
@@ -231,10 +306,6 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
 
   // Calculate grand totals across current filtered dataset (independent of pagination)
   const calculateGrandTotals = () => {
-    // Debug: Log the filtered data to understand what's happening
-    console.log('Filtered Stock History:', filteredStockHistory)
-    console.log('Stock History:', stockHistory)
-    
     // If we have a specific product selected, show only that product's data
     if (productId || productFilter !== 'all') {
       const targetProduct = stockHistory.find(movement => 
@@ -243,7 +314,6 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
       )
       
       if (targetProduct) {
-        console.log('Target Product:', targetProduct)
         return {
           opening_stock: targetProduct.opening_stock,
           opening_value: targetProduct.opening_value,
@@ -355,6 +425,33 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
     setShowPDFPreview(true)
   }
 
+  // Enhanced Clear All functionality
+  const handleClearAll = () => {
+    setFinancialYearFilter('all')
+    setProductFilter('all')
+    setCategoryFilter('all')
+    setSupplierFilter('all')
+    setStockLevelFilter('all')
+    setEntryTypeFilter('all')
+    setDateRangeFilter({
+      startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      endDate: new Date().toISOString().slice(0, 10)
+    })
+    setCurrentPage(1) // Reset pagination
+    
+    // If we have a productId from URL, remove it and reload
+    if (productId) {
+      const newSearchParams = new URLSearchParams(searchParams)
+      newSearchParams.delete('product')
+      setSearchParams(newSearchParams)
+      // Force reload to show all products
+      setForceReload(prev => prev + 1)
+    } else {
+      // Just reload the current data
+      loadStockHistory()
+    }
+  }
+
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
       <div style={{ 
@@ -400,9 +497,10 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
 
       {error && <ErrorMessage message={error} />}
 
-      {/* Unified Filter System */}
+      {/* Unified Filter System with real-time updates */}
       <UnifiedFilterSystem
         title="Stock Movement Filters"
+        defaultCollapsed={true} // Filter section collapsed by default
         filters={[
           {
             id: 'financialYear',
@@ -472,7 +570,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
             id: 'dateRange',
             type: 'date-range' as const,
             label: 'Date Range',
-            width: 'half'
+            width: 'third'
           }
         ]}
         quickFilters={[
@@ -515,68 +613,8 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
             isActive: stockLevelFilter === 'low_stock'
           }
         ]}
-        onFilterChange={(filters) => {
-          // Clear existing debounce timer
-          if (debounceTimer) {
-            clearTimeout(debounceTimer)
-          }
-          
-          // Update individual filter states based on unified filter values
-          if (filters.financialYear !== undefined) {
-            setFinancialYearFilter(filters.financialYear)
-          }
-          if (filters.product !== undefined) {
-            setProductFilter(filters.product)
-          }
-          if (filters.category !== undefined) {
-            setCategoryFilter(filters.category)
-          }
-          if (filters.supplier !== undefined) {
-            setSupplierFilter(filters.supplier)
-          }
-          if (filters.stockLevel !== undefined) {
-            setStockLevelFilter(filters.stockLevel)
-          }
-          if (filters.entryType !== undefined) {
-            setEntryTypeFilter(filters.entryType)
-          }
-          if (filters.dateRange !== undefined) {
-            setDateRangeFilter(filters.dateRange)
-          }
-          
-          // Debounce the reload to prevent rapid API calls
-          const timer = setTimeout(() => {
-            setForceReload(prev => prev + 1)
-          }, 500) // 500ms delay
-          
-          setDebounceTimer(timer)
-        }}
-        onClearAll={() => {
-          setFinancialYearFilter('all')
-          setProductFilter('all')
-          setCategoryFilter('all')
-          setSupplierFilter('all')
-          setStockLevelFilter('all')
-          setEntryTypeFilter('all')
-          setDateRangeFilter({
-            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-            endDate: new Date().toISOString().slice(0, 10)
-          })
-          setCurrentPage(1) // Reset pagination
-          
-          // If we have a productId from URL, remove it and reload
-          if (productId) {
-            const newSearchParams = new URLSearchParams(searchParams)
-            newSearchParams.delete('product')
-            // Use setSearchParams to properly update the URL and trigger re-render
-            setSearchParams(newSearchParams)
-            // Force reload to show all products
-            setForceReload(prev => prev + 1)
-          } else {
-            // Just reload the current data
-            loadStockHistory()
-          }
-        }}
+        onFilterChange={handleFilterChange}
+        onClearAll={handleClearAll}
         activeFiltersCount={
           (financialYearFilter !== 'all' ? 1 : 0) +
           (productFilter !== 'all' ? 1 : 0) +
@@ -657,6 +695,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
           color: '#6c757d',
           fontSize: '16px'
         }}>
+          <div style={{ marginBottom: '12px' }}>⏳</div>
           Loading stock movement history...
         </div>
       ) : paginatedStockHistory.length === 0 ? (

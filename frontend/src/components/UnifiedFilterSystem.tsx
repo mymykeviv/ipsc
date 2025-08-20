@@ -41,6 +41,7 @@ export interface UnifiedFilterProps {
   className?: string
   showQuickActions?: boolean
   activeFiltersCount?: number
+  defaultCollapsed?: boolean // New prop for controlling default state
 }
 
 export function UnifiedFilterSystem({
@@ -51,9 +52,10 @@ export function UnifiedFilterSystem({
   onClearAll,
   className = "",
   showQuickActions = true,
-  activeFiltersCount = 0
+  activeFiltersCount = 0,
+  defaultCollapsed = true // Default to collapsed state
 }: UnifiedFilterProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed)
   const [filterValues, setFilterValues] = useState<Record<string, any>>({})
   const [isOpen, setIsOpen] = useState<Record<string, boolean>>({})
 
@@ -144,7 +146,7 @@ export function UnifiedFilterSystem({
     setIsOpen({})
   }
 
-  // Group filters by rows based on width
+  // Group filters by rows based on width - Improved layout logic
   const groupFiltersByRows = () => {
     const rows: FilterConfig[][] = []
     let currentRow: FilterConfig[] = []
@@ -193,8 +195,9 @@ export function UnifiedFilterSystem({
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '16px 20px',
-        borderBottom: '1px solid #e9ecef',
-        backgroundColor: '#f8f9fa'
+        borderBottom: isCollapsed ? 'none' : '1px solid #e9ecef',
+        backgroundColor: '#f8f9fa',
+        borderRadius: isCollapsed ? '8px' : '8px 8px 0 0'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <h3 style={{ 
@@ -215,11 +218,23 @@ export function UnifiedFilterSystem({
           }}>
             Filters
           </span>
+          {activeFiltersCount > 0 && (
+            <span style={{
+              backgroundColor: '#007bff',
+              color: 'white',
+              padding: '2px 8px',
+              borderRadius: '12px',
+              fontSize: '11px',
+              fontWeight: '500'
+            }}>
+              {activeFiltersCount} active
+            </span>
+          )}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* Quick Actions */}
-          {showQuickActions && quickFilters.length > 0 && (
+          {showQuickActions && quickFilters.length > 0 && !isCollapsed && (
             <div style={{ display: 'flex', gap: '8px' }}>
               {quickFilters.map(filter => (
                 <button
@@ -261,35 +276,25 @@ export function UnifiedFilterSystem({
           )}
 
           {/* Clear All Button */}
-          {onClearAll && (
+          {onClearAll && activeFiltersCount > 0 && (
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 handleClearAll()
               }}
-              disabled={activeFiltersCount === 0}
               style={{
                 padding: '6px 12px',
                 border: '1px solid #ced4da',
                 borderRadius: '6px',
-                backgroundColor: activeFiltersCount > 0 ? '#dc3545' : '#f8f9fa',
-                color: activeFiltersCount > 0 ? 'white' : '#6c757d',
-                cursor: activeFiltersCount > 0 ? 'pointer' : 'not-allowed',
+                backgroundColor: '#dc3545',
+                color: 'white',
+                cursor: 'pointer',
                 fontSize: '12px',
                 fontWeight: '500',
-                transition: 'all 0.2s ease',
-                opacity: activeFiltersCount > 0 ? 1 : 0.6
+                transition: 'all 0.2s ease'
               }}
-              onMouseEnter={(e) => {
-                if (activeFiltersCount > 0) {
-                  e.currentTarget.style.backgroundColor = '#c82333'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeFiltersCount > 0) {
-                  e.currentTarget.style.backgroundColor = '#dc3545'
-                }
-              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c82333'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dc3545'}
             >
               Clear All
             </button>
@@ -311,6 +316,7 @@ export function UnifiedFilterSystem({
               transition: 'transform 0.3s ease',
               transform: isCollapsed ? 'rotate(0deg)' : 'rotate(180deg)'
             }}
+            aria-label={isCollapsed ? 'Expand filters' : 'Collapse filters'}
           >
             <span style={{ color: '#6c757d', fontSize: '14px' }}>▼</span>
           </button>
@@ -321,7 +327,9 @@ export function UnifiedFilterSystem({
       {!isCollapsed && (
         <div style={{
           padding: '20px',
-          backgroundColor: 'white'
+          backgroundColor: 'white',
+          borderRadius: '0 0 8px 8px',
+          width: '100%'
         }}>
           {/* Filter Rows */}
           {filterRows.map((row, rowIndex) => (
@@ -332,7 +340,8 @@ export function UnifiedFilterSystem({
                 gridTemplateColumns: 'repeat(4, 1fr)',
                 gap: '16px',
                 marginBottom: rowIndex < filterRows.length - 1 ? '20px' : '0',
-                alignItems: 'end'
+                alignItems: 'end',
+                width: '100%'
               }}
             >
               {row.map(filter => (
@@ -416,7 +425,7 @@ function FilterField({ filter, value, onChange, isOpen, onToggle, onClick }: Fil
 
       case 'dropdown':
         return (
-          <div ref={fieldRef} style={{ position: 'relative' }}>
+          <div ref={fieldRef} style={{ position: 'relative', width: '100%' }}>
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -537,7 +546,8 @@ function FilterField({ filter, value, onChange, isOpen, onToggle, onClick }: Fil
         gridColumn: getGridColumnSpan(),
         display: 'flex',
         flexDirection: 'column',
-        gap: '6px'
+        gap: '6px',
+        width: '100%'
       }}
       onClick={onClick}
     >
@@ -554,7 +564,7 @@ function FilterField({ filter, value, onChange, isOpen, onToggle, onClick }: Fil
   )
 }
 
-// Date Range Filter Component
+// Date Range Filter Component - Standardized sizing
 interface DateRangeFilterProps {
   value: DateRange
   onChange: (value: DateRange) => void
@@ -585,7 +595,7 @@ function DateRangeFilter({ value, onChange, predefinedRanges, placeholder }: Dat
   }
 
   return (
-    <div ref={containerRef} style={{ position: 'relative' }}>
+    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
       <button
         onClick={(e) => {
           e.stopPropagation()
@@ -628,7 +638,7 @@ function DateRangeFilter({ value, onChange, predefinedRanges, placeholder }: Dat
           zIndex: 1000,
           padding: '12px',
           marginTop: '4px',
-          minWidth: '300px'
+          width: '100%'
         }}>
           {/* Predefined Ranges */}
           <div style={{ marginBottom: '12px' }}>
