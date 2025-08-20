@@ -298,14 +298,14 @@ function Shell() {
             )}
           </div>
           
-          {/* Reporting Section */}
+          {/* Reporting & Analytics Section */}
           <div className="nav-section">
             <div 
               className="nav-section-header" 
               onClick={() => toggleSection('reporting')}
               style={{ cursor: 'pointer', userSelect: 'none' }}
             >
-              📊 Reporting {collapsedSections.reporting ? '▼' : '▶'}
+              📊 Reporting & Analytics {collapsedSections.reporting ? '▼' : '▶'}
             </div>
             {!collapsedSections.reporting && (
               <>
@@ -313,22 +313,22 @@ function Shell() {
                   GST Reports (GSTR-1 & GSTR-3B)
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/reports/cashflow') ? 'active' : ''}`} to="/reports/cashflow">
-                  Cashflow Reports
+                  Cashflow Analytics
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/reports/income') ? 'active' : ''}`} to="/reports/income">
-                  Income Reports
+                  Income Analytics
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/reports/expenses') ? 'active' : ''}`} to="/reports/expenses">
-                  Expense Reports
+                  Expense Analytics
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/reports/inventory') ? 'active' : ''}`} to="/reports/inventory">
-                  Inventory Reports
+                  Inventory Analytics
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/reports/purchases') ? 'active' : ''}`} to="/reports/purchases">
-                  Purchase Reports
+                  Purchase Analytics
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/reports/payments') ? 'active' : ''}`} to="/reports/payments">
-                  Payment Reports
+                  Payment Analytics
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/reports/financial') ? 'active' : ''}`} to="/reports/financial">
                   Financial Reports (P&L, Balance Sheet)

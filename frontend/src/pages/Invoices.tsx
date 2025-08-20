@@ -8,7 +8,7 @@ import { StatusBadge } from '../components/StatusBadge'
 import { ComprehensiveInvoiceForm } from '../components/ComprehensiveInvoiceForm'
 import { PDFViewer } from '../components/PDFViewer'
 import { EmailFormModal } from '../components/EmailFormModal'
-import { DateFilter } from '../components/DateFilter'
+import { DateFilter, DateRange } from '../components/DateFilter'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
@@ -49,7 +49,10 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
   const [amountRangeFilter, setAmountRangeFilter] = useState<string>('all')
   const [gstTypeFilter, setGstTypeFilter] = useState<string>('all')
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('all')
-  const [dateFilter, setDateFilter] = useState<string>('all')
+  const [dateFilter, setDateFilter] = useState<DateRange>({
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+    endDate: new Date().toISOString().slice(0, 10)
+  })
 
   useEffect(() => {
     if (mode === 'manage') {
@@ -86,54 +89,9 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
       }
       if (gstTypeFilter !== 'all') params.append('gst_type', gstTypeFilter)
       if (paymentStatusFilter !== 'all') params.append('payment_status', paymentStatusFilter)
-      if (dateFilter !== 'all') {
-        if (dateFilter.startsWith('custom:')) {
-          const [, from, to] = dateFilter.split(':')
-          params.append('date_from', from)
-          params.append('date_to', to)
-        } else {
-          // Handle preset date filters
-          const today = new Date()
-          let fromDate = ''
-          let toDate = ''
-          
-          switch (dateFilter) {
-            case 'today':
-              fromDate = toDate = today.toISOString().split('T')[0]
-              break
-            case 'yesterday':
-              const yesterday = new Date(today)
-              yesterday.setDate(yesterday.getDate() - 1)
-              fromDate = toDate = yesterday.toISOString().split('T')[0]
-              break
-            case 'last7days':
-              const lastWeek = new Date(today)
-              lastWeek.setDate(lastWeek.getDate() - 7)
-              fromDate = lastWeek.toISOString().split('T')[0]
-              toDate = today.toISOString().split('T')[0]
-              break
-            case 'last30days':
-              const lastMonth = new Date(today)
-              lastMonth.setDate(lastMonth.getDate() - 30)
-              fromDate = lastMonth.toISOString().split('T')[0]
-              toDate = today.toISOString().split('T')[0]
-              break
-            case 'thisMonth':
-              fromDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`
-              toDate = today.toISOString().split('T')[0]
-              break
-            case 'lastMonth':
-              const lastMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1)
-              fromDate = lastMonthDate.toISOString().split('T')[0]
-              const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0)
-              toDate = lastMonthEnd.toISOString().split('T')[0]
-              break
-          }
-          
-          if (fromDate) params.append('date_from', fromDate)
-          if (toDate) params.append('date_to', toDate)
-        }
-      }
+      // Always use the date range from the DateFilter component
+      params.append('date_from', dateFilter.startDate)
+      params.append('date_to', dateFilter.endDate)
       
       params.append('page', pagination.page.toString())
       params.append('limit', pagination.limit.toString())
@@ -336,7 +294,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           (amountRangeFilter !== 'all' ? 1 : 0) +
           (gstTypeFilter !== 'all' ? 1 : 0) +
           (paymentStatusFilter !== 'all' ? 1 : 0) +
-          (dateFilter !== 'all' ? 1 : 0)
+          0 // DateFilter is always active now
         }
         onClearAll={() => {
           setSearchTerm('')
@@ -345,7 +303,10 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           setAmountRangeFilter('all')
           setGstTypeFilter('all')
           setPaymentStatusFilter('all')
-          setDateFilter('all')
+          setDateFilter({
+            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+            endDate: new Date().toISOString().slice(0, 10)
+          })
         }}
         showQuickActions={true}
         quickActions={[
@@ -360,7 +321,10 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
             label: 'Last 10',
             action: () => {
               // This would need to be implemented in the backend
-              setDateFilter('last_10')
+              setDateFilter({
+                startDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+                endDate: new Date().toISOString().slice(0, 10)
+              })
             },
             icon: '📋'
           }
@@ -452,7 +416,6 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           <DateFilter
             value={dateFilter}
             onChange={setDateFilter}
-            placeholder="Select date range"
           />
         </div>
       </EnhancedFilterBar>

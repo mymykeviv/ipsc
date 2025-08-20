@@ -23,7 +23,7 @@ export function Header({ onLogout }: HeaderProps) {
           fontWeight: '600', 
           color: '#2c3e50' 
         }}>
-          Cashflow Management System
+          ProfitPath Management System
         </h1>
       </div>
       

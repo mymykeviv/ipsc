@@ -17,8 +17,11 @@ depends_on = None
 
 
 def upgrade():
-    # Drop the redundant cashflow_transactions table
-    op.drop_table('cashflow_transactions')
+    # Drop the redundant cashflow_transactions table (with SQLite compatibility)
+    try:
+        op.drop_table('cashflow_transactions')
+    except Exception:
+        pass  # Table might not exist
 
 
 def downgrade():

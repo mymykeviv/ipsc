@@ -16,7 +16,7 @@ import { Button } from '../components/Button'
 import { ExpenseForm } from '../components/ExpenseForm'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { FilterDropdown } from '../components/FilterDropdown'
-import { DateFilter } from '../components/DateFilter'
+import { DateFilter, DateRange } from '../components/DateFilter'
 import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
 import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 
@@ -38,7 +38,10 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('all')
   const [amountRangeFilter, setAmountRangeFilter] = useState('all')
   const [financialYearFilter, setFinancialYearFilter] = useState('all')
-  const [dateFilter, setDateFilter] = useState('all')
+  const [dateFilter, setDateFilter] = useState<DateRange>({
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+    endDate: new Date().toISOString().slice(0, 10)
+  })
   const [currentExpense, setCurrentExpense] = useState<Expense | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
@@ -251,7 +254,7 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
           (paymentMethodFilter !== 'all' ? 1 : 0) +
           (amountRangeFilter !== 'all' ? 1 : 0) +
           (financialYearFilter !== 'all' ? 1 : 0) +
-          (dateFilter !== 'all' ? 1 : 0)
+          0 // DateFilter is always active now
         }
         onClearAll={() => {
           setSearchTerm('')
@@ -260,7 +263,10 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
           setPaymentMethodFilter('all')
           setAmountRangeFilter('all')
           setFinancialYearFilter('all')
-          setDateFilter('all')
+          setDateFilter({
+            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+            endDate: new Date().toISOString().slice(0, 10)
+          })
         }}
         showQuickActions={true}
         quickActions={[
@@ -380,11 +386,10 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
-          <DateFilter
-            value={dateFilter}
-            onChange={setDateFilter}
-            placeholder="Select date range"
-          />
+                      <DateFilter
+              value={dateFilter}
+              onChange={setDateFilter}
+            />
         </div>
       </EnhancedFilterBar>
 

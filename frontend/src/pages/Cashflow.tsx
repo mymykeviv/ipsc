@@ -5,7 +5,7 @@ import {
   CashflowTransaction
 } from '../lib/api'
 import { Button } from '../components/Button'
-import { DateFilter } from '../components/DateFilter'
+import { DateFilter, DateRange } from '../components/DateFilter'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
@@ -21,7 +21,10 @@ export function Cashflow() {
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>('all')
   const [accountHeadFilter, setAccountHeadFilter] = useState<string>('all')
   const [amountRangeFilter, setAmountRangeFilter] = useState<string>('all')
-  const [dateFilter, setDateFilter] = useState('all')
+  const [dateFilter, setDateFilter] = useState<DateRange>({
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+    endDate: new Date().toISOString().slice(0, 10)
+  })
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(25)
 
@@ -54,54 +57,9 @@ export function Cashflow() {
         if (min) params.append('amount_min', min)
         if (max) params.append('amount_max', max)
       }
-      if (dateFilter !== 'all') {
-        if (dateFilter.startsWith('custom:')) {
-          const [, from, to] = dateFilter.split(':')
-          params.append('start_date', from)
-          params.append('end_date', to)
-        } else {
-          // Handle preset date filters
-          const today = new Date()
-          let fromDate = ''
-          let toDate = ''
-          
-          switch (dateFilter) {
-            case 'today':
-              fromDate = toDate = today.toISOString().split('T')[0]
-              break
-            case 'yesterday':
-              const yesterday = new Date(today)
-              yesterday.setDate(yesterday.getDate() - 1)
-              fromDate = toDate = yesterday.toISOString().split('T')[0]
-              break
-            case 'last7days':
-              const lastWeek = new Date(today)
-              lastWeek.setDate(lastWeek.getDate() - 7)
-              fromDate = lastWeek.toISOString().split('T')[0]
-              toDate = today.toISOString().split('T')[0]
-              break
-            case 'last30days':
-              const lastMonth = new Date(today)
-              lastMonth.setDate(lastMonth.getDate() - 30)
-              fromDate = lastMonth.toISOString().split('T')[0]
-              toDate = today.toISOString().split('T')[0]
-              break
-            case 'thisMonth':
-              fromDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`
-              toDate = today.toISOString().split('T')[0]
-              break
-            case 'lastMonth':
-              const lastMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1)
-              fromDate = lastMonthDate.toISOString().split('T')[0]
-              const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0)
-              toDate = lastMonthEnd.toISOString().split('T')[0]
-              break
-          }
-          
-          if (fromDate) params.append('start_date', fromDate)
-          if (toDate) params.append('end_date', toDate)
-        }
-      }
+      // Always use the date range from the DateFilter component
+      params.append('start_date', dateFilter.startDate)
+      params.append('end_date', dateFilter.endDate)
       
       params.append('page', currentPage.toString())
       params.append('limit', itemsPerPage.toString())
@@ -133,43 +91,11 @@ export function Cashflow() {
                          transaction.payment_method.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesType = typeFilter === 'all' || transaction.type === typeFilter
     
-    // Date filtering
-    let matchesDate = true
-    if (dateFilter !== 'all') {
-      const transactionDate = new Date(transaction.transaction_date)
-      const today = new Date()
-      const yesterday = new Date(today)
-      yesterday.setDate(yesterday.getDate() - 1)
-      const lastWeek = new Date(today)
-      lastWeek.setDate(lastWeek.getDate() - 7)
-      const lastMonth = new Date(today)
-      lastMonth.setMonth(lastMonth.getMonth() - 1)
-      
-      switch (dateFilter) {
-        case 'today':
-          matchesDate = transactionDate.toDateString() === today.toDateString()
-          break
-        case 'yesterday':
-          matchesDate = transactionDate.toDateString() === yesterday.toDateString()
-          break
-        case 'last7days':
-          matchesDate = transactionDate >= lastWeek
-          break
-        case 'last30days':
-          matchesDate = transactionDate >= lastMonth
-          break
-        case 'thisMonth':
-          matchesDate = transactionDate.getMonth() === today.getMonth() && 
-                       transactionDate.getFullYear() === today.getFullYear()
-          break
-        case 'lastMonth':
-          const lastMonthDate = new Date(today)
-          lastMonthDate.setMonth(lastMonthDate.getMonth() - 1)
-          matchesDate = transactionDate.getMonth() === lastMonthDate.getMonth() && 
-                       transactionDate.getFullYear() === lastMonthDate.getFullYear()
-          break
-      }
-    }
+    // Date filtering using DateRange
+    const transactionDate = new Date(transaction.transaction_date)
+    const startDate = new Date(dateFilter.startDate)
+    const endDate = new Date(dateFilter.endDate)
+    const matchesDate = transactionDate >= startDate && transactionDate <= endDate
     
     return matchesSearch && matchesType && matchesDate
   })
@@ -214,7 +140,7 @@ export function Cashflow() {
           (paymentMethodFilter !== 'all' ? 1 : 0) +
           (accountHeadFilter !== 'all' ? 1 : 0) +
           (amountRangeFilter !== 'all' ? 1 : 0) +
-          (dateFilter !== 'all' ? 1 : 0)
+          1 // Date filter is always active
         }
         onClearAll={() => {
           setSearchTerm('')
@@ -223,7 +149,10 @@ export function Cashflow() {
           setPaymentMethodFilter('all')
           setAccountHeadFilter('all')
           setAmountRangeFilter('all')
-          setDateFilter('all')
+          setDateFilter({
+            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+            endDate: new Date().toISOString().slice(0, 10)
+          })
         }}
         showQuickActions={true}
         quickActions={[
@@ -231,7 +160,10 @@ export function Cashflow() {
             label: 'Current FY',
             action: () => {
               const currentYear = new Date().getFullYear()
-              setDateFilter(`custom:${currentYear}-04-01:${currentYear + 1}-03-31`)
+              setDateFilter({
+                startDate: `${currentYear}-04-01`,
+                endDate: `${currentYear + 1}-03-31`
+              })
             },
             icon: '📅'
           },
@@ -348,7 +280,6 @@ export function Cashflow() {
           <DateFilter
             value={dateFilter}
             onChange={setDateFilter}
-            placeholder="Select date range"
           />
         </div>
       </EnhancedFilterBar>

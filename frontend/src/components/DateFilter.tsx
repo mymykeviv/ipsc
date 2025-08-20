@@ -1,266 +1,519 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
+import { Button } from './Button'
 
-interface DateFilterProps {
-  value: string
-  onChange: (value: string) => void
-  placeholder?: string
+export interface DateRange {
+  startDate: string
+  endDate: string
+}
+
+export interface DateFilterProps {
+  value: DateRange
+  onChange: (range: DateRange) => void
+  presets?: Array<{
+    label: string
+    value: string
+    getRange: () => DateRange
+  }>
+  showFinancialPeriods?: boolean
+  showComparison?: boolean
+  comparisonRange?: DateRange | null
+  onComparisonChange?: (range: DateRange | null) => void
+  disabled?: boolean
   className?: string
 }
 
-interface DateRange {
-  from: string
-  to: string
-}
+export function DateFilter({
+  value,
+  onChange,
+  presets = [],
+  showFinancialPeriods = true,
+  showComparison = false,
+  comparisonRange,
+  onComparisonChange,
+  disabled = false,
+  className = ''
+}: DateFilterProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [tempRange, setTempRange] = useState<DateRange>(value)
+  const [tempComparisonRange, setTempComparisonRange] = useState<DateRange | null>(comparisonRange || null)
+  const dateFilterRef = useRef<HTMLDivElement>(null)
 
-const presetOptions = [
-  { value: 'all', label: 'All Time' },
-  { value: 'today', label: 'Today' },
-  { value: 'yesterday', label: 'Yesterday' },
-  { value: 'last7days', label: 'Last 7 Days' },
-  { value: 'last30days', label: 'Last 30 Days' },
-  { value: 'thisMonth', label: 'This Month' },
-  { value: 'lastMonth', label: 'Last Month' },
-  { value: 'thisQuarter', label: 'This Quarter' },
-  { value: 'lastQuarter', label: 'Last Quarter' },
-  { value: 'thisYear', label: 'This Year' },
-  { value: 'lastYear', label: 'Last Year' },
-  { value: 'custom', label: 'Custom Range' }
-]
-
-export function DateFilter({ value, onChange, placeholder = 'Select date range', className = '' }: DateFilterProps) {
-  const [isCustomOpen, setIsCustomOpen] = useState(false)
-  const [customRange, setCustomRange] = useState<DateRange>({
-    from: '',
-    to: ''
-  })
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsCustomOpen(false)
+  // Default presets
+  const defaultPresets = useMemo(() => [
+    {
+      label: 'Today',
+      value: 'today',
+      getRange: () => {
+        const today = new Date()
+        return {
+          startDate: today.toISOString().slice(0, 10),
+          endDate: today.toISOString().slice(0, 10)
+        }
+      }
+    },
+    {
+      label: 'Yesterday',
+      value: 'yesterday',
+      getRange: () => {
+        const yesterday = new Date()
+        yesterday.setDate(yesterday.getDate() - 1)
+        return {
+          startDate: yesterday.toISOString().slice(0, 10),
+          endDate: yesterday.toISOString().slice(0, 10)
+        }
+      }
+    },
+    {
+      label: 'Last 7 Days',
+      value: 'last7days',
+      getRange: () => {
+        const end = new Date()
+        const start = new Date()
+        start.setDate(start.getDate() - 6)
+        return {
+          startDate: start.toISOString().slice(0, 10),
+          endDate: end.toISOString().slice(0, 10)
+        }
+      }
+    },
+    {
+      label: 'Last 30 Days',
+      value: 'last30days',
+      getRange: () => {
+        const end = new Date()
+        const start = new Date()
+        start.setDate(start.getDate() - 29)
+        return {
+          startDate: start.toISOString().slice(0, 10),
+          endDate: end.toISOString().slice(0, 10)
+        }
+      }
+    },
+    {
+      label: 'Last 90 Days',
+      value: 'last90days',
+      getRange: () => {
+        const end = new Date()
+        const start = new Date()
+        start.setDate(start.getDate() - 89)
+        return {
+          startDate: start.toISOString().slice(0, 10),
+          endDate: end.toISOString().slice(0, 10)
+        }
+      }
+    },
+    {
+      label: 'This Month',
+      value: 'thisMonth',
+      getRange: () => {
+        const now = new Date()
+        const start = new Date(now.getFullYear(), now.getMonth(), 1)
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        return {
+          startDate: start.toISOString().slice(0, 10),
+          endDate: end.toISOString().slice(0, 10)
+        }
+      }
+    },
+    {
+      label: 'Last Month',
+      value: 'lastMonth',
+      getRange: () => {
+        const now = new Date()
+        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        const end = new Date(now.getFullYear(), now.getMonth(), 0)
+        return {
+          startDate: start.toISOString().slice(0, 10),
+          endDate: end.toISOString().slice(0, 10)
+        }
+      }
+    },
+    {
+      label: 'This Quarter',
+      value: 'thisQuarter',
+      getRange: () => {
+        const now = new Date()
+        const quarter = Math.floor(now.getMonth() / 3)
+        const start = new Date(now.getFullYear(), quarter * 3, 1)
+        const end = new Date(now.getFullYear(), (quarter + 1) * 3, 0)
+        return {
+          startDate: start.toISOString().slice(0, 10),
+          endDate: end.toISOString().slice(0, 10)
+        }
+      }
+    },
+    {
+      label: 'This Year',
+      value: 'thisYear',
+      getRange: () => {
+        const now = new Date()
+        const start = new Date(now.getFullYear(), 0, 1)
+        const end = new Date(now.getFullYear(), 11, 31)
+        return {
+          startDate: start.toISOString().slice(0, 10),
+          endDate: end.toISOString().slice(0, 10)
+        }
       }
     }
+  ], [])
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+  // Financial year presets (April to March)
+  const financialYearPresets = useMemo(() => {
+    const currentYear = new Date().getFullYear()
+    const currentMonth = new Date().getMonth()
+    const financialYear = currentMonth >= 3 ? currentYear : currentYear - 1
+    
+    return [
+      {
+        label: `FY ${financialYear}-${financialYear + 1}`,
+        value: 'currentFY',
+        getRange: () => {
+          const start = new Date(financialYear, 3, 1) // April 1st
+          const end = new Date(financialYear + 1, 2, 31) // March 31st
+          return {
+            startDate: start.toISOString().slice(0, 10),
+            endDate: end.toISOString().slice(0, 10)
+          }
+        }
+      },
+      {
+        label: `FY ${financialYear - 1}-${financialYear}`,
+        value: 'previousFY',
+        getRange: () => {
+          const start = new Date(financialYear - 1, 3, 1) // April 1st
+          const end = new Date(financialYear, 2, 31) // March 31st
+          return {
+            startDate: start.toISOString().slice(0, 10),
+            endDate: end.toISOString().slice(0, 10)
+          }
+        }
+      }
+    ]
   }, [])
 
+  const allPresets = [...defaultPresets, ...(showFinancialPeriods ? financialYearPresets : []), ...presets]
+
   useEffect(() => {
-    if (value === 'custom') {
-      setIsCustomOpen(true)
-    } else {
-      setIsCustomOpen(false)
-    }
+    setTempRange(value)
   }, [value])
 
-  const handlePresetChange = (presetValue: string) => {
-    if (presetValue === 'custom') {
-      setIsCustomOpen(true)
-    } else {
-      setIsCustomOpen(false)
-      onChange(presetValue)
-    }
+  useEffect(() => {
+    setTempComparisonRange(comparisonRange || null)
+  }, [comparisonRange])
+
+  const handlePresetClick = (preset: typeof allPresets[0]) => {
+    const newRange = preset.getRange()
+    setTempRange(newRange)
+    onChange(newRange)
+    setIsOpen(false)
   }
 
-  const handleCustomRangeApply = () => {
-    if (customRange.from && customRange.to) {
-      onChange(`custom:${customRange.from}:${customRange.to}`)
-      setIsCustomOpen(false)
+  const handleApply = () => {
+    onChange(tempRange)
+    if (showComparison && onComparisonChange) {
+      onComparisonChange(tempComparisonRange)
     }
+    setIsOpen(false)
   }
 
-  const handleCustomRangeCancel = () => {
-    setIsCustomOpen(false)
-    setCustomRange({ from: '', to: '' })
-    onChange('all')
+  const handleCancel = () => {
+    setTempRange(value)
+    setTempComparisonRange(comparisonRange || null)
+    setIsOpen(false)
   }
 
-  const getDisplayValue = () => {
-    if (value === 'all') return 'All Time'
-    if (value.startsWith('custom:')) {
-      const [, from, to] = value.split(':')
-      return `${from} to ${to}`
-    }
-    const preset = presetOptions.find(option => option.value === value)
-    return preset ? preset.label : 'Select date range'
+  const formatDateRange = (range: DateRange) => {
+    const start = new Date(range.startDate).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    })
+    const end = new Date(range.endDate).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    })
+    return start === end ? start : `${start} - ${end}`
   }
+
+  const getActivePreset = () => {
+    return allPresets.find(preset => {
+      const presetRange = preset.getRange()
+      return presetRange.startDate === value.startDate && presetRange.endDate === value.endDate
+    })
+  }
+
+  const activePreset = getActivePreset()
 
   return (
-    <div className={`date-filter ${className}`} style={{ 
-      position: 'relative',
-      zIndex: 9999 // Ensure the dropdown container has high z-index
-    }} ref={dropdownRef}>
+    <div ref={dateFilterRef} className={`date-filter ${className}`} style={{ position: 'relative' }}>
       <div
-        onClick={() => setIsCustomOpen(!isCustomOpen)}
         style={{
-          padding: '6px 10px', // Reduced padding
-          border: '1px solid #ced4da',
-          borderRadius: '4px', // Reduced border radius
-          backgroundColor: 'white',
-          cursor: 'pointer',
           display: 'flex',
-          justifyContent: 'space-between',
           alignItems: 'center',
-          minWidth: '160px', // Reduced min width
-          fontSize: '12px', // Reduced font size
-          minHeight: '32px' // Reduced min height
+          gap: '8px',
+          padding: '8px 12px',
+          border: '1px solid #ced4da',
+          borderRadius: '4px',
+          backgroundColor: disabled ? '#f8f9fa' : 'white',
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          minWidth: '200px'
         }}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
       >
+        <span style={{ fontSize: '16px' }}>📅</span>
         <span style={{ 
-          color: value === 'all' ? '#6c757d' : '#495057',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          flex: 1
+          fontSize: '14px', 
+          color: disabled ? '#6c757d' : '#495057',
+          flex: 1,
+          textAlign: 'left'
         }}>
-          {getDisplayValue()}
+          {activePreset ? activePreset.label : formatDateRange(value)}
         </span>
-        <span style={{ 
-          color: '#6c757d',
-          fontSize: '10px', // Reduced font size
-          marginLeft: '8px'
-        }}>▼</span>
+        <span style={{ fontSize: '12px', color: '#6c757d' }}>
+          {isOpen ? '▲' : '▼'}
+        </span>
       </div>
 
-      {isCustomOpen && (
+      {isOpen && !disabled && (
         <div style={{
-          position: 'absolute',
-          top: '100%',
-          left: 0,
-          right: 0,
+          position: 'fixed', // Use fixed positioning to escape parent containers
+          top: dateFilterRef.current ? dateFilterRef.current.getBoundingClientRect().bottom + 4 : '100%',
+          left: dateFilterRef.current ? dateFilterRef.current.getBoundingClientRect().left : 0,
+          width: '400px', // Fixed width for date picker
           backgroundColor: 'white',
           border: '1px solid #ced4da',
-          borderRadius: '4px', // Reduced border radius
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-          zIndex: 9999, // Increased z-index to ensure it appears above other elements
-          marginTop: '2px' // Reduced margin
+          borderRadius: '4px',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          zIndex: 9999,
+          padding: '16px',
+          marginTop: '4px'
         }}>
-          {/* Preset Options */}
-          <div style={{ maxHeight: '150px', overflow: 'auto' }}> {/* Reduced max height */}
-            {presetOptions.map((option) => (
-              <div
-                key={option.value}
-                onClick={() => handlePresetChange(option.value)}
-                style={{
-                  padding: '4px 8px', // Reduced padding
-                  cursor: 'pointer',
-                  fontSize: '11px', // Reduced font size
-                  backgroundColor: value === option.value ? '#e3f2fd' : 'transparent',
-                  color: value === option.value ? '#1976d2' : '#495057',
-                  borderBottom: '1px solid #f8f9fa'
-                }}
-                onMouseEnter={(e) => {
-                  if (value !== option.value) {
+          {/* Presets */}
+          <div style={{ marginBottom: '16px' }}>
+            <h4 style={{ 
+              margin: '0 0 12px 0', 
+              fontSize: '14px', 
+              fontWeight: '600', 
+              color: '#495057' 
+            }}>
+              Quick Presets
+            </h4>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+              gap: '8px'
+            }}>
+              {allPresets.map((preset) => (
+                <button
+                  key={preset.value}
+                  onClick={() => handlePresetClick(preset)}
+                  style={{
+                    padding: '6px 12px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    backgroundColor: 'white',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = '#f8f9fa'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (value !== option.value) {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }
-                }}
-              >
-                {option.label}
-              </div>
-            ))}
+                    e.currentTarget.style.borderColor = '#007bff'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white'
+                    e.currentTarget.style.borderColor = '#ced4da'
+                  }}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Custom Range Input */}
-          {isCustomOpen && (
-            <div style={{ 
-              padding: '8px', // Reduced padding
-              borderTop: '1px solid #e9ecef',
-              backgroundColor: '#f8f9fa'
+          {/* Custom Date Range */}
+          <div style={{ marginBottom: '16px' }}>
+            <h4 style={{ 
+              margin: '0 0 12px 0', 
+              fontSize: '14px', 
+              fontWeight: '600', 
+              color: '#495057' 
             }}>
-              <div style={{ marginBottom: '6px' }}> {/* Reduced margin */}
+              Custom Range
+            </h4>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '12px'
+            }}>
+              <div>
                 <label style={{ 
-                  fontSize: '10px', // Reduced font size
-                  color: '#495057',
-                  fontWeight: '500',
-                  display: 'block',
-                  marginBottom: '2px' // Reduced margin
+                  display: 'block', 
+                  marginBottom: '4px', 
+                  fontSize: '12px', 
+                  color: '#6c757d' 
                 }}>
-                  From Date:
+                  Start Date
                 </label>
                 <input
                   type="date"
-                  value={customRange.from}
-                  onChange={(e) => setCustomRange(prev => ({ ...prev, from: e.target.value }))}
+                  value={tempRange.startDate}
+                  onChange={(e) => setTempRange(prev => ({ ...prev, startDate: e.target.value }))}
                   style={{
                     width: '100%',
-                    padding: '3px 6px', // Reduced padding
+                    padding: '6px 8px',
                     border: '1px solid #ced4da',
-                    borderRadius: '3px', // Reduced border radius
-                    fontSize: '11px', // Reduced font size
-                    outline: 'none'
+                    borderRadius: '4px',
+                    fontSize: '12px'
                   }}
                 />
               </div>
-              <div style={{ marginBottom: '6px' }}> {/* Reduced margin */}
+              <div>
                 <label style={{ 
-                  fontSize: '10px', // Reduced font size
-                  color: '#495057',
-                  fontWeight: '500',
-                  display: 'block',
-                  marginBottom: '2px' // Reduced margin
+                  display: 'block', 
+                  marginBottom: '4px', 
+                  fontSize: '12px', 
+                  color: '#6c757d' 
                 }}>
-                  To Date:
+                  End Date
                 </label>
                 <input
                   type="date"
-                  value={customRange.to}
-                  onChange={(e) => setCustomRange(prev => ({ ...prev, to: e.target.value }))}
+                  value={tempRange.endDate}
+                  onChange={(e) => setTempRange(prev => ({ ...prev, endDate: e.target.value }))}
                   style={{
                     width: '100%',
-                    padding: '3px 6px', // Reduced padding
+                    padding: '6px 8px',
                     border: '1px solid #ced4da',
-                    borderRadius: '3px', // Reduced border radius
-                    fontSize: '11px', // Reduced font size
-                    outline: 'none'
+                    borderRadius: '4px',
+                    fontSize: '12px'
                   }}
                 />
-              </div>
-              <div style={{ 
-                display: 'flex', 
-                gap: '4px', // Reduced gap
-                marginTop: '6px' // Reduced margin
-              }}>
-                <button
-                  onClick={handleCustomRangeApply}
-                  disabled={!customRange.from || !customRange.to}
-                  style={{
-                    flex: 1,
-                    padding: '4px 8px', // Reduced padding
-                    border: '1px solid #007bff',
-                    borderRadius: '3px', // Reduced border radius
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontSize: '10px', // Reduced font size
-                    opacity: (!customRange.from || !customRange.to) ? 0.5 : 1
-                  }}
-                >
-                  Apply
-                </button>
-                <button
-                  onClick={handleCustomRangeCancel}
-                  style={{
-                    flex: 1,
-                    padding: '4px 8px', // Reduced padding
-                    border: '1px solid #ced4da',
-                    borderRadius: '3px', // Reduced border radius
-                    backgroundColor: 'white',
-                    color: '#495057',
-                    cursor: 'pointer',
-                    fontSize: '10px' // Reduced font size
-                  }}
-                >
-                  Cancel
-                </button>
               </div>
             </div>
+          </div>
+
+          {/* Comparison Range */}
+          {showComparison && (
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '12px'
+              }}>
+                <input
+                  type="checkbox"
+                  id="enableComparison"
+                  checked={tempComparisonRange !== null}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      const comparisonRange = {
+                        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+                        endDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+                      }
+                      setTempComparisonRange(comparisonRange)
+                    } else {
+                      setTempComparisonRange(null)
+                    }
+                  }}
+                  style={{ margin: 0 }}
+                />
+                <label htmlFor="enableComparison" style={{ 
+                  fontSize: '14px', 
+                  fontWeight: '600', 
+                  color: '#495057',
+                  cursor: 'pointer'
+                }}>
+                  Compare with Previous Period
+                </label>
+              </div>
+              
+              {tempComparisonRange && (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '12px',
+                  padding: '12px',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '4px'
+                }}>
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '4px', 
+                      fontSize: '12px', 
+                      color: '#6c757d' 
+                    }}>
+                      Comparison Start
+                    </label>
+                    <input
+                      type="date"
+                      value={tempComparisonRange.startDate}
+                      onChange={(e) => setTempComparisonRange(prev => 
+                        prev ? { ...prev, startDate: e.target.value } : null
+                      )}
+                      style={{
+                        width: '100%',
+                        padding: '6px 8px',
+                        border: '1px solid #ced4da',
+                        borderRadius: '4px',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '4px', 
+                      fontSize: '12px', 
+                      color: '#6c757d' 
+                    }}>
+                      Comparison End
+                    </label>
+                    <input
+                      type="date"
+                      value={tempComparisonRange.endDate}
+                      onChange={(e) => setTempComparisonRange(prev => 
+                        prev ? { ...prev, endDate: e.target.value } : null
+                      )}
+                      style={{
+                        width: '100%',
+                        padding: '6px 8px',
+                        border: '1px solid #ced4da',
+                        borderRadius: '4px',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           )}
+
+          {/* Actions */}
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            justifyContent: 'flex-end'
+          }}>
+            <Button
+              onClick={handleCancel}
+              variant="secondary"
+              style={{ fontSize: '12px', padding: '6px 12px' }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleApply}
+              variant="primary"
+              style={{ fontSize: '12px', padding: '6px 12px' }}
+            >
+              Apply
+            </Button>
+          </div>
         </div>
       )}
     </div>

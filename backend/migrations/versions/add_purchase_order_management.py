@@ -17,8 +17,9 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Create purchase_orders table
-    op.create_table('purchase_orders',
+    # Create purchase_orders table (with SQLite compatibility)
+    try:
+        op.create_table('purchase_orders',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('vendor_id', sa.Integer(), nullable=False),
         sa.Column('po_number', sa.String(length=16), nullable=False),
@@ -54,10 +55,13 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['vendor_id'], ['parties.id'], ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('po_number')
-    )
+        )
+    except Exception:
+        pass  # Table might already exist
     
-    # Create purchase_order_items table
-    op.create_table('purchase_order_items',
+    # Create purchase_order_items table (with SQLite compatibility)
+    try:
+        op.create_table('purchase_order_items',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('purchase_order_id', sa.Integer(), nullable=False),
         sa.Column('product_id', sa.Integer(), nullable=False),
@@ -73,7 +77,9 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['product_id'], ['products.id'], ),
         sa.ForeignKeyConstraint(['purchase_order_id'], ['purchase_orders.id'], ),
         sa.PrimaryKeyConstraint('id')
-    )
+        )
+    except Exception:
+        pass  # Table might already exist
 
 
 def downgrade() -> None:

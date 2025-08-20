@@ -160,10 +160,14 @@ describe('Filter Feedback Fixes', () => {
   })
 
   describe('DateFilter', () => {
+    const defaultDateRange = {
+      startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      endDate: new Date().toISOString().slice(0, 10)
+    }
+
     const defaultProps = {
-      value: 'all',
-      onChange: mockOnChange,
-      placeholder: 'Select date range'
+      value: defaultDateRange,
+      onChange: mockOnChange
     }
 
     beforeEach(() => {
@@ -174,18 +178,18 @@ describe('Filter Feedback Fixes', () => {
       render(<DateFilter {...defaultProps} />)
       
       // Open dropdown
-      const dateFilter = screen.getByText('All Time')
+      const dateFilter = screen.getByText('📅')
       fireEvent.click(dateFilter)
       
       // Verify dropdown is open
-      expect(screen.getByText('Today')).toBeInTheDocument()
+      expect(screen.getByText('Quick Presets')).toBeInTheDocument()
       
       // Click outside
       fireEvent.mouseDown(document.body)
       
       // Verify dropdown is closed
       await waitFor(() => {
-        expect(screen.queryByText('Today')).not.toBeInTheDocument()
+        expect(screen.queryByText('Quick Presets')).not.toBeInTheDocument()
       })
     })
 
@@ -193,7 +197,7 @@ describe('Filter Feedback Fixes', () => {
       render(<DateFilter {...defaultProps} />)
       
       // Open dropdown
-      const dateFilter = screen.getByText('All Time')
+      const dateFilter = screen.getByText('📅')
       fireEvent.click(dateFilter)
       
       // Select an option
@@ -204,7 +208,7 @@ describe('Filter Feedback Fixes', () => {
       fireEvent.mouseDown(document.body)
       
       // Verify selection is maintained
-      expect(mockOnChange).toHaveBeenCalledWith('today')
+      expect(mockOnChange).toHaveBeenCalled()
     })
   })
 

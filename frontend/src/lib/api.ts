@@ -42,7 +42,11 @@ export interface ProductFilters {
 export interface StockHistoryFilters {
   search?: string
   product_id?: number
-  entry_type?: string
+  productFilter?: string
+  categoryFilter?: string
+  supplierFilter?: string
+  stockLevelFilter?: string
+  entryTypeFilter?: string
   reference_number?: string
   quantity_min?: number
   quantity_max?: number
@@ -1129,20 +1133,20 @@ export async function apiDownloadStockMovementHistoryPDF(
   productId?: number,
   filters?: {
     productFilter?: string
-    entryTypeFilter?: string
-    referenceTypeFilter?: string
-    referenceSearch?: string
+    categoryFilter?: string
+    supplierFilter?: string
     stockLevelFilter?: string
+    entryTypeFilter?: string
   }
 ): Promise<void> {
   const params = new URLSearchParams()
   if (financialYear) params.append('financial_year', financialYear)
   if (productId) params.append('product_id', productId.toString())
   if (filters?.productFilter && filters.productFilter !== 'all') params.append('product_filter', filters.productFilter)
-  if (filters?.entryTypeFilter && filters.entryTypeFilter !== 'all') params.append('entry_type_filter', filters.entryTypeFilter)
-  if (filters?.referenceTypeFilter && filters.referenceTypeFilter !== 'all') params.append('reference_type_filter', filters.referenceTypeFilter)
-  if (filters?.referenceSearch) params.append('reference_search', filters.referenceSearch)
+  if (filters?.categoryFilter && filters.categoryFilter !== 'all') params.append('category_filter', filters.categoryFilter)
+  if (filters?.supplierFilter && filters.supplierFilter !== 'all') params.append('supplier_filter', filters.supplierFilter)
   if (filters?.stockLevelFilter && filters.stockLevelFilter !== 'all') params.append('stock_level_filter', filters.stockLevelFilter)
+  if (filters?.entryTypeFilter && filters.entryTypeFilter !== 'all') params.append('entry_type_filter', filters.entryTypeFilter)
   
   const queryString = params.toString()
   const url = `/api/stock/movement-history/pdf${queryString ? `?${queryString}` : ''}`
@@ -1187,20 +1191,20 @@ export async function apiGetStockMovementHistoryPDFPreview(
   productId?: number,
   filters?: {
     productFilter?: string
-    entryTypeFilter?: string
-    referenceTypeFilter?: string
-    referenceSearch?: string
+    categoryFilter?: string
+    supplierFilter?: string
     stockLevelFilter?: string
+    entryTypeFilter?: string
   }
 ): Promise<string> {
   const params = new URLSearchParams()
   if (financialYear) params.append('financial_year', financialYear)
   if (productId) params.append('product_id', productId.toString())
   if (filters?.productFilter && filters.productFilter !== 'all') params.append('product_filter', filters.productFilter)
-  if (filters?.entryTypeFilter && filters.entryTypeFilter !== 'all') params.append('entry_type_filter', filters.entryTypeFilter)
-  if (filters?.referenceTypeFilter && filters.referenceTypeFilter !== 'all') params.append('reference_type_filter', filters.referenceTypeFilter)
-  if (filters?.referenceSearch) params.append('reference_search', filters.referenceSearch)
+  if (filters?.categoryFilter && filters.categoryFilter !== 'all') params.append('category_filter', filters.categoryFilter)
+  if (filters?.supplierFilter && filters.supplierFilter !== 'all') params.append('supplier_filter', filters.supplierFilter)
   if (filters?.stockLevelFilter && filters.stockLevelFilter !== 'all') params.append('stock_level_filter', filters.stockLevelFilter)
+  if (filters?.entryTypeFilter && filters.entryTypeFilter !== 'all') params.append('entry_type_filter', filters.entryTypeFilter)
   
   const queryString = params.toString()
   const url = `/api/stock/movement-history/pdf-preview${queryString ? `?${queryString}` : ''}`

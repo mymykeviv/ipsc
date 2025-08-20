@@ -21,7 +21,7 @@ import { PurchaseForm } from '../components/PurchaseForm'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { FilterDropdown } from '../components/FilterDropdown'
-import { DateFilter } from '../components/DateFilter'
+import { DateFilter, DateRange } from '../components/DateFilter'
 import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
 import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 
@@ -44,7 +44,10 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
   const [vendorFilter, setVendorFilter] = useState('all')
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('all')
   const [amountRangeFilter, setAmountRangeFilter] = useState('all')
-  const [dateFilter, setDateFilter] = useState('all')
+  const [dateFilter, setDateFilter] = useState<DateRange>({
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+    endDate: new Date().toISOString().slice(0, 10)
+  })
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
 
@@ -295,7 +298,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
           (vendorFilter !== 'all' ? 1 : 0) +
           (paymentStatusFilter !== 'all' ? 1 : 0) +
           (amountRangeFilter !== 'all' ? 1 : 0) +
-          (dateFilter !== 'all' ? 1 : 0)
+          0 // DateFilter is always active now
         }
         onClearAll={() => {
           setSearchTerm('')
@@ -303,7 +306,10 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
           setVendorFilter('all')
           setPaymentStatusFilter('all')
           setAmountRangeFilter('all')
-          setDateFilter('all')
+          setDateFilter({
+            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+            endDate: new Date().toISOString().slice(0, 10)
+          })
         }}
         showQuickActions={true}
         quickActions={[
@@ -311,7 +317,10 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
             label: 'Current FY',
             action: () => {
               const currentYear = new Date().getFullYear()
-              setDateFilter(`custom:${currentYear}-04-01:${currentYear + 1}-03-31`)
+              setDateFilter({
+                startDate: `${currentYear}-04-01`,
+                endDate: `${currentYear + 1}-03-31`
+              })
             },
             icon: '📅'
           },
@@ -410,7 +419,6 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
           <DateFilter
             value={dateFilter}
             onChange={setDateFilter}
-            placeholder="Select date range"
           />
         </div>
       </EnhancedFilterBar>

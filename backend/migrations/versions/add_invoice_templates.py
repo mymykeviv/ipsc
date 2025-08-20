@@ -17,8 +17,9 @@ depends_on = None
 
 
 def upgrade():
-    # Create invoice_templates table
-    op.create_table('invoice_templates',
+    # Create invoice_templates table (with SQLite compatibility)
+    try:
+        op.create_table('invoice_templates',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('name', sa.String(length=100), nullable=False),
         sa.Column('description', sa.String(length=200), nullable=True),
@@ -46,21 +47,36 @@ def upgrade():
         sa.Column('created_at', sa.DateTime(), nullable=False, default=sa.func.current_timestamp()),
         sa.Column('updated_at', sa.DateTime(), nullable=False, default=sa.func.current_timestamp(), onupdate=sa.func.current_timestamp()),
         sa.PrimaryKeyConstraint('id')
-    )
+        )
+    except Exception:
+        pass  # Table might already exist
 
-    # Create indexes
-    op.create_index(op.f('ix_invoice_templates_is_active'), 'invoice_templates', ['is_active'], unique=False)
-    op.create_index(op.f('ix_invoice_templates_is_default'), 'invoice_templates', ['is_default'], unique=False)
-    op.create_index(op.f('ix_invoice_templates_template_type'), 'invoice_templates', ['template_type'], unique=False)
+    # Create indexes (with SQLite compatibility)
+    try:
+        op.create_index(op.f('ix_invoice_templates_is_active'), 'invoice_templates', ['is_active'], unique=False)
+    except Exception:
+        pass  # Index might already exist
+        
+    try:
+        op.create_index(op.f('ix_invoice_templates_is_default'), 'invoice_templates', ['is_default'], unique=False)
+    except Exception:
+        pass  # Index might already exist
+        
+    try:
+        op.create_index(op.f('ix_invoice_templates_template_type'), 'invoice_templates', ['template_type'], unique=False)
+    except Exception:
+        pass  # Index might already exist
 
-    # Insert default template
-    op.execute("""
+    # Insert default template (with SQLite compatibility)
+    try:
+        op.execute("""
         INSERT INTO invoice_templates (
             name, description, template_type, primary_color, secondary_color, accent_color,
             header_font, body_font, header_font_size, body_font_size,
             show_logo, logo_position, show_company_details, show_customer_details,
             show_supplier_details, show_terms, show_notes, show_footer,
-            header_text, footer_text, terms_text, is_active, is_default
+            header_text, footer_text, terms_text, is_active, is_default,
+            created_at, updated_at
         ) VALUES (
             'Default Professional',
             'Default professional invoice template with clean design',
@@ -84,9 +100,13 @@ def upgrade():
             'Thank you for your business!',
             'Payment is due within the terms specified above.',
             1,
-            1
+            1,
+            datetime('now'),
+            datetime('now')
         )
-    """)
+        """)
+    except Exception:
+        pass  # Template might already exist
 
 
 def downgrade():

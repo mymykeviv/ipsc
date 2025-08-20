@@ -260,10 +260,10 @@ export function Dashboard() {
       }}>
         <div>
           <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
-            📊 Business Dashboard
+            📊 ProfitPath Dashboard
           </h1>
           <p style={{ margin: '8px 0 0 0', color: '#6c757d', fontSize: '16px' }}>
-            {getPeriodLabel()} • Real-time business overview
+            {getPeriodLabel()} • Track Your Success, Step by Step
           </p>
         </div>
         

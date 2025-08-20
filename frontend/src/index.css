@@ -367,6 +367,18 @@ header {
   border-color: #bd2130;
 }
 
+.btn-outline {
+  color: #007bff;
+  background-color: transparent;
+  border-color: #007bff;
+}
+
+.btn-outline:hover {
+  color: #fff;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
 /* Card Styles */
 .card {
   position: relative;

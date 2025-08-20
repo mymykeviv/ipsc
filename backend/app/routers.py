@@ -837,8 +837,8 @@ def invoice_pdf(invoice_id: int, template_id: int | None = None, _: User = Depen
         story.append(Paragraph(f"GSTIN: {company.gstin}", normal_style))
         story.append(Paragraph(f"State: {company.state} - {company.state_code}", normal_style))
     elif template.show_company_details:
-        story.append(Paragraph("<b>CASHFLOW</b>", title_style))
-        story.append(Paragraph("Financial Management System", normal_style))
+        story.append(Paragraph("<b>ProfitPath</b>", title_style))
+        story.append(Paragraph("Track Your Success, Step by Step", normal_style))
     
     story.append(Spacer(1, 20))
     
@@ -1332,7 +1332,7 @@ def email_invoice(invoice_id: int, payload: EmailRequest, _: User = Depends(get_
     
     # Get company details
     company = db.query(CompanySettings).first()
-    company_name = company.name if company else "CASHFLOW"
+    company_name = company.name if company else "ProfitPath"
     
     # Generate PDF
     try:
@@ -2058,6 +2058,122 @@ class InventoryDashboardMetrics(BaseModel):
     generated_at: str = None
 
 
+# Financial Reporting Models
+class CashflowReportItem(BaseModel):
+    transaction_id: int
+    transaction_type: str  # 'income', 'expense', 'purchase_payment'
+    transaction_date: str
+    amount: float
+    description: str
+    category: str | None
+    payment_method: str | None
+    reference_type: str | None  # 'invoice', 'purchase', 'expense'
+    reference_id: int | None
+    reference_number: str | None
+    party_name: str | None
+
+class CashflowReport(BaseModel):
+    period: dict
+    summary: dict
+    transactions: list[CashflowReportItem]
+    trends: dict
+    generated_at: str
+    filters_applied: dict | None
+
+class IncomeReportItem(BaseModel):
+    invoice_id: int
+    invoice_no: str
+    invoice_date: str
+    customer_name: str
+    taxable_value: float
+    total_tax: float
+    grand_total: float
+    payment_status: str
+    payment_amount: float
+    outstanding_amount: float
+
+class IncomeReport(BaseModel):
+    period: dict
+    summary: dict
+    transactions: list[IncomeReportItem]
+    customer_breakdown: list[dict]
+    product_breakdown: list[dict]
+    trends: dict
+    generated_at: str
+    filters_applied: dict | None
+
+class ExpenseReportItem(BaseModel):
+    expense_id: int
+    expense_date: str
+    category: str
+    description: str
+    amount: float
+    vendor_name: str | None
+    payment_method: str | None
+    reference_number: str | None
+
+class ExpenseReport(BaseModel):
+    period: dict
+    summary: dict
+    transactions: list[ExpenseReportItem]
+    category_breakdown: list[dict]
+    vendor_breakdown: list[dict]
+    trends: dict
+    generated_at: str
+    filters_applied: dict | None
+
+class PurchaseReportItem(BaseModel):
+    purchase_id: int
+    purchase_no: str
+    purchase_date: str
+    vendor_name: str
+    taxable_value: float
+    total_tax: float
+    grand_total: float
+    payment_status: str
+    payment_amount: float
+    outstanding_amount: float
+
+class PurchaseReport(BaseModel):
+    period: dict
+    summary: dict
+    transactions: list[PurchaseReportItem]
+    vendor_breakdown: list[dict]
+    product_breakdown: list[dict]
+    trends: dict
+    generated_at: str
+    filters_applied: dict | None
+
+class PaymentReportItem(BaseModel):
+    payment_id: int
+    payment_date: str
+    payment_type: str  # 'invoice_payment', 'purchase_payment'
+    payment_method: str
+    amount: float
+    reference_type: str
+    reference_id: int
+    reference_number: str
+    party_name: str
+    status: str
+
+class PaymentReport(BaseModel):
+    period: dict
+    summary: dict
+    transactions: list[PaymentReportItem]
+    method_breakdown: list[dict]
+    party_breakdown: list[dict]
+    trends: dict
+    generated_at: str
+    filters_applied: dict | None
+
+class FinancialReport(BaseModel):
+    report_type: str
+    period: dict
+    data: dict
+    generated_at: str
+    filters_applied: dict | None
+
+
 @api.get('/reports/inventory-summary', response_model=InventorySummaryReport)
 def get_inventory_summary_report(
     category: str | None = Query(None, description="Filter by product category"),
@@ -2481,6 +2597,983 @@ def get_inventory_dashboard_metrics(
     except Exception as e:
         logger.error(f"Error generating inventory dashboard metrics: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to generate inventory dashboard metrics")
+
+
+# Cashflow Reports API Endpoints
+@api.get('/reports/cashflow', response_model=CashflowReport)
+def get_cashflow_report(
+    start_date: str | None = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: str | None = Query(None, description="End date (YYYY-MM-DD)"),
+    transaction_type: str | None = Query(None, description="Filter by transaction type: income, expense, purchase_payment"),
+    payment_method: str | None = Query(None, description="Filter by payment method"),
+    category: str | None = Query(None, description="Filter by category"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate comprehensive cashflow report with trends and analysis"""
+    
+    try:
+        from datetime import datetime, timedelta
+        
+        # Set default date range if not provided
+        if not start_date:
+            start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+        if not end_date:
+            end_date = datetime.now().strftime('%Y-%m-%d')
+        
+        # Convert to datetime objects
+        start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+        
+        # Initialize cashflow service
+        from .cashflow_service import CashflowService
+        cashflow_service = CashflowService(db)
+        
+        # Get cashflow summary
+        summary = cashflow_service.get_cashflow_summary(start_dt, end_dt)
+        
+        # Get detailed transactions
+        transactions = []
+        
+        # Income transactions (Invoice Payments)
+        income_filter = []
+        if start_date:
+            income_filter.append(Payment.payment_date >= start_dt)
+        if end_date:
+            income_filter.append(Payment.payment_date <= end_dt)
+        if payment_method:
+            income_filter.append(Payment.payment_method == payment_method)
+        
+        income_payments = db.query(Payment).filter(and_(*income_filter)).all()
+        for payment in income_payments:
+            invoice = db.query(Invoice).filter(Invoice.id == payment.invoice_id).first()
+            customer = db.query(Party).filter(Party.id == invoice.customer_id).first() if invoice else None
+            
+            transactions.append(CashflowReportItem(
+                transaction_id=payment.id,
+                transaction_type='income',
+                transaction_date=payment.payment_date.isoformat(),
+                amount=float(payment.payment_amount),
+                description=f"Payment for Invoice {invoice.invoice_no}" if invoice else "Payment",
+                category="Sales",
+                payment_method=payment.payment_method,
+                reference_type='invoice',
+                reference_id=payment.invoice_id,
+                reference_number=invoice.invoice_no if invoice else None,
+                party_name=customer.name if customer else None
+            ))
+        
+        # Expense transactions (Purchase Payments + Direct Expenses)
+        purchase_payment_filter = []
+        expense_filter = []
+        if start_date:
+            purchase_payment_filter.append(PurchasePayment.payment_date >= start_dt)
+            expense_filter.append(Expense.expense_date >= start_dt)
+        if end_date:
+            purchase_payment_filter.append(PurchasePayment.payment_date <= end_dt)
+            expense_filter.append(Expense.expense_date <= end_dt)
+        if payment_method:
+            purchase_payment_filter.append(PurchasePayment.payment_method == payment_method)
+        
+        # Purchase payments
+        purchase_payments = db.query(PurchasePayment).filter(and_(*purchase_payment_filter)).all()
+        for payment in purchase_payments:
+            purchase = db.query(Purchase).filter(Purchase.id == payment.purchase_id).first()
+            vendor = db.query(Party).filter(Party.id == purchase.vendor_id).first() if purchase else None
+            
+            transactions.append(CashflowReportItem(
+                transaction_id=payment.id,
+                transaction_type='purchase_payment',
+                transaction_date=payment.payment_date.isoformat(),
+                amount=float(payment.payment_amount),
+                description=f"Payment for Purchase {purchase.purchase_no}" if purchase else "Purchase Payment",
+                category="Purchases",
+                payment_method=payment.payment_method,
+                reference_type='purchase',
+                reference_id=payment.purchase_id,
+                reference_number=purchase.purchase_no if purchase else None,
+                party_name=vendor.name if vendor else None
+            ))
+        
+        # Direct expenses
+        expenses = db.query(Expense).filter(and_(*expense_filter)).all()
+        for expense in expenses:
+            # Get vendor name through relationship
+            vendor = db.query(Party).filter(Party.id == expense.vendor_id).first() if expense.vendor_id else None
+            
+            transactions.append(CashflowReportItem(
+                transaction_id=expense.id,
+                transaction_type='expense',
+                transaction_date=expense.expense_date.isoformat(),
+                amount=float(expense.total_amount),
+                description=expense.description,
+                category=expense.category,
+                payment_method=expense.payment_method,
+                reference_type='expense',
+                reference_id=expense.id,
+                reference_number=expense.reference_number,
+                party_name=vendor.name if vendor else None
+            ))
+        
+        # Apply transaction type filter if specified
+        if transaction_type:
+            transactions = [t for t in transactions if t.transaction_type == transaction_type]
+        
+        # Apply category filter if specified
+        if category:
+            transactions = [t for t in transactions if t.category == category]
+        
+        # Sort transactions by date
+        transactions.sort(key=lambda x: x.transaction_date, reverse=True)
+        
+        # Calculate trends (monthly breakdown)
+        trends = {
+            "monthly_breakdown": [],
+            "cashflow_trend": "positive" if summary["net_cashflow"] > 0 else "negative"
+        }
+        
+        # Generate monthly breakdown for the last 6 months
+        for i in range(6):
+            month_start = (datetime.now() - timedelta(days=30*i)).replace(day=1)
+            month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+            
+            month_summary = cashflow_service.get_cashflow_summary(month_start.date(), month_end.date())
+            trends["monthly_breakdown"].append({
+                "month": month_start.strftime('%Y-%m'),
+                "income": month_summary["total_income"],
+                "expenses": month_summary["total_outflow"],
+                "net_cashflow": month_summary["net_cashflow"]
+            })
+        
+        trends["monthly_breakdown"].reverse()
+        
+        return CashflowReport(
+            period={
+                "start_date": start_date,
+                "end_date": end_date
+            },
+            summary=summary,
+            transactions=transactions,
+            trends=trends,
+            generated_at=datetime.now().isoformat(),
+            filters_applied={
+                "transaction_type": transaction_type,
+                "payment_method": payment_method,
+                "category": category
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating cashflow report: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate cashflow report")
+
+
+# Income Reports API Endpoints
+@api.get('/reports/income', response_model=IncomeReport)
+def get_income_report(
+    start_date: str | None = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: str | None = Query(None, description="End date (YYYY-MM-DD)"),
+    customer_id: int | None = Query(None, description="Filter by customer ID"),
+    payment_status: str | None = Query(None, description="Filter by payment status"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate comprehensive income report with customer and product breakdown"""
+    
+    try:
+        from datetime import datetime, timedelta
+        
+        # Set default date range if not provided
+        if not start_date:
+            start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+        if not end_date:
+            end_date = datetime.now().strftime('%Y-%m-%d')
+        
+        # Convert to datetime objects
+        start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+        
+        # Build base query
+        query = db.query(Invoice).join(Party, Invoice.customer_id == Party.id)
+        
+        # Apply filters
+        query = query.filter(Invoice.date >= start_dt, Invoice.date <= end_dt)
+        if customer_id:
+            query = query.filter(Invoice.customer_id == customer_id)
+        if payment_status:
+            query = query.filter(Invoice.payment_status == payment_status)
+        
+        invoices = query.all()
+        
+        # Calculate summary
+        total_revenue = sum(float(inv.grand_total) for inv in invoices)
+        total_tax = sum(float(inv.cgst + inv.sgst + inv.igst) for inv in invoices)
+        total_taxable_value = sum(float(inv.taxable_value) for inv in invoices)
+        
+        # Calculate payment status breakdown
+        paid_amount = 0
+        outstanding_amount = 0
+        for inv in invoices:
+            if inv.payment_status == 'paid':
+                paid_amount += float(inv.grand_total)
+            else:
+                outstanding_amount += float(inv.grand_total)
+        
+        summary = {
+            "total_revenue": total_revenue,
+            "total_tax": total_tax,
+            "total_taxable_value": total_taxable_value,
+            "paid_amount": paid_amount,
+            "outstanding_amount": outstanding_amount,
+            "invoice_count": len(invoices),
+            "payment_status_breakdown": {
+                "paid": paid_amount,
+                "outstanding": outstanding_amount
+            }
+        }
+        
+        # Build transaction list
+        transactions = []
+        for inv in invoices:
+            customer = db.query(Party).filter(Party.id == inv.customer_id).first()
+            
+            # Calculate payment amount
+            payments = db.query(Payment).filter(Payment.invoice_id == inv.id).all()
+            payment_amount = sum(float(p.payment_amount) for p in payments)
+            outstanding = float(inv.grand_total) - payment_amount
+            
+            transactions.append(IncomeReportItem(
+                invoice_id=inv.id,
+                invoice_no=inv.invoice_no,
+                invoice_date=inv.date.isoformat(),
+                customer_name=customer.name if customer else "Unknown",
+                taxable_value=float(inv.taxable_value),
+                total_tax=float(inv.cgst + inv.sgst + inv.igst),
+                grand_total=float(inv.grand_total),
+                payment_status=inv.payment_status,
+                payment_amount=payment_amount,
+                outstanding_amount=outstanding
+            ))
+        
+        # Customer breakdown
+        customer_breakdown = []
+        customer_totals = {}
+        for inv in invoices:
+            customer = db.query(Party).filter(Party.id == inv.customer_id).first()
+            customer_name = customer.name if customer else "Unknown"
+            
+            if customer_name not in customer_totals:
+                customer_totals[customer_name] = 0
+            customer_totals[customer_name] += float(inv.grand_total)
+        
+        for customer_name, total in customer_totals.items():
+            customer_breakdown.append({
+                "customer_name": customer_name,
+                "total_revenue": total,
+                "invoice_count": len([inv for inv in invoices if db.query(Party).filter(Party.id == inv.customer_id).first().name == customer_name])
+            })
+        
+        # Product breakdown
+        product_breakdown = []
+        product_totals = {}
+        
+        for inv in invoices:
+            items = db.query(InvoiceItem).filter(InvoiceItem.invoice_id == inv.id).all()
+            for item in items:
+                product = db.query(Product).filter(Product.id == item.product_id).first()
+                product_name = product.name if product else "Unknown"
+                
+                if product_name not in product_totals:
+                    product_totals[product_name] = 0
+                product_totals[product_name] += float(item.amount)
+        
+        for product_name, total in product_totals.items():
+            product_breakdown.append({
+                "product_name": product_name,
+                "total_revenue": total,
+                "quantity_sold": sum(
+                    float(item.qty) for inv in invoices 
+                    for item in db.query(InvoiceItem).filter(InvoiceItem.invoice_id == inv.id).all()
+                    if db.query(Product).filter(Product.id == item.product_id).first().name == product_name
+                )
+            })
+        
+        # Calculate trends
+        trends = {
+            "monthly_revenue": [],
+            "growth_rate": 0
+        }
+        
+        # Generate monthly revenue for the last 6 months
+        for i in range(6):
+            month_start = (datetime.now() - timedelta(days=30*i)).replace(day=1)
+            month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+            
+            month_invoices = db.query(Invoice).filter(
+                Invoice.date >= month_start.date(),
+                Invoice.date <= month_end.date()
+            ).all()
+            
+            month_revenue = sum(float(inv.grand_total) for inv in month_invoices)
+            trends["monthly_revenue"].append({
+                "month": month_start.strftime('%Y-%m'),
+                "revenue": month_revenue
+            })
+        
+        trends["monthly_revenue"].reverse()
+        
+        # Calculate growth rate (comparing current month to previous month)
+        if len(trends["monthly_revenue"]) >= 2:
+            current_month = trends["monthly_revenue"][-1]["revenue"]
+            previous_month = trends["monthly_revenue"][-2]["revenue"]
+            if previous_month > 0:
+                trends["growth_rate"] = ((current_month - previous_month) / previous_month) * 100
+        
+        return IncomeReport(
+            period={
+                "start_date": start_date,
+                "end_date": end_date
+            },
+            summary=summary,
+            transactions=transactions,
+            customer_breakdown=customer_breakdown,
+            product_breakdown=product_breakdown,
+            trends=trends,
+            generated_at=datetime.now().isoformat(),
+            filters_applied={
+                "customer_id": customer_id,
+                "payment_status": payment_status
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating income report: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate income report")
+
+
+# Expense Reports API Endpoints
+@api.get('/reports/expenses', response_model=ExpenseReport)
+def get_expense_report(
+    start_date: str | None = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: str | None = Query(None, description="End date (YYYY-MM-DD)"),
+    category: str | None = Query(None, description="Filter by expense category"),
+    vendor_name: str | None = Query(None, description="Filter by vendor name"),
+    payment_method: str | None = Query(None, description="Filter by payment method"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate comprehensive expense report with category and vendor breakdown"""
+    
+    try:
+        from datetime import datetime, timedelta
+        
+        # Set default date range if not provided
+        if not start_date:
+            start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+        if not end_date:
+            end_date = datetime.now().strftime('%Y-%m-%d')
+        
+        # Convert to datetime objects
+        start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+        
+        # Build base query
+        query = db.query(Expense)
+        
+        # Apply filters
+        query = query.filter(Expense.expense_date >= start_dt, Expense.expense_date <= end_dt)
+        if category:
+            query = query.filter(Expense.category == category)
+        if vendor_name:
+            # Find vendor by name and filter by vendor_id
+            vendor = db.query(Party).filter(Party.name.ilike(f"%{vendor_name}%")).first()
+            if vendor:
+                query = query.filter(Expense.vendor_id == vendor.id)
+        if payment_method:
+            query = query.filter(Expense.payment_method == payment_method)
+        
+        expenses = query.all()
+        
+        # Calculate summary
+        total_expenses = sum(float(exp.total_amount) for exp in expenses)
+        expense_count = len(expenses)
+        
+        summary = {
+            "total_expenses": total_expenses,
+            "expense_count": expense_count,
+            "average_expense": total_expenses / expense_count if expense_count > 0 else 0
+        }
+        
+        # Build transaction list
+        transactions = []
+        for exp in expenses:
+            # Get vendor name through relationship
+            vendor = db.query(Party).filter(Party.id == exp.vendor_id).first() if exp.vendor_id else None
+            
+            transactions.append(ExpenseReportItem(
+                expense_id=exp.id,
+                expense_date=exp.expense_date.isoformat(),
+                category=exp.category,
+                description=exp.description,
+                amount=float(exp.total_amount),
+                vendor_name=vendor.name if vendor else None,
+                payment_method=exp.payment_method,
+                reference_number=exp.reference_number
+            ))
+        
+        # Category breakdown
+        category_breakdown = []
+        category_totals = {}
+        for exp in expenses:
+            if exp.category not in category_totals:
+                category_totals[exp.category] = 0
+            category_totals[exp.category] += float(exp.total_amount)
+        
+        for category_name, total in category_totals.items():
+            category_breakdown.append({
+                "category": category_name,
+                "total_amount": total,
+                "expense_count": len([exp for exp in expenses if exp.category == category_name]),
+                "percentage": (total / total_expenses * 100) if total_expenses > 0 else 0
+            })
+        
+        # Vendor breakdown
+        vendor_breakdown = []
+        vendor_totals = {}
+        vendor_counts = {}
+        
+        for exp in expenses:
+            vendor = db.query(Party).filter(Party.id == exp.vendor_id).first() if exp.vendor_id else None
+            vendor_name = vendor.name if vendor else "Unknown"
+            
+            if vendor_name not in vendor_totals:
+                vendor_totals[vendor_name] = 0
+                vendor_counts[vendor_name] = 0
+            
+            vendor_totals[vendor_name] += float(exp.total_amount)
+            vendor_counts[vendor_name] += 1
+        
+        for vendor_name, total in vendor_totals.items():
+            vendor_breakdown.append({
+                "vendor_name": vendor_name,
+                "total_amount": total,
+                "expense_count": vendor_counts[vendor_name],
+                "percentage": (total / total_expenses * 100) if total_expenses > 0 else 0
+            })
+        
+        # Calculate trends
+        trends = {
+            "monthly_expenses": [],
+            "expense_trend": "increasing" if expense_count > 0 else "stable"
+        }
+        
+        # Generate monthly expenses for the last 6 months
+        for i in range(6):
+            month_start = (datetime.now() - timedelta(days=30*i)).replace(day=1)
+            month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+            
+            month_expenses = db.query(Expense).filter(
+                Expense.expense_date >= month_start.date(),
+                Expense.expense_date <= month_end.date()
+            ).all()
+            
+            month_total = sum(float(exp.total_amount) for exp in month_expenses)
+            trends["monthly_expenses"].append({
+                "month": month_start.strftime('%Y-%m'),
+                "expenses": month_total
+            })
+        
+        trends["monthly_expenses"].reverse()
+        
+        return ExpenseReport(
+            period={
+                "start_date": start_date,
+                "end_date": end_date
+            },
+            summary=summary,
+            transactions=transactions,
+            category_breakdown=category_breakdown,
+            vendor_breakdown=vendor_breakdown,
+            trends=trends,
+            generated_at=datetime.now().isoformat(),
+            filters_applied={
+                "category": category,
+                "vendor_name": vendor_name,
+                "payment_method": payment_method
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating expense report: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate expense report")
+
+
+# Purchase Reports API Endpoints
+@api.get('/reports/purchases', response_model=PurchaseReport)
+def get_purchase_report(
+    start_date: str | None = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: str | None = Query(None, description="End date (YYYY-MM-DD)"),
+    vendor_id: int | None = Query(None, description="Filter by vendor ID"),
+    payment_status: str | None = Query(None, description="Filter by payment status"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate comprehensive purchase report with vendor and product breakdown"""
+    
+    try:
+        from datetime import datetime, timedelta
+        
+        # Set default date range if not provided
+        if not start_date:
+            start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+        if not end_date:
+            end_date = datetime.now().strftime('%Y-%m-%d')
+        
+        # Convert to datetime objects
+        start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+        
+        # Build base query
+        query = db.query(Purchase).join(Party, Purchase.vendor_id == Party.id)
+        
+        # Apply filters
+        query = query.filter(Purchase.date >= start_dt, Purchase.date <= end_dt)
+        if vendor_id:
+            query = query.filter(Purchase.vendor_id == vendor_id)
+        
+        purchases = query.all()
+        
+        # Filter by payment status dynamically if specified
+        if payment_status:
+            filtered_purchases = []
+            for pur in purchases:
+                # Calculate payment amount for this purchase
+                payments = db.query(PurchasePayment).filter(PurchasePayment.purchase_id == pur.id).all()
+                payment_amount = sum(float(p.payment_amount) for p in payments)
+                outstanding = float(pur.grand_total) - payment_amount
+                
+                # Determine payment status
+                if payment_amount == 0:
+                    calc_status = 'pending'
+                elif outstanding <= 0:
+                    calc_status = 'paid'
+                else:
+                    calc_status = 'partial'
+                
+                # Filter based on requested payment_status
+                if calc_status == payment_status:
+                    filtered_purchases.append(pur)
+            
+            purchases = filtered_purchases
+        
+        # Calculate summary
+        total_purchases = sum(float(pur.grand_total) for pur in purchases)
+        total_tax = sum(float(pur.cgst + pur.sgst + pur.igst) for pur in purchases)
+        total_taxable_value = sum(float(pur.taxable_value) for pur in purchases)
+        
+        # Calculate payment status breakdown
+        paid_amount = 0
+        outstanding_amount = 0
+        for pur in purchases:
+            # Calculate actual payment amount
+            payments = db.query(PurchasePayment).filter(PurchasePayment.purchase_id == pur.id).all()
+            payment_amount = sum(float(p.payment_amount) for p in payments)
+            purchase_outstanding = float(pur.grand_total) - payment_amount
+            
+            paid_amount += payment_amount
+            outstanding_amount += max(0, purchase_outstanding)
+        
+        summary = {
+            "total_purchases": total_purchases,
+            "total_tax": total_tax,
+            "total_taxable_value": total_taxable_value,
+            "paid_amount": paid_amount,
+            "outstanding_amount": outstanding_amount,
+            "purchase_count": len(purchases),
+            "payment_status_breakdown": {
+                "paid": paid_amount,
+                "outstanding": outstanding_amount
+            }
+        }
+        
+        # Build transaction list
+        transactions = []
+        for pur in purchases:
+            vendor = db.query(Party).filter(Party.id == pur.vendor_id).first()
+            
+            # Calculate payment amount and status
+            payments = db.query(PurchasePayment).filter(PurchasePayment.purchase_id == pur.id).all()
+            payment_amount = sum(float(p.payment_amount) for p in payments)
+            outstanding = float(pur.grand_total) - payment_amount
+            
+            # Determine payment status dynamically
+            if payment_amount == 0:
+                calc_payment_status = 'pending'
+            elif outstanding <= 0:
+                calc_payment_status = 'paid'
+            else:
+                calc_payment_status = 'partial'
+            
+            transactions.append(PurchaseReportItem(
+                purchase_id=pur.id,
+                purchase_no=pur.purchase_no,
+                purchase_date=pur.date.isoformat(),
+                vendor_name=vendor.name if vendor else "Unknown",
+                taxable_value=float(pur.taxable_value),
+                total_tax=float(pur.cgst + pur.sgst + pur.igst),
+                grand_total=float(pur.grand_total),
+                payment_status=calc_payment_status,
+                payment_amount=payment_amount,
+                outstanding_amount=max(0, outstanding)
+            ))
+        
+        # Vendor breakdown
+        vendor_breakdown = []
+        vendor_totals = {}
+        for pur in purchases:
+            vendor = db.query(Party).filter(Party.id == pur.vendor_id).first()
+            vendor_name = vendor.name if vendor else "Unknown"
+            
+            if vendor_name not in vendor_totals:
+                vendor_totals[vendor_name] = 0
+            vendor_totals[vendor_name] += float(pur.grand_total)
+        
+        for vendor_name, total in vendor_totals.items():
+            vendor_breakdown.append({
+                "vendor_name": vendor_name,
+                "total_purchases": total,
+                "purchase_count": len([pur for pur in purchases if db.query(Party).filter(Party.id == pur.vendor_id).first().name == vendor_name])
+            })
+        
+        # Product breakdown
+        product_breakdown = []
+        product_totals = {}
+        
+        for pur in purchases:
+            items = db.query(PurchaseItem).filter(PurchaseItem.purchase_id == pur.id).all()
+            for item in items:
+                product = db.query(Product).filter(Product.id == item.product_id).first()
+                product_name = product.name if product else "Unknown"
+                
+                if product_name not in product_totals:
+                    product_totals[product_name] = 0
+                product_totals[product_name] += float(item.amount)
+        
+        for product_name, total in product_totals.items():
+            product_breakdown.append({
+                "product_name": product_name,
+                "total_purchases": total,
+                "quantity_purchased": sum(
+                    float(item.qty) for pur in purchases 
+                    for item in db.query(PurchaseItem).filter(PurchaseItem.purchase_id == pur.id).all()
+                    if db.query(Product).filter(Product.id == item.product_id).first().name == product_name
+                )
+            })
+        
+        # Calculate trends
+        trends = {
+            "monthly_purchases": [],
+            "purchase_trend": "increasing" if len(purchases) > 0 else "stable"
+        }
+        
+        # Generate monthly purchases for the last 6 months
+        for i in range(6):
+            month_start = (datetime.now() - timedelta(days=30*i)).replace(day=1)
+            month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+            
+            month_purchases = db.query(Purchase).filter(
+                Purchase.date >= month_start.date(),
+                Purchase.date <= month_end.date()
+            ).all()
+            
+            month_total = sum(float(pur.grand_total) for pur in month_purchases)
+            trends["monthly_purchases"].append({
+                "month": month_start.strftime('%Y-%m'),
+                "purchases": month_total
+            })
+        
+        trends["monthly_purchases"].reverse()
+        
+        return PurchaseReport(
+            period={
+                "start_date": start_date,
+                "end_date": end_date
+            },
+            summary=summary,
+            transactions=transactions,
+            vendor_breakdown=vendor_breakdown,
+            product_breakdown=product_breakdown,
+            trends=trends,
+            generated_at=datetime.now().isoformat(),
+            filters_applied={
+                "vendor_id": vendor_id,
+                "payment_status": payment_status
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating purchase report: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate purchase report")
+
+
+# Payment Reports API Endpoints
+@api.get('/reports/payments', response_model=PaymentReport)
+def get_payment_report(
+    start_date: str | None = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: str | None = Query(None, description="End date (YYYY-MM-DD)"),
+    payment_type: str | None = Query(None, description="Filter by payment type: invoice_payment, purchase_payment"),
+    payment_method: str | None = Query(None, description="Filter by payment method"),
+    party_id: int | None = Query(None, description="Filter by party ID"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate comprehensive payment report with method and party breakdown"""
+    
+    try:
+        from datetime import datetime, timedelta
+        
+        # Set default date range if not provided
+        if not start_date:
+            start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+        if not end_date:
+            end_date = datetime.now().strftime('%Y-%m-%d')
+        
+        # Convert to datetime objects
+        start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+        
+        transactions = []
+        
+        # Invoice payments
+        if not payment_type or payment_type == 'invoice_payment':
+            invoice_payment_filter = []
+            if start_date:
+                invoice_payment_filter.append(Payment.payment_date >= start_dt)
+            if end_date:
+                invoice_payment_filter.append(Payment.payment_date <= end_dt)
+            if payment_method:
+                invoice_payment_filter.append(Payment.payment_method == payment_method)
+            if party_id:
+                # Get invoices for the party
+                party_invoices = db.query(Invoice).filter(Invoice.customer_id == party_id).all()
+                invoice_ids = [inv.id for inv in party_invoices]
+                invoice_payment_filter.append(Payment.invoice_id.in_(invoice_ids))
+            
+            invoice_payments = db.query(Payment).filter(and_(*invoice_payment_filter)).all()
+            for payment in invoice_payments:
+                invoice = db.query(Invoice).filter(Invoice.id == payment.invoice_id).first()
+                customer = db.query(Party).filter(Party.id == invoice.customer_id).first() if invoice else None
+                
+                transactions.append(PaymentReportItem(
+                    payment_id=payment.id,
+                    payment_date=payment.payment_date.isoformat(),
+                    payment_type='invoice_payment',
+                    payment_method=payment.payment_method,
+                    amount=float(payment.payment_amount),
+                    reference_type='invoice',
+                    reference_id=payment.invoice_id,
+                    reference_number=invoice.invoice_no if invoice else None,
+                    party_name=customer.name if customer else None,
+                    status='completed'
+                ))
+        
+        # Purchase payments
+        if not payment_type or payment_type == 'purchase_payment':
+            purchase_payment_filter = []
+            if start_date:
+                purchase_payment_filter.append(PurchasePayment.payment_date >= start_dt)
+            if end_date:
+                purchase_payment_filter.append(PurchasePayment.payment_date <= end_dt)
+            if payment_method:
+                purchase_payment_filter.append(PurchasePayment.payment_method == payment_method)
+            if party_id:
+                # Get purchases for the party
+                party_purchases = db.query(Purchase).filter(Purchase.vendor_id == party_id).all()
+                purchase_ids = [pur.id for pur in party_purchases]
+                purchase_payment_filter.append(PurchasePayment.purchase_id.in_(purchase_ids))
+            
+            purchase_payments = db.query(PurchasePayment).filter(and_(*purchase_payment_filter)).all()
+            for payment in purchase_payments:
+                purchase = db.query(Purchase).filter(Purchase.id == payment.purchase_id).first()
+                vendor = db.query(Party).filter(Party.id == purchase.vendor_id).first() if purchase else None
+                
+                transactions.append(PaymentReportItem(
+                    payment_id=payment.id,
+                    payment_date=payment.payment_date.isoformat(),
+                    payment_type='purchase_payment',
+                    payment_method=payment.payment_method,
+                    amount=float(payment.payment_amount),
+                    reference_type='purchase',
+                    reference_id=payment.purchase_id,
+                    reference_number=purchase.purchase_no if purchase else None,
+                    party_name=vendor.name if vendor else None,
+                    status='completed'
+                ))
+        
+        # Calculate summary
+        total_payments = sum(float(t.amount) for t in transactions)
+        payment_count = len(transactions)
+        
+        summary = {
+            "total_payments": total_payments,
+            "payment_count": payment_count,
+            "average_payment": total_payments / payment_count if payment_count > 0 else 0
+        }
+        
+        # Method breakdown
+        method_breakdown = []
+        method_totals = {}
+        for t in transactions:
+            if t.payment_method not in method_totals:
+                method_totals[t.payment_method] = 0
+            method_totals[t.payment_method] += float(t.amount)
+        
+        for method, total in method_totals.items():
+            method_breakdown.append({
+                "payment_method": method,
+                "total_amount": total,
+                "payment_count": len([t for t in transactions if t.payment_method == method]),
+                "percentage": (total / total_payments * 100) if total_payments > 0 else 0
+            })
+        
+        # Party breakdown
+        party_breakdown = []
+        party_totals = {}
+        for t in transactions:
+            party_name = t.party_name or "Unknown"
+            if party_name not in party_totals:
+                party_totals[party_name] = 0
+            party_totals[party_name] += float(t.amount)
+        
+        for party_name, total in party_totals.items():
+            party_breakdown.append({
+                "party_name": party_name,
+                "total_amount": total,
+                "payment_count": len([t for t in transactions if (t.party_name or "Unknown") == party_name]),
+                "percentage": (total / total_payments * 100) if total_payments > 0 else 0
+            })
+        
+        # Calculate trends
+        trends = {
+            "monthly_payments": [],
+            "payment_trend": "increasing" if payment_count > 0 else "stable"
+        }
+        
+        # Generate monthly payments for the last 6 months
+        for i in range(6):
+            month_start = (datetime.now() - timedelta(days=30*i)).replace(day=1)
+            month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+            
+            month_invoice_payments = db.query(Payment).filter(
+                Payment.payment_date >= month_start.date(),
+                Payment.payment_date <= month_end.date()
+            ).all()
+            
+            month_purchase_payments = db.query(PurchasePayment).filter(
+                PurchasePayment.payment_date >= month_start.date(),
+                PurchasePayment.payment_date <= month_end.date()
+            ).all()
+            
+            month_total = sum(float(p.payment_amount) for p in month_invoice_payments) + sum(float(p.payment_amount) for p in month_purchase_payments)
+            trends["monthly_payments"].append({
+                "month": month_start.strftime('%Y-%m'),
+                "payments": month_total
+            })
+        
+        trends["monthly_payments"].reverse()
+        
+        return PaymentReport(
+            period={
+                "start_date": start_date,
+                "end_date": end_date
+            },
+            summary=summary,
+            transactions=transactions,
+            method_breakdown=method_breakdown,
+            party_breakdown=party_breakdown,
+            trends=trends,
+            generated_at=datetime.now().isoformat(),
+            filters_applied={
+                "payment_type": payment_type,
+                "payment_method": payment_method,
+                "party_id": party_id
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating payment report: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate payment report")
+
+
+# Financial Reports API Endpoints
+@api.get('/reports/financial', response_model=FinancialReport)
+def get_financial_report(
+    report_type: str = Query(..., description="Report type: profit_loss, balance_sheet, cash_flow"),
+    start_date: str | None = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: str | None = Query(None, description="End date (YYYY-MM-DD)"),
+    as_of_date: str | None = Query(None, description="As of date for balance sheet (YYYY-MM-DD)"),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate comprehensive financial reports (P&L, Balance Sheet, Cash Flow)"""
+    
+    try:
+        from datetime import datetime
+        from .financial_reports import FinancialReports
+        
+        # Initialize financial reports service
+        financial_service = FinancialReports(db)
+        
+        if report_type == "profit_loss":
+            # Convert dates for P&L
+            start_dt = None
+            end_dt = None
+            if start_date:
+                start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+            if end_date:
+                end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+            
+            data = financial_service.generate_profit_loss_statement(start_dt, end_dt)
+            
+        elif report_type == "balance_sheet":
+            # Convert date for balance sheet
+            as_of_dt = None
+            if as_of_date:
+                as_of_dt = datetime.strptime(as_of_date, '%Y-%m-%d').date()
+            
+            data = financial_service.generate_balance_sheet(as_of_dt)
+            
+        elif report_type == "cash_flow":
+            # Convert dates for cash flow
+            start_dt = None
+            end_dt = None
+            if start_date:
+                start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+            if end_date:
+                end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+            
+            data = financial_service.generate_cash_flow_statement(start_dt, end_dt)
+            
+        else:
+            raise HTTPException(status_code=400, detail="Invalid report type. Use: profit_loss, balance_sheet, cash_flow")
+        
+        return FinancialReport(
+            report_type=report_type,
+            period={
+                "start_date": start_date,
+                "end_date": end_date,
+                "as_of_date": as_of_date
+            },
+            data=data,
+            generated_at=datetime.now().isoformat(),
+            filters_applied={
+                "report_type": report_type
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating financial report: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate financial report")
 
 
 def _calculate_period_dates(period_type: str, period_value: str) -> tuple[str, str]:
@@ -4208,8 +5301,8 @@ def purchase_pdf(purchase_id: int, _: User = Depends(get_current_user), db: Sess
         story.append(Paragraph(f"GSTIN: {company.gstin}", normal_style))
         story.append(Paragraph(f"State: {company.state} - {company.state_code}", normal_style))
     else:
-        story.append(Paragraph("<b>CASHFLOW</b>", title_style))
-        story.append(Paragraph("Financial Management System", normal_style))
+        story.append(Paragraph("<b>ProfitPath</b>", title_style))
+        story.append(Paragraph("Track Your Success, Step by Step", normal_style))
     
     story.append(Spacer(1, 20))
     
@@ -4353,7 +5446,7 @@ def email_purchase(purchase_id: int, payload: EmailRequest, _: User = Depends(ge
     
     # Get company details
     company = db.query(CompanySettings).first()
-    company_name = company.name if company else "CASHFLOW"
+    company_name = company.name if company else "ProfitPath"
     
     # Generate PDF
     try:

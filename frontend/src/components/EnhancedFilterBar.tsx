@@ -66,7 +66,8 @@ export function EnhancedFilterBar({
         // Removed overflow: 'hidden' to prevent dropdown clipping
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)', // Reduced shadow
         border: '1px solid #e9ecef',
-        position: 'relative' // Added to ensure proper stacking context
+        position: 'relative', // Added to ensure proper stacking context
+        zIndex: 1 // Create stacking context for children
       }}
     >
       {/* Header */}
@@ -220,15 +221,17 @@ export function EnhancedFilterBar({
           style={{
             padding: '16px', // Reduced padding
             backgroundColor: 'white',
-            overflow: 'visible' // Ensure dropdowns are not clipped
+            overflow: 'visible', // Ensure dropdowns are not clipped
+            position: 'relative', // Create stacking context
+            minHeight: '200px' // Ensure minimum height for dropdown expansion
           }}
         >
           {/* Filter Content */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)', // 4-column grid as requested
-            gap: '8px', // Reduced gap for more compact layout
-            alignItems: 'start',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px', // Reasonable gap for normal spacing
+            alignItems: 'stretch',
             marginBottom: '12px' // Reduced margin
           }}>
             {children}

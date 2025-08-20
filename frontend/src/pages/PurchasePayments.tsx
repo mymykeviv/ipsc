@@ -6,7 +6,7 @@ import { apiListPurchases, apiListPurchasePayments, apiAddPurchasePayment, Purch
 import { Button } from '../components/Button'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { FilterDropdown } from '../components/FilterDropdown'
-import { DateFilter } from '../components/DateFilter'
+import { DateFilter, DateRange } from '../components/DateFilter'
 import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
 import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 
@@ -39,7 +39,10 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('all')
   const [amountRangeFilter, setAmountRangeFilter] = useState('all')
   const [financialYearFilter, setFinancialYearFilter] = useState('all')
-  const [dateFilter, setDateFilter] = useState('all')
+  const [dateFilter, setDateFilter] = useState<DateRange>({
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+    endDate: new Date().toISOString().slice(0, 10)
+  })
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
 
@@ -141,7 +144,11 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
       return paymentYear === startYear
     })()
     
-    const matchesDate = dateFilter === 'all' || payment.payment_date.startsWith(dateFilter)
+    // Date filtering is handled by the DateFilter component
+    const paymentDate = new Date(payment.payment_date)
+    const startDate = new Date(dateFilter.startDate)
+    const endDate = new Date(dateFilter.endDate)
+    const matchesDate = paymentDate >= startDate && paymentDate <= endDate
     
     return matchesSearch && matchesVendor && matchesPaymentMethod && matchesAmountRange && matchesFinancialYear && matchesDate
   })
@@ -194,7 +201,7 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
           (paymentMethodFilter !== 'all' ? 1 : 0) +
           (amountRangeFilter !== 'all' ? 1 : 0) +
           (financialYearFilter !== 'all' ? 1 : 0) +
-          (dateFilter !== 'all' ? 1 : 0)
+          0 // DateFilter is always active now
         }
         onClearAll={() => {
           setSearchTerm('')
@@ -202,7 +209,10 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
           setPaymentMethodFilter('all')
           setAmountRangeFilter('all')
           setFinancialYearFilter('all')
-          setDateFilter('all')
+          setDateFilter({
+            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+            endDate: new Date().toISOString().slice(0, 10)
+          })
         }}
         showQuickActions={true}
         quickActions={[
@@ -307,11 +317,10 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
-          <DateFilter
-            value={dateFilter}
-            onChange={setDateFilter}
-            placeholder="Select date range"
-          />
+                      <DateFilter
+              value={dateFilter}
+              onChange={setDateFilter}
+            />
         </div>
       </EnhancedFilterBar>
 

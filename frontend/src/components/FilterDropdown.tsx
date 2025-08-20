@@ -97,7 +97,7 @@ export function FilterDropdown({
       className={`filter-dropdown ${className}`} 
       style={{ 
         position: 'relative',
-        zIndex: 9999 // Ensure the dropdown container has high z-index
+        zIndex: 1000 // Lower z-index for filter dropdowns
       }}
     >
       <div
@@ -148,15 +148,15 @@ export function FilterDropdown({
 
       {isOpen && !disabled && (
         <div style={{
-          position: 'absolute',
-          top: '100%',
-          left: 0,
-          right: 0,
+          position: 'fixed', // Use fixed positioning to escape parent containers
+          top: dropdownRef.current ? dropdownRef.current.getBoundingClientRect().bottom + 2 : '100%',
+          left: dropdownRef.current ? dropdownRef.current.getBoundingClientRect().left : 0,
+          width: dropdownRef.current ? dropdownRef.current.offsetWidth : '100%',
           backgroundColor: 'white',
           border: '1px solid #ced4da',
           borderRadius: '4px', // Reduced border radius
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-          zIndex: 9999, // Increased z-index to ensure it appears above other elements
+          zIndex: 1001, // Higher than container but lower than DateFilter
           maxHeight: '200px', // Reduced max height
           overflow: 'auto',
           marginTop: '2px' // Reduced margin

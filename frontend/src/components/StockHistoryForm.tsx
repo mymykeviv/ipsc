@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { apiGetStockMovementHistory, StockMovement, StockTransaction, apiGetProducts, Product, apiDownloadStockMovementHistoryPDF } from '../lib/api'
 import { Button } from './Button'
 import { ErrorMessage } from './ErrorMessage'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
-import { EnhancedFilterBar } from './EnhancedFilterBar'
-import { FilterDropdown } from './FilterDropdown'
-import { DateFilter } from './DateFilter'
+import { UnifiedFilterSystem, DateRange } from './UnifiedFilterSystem'
 import { useSearchParams } from 'react-router-dom'
 import { PDFViewer } from './PDFViewer'
 
@@ -27,12 +25,14 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
   
   // New filter states
   const [productFilter, setProductFilter] = useState('all')
-  const [entryTypeFilter, setEntryTypeFilter] = useState('all')
-  const [dateRangeFilter, setDateRangeFilter] = useState('all')
-  const [referenceTypeFilter, setReferenceTypeFilter] = useState('all')
-  const [referenceSearch, setReferenceSearch] = useState('')
-  const [amountRangeFilter, setAmountRangeFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [supplierFilter, setSupplierFilter] = useState('all')
   const [stockLevelFilter, setStockLevelFilter] = useState('all')
+  const [entryTypeFilter, setEntryTypeFilter] = useState('all')
+  const [dateRangeFilter, setDateRangeFilter] = useState<DateRange>({
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+    endDate: new Date().toISOString().slice(0, 10)
+  })
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1)
@@ -40,6 +40,9 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
   
   // Force reload state
   const [forceReload, setForceReload] = useState(0)
+  
+  // Debounce state
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null)
   
   // PDF download state
   const [downloadingPDF, setDownloadingPDF] = useState(false)
@@ -66,7 +69,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
     }
   }
 
-  const loadStockHistory = async () => {
+  const loadStockHistory = useCallback(async () => {
     try {
       setHistoryLoading(true)
       setError(null)
@@ -86,7 +89,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
     } finally {
       setHistoryLoading(false)
     }
-  }
+  }, [financialYearFilter, productId, forceReload])
 
   // Set product filter when productId is present in URL
   useEffect(() => {
@@ -103,15 +106,46 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
 
   useEffect(() => {
     loadProducts()
+  }, []) // Only load products once on mount
+
+  useEffect(() => {
     loadStockHistory()
-  }, [financialYearFilter, productId, forceReload])
+  }, [financialYearFilter, productId, forceReload, loadStockHistory]) // Only reload when these specific values change
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer)
+      }
+    }
+  }, [debounceTimer])
 
   // Filter stock history based on all filters
+  console.log('Applying filters:', {
+    productFilter,
+    categoryFilter,
+    supplierFilter,
+    stockLevelFilter,
+    entryTypeFilter,
+    dateRangeFilter,
+    productId
+  })
+  
   const filteredStockHistory = stockHistory.filter(movement => {
     // Product filter - if productId is present, always include that product
     const matchesProduct = (productId && movement.product_id === parseInt(productId)) ||
                           productFilter === 'all' || 
                           movement.product_name === productFilter
+    
+    // Category filter
+    const product = products.find(p => p.name === movement.product_name)
+    const matchesCategory = categoryFilter === 'all' ||
+                          (product && product.category === categoryFilter)
+    
+    // Supplier filter
+    const matchesSupplier = supplierFilter === 'all' ||
+                          (product && product.supplier === supplierFilter)
     
     // Entry type filter (based on transaction types)
     const hasIncoming = movement.total_incoming > 0
@@ -123,21 +157,13 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
                             (entryTypeFilter === 'outgoing' && hasOutgoing) ||
                             (entryTypeFilter === 'adjustment' && hasEntryAdjustments)
     
-    // Reference type filter
-    const hasInvoices = movement.transactions.some(t => t.ref_type === 'invoice')
-    const hasPurchases = movement.transactions.some(t => t.ref_type === 'purchase')
-    const hasRefAdjustments = movement.transactions.some(t => t.ref_type === 'adjustment')
-    
-    const matchesReferenceType = referenceTypeFilter === 'all' ||
-                                (referenceTypeFilter === 'invoice' && hasInvoices) ||
-                                (referenceTypeFilter === 'purchase' && hasPurchases) ||
-                                (referenceTypeFilter === 'adjustment' && hasRefAdjustments)
-    
-    // Reference search
-    const matchesReferenceSearch = !referenceSearch || 
-                                  movement.transactions.some(t => 
-                                    t.reference_number?.toLowerCase().includes(referenceSearch.toLowerCase())
-                                  )
+    // Date range filter - filter transactions within the date range
+    const matchesDateRange = movement.transactions.some(transaction => {
+      const transactionDate = new Date(transaction.transaction_date)
+      const startDate = new Date(dateRangeFilter.startDate)
+      const endDate = new Date(dateRangeFilter.endDate)
+      return transactionDate >= startDate && transactionDate <= endDate
+    })
     
     // Stock level filter
     const matchesStockLevel = stockLevelFilter === 'all' ||
@@ -145,8 +171,8 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
                              (stockLevelFilter === 'out_of_stock' && movement.closing_stock === 0) ||
                              (stockLevelFilter === 'low_stock' && movement.closing_stock > 0 && movement.closing_stock < 10) // Assuming 10 is low stock threshold
     
-    return matchesProduct && matchesEntryType && matchesReferenceType && 
-           matchesReferenceSearch && matchesStockLevel
+    return matchesProduct && matchesCategory && matchesSupplier && matchesEntryType && 
+           matchesDateRange && matchesStockLevel
   })
 
   // Pagination logic
@@ -159,7 +185,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [productFilter, entryTypeFilter, dateRangeFilter, referenceTypeFilter, referenceSearch, amountRangeFilter, stockLevelFilter])
+  }, [productFilter, categoryFilter, supplierFilter, stockLevelFilter, entryTypeFilter, dateRangeFilter])
 
   // Pagination handlers
   const handlePageChange = (page: number) => {
@@ -311,10 +337,10 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
       
       await apiDownloadStockMovementHistoryPDF(fy, productIdNum, {
         productFilter: productFilter !== 'all' ? productFilter : undefined,
-        entryTypeFilter: entryTypeFilter !== 'all' ? entryTypeFilter : undefined,
-        referenceTypeFilter: referenceTypeFilter !== 'all' ? referenceTypeFilter : undefined,
-        referenceSearch: referenceSearch || undefined,
-        stockLevelFilter: stockLevelFilter !== 'all' ? stockLevelFilter : undefined
+        categoryFilter: categoryFilter !== 'all' ? categoryFilter : undefined,
+        supplierFilter: supplierFilter !== 'all' ? supplierFilter : undefined,
+        stockLevelFilter: stockLevelFilter !== 'all' ? stockLevelFilter : undefined,
+        entryTypeFilter: entryTypeFilter !== 'all' ? entryTypeFilter : undefined
       })
     } catch (err) {
       console.error('Failed to download PDF:', err)
@@ -374,29 +400,168 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
 
       {error && <ErrorMessage message={error} />}
 
-      {/* Enhanced Filter Options */}
-      <EnhancedFilterBar 
+      {/* Unified Filter System */}
+      <UnifiedFilterSystem
         title="Stock Movement Filters"
-        activeFiltersCount={
-          (financialYearFilter !== 'all' ? 1 : 0) +
-          (productFilter !== 'all' ? 1 : 0) +
-          (entryTypeFilter !== 'all' ? 1 : 0) +
-          (dateRangeFilter !== 'all' ? 1 : 0) +
-          (referenceTypeFilter !== 'all' ? 1 : 0) +
-          (referenceSearch ? 1 : 0) +
-          (amountRangeFilter !== 'all' ? 1 : 0) +
-          (stockLevelFilter !== 'all' ? 1 : 0) +
-          (productId ? 1 : 0) // Count productId from URL as an active filter
-        }
+        filters={[
+          {
+            id: 'financialYear',
+            type: 'dropdown' as const,
+            label: 'Financial Year',
+            options: [
+              { value: 'all', label: 'All Years' },
+              ...getAvailableFinancialYears().map(year => ({ value: year, label: year }))
+            ],
+            width: 'third'
+          },
+          {
+            id: 'product',
+            type: 'dropdown' as const,
+            label: 'Product',
+            options: [
+              { value: 'all', label: 'All Products' },
+              ...products.map(product => ({ value: product.name, label: product.name }))
+            ],
+            width: 'third'
+          },
+          {
+            id: 'category',
+            type: 'dropdown' as const,
+            label: 'Product Category',
+            options: [
+              { value: 'all', label: 'All Categories' },
+              ...Array.from(new Set(products.map(p => p.category).filter(Boolean))).map(category => ({ value: category!, label: category! }))
+            ],
+            width: 'third'
+          },
+          {
+            id: 'supplier',
+            type: 'dropdown' as const,
+            label: 'Supplier',
+            options: [
+              { value: 'all', label: 'All Suppliers' },
+              ...Array.from(new Set(products.map(p => p.supplier).filter(Boolean))).map(supplier => ({ value: supplier!, label: supplier! }))
+            ],
+            width: 'third'
+          },
+          {
+            id: 'stockLevel',
+            type: 'dropdown' as const,
+            label: 'Stock Level',
+            options: [
+              { value: 'all', label: 'All Stock Levels' },
+              { value: 'in_stock', label: 'In Stock' },
+              { value: 'out_of_stock', label: 'Out of Stock' },
+              { value: 'low_stock', label: 'Low Stock (< 10)' }
+            ],
+            width: 'third'
+          },
+          {
+            id: 'entryType',
+            type: 'dropdown' as const,
+            label: 'Entry Type',
+            options: [
+              { value: 'all', label: 'All Entries' },
+              { value: 'incoming', label: 'Incoming' },
+              { value: 'outgoing', label: 'Outgoing' },
+              { value: 'adjustment', label: 'Adjustment' }
+            ],
+            width: 'third'
+          },
+          {
+            id: 'dateRange',
+            type: 'date-range' as const,
+            label: 'Date Range',
+            width: 'half'
+          }
+        ]}
+        quickFilters={[
+          {
+            id: 'currentFY',
+            label: 'Current FY',
+            icon: '📅',
+            action: () => setFinancialYearFilter(getCurrentFinancialYear()),
+            isActive: financialYearFilter === getCurrentFinancialYear()
+          },
+          {
+            id: 'lastFY',
+            label: 'Last FY',
+            icon: '📊',
+            action: () => {
+              const currentYear = new Date().getFullYear()
+              setFinancialYearFilter(`${currentYear - 1}-${currentYear}`)
+            },
+            isActive: financialYearFilter === `${new Date().getFullYear() - 1}-${new Date().getFullYear()}`
+          },
+          {
+            id: 'incoming',
+            label: 'Incoming Only',
+            icon: '📥',
+            action: () => setEntryTypeFilter('incoming'),
+            isActive: entryTypeFilter === 'incoming'
+          },
+          {
+            id: 'outgoing',
+            label: 'Outgoing Only',
+            icon: '📤',
+            action: () => setEntryTypeFilter('outgoing'),
+            isActive: entryTypeFilter === 'outgoing'
+          },
+          {
+            id: 'lowStock',
+            label: 'Low Stock',
+            icon: '⚠️',
+            action: () => setStockLevelFilter('low_stock'),
+            isActive: stockLevelFilter === 'low_stock'
+          }
+        ]}
+        onFilterChange={(filters) => {
+          // Clear existing debounce timer
+          if (debounceTimer) {
+            clearTimeout(debounceTimer)
+          }
+          
+          // Update individual filter states based on unified filter values
+          if (filters.financialYear !== undefined) {
+            setFinancialYearFilter(filters.financialYear)
+          }
+          if (filters.product !== undefined) {
+            setProductFilter(filters.product)
+          }
+          if (filters.category !== undefined) {
+            setCategoryFilter(filters.category)
+          }
+          if (filters.supplier !== undefined) {
+            setSupplierFilter(filters.supplier)
+          }
+          if (filters.stockLevel !== undefined) {
+            setStockLevelFilter(filters.stockLevel)
+          }
+          if (filters.entryType !== undefined) {
+            setEntryTypeFilter(filters.entryType)
+          }
+          if (filters.dateRange !== undefined) {
+            setDateRangeFilter(filters.dateRange)
+          }
+          
+          // Debounce the reload to prevent rapid API calls
+          const timer = setTimeout(() => {
+            setForceReload(prev => prev + 1)
+          }, 500) // 500ms delay
+          
+          setDebounceTimer(timer)
+        }}
         onClearAll={() => {
           setFinancialYearFilter('all')
           setProductFilter('all')
-          setEntryTypeFilter('all')
-          setDateRangeFilter('all')
-          setReferenceTypeFilter('all')
-          setReferenceSearch('')
-          setAmountRangeFilter('all')
+          setCategoryFilter('all')
+          setSupplierFilter('all')
           setStockLevelFilter('all')
+          setEntryTypeFilter('all')
+          setDateRangeFilter({
+            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+            endDate: new Date().toISOString().slice(0, 10)
+          })
           setCurrentPage(1) // Reset pagination
           
           // If we have a productId from URL, remove it and reload
@@ -412,146 +577,17 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
             loadStockHistory()
           }
         }}
+        activeFiltersCount={
+          (financialYearFilter !== 'all' ? 1 : 0) +
+          (productFilter !== 'all' ? 1 : 0) +
+          (categoryFilter !== 'all' ? 1 : 0) +
+          (supplierFilter !== 'all' ? 1 : 0) +
+          (stockLevelFilter !== 'all' ? 1 : 0) +
+          (entryTypeFilter !== 'all' ? 1 : 0) +
+          (productId ? 1 : 0) // Count productId from URL as an active filter
+        }
         showQuickActions={true}
-        quickActions={[
-          {
-            label: 'Current FY',
-            action: () => setFinancialYearFilter(getCurrentFinancialYear()),
-            icon: '📅'
-          },
-          {
-            label: 'Last FY',
-            action: () => {
-              const currentYear = new Date().getFullYear()
-              setFinancialYearFilter(`${currentYear - 1}-${currentYear}`)
-            },
-            icon: '📊'
-          },
-          {
-            label: 'Incoming Only',
-            action: () => setEntryTypeFilter('incoming'),
-            icon: '📥'
-          },
-          {
-            label: 'Outgoing Only',
-            action: () => setEntryTypeFilter('outgoing'),
-            icon: '📤'
-          },
-          {
-            label: 'Low Stock',
-            action: () => setStockLevelFilter('low_stock'),
-            icon: '⚠️'
-          }
-        ]}
-      >
-        {/* Row 1: Financial Year and Product */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Financial Year</span>
-            <FilterDropdown
-              value={financialYearFilter}
-              onChange={(value) => setFinancialYearFilter(Array.isArray(value) ? value[0] || 'all' : value)}
-              options={[
-                { value: 'all', label: 'All Years' },
-                ...getAvailableFinancialYears().map(year => ({ value: year, label: year }))
-              ]}
-              placeholder="Select financial year"
-            />
-          </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Product</span>
-            <FilterDropdown
-              value={productFilter}
-              onChange={(value) => setProductFilter(Array.isArray(value) ? value[0] || 'all' : value)}
-              options={[
-                { value: 'all', label: 'All Products' },
-                ...products.map(product => ({ value: product.name, label: product.name }))
-              ]}
-              placeholder="Select product"
-            />
-          </div>
-        </div>
-
-        {/* Row 2: Entry Type and Reference Type */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Entry Type</span>
-            <FilterDropdown
-              value={entryTypeFilter}
-              onChange={(value) => setEntryTypeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
-              options={[
-                { value: 'all', label: 'All Entries' },
-                { value: 'incoming', label: 'Incoming' },
-                { value: 'outgoing', label: 'Outgoing' },
-                { value: 'adjustment', label: 'Adjustment' }
-              ]}
-              placeholder="Select entry type"
-            />
-          </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Reference Type</span>
-            <FilterDropdown
-              value={referenceTypeFilter}
-              onChange={(value) => setReferenceTypeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
-              options={[
-                { value: 'all', label: 'All References' },
-                { value: 'invoice', label: 'Invoice' },
-                { value: 'purchase', label: 'Purchase' },
-                { value: 'adjustment', label: 'Adjustment' }
-              ]}
-              placeholder="Select reference type"
-            />
-          </div>
-        </div>
-
-        {/* Row 3: Date Range and Stock Level */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date Range</span>
-            <DateFilter
-              value={dateRangeFilter}
-              onChange={setDateRangeFilter}
-              placeholder="Select date range"
-            />
-          </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Stock Level</span>
-            <FilterDropdown
-              value={stockLevelFilter}
-              onChange={(value) => setStockLevelFilter(Array.isArray(value) ? value[0] || 'all' : value)}
-              options={[
-                { value: 'all', label: 'All Stock Levels' },
-                { value: 'in_stock', label: 'In Stock' },
-                { value: 'out_of_stock', label: 'Out of Stock' },
-                { value: 'low_stock', label: 'Low Stock' }
-              ]}
-              placeholder="Select stock level"
-            />
-          </div>
-        </div>
-
-        {/* Row 4: Reference Search */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Reference Search</span>
-          <input
-            type="text"
-            value={referenceSearch}
-            onChange={(e) => setReferenceSearch(e.target.value)}
-            placeholder="Search by reference number..."
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px',
-              outline: 'none'
-            }}
-          />
-        </div>
-      </EnhancedFilterBar>
+      />
 
       {/* Summary Section - computed from filtered dataset (not paginated) */}
       {filteredStockHistory.length > 0 && (
@@ -560,7 +596,8 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
           border: '1px solid #e9ecef', 
           borderRadius: '8px', 
           padding: '20px',
-          marginBottom: '24px'
+          marginBottom: '24px',
+          marginTop: '20px' // Add space for dropdowns to expand
         }}>
           <h3 style={{ margin: '0 0 16px 0', color: '#495057', fontSize: '18px' }}>
             {(() => {
@@ -884,10 +921,10 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
         productId={(productId && forceReload === 0) ? parseInt(productId) : undefined}
         filters={{
           productFilter: productFilter !== 'all' ? productFilter : undefined,
-          entryTypeFilter: entryTypeFilter !== 'all' ? entryTypeFilter : undefined,
-          referenceTypeFilter: referenceTypeFilter !== 'all' ? referenceTypeFilter : undefined,
-          referenceSearch: referenceSearch || undefined,
-          stockLevelFilter: stockLevelFilter !== 'all' ? stockLevelFilter : undefined
+          categoryFilter: categoryFilter !== 'all' ? categoryFilter : undefined,
+          supplierFilter: supplierFilter !== 'all' ? supplierFilter : undefined,
+          stockLevelFilter: stockLevelFilter !== 'all' ? stockLevelFilter : undefined,
+          entryTypeFilter: entryTypeFilter !== 'all' ? entryTypeFilter : undefined
         }}
       />
     </div>

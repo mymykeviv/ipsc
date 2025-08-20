@@ -5,7 +5,7 @@ import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
 import { SearchBar } from '../components/SearchBar'
 import { ErrorMessage } from '../components/ErrorMessage'
-import { DateFilter } from '../components/DateFilter'
+import { DateFilter, DateRange } from '../components/DateFilter'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { FilterBar } from '../components/FilterBar'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
@@ -96,7 +96,10 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   const [stockLevelFilter, setStockLevelFilter] = useState<string>('all')
   const [supplierFilter, setSupplierFilter] = useState<string>('all')
   const [priceRangeFilter, setPriceRangeFilter] = useState<string>('all')
-  const [dateFilter, setDateFilter] = useState<string>('all')
+  const [dateFilter, setDateFilter] = useState<DateRange>({
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+    endDate: new Date().toISOString().slice(0, 10)
+  })
   const [sortField, setSortField] = useState<keyof Product>('name')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [currentPage, setCurrentPage] = useState(1)
@@ -999,7 +1002,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           (stockLevelFilter !== 'all' ? 1 : 0) +
           (supplierFilter !== 'all' ? 1 : 0) +
           (priceRangeFilter !== 'all' ? 1 : 0) +
-          (dateFilter !== 'all' ? 1 : 0)
+          0 // DateFilter is always active now
         }
         onClearAll={() => {
           setSearchTerm('')
@@ -1010,7 +1013,10 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           setStockLevelFilter('all')
           setSupplierFilter('all')
           setPriceRangeFilter('all')
-          setDateFilter('all')
+          setDateFilter({
+            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+            endDate: new Date().toISOString().slice(0, 10)
+          })
         }}
         showQuickActions={true}
         quickActions={[
@@ -1137,11 +1143,10 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
-          <DateFilter
-            value={dateFilter}
-            onChange={setDateFilter}
-            placeholder="Select date range"
-          />
+                      <DateFilter
+              value={dateFilter}
+              onChange={setDateFilter}
+            />
         </div>
       </EnhancedFilterBar>
 

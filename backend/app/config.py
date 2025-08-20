@@ -6,13 +6,13 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # Application Settings
-    app_name: str = "CASHFLOW Backend"
+    app_name: str = "ProfitPath Backend"
     version: str = "1.4.4"
     debug: bool = False
     environment: str = "development"
     
-    # Database Settings
-    database_url: str = "postgresql+psycopg://postgres:postgres@db:5432/cashflow"
+    # Database Settings - PostgreSQL Only
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/profitpath"
     database_pool_size: int = 10
     database_max_overflow: int = 20
     database_pool_timeout: int = 30
@@ -82,6 +82,7 @@ class DevelopmentSettings(Settings):
     environment: str = "development"
     log_level: str = "DEBUG"
     reload: bool = True
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/profitpath"
 
 
 class ProductionSettings(Settings):
@@ -98,22 +99,10 @@ class ProductionSettings(Settings):
 class TestingSettings(Settings):
     debug: bool = True
     environment: str = "testing"
-    database_url: str = "sqlite:///./test.db"
     log_level: str = "DEBUG"
-
-
-def get_environment_settings() -> Settings:
-    """Get environment-specific settings"""
-    env = os.getenv("ENVIRONMENT", "development").lower()
-    
-    if env == "production":
-        return ProductionSettings()
-    elif env == "testing":
-        return TestingSettings()
-    else:
-        return DevelopmentSettings()
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/profitpath_test"
 
 
 # Global settings instance
-settings = get_environment_settings()
+settings = get_settings()
 

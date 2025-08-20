@@ -16,10 +16,10 @@ interface PDFViewerProps {
   productId?: number
   filters?: {
     productFilter?: string
-    entryTypeFilter?: string
-    referenceTypeFilter?: string
-    referenceSearch?: string
+    categoryFilter?: string
+    supplierFilter?: string
     stockLevelFilter?: string
+    entryTypeFilter?: string
   }
 }
 
