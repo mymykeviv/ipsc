@@ -345,15 +345,16 @@ export function UnifiedFilterSystem({
               }}
             >
               {row.map(filter => (
-                <FilterField
-                  key={filter.id}
-                  filter={filter}
-                  value={filterValues[filter.id]}
-                  onChange={(value) => handleFilterChange(filter.id, value)}
-                  isOpen={isOpen[filter.id]}
-                  onToggle={() => toggleDropdown(filter.id)}
-                  onClick={(e) => e.stopPropagation()}
-                />
+                <div key={filter.id} style={{ gridColumn: getGridColumnSpan(filter.width) }}>
+                  <FilterField
+                    filter={filter}
+                    value={filterValues[filter.id]}
+                    onChange={(value) => handleFilterChange(filter.id, value)}
+                    isOpen={isOpen[filter.id]}
+                    onToggle={() => toggleDropdown(filter.id)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
               ))}
             </div>
           ))}
@@ -387,18 +388,19 @@ interface FilterFieldProps {
   onClick: (e: React.MouseEvent) => void
 }
 
+// Helper function to get grid column span
+const getGridColumnSpan = (width: string | undefined) => {
+  switch (width) {
+    case 'full': return 'span 4'
+    case 'half': return 'span 2'
+    case 'third': return 'span 1'
+    case 'quarter': return 'span 1'
+    default: return 'span 1'
+  }
+}
+
 function FilterField({ filter, value, onChange, isOpen, onToggle, onClick }: FilterFieldProps) {
   const fieldRef = useRef<HTMLDivElement>(null)
-
-  const getGridColumnSpan = () => {
-    switch (filter.width) {
-      case 'full': return 'span 4'
-      case 'half': return 'span 2'
-      case 'third': return 'span 1'
-      case 'quarter': return 'span 1'
-      default: return 'span 1'
-    }
-  }
 
   const renderFilterInput = () => {
     switch (filter.type) {
@@ -543,7 +545,6 @@ function FilterField({ filter, value, onChange, isOpen, onToggle, onClick }: Fil
   return (
     <div
       style={{
-        gridColumn: getGridColumnSpan(),
         display: 'flex',
         flexDirection: 'column',
         gap: '6px',

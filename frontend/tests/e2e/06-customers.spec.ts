@@ -29,20 +29,18 @@ test.describe('Customers Management', () => {
     // Check for parties page elements (customers are part of parties)
     await expect(page.locator('h1:has-text("👥 Parties Management")')).toBeVisible();
     
-    // Debug: Check what buttons are available
-    const allButtons = await page.locator('button').allTextContents();
-    console.log('Available buttons:', allButtons);
+
     
     // Check for add customer button
-    await expect(page.locator('button:has-text("👤 Add Customer")')).toBeVisible();
+    await expect(page.locator('button:has-text("👤Add Customer")')).toBeVisible();
     
     // Check for search functionality
     await expect(page.locator('input[placeholder="Search parties by name, contact, email..."]')).toBeVisible();
   });
 
   test('should add a new customer', async ({ page }) => {
-    // Ensure we're on the parties page
-    await page.goto('/parties');
+    // Ensure we're on the customers page
+    await page.goto('/customers');
     await page.waitForTimeout(3000);
     
     // Check if we're on dashboard and navigate if needed
@@ -51,7 +49,7 @@ test.describe('Customers Management', () => {
     
     const isDashboard = await dashboardHeading.isVisible();
     if (isDashboard) {
-      await page.click('a[href="/parties"]');
+      await page.click('a[href="/customers"]');
       await page.waitForTimeout(2000);
     }
     
@@ -59,7 +57,7 @@ test.describe('Customers Management', () => {
     await expect(page.locator('h1:has-text("👥 Parties Management")')).toBeVisible();
     
     // Click add customer button
-    await page.click('button:has-text("👤 Add Customer")');
+    await page.click('button:has-text("👤Add Customer")');
     
     // Wait for form to load
     await page.waitForURL('/parties/add');
@@ -88,8 +86,8 @@ test.describe('Customers Management', () => {
   });
 
   test('should edit customer details', async ({ page }) => {
-    // Ensure we're on the parties page
-    await page.goto('/parties');
+    // Ensure we're on the customers page
+    await page.goto('/customers');
     await page.waitForTimeout(3000);
     
     // Check if we're on dashboard and navigate if needed
@@ -98,7 +96,7 @@ test.describe('Customers Management', () => {
     
     const isDashboard = await dashboardHeading.isVisible();
     if (isDashboard) {
-      await page.click('a[href="/parties"]');
+      await page.click('a[href="/customers"]');
       await page.waitForTimeout(2000);
     }
     
@@ -141,8 +139,8 @@ test.describe('Customers Management', () => {
   });
 
   test('should activate/deactivate customer', async ({ page }) => {
-    // Ensure we're on the parties page
-    await page.goto('/parties');
+    // Ensure we're on the customers page
+    await page.goto('/customers');
     await page.waitForTimeout(3000);
     
     // Check if we're on dashboard and navigate if needed
@@ -151,7 +149,7 @@ test.describe('Customers Management', () => {
     
     const isDashboard = await dashboardHeading.isVisible();
     if (isDashboard) {
-      await page.click('a[href="/parties"]');
+      await page.click('a[href="/customers"]');
       await page.waitForTimeout(2000);
     }
     
@@ -178,8 +176,8 @@ test.describe('Customers Management', () => {
   });
 
   test('should search and filter customers', async ({ page }) => {
-    // Ensure we're on the parties page
-    await page.goto('/parties');
+    // Ensure we're on the customers page
+    await page.goto('/customers');
     await page.waitForTimeout(3000);
     
     // Check if we're on dashboard and navigate if needed
@@ -188,7 +186,7 @@ test.describe('Customers Management', () => {
     
     const isDashboard = await dashboardHeading.isVisible();
     if (isDashboard) {
-      await page.click('a[href="/parties"]');
+      await page.click('a[href="/customers"]');
       await page.waitForTimeout(2000);
     }
     

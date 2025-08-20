@@ -1,6 +1,6 @@
 {
-  "version": "1.48.2",
-  "build_date": "2025-08-20T18:29:19.926790",
+  "version": "1.48.3",
+  "build_date": "2025-08-20T18:32:25.925527",
   "changes": [
     "Comprehensive UX improvements for Parties page and navigation",
     "Renamed side menu 'Customers / Vendors' to 'Parties' for better clarity",
