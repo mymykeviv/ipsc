@@ -23,6 +23,7 @@ from .payment_scheduler import PaymentScheduler, PaymentStatus, PaymentReminderT
 from .inventory_manager import InventoryManager, StockValuationMethod
 from .financial_reports import FinancialReports, ReportType
 from .branding import router as branding_router
+from .dental import router as dental_router
 from decimal import Decimal
 from .emailer import send_email, create_invoice_email_template, create_purchase_email_template
 from fastapi import Query
@@ -8023,6 +8024,9 @@ def export_invoice_template(
 
 # Include branding router
 api.include_router(branding_router)
+
+# Include dental router
+api.include_router(dental_router)
 
 
 
