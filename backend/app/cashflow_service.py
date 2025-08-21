@@ -167,9 +167,12 @@ class CashflowService:
                 )
             
             if start_date:
-                payment_query = payment_query.filter(Payment.payment_date >= start_date)
+                payment_query = payment_query.filter(Payment.payment_date >= datetime.combine(start_date, datetime.min.time()))
             if end_date:
-                payment_query = payment_query.filter(Payment.payment_date <= end_date)
+                payment_query = payment_query.filter(Payment.payment_date <= datetime.combine(end_date, datetime.max.time()))
+            
+            if payment_method:
+                payment_query = payment_query.filter(Payment.payment_method.ilike(f"%{payment_method}%"))
             
             payment_transactions = payment_query.all()
             transactions.extend(payment_transactions)
@@ -203,9 +206,12 @@ class CashflowService:
                 )
             
             if start_date:
-                purchase_payment_query = purchase_payment_query.filter(PurchasePayment.payment_date >= start_date)
+                purchase_payment_query = purchase_payment_query.filter(PurchasePayment.payment_date >= datetime.combine(start_date, datetime.min.time()))
             if end_date:
-                purchase_payment_query = purchase_payment_query.filter(PurchasePayment.payment_date <= end_date)
+                purchase_payment_query = purchase_payment_query.filter(PurchasePayment.payment_date <= datetime.combine(end_date, datetime.max.time()))
+            
+            if payment_method:
+                purchase_payment_query = purchase_payment_query.filter(PurchasePayment.payment_method.ilike(f"%{payment_method}%"))
             
             purchase_transactions = purchase_payment_query.all()
             transactions.extend(purchase_transactions)
@@ -239,9 +245,12 @@ class CashflowService:
                 )
             
             if start_date:
-                expense_query = expense_query.filter(Expense.expense_date >= start_date)
+                expense_query = expense_query.filter(Expense.expense_date >= datetime.combine(start_date, datetime.min.time()))
             if end_date:
-                expense_query = expense_query.filter(Expense.expense_date <= end_date)
+                expense_query = expense_query.filter(Expense.expense_date <= datetime.combine(end_date, datetime.max.time()))
+            
+            if payment_method:
+                expense_query = expense_query.filter(Expense.payment_method.ilike(f"%{payment_method}%"))
             
             expense_transactions = expense_query.all()
             transactions.extend(expense_transactions)
