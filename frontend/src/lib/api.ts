@@ -1507,53 +1507,11 @@ export async function apiGetInventoryDashboard(): Promise<InventoryDashboardMetr
   return r.json()
 }
 
-// Payment Functions
-export async function apiAddPayment(invoiceId: number, payment: PaymentCreate): Promise<Payment> {
-  const r = await fetch(`/api/invoices/${invoiceId}/payments`, {
-    method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('auth_token')}` 
-    },
-    body: JSON.stringify(payment)
-  })
-  
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  
-  return r.json()
-}
-
-export async function apiAddPurchasePayment(purchaseId: number, payment: PurchasePaymentCreate): Promise<any> {
-  const r = await fetch(`/api/purchases/${purchaseId}/payments`, {
-    method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('auth_token')}` 
-    },
-    body: JSON.stringify(payment)
-  })
-  
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  
-  return r.json()
-}
 
 
-// Payment Management API Functions
+
+
+
 export async function apiAddPayment(invoiceId: number, payload: PaymentCreate): Promise<Payment> {
   const r = await fetch(`/api/invoices/${invoiceId}/payments`, {
     method: 'POST',
