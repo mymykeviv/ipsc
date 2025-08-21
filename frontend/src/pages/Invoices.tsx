@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { apiListParties, apiGetProducts, apiCreateInvoice, apiUpdateInvoice, apiGetInvoice, apiDeleteInvoice, apiEmailInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, apiGetInvoices, apiUpdateInvoiceStatus, apiGetInvoicePDF, Party, Product, Payment, PaginationInfo, Invoice } from '../lib/api'
 import { useAuth } from '../modules/AuthContext'
-import { createApiErrorHandler } from '../lib/apiUtils'
+import { createApiErrorHandler, createInvoiceErrorHandler, createInvoiceGridErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
 import { StatusBadge } from '../components/StatusBadge'
 import { ComprehensiveInvoiceForm } from '../components/ComprehensiveInvoiceForm'
@@ -31,8 +31,9 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
   const [emailModalOpen, setEmailModalOpen] = useState(false)
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   
-  // Create error handler that will automatically log out on 401 errors
-  const handleApiError = createApiErrorHandler(forceLogout)
+  // Create enhanced error handlers for different operations
+  const handleInvoiceError = createInvoiceErrorHandler(forceLogout)
+  const handleGridError = createInvoiceGridErrorHandler(forceLogout)
   const [pagination, setPagination] = useState<PaginationInfo>({
     page: 1,
     limit: 10,
@@ -53,6 +54,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
     endDate: new Date().toISOString().slice(0, 10)
   })
+  const [isDateFilterActive, setIsDateFilterActive] = useState(true)
 
   useEffect(() => {
     if (mode === 'manage') {
@@ -71,7 +73,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
     if (mode === 'manage') {
       loadInvoices()
     }
-  }, [searchTerm, statusFilter, customerFilter, amountRangeFilter, gstTypeFilter, paymentStatusFilter, dateFilter])
+  }, [searchTerm, statusFilter, customerFilter, amountRangeFilter, gstTypeFilter, paymentStatusFilter, dateFilter, isDateFilterActive])
 
   const loadInvoices = async () => {
     try {
@@ -89,9 +91,11 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
       }
       if (gstTypeFilter !== 'all') params.append('gst_type', gstTypeFilter)
       if (paymentStatusFilter !== 'all') params.append('payment_status', paymentStatusFilter)
-      // Always use the date range from the DateFilter component
-      params.append('date_from', dateFilter.startDate)
-      params.append('date_to', dateFilter.endDate)
+      // Only apply date filter when it's active
+      if (isDateFilterActive) {
+        params.append('date_from', dateFilter.startDate)
+        params.append('date_to', dateFilter.endDate)
+      }
       
       params.append('page', pagination.page.toString())
       params.append('limit', pagination.limit.toString())
@@ -107,7 +111,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
       setInvoices(data.invoices)
       setPagination(data.pagination)
     } catch (err: any) {
-      const errorMessage = handleApiError(err)
+      const errorMessage = handleGridError(err)
       setError(errorMessage)
     } finally {
       setLoading(false)
@@ -294,7 +298,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           (amountRangeFilter !== 'all' ? 1 : 0) +
           (gstTypeFilter !== 'all' ? 1 : 0) +
           (paymentStatusFilter !== 'all' ? 1 : 0) +
-          0 // DateFilter is always active now
+          (isDateFilterActive ? 1 : 0)
         }
         onClearAll={() => {
           setSearchTerm('')
@@ -303,6 +307,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           setAmountRangeFilter('all')
           setGstTypeFilter('all')
           setPaymentStatusFilter('all')
+          setIsDateFilterActive(false)
           setDateFilter({
             startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
             endDate: new Date().toISOString().slice(0, 10)
@@ -415,7 +420,10 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
           <DateFilter
             value={dateFilter}
-            onChange={setDateFilter}
+            onChange={(newDateFilter) => {
+              setDateFilter(newDateFilter)
+              setIsDateFilterActive(true)
+            }}
           />
         </div>
       </EnhancedFilterBar>
