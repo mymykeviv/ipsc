@@ -1,52 +1,100 @@
 {
-  "timestamp": "2025-08-20T18:36:20.442928",
-  "duration": "0:00:07.465333",
-  "total_tests": 7,
-  "passed_tests": 0,
-  "failed_tests": 7,
-  "success_rate": 0.0,
+  "timestamp": "2025-08-21T09:44:21.419687",
+  "duration": "0:00:11.509681",
+  "total_tests": 15,
+  "passed_tests": 14,
+  "failed_tests": 1,
+  "success_rate": 93.33333333333333,
   "results": [
     {
       "test": "Backend Accessibility",
-      "success": false,
-      "details": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x1072f8830>: Failed to establish a new connection: [Errno 61] Connection refused'))",
-      "timestamp": "2025-08-20T18:36:12.981565"
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2025-08-21T09:44:09.925944"
     },
     {
       "test": "Frontend Build",
-      "success": false,
+      "success": true,
       "details": "",
-      "timestamp": "2025-08-20T18:36:15.472357"
+      "timestamp": "2025-08-21T09:44:13.759966"
     },
     {
       "test": "Backend Server Running",
-      "success": false,
-      "details": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x107300e10>: Failed to establish a new connection: [Errno 61] Connection refused'))",
-      "timestamp": "2025-08-20T18:36:15.474354"
+      "success": true,
+      "details": "",
+      "timestamp": "2025-08-21T09:44:13.765875"
+    },
+    {
+      "test": "Authentication",
+      "success": true,
+      "details": "",
+      "timestamp": "2025-08-21T09:44:14.082753"
+    },
+    {
+      "test": "Invoice Templates API",
+      "success": true,
+      "details": "Found 2 templates",
+      "timestamp": "2025-08-21T09:44:14.090557"
+    },
+    {
+      "test": "Invoices API",
+      "success": true,
+      "details": "Found 2 invoices",
+      "timestamp": "2025-08-21T09:44:14.100473"
+    },
+    {
+      "test": "Products API",
+      "success": true,
+      "details": "Found 3 products",
+      "timestamp": "2025-08-21T09:44:14.106278"
+    },
+    {
+      "test": "Parties API",
+      "success": true,
+      "details": "Found 1 parties",
+      "timestamp": "2025-08-21T09:44:14.113797"
+    },
+    {
+      "test": "PDF Generation",
+      "success": true,
+      "details": "Generated PDF for invoice 1",
+      "timestamp": "2025-08-21T09:44:14.132429"
     },
     {
       "test": "Frontend Build",
-      "success": false,
+      "success": true,
       "details": "",
-      "timestamp": "2025-08-20T18:36:17.869972"
+      "timestamp": "2025-08-21T09:44:17.636096"
     },
     {
       "test": "TypeScript Compilation",
-      "success": false,
+      "success": true,
       "details": "",
-      "timestamp": "2025-08-20T18:36:20.326716"
+      "timestamp": "2025-08-21T09:44:20.891181"
     },
     {
       "test": "Frontend Linting",
       "success": false,
-      "details": "Linting issues found (non-critical): \nOops! Something went wrong! :(\n\nESLint: 8.57.1\n\nError: Cannot find module '/Users/vivekm/code/ipsc/...",
-      "timestamp": "2025-08-20T18:36:20.442851"
+      "details": "Linting issues found (non-critical): ...",
+      "timestamp": "2025-08-21T09:44:21.352822"
     },
     {
-      "test": "Integration Tests",
-      "success": false,
-      "details": "No authentication token available",
-      "timestamp": "2025-08-20T18:36:20.442923"
+      "test": "Template Creation",
+      "success": true,
+      "details": "Created template 7",
+      "timestamp": "2025-08-21T09:44:21.390479"
+    },
+    {
+      "test": "Template PDF Generation",
+      "success": true,
+      "details": "Generated PDF with template 7",
+      "timestamp": "2025-08-21T09:44:21.412977"
+    },
+    {
+      "test": "Template Cleanup",
+      "success": true,
+      "details": "Deleted template 7",
+      "timestamp": "2025-08-21T09:44:21.419586"
     }
   ]
 }
