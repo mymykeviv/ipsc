@@ -1482,30 +1482,21 @@ export async function apiGetInvoicePayments(invoiceId: number): Promise<Payment[
 }
 
 export async function apiGetAllInvoicePayments(): Promise<Payment[]> {
-  // First get all invoices, then get payments for each
-  const invoicesResponse = await fetch('/api/invoices', {
+  // Use the direct endpoint for getting all invoice payments
+  const r = await fetch('/api/invoice-payments', {
     headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
   })
   
-  if (!invoicesResponse.ok) {
-    throw new Error(`HTTP ${invoicesResponse.status}: ${invoicesResponse.statusText}`)
-  }
-  
-  const invoicesData = await invoicesResponse.json()
-  const allPayments: Payment[] = []
-  
-  // Get payments for each invoice
-  for (const invoice of invoicesData.invoices) {
+  if (!r.ok) {
     try {
-      const payments = await apiGetInvoicePayments(invoice.id)
-      allPayments.push(...payments)
-    } catch (error) {
-      // Skip invoices with no payments or errors
-      console.warn(`Failed to get payments for invoice ${invoice.id}:`, error)
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
     }
   }
   
-  return allPayments
+  return r.json()
 }
 
 export async function apiDeletePayment(paymentId: number): Promise<void> {

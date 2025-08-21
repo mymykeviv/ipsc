@@ -1325,10 +1325,10 @@ def list_invoice_payments(
             payment_method=payment.payment_method,
             account_head=payment.account_head,
             reference_number=payment.reference_number,
-            payment_date=payment.payment_date.isoformat(),
+            payment_date=payment.payment_date,
             notes=payment.notes,
-            customer_name=customer.name if customer else "Unknown",
-            invoice_number=invoice.invoice_no if invoice else "Unknown"
+            created_at=payment.created_at,
+            updated_at=payment.updated_at
         ))
     
     return result
