@@ -827,6 +827,20 @@ def invoice_pdf(invoice_id: int, template_id: int | None = None, _: User = Depen
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, rightMargin=1*cm, leftMargin=1*cm, topMargin=1*cm, bottomMargin=1*cm)
     
+    # Register fonts that support Unicode characters (including ₹ symbol)
+    try:
+        # Try to register a Unicode-supporting font
+        pdfmetrics.registerFont(TTFont('DejaVuSans', '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'))
+        unicode_font = 'DejaVuSans'
+    except:
+        try:
+            # Fallback to Arial Unicode MS if available
+            pdfmetrics.registerFont(TTFont('ArialUnicode', '/usr/share/fonts/truetype/msttcorefonts/Arial.ttf'))
+            unicode_font = 'ArialUnicode'
+        except:
+            # Ultimate fallback to default fonts
+            unicode_font = 'Helvetica'
+    
     # Define styles based on template
     styles = getSampleStyleSheet()
     
