@@ -36,6 +36,7 @@ All notable changes to this project will be documented in this file.
 - **API Compilation**: Fixed duplicate function declarations causing esbuild transform errors
 - **Payment Display**: Fixed backend PaymentOut model validation errors preventing payment history display
 - **Invoice Payments UI**: Fixed date filter always active causing payments to not display despite successful API response
+- **Cashflow Transactions**: Fixed missing payment_method filter and date comparison issues preventing invoice payments from appearing
 
 ### ✨ Enhanced
 - **Currency Display**: Updated invoice PDFs to show ₹ symbol instead of INR code
