@@ -208,13 +208,13 @@ def format_currency_for_pdf(amount: float, currency_code: str = 'INR') -> str:
         
         # For INR, use Indian number formatting (lakhs, crores)
         if currency_code.upper() == 'INR':
-            # Use INR as fallback if ₹ symbol might not render properly
+            # Use ₹ symbol with Unicode font support
             if amount >= 10000000:  # 1 crore
-                return f"INR {amount/10000000:.2f} Cr"
+                return f"{symbol}{amount/10000000:.2f} Cr"
             elif amount >= 100000:  # 1 lakh
-                return f"INR {amount/100000:.2f} L"
+                return f"{symbol}{amount/100000:.2f} L"
             else:
-                return f"INR {formatted_amount}"
+                return f"{symbol}{formatted_amount}"
         else:
             # For other currencies, use standard formatting
             return f"{symbol}{formatted_amount}"
