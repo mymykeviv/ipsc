@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - **Migration Scripts**: Created automated database schema fix script
 - **Purchase Payments Display**: Fixed missing API function and updated component to use correct endpoint for displaying purchase payments
 - **E2E Test Fix**: Fixed health endpoint URL in critical flows test from `/api/health` to `/health`
+- **Database Connection Issue**: Resolved PostgreSQL connection refused error by using automated deployment pipeline
 
 ### 🔧 Changed
 - **CI Configuration**: Updated all Python commands to use `python3`
