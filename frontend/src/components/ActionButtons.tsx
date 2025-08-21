@@ -241,7 +241,9 @@ export const ActionButtonSets = {
   }) => ({
     primaryActions: [
       { label: 'Edit', onClick: actions.onEdit, icon: '✏️', variant: 'secondary' as const },
-      { label: 'Add Payment', onClick: actions.onPayment, icon: '💰', variant: 'secondary' as const }
+      ...(item.balance_amount > 0 ? [
+        { label: 'Add Payment', onClick: actions.onPayment, icon: '💰', variant: 'secondary' as const }
+      ] : [])
     ],
     contextualActions: [
       ...(item.status === 'Cancelled' ? [

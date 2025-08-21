@@ -459,10 +459,10 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
                     borderRadius: '4px', 
                     fontSize: '12px',
                     fontWeight: '500',
-                    backgroundColor: purchase.grand_total > 0 ? '#fff3cd' : '#d4edda',
-                    color: purchase.grand_total > 0 ? '#856404' : '#155724'
+                    backgroundColor: purchase.balance_amount > 0 ? '#fff3cd' : '#d4edda',
+                    color: purchase.balance_amount > 0 ? '#856404' : '#155724'
                   }}>
-                    ₹{purchase.grand_total.toFixed(2)}
+                    ₹{purchase.balance_amount.toFixed(2)}
                   </span>
                 </td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
