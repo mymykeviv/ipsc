@@ -32,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - **Payment Submission**: Fixed missing payment_date field causing 422 errors when adding payments
 - **Filter Clear All**: Fixed Clear All filter functionality not properly clearing date filters
 - **Invoice Status Logic**: Fixed status field showing payment information instead of invoice state
+- **Invoice Payments Display**: Fixed missing API functions causing payments not to display after submission
 
 ### ✨ Enhanced
 - **Currency Display**: Updated invoice PDFs to show ₹ symbol instead of INR code
