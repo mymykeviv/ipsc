@@ -39,6 +39,8 @@ All notable changes to this project will be documented in this file.
 - **Cashflow Transactions**: Fixed missing payment_method filter and date comparison issues preventing invoice payments from appearing
 - **Filter Behavior**: Fixed automatic filter application when navigating to Cashflow and Payments pages - now shows all data by default
 - **Dashboard Calculations**: Fixed missing cashflow API functions causing incorrect dashboard display values
+- **Purchase Payment Failure**: Fixed 422 error due to incorrect field names (amount/method vs payment_amount/payment_method)
+- **API Compilation Errors**: Fixed duplicate function declarations and missing TypeScript types
 
 ### ✨ Enhanced
 - **Currency Display**: Updated invoice PDFs to show ₹ symbol instead of INR code
