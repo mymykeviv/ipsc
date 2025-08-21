@@ -45,6 +45,8 @@ All notable changes to this project will be documented in this file.
 - **Stock Movement History**: Fixed missing API functions preventing all products from being displayed
 - **Purchase Payment Amount**: Fixed incorrect pending amount calculation causing payment failures
 - **Stock Movement Functions**: Removed duplicate function declarations causing esbuild compilation errors
+- **Purchase Display**: Fixed Amount Due column to show correct balance amounts
+- **Purchase Actions**: Disabled Add Payment option for fully paid purchases
 
 ### ✨ Enhanced
 - **Currency Display**: Updated invoice PDFs to show ₹ symbol instead of INR code
