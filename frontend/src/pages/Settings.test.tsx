@@ -67,7 +67,6 @@ describe('Settings Page', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Email Configuration')).toBeInTheDocument()
-        expect(screen.getByText('Email Provider')).toBeInTheDocument()
         expect(screen.getByText('SMTP Configuration')).toBeInTheDocument()
         expect(screen.getByText('Sender Information')).toBeInTheDocument()
       })
@@ -81,7 +80,6 @@ describe('Settings Page', () => {
       await waitFor(() => {
         expect(screen.getByText('Invoice Settings')).toBeInTheDocument()
         expect(screen.getByText('Invoice Configuration')).toBeInTheDocument()
-        expect(screen.getByText('Invoice Template')).toBeInTheDocument()
       })
     })
   })

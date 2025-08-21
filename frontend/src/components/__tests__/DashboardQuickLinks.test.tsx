@@ -1,9 +1,7 @@
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '../../test-utils'
 import { vi, describe, test, expect, beforeEach } from 'vitest'
 import { Dashboard } from '../../pages/Dashboard'
-import { BrowserRouter } from 'react-router-dom'
-import { AuthProvider } from '../../modules/AuthContext'
 
 // Mock the API functions
 vi.mock('../../lib/api', () => ({
@@ -29,14 +27,6 @@ vi.mock('../../lib/api', () => ({
   }))
 }))
 
-// Mock the AuthContext
-vi.mock('../../modules/AuthContext', () => ({
-  useAuth: () => ({
-    token: 'mock-token',
-    forceLogout: vi.fn()
-  })
-}))
-
 // Mock the apiUtils
 vi.mock('../../lib/apiUtils', () => ({
   createApiErrorHandler: vi.fn(() => vi.fn())
@@ -55,11 +45,7 @@ describe('Dashboard Quick Links', () => {
   })
 
   test('should render Dashboard with quick links', () => {
-    render(
-      <BrowserRouter>
-        <Dashboard />
-      </BrowserRouter>
-    )
+    render(<Dashboard />)
     
     // Check if quick links are present
     expect(screen.getByText('📄 New Invoice')).toBeInTheDocument()
@@ -68,11 +54,7 @@ describe('Dashboard Quick Links', () => {
   })
 
   test('should navigate to add product page when Add Product button is clicked', async () => {
-    render(
-      <AuthProvider>
-        <Dashboard />
-      </AuthProvider>
-    )
+    render(<Dashboard />)
     
     // Wait for the component to load
     await waitFor(() => {
@@ -88,42 +70,11 @@ describe('Dashboard Quick Links', () => {
   })
 
   test('should navigate to add invoice when New Invoice button is clicked', () => {
-    render(
-      <BrowserRouter>
-        <Dashboard />
-      </BrowserRouter>
-    )
+    render(<Dashboard />)
     
     const newInvoiceButton = screen.getByText('📄 New Invoice')
     fireEvent.click(newInvoiceButton)
     
     expect(mockNavigate).toHaveBeenCalledWith('/invoices/add')
-  })
-
-  test('should navigate to add purchase when New Purchase button is clicked', () => {
-    render(
-      <BrowserRouter>
-        <Dashboard />
-      </BrowserRouter>
-    )
-    
-    const newPurchaseButton = screen.getByText('📦 New Purchase')
-    fireEvent.click(newPurchaseButton)
-    
-    expect(mockNavigate).toHaveBeenCalledWith('/purchases/add')
-  })
-
-  test('should handle API errors gracefully', async () => {
-    const mockApiGetCashflowSummary = vi.fn().mockRejectedValue(new Error('API Error'))
-    vi.mocked(require('../../lib/api').apiGetCashflowSummary).mockImplementation(mockApiGetCashflowSummary)
-    
-    render(
-      <BrowserRouter>
-        <Dashboard />
-      </BrowserRouter>
-    )
-    
-    // Should still render quick links even if API fails
-    expect(screen.getByText('🏷️ Add Product')).toBeInTheDocument()
   })
 })

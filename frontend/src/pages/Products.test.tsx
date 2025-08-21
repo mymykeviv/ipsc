@@ -150,7 +150,7 @@ describe('Products Page', () => {
 
       renderWithProviders(<Products mode="manage" />)
 
-      expect(screen.getByText('Loading...')).toBeInTheDocument()
+      expect(screen.getByText('Loading products...')).toBeInTheDocument()
     })
 
     it('should handle API errors gracefully', async () => {
@@ -160,7 +160,7 @@ describe('Products Page', () => {
       renderWithProviders(<Products mode="manage" />)
 
       await waitFor(() => {
-        expect(screen.getByText('No products found')).toBeInTheDocument()
+        expect(screen.getByText('Error Loading Products')).toBeInTheDocument()
       })
     })
   })
@@ -202,7 +202,7 @@ describe('Products Page', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Stock Adjustment')).toBeInTheDocument()
-        expect(screen.getByText('Stock adjustment functionality will be implemented here.')).toBeInTheDocument()
+        expect(screen.getByText('Product Selection')).toBeInTheDocument()
       })
     })
   })
@@ -214,8 +214,7 @@ describe('Products Page', () => {
       renderWithProviders(<Products mode="stock-history" />, '/products/stock-history')
 
       await waitFor(() => {
-        expect(screen.getAllByText('Stock History')).toHaveLength(2) // Both h1 and h3
-        expect(screen.getByText('Stock history functionality will be implemented here.')).toBeInTheDocument()
+        expect(screen.getByText('Stock Movement History')).toBeInTheDocument()
       })
     })
   })
