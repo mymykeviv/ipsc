@@ -1583,66 +1583,7 @@ export type StockMovement = {
   transactions: StockTransaction[]
 }
 
-// Stock Movement Functions
-export async function apiGetStockMovementHistory(
-  financialYear: string,
-  productId?: number
-): Promise<StockMovement[]> {
-  const params = new URLSearchParams()
-  params.append('financial_year', financialYear)
-  if (productId) {
-    params.append('product_id', productId.toString())
-  }
-  
-  const r = await fetch(`/api/stock/movement-history?${params.toString()}`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  
-  return r.json()
-}
 
-export async function apiDownloadStockMovementHistoryPDF(
-  financialYear: string,
-  productId?: number,
-  productFilter?: string,
-  entryTypeFilter?: string,
-  referenceTypeFilter?: string,
-  referenceSearch?: string,
-  stockLevelFilter?: string
-): Promise<Blob> {
-  const params = new URLSearchParams()
-  params.append('financial_year', financialYear)
-  if (productId) params.append('product_id', productId.toString())
-  if (productFilter) params.append('product_filter', productFilter)
-  if (entryTypeFilter) params.append('entry_type_filter', entryTypeFilter)
-  if (referenceTypeFilter) params.append('reference_type_filter', referenceTypeFilter)
-  if (referenceSearch) params.append('reference_search', referenceSearch)
-  if (stockLevelFilter) params.append('stock_level_filter', stockLevelFilter)
-  
-  const r = await fetch(`/api/stock/movement-history/pdf?${params.toString()}`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  
-  return r.blob()
-}
 
 
 
