@@ -1,9 +1,9 @@
 {
-  "timestamp": "2025-08-21T17:06:40Z",
+  "timestamp": "2025-08-21T17:27:36Z",
   "backend": "unhealthy",
   "frontend": "unhealthy",
   "database": "unhealthy",
-  "performance": "success",
+  "performance": "abandoned",
   "critical_flows": "success",
   "overall_status": "success"
 }
