@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.48.7] - 2025-08-21
+
+### 🐛 Fixed
+- **Database Schema**: Fixed missing `gst_enabled_by_default` column in `company_settings` table
+- **CI/CD Pipeline**: Fixed Python path issues (python3 vs python)
+- **Frontend Tests**: Fixed Vitest configuration and removed deprecated `--watchAll` flag
+- **Test Dependencies**: Added missing vitest global installation in CI
+- **Migration Scripts**: Created automated database schema fix script
+
+### 🔧 Changed
+- **CI Configuration**: Updated all Python commands to use `python3`
+- **Frontend Test Script**: Updated package.json test command to use `vitest run`
+- **Test Runner**: Fixed comprehensive test runner to use correct Python path
+
+### 🧪 Testing
+- **Database Migration**: Added verification script to ensure schema fixes are applied correctly
+- **CI/CD Validation**: All CI/CD pipeline issues addressed and tested
+
 ## [1.48.6] - 2025-08-21
 
 ### 🐛 Fixed
@@ -9,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - **Invoice Creation Test**: Updated test to include all required fields (customer_id, supplier_id, place_of_supply, etc.)
 - **Test Data Structure**: Fixed invoice item structure to include required product_id and qty fields
 - **CI/CD Pipeline**: All tests now passing with 100% success rate
+- **Invoice Status Update**: Fixed missing apiUpdateInvoiceStatus function causing 422 errors when marking invoices as sent
 
 ### 🧪 Testing
 - **Test Suite Validation**: Comprehensive test suite validation successful
