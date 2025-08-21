@@ -94,10 +94,10 @@ export function PaymentForm({ onSuccess, onCancel, type, purchaseId, invoiceId }
       purchase_no: purchase.purchase_no,
       vendor_name: purchase.vendor_name,
       total_amount: purchase.grand_total,
-      pending_amount: purchase.grand_total, // TODO: Calculate actual pending amount
+      pending_amount: purchase.balance_amount, // Use actual balance amount
       terms: purchase.terms,
       due_date: purchase.due_date?.split('T')[0],
-      payment_amount: purchase.grand_total
+      payment_amount: purchase.balance_amount // Set default payment amount to balance
     }))
   }
 
@@ -108,10 +108,10 @@ export function PaymentForm({ onSuccess, onCancel, type, purchaseId, invoiceId }
       invoice_no: invoice.invoice_no,
       customer_name: invoice.customer_name,
       total_amount: invoice.grand_total,
-      pending_amount: invoice.grand_total, // TODO: Calculate actual pending amount
+      pending_amount: invoice.balance_amount, // Use actual balance amount
       terms: 'Due on Receipt', // Default terms since Invoice type doesn't have terms property
       due_date: invoice.due_date?.split('T')[0],
-      payment_amount: invoice.grand_total
+      payment_amount: invoice.balance_amount // Set default payment amount to balance
     }))
   }
 

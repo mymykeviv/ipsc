@@ -184,6 +184,49 @@ export type PurchasePaymentCreate = {
   notes?: string
 }
 
+export type Purchase = {
+  id: number
+  purchase_no: string
+  vendor_id: number
+  vendor_name: string
+  date: string
+  grand_total: number
+  paid_amount: number
+  balance_amount: number
+  status: string
+  terms?: string
+  due_date?: string
+  items: Array<{
+    id: number
+    product_id: number
+    product_name: string
+    qty: number
+    rate: number
+    total: number
+  }>
+}
+
+export type Invoice = {
+  id: number
+  invoice_no: string
+  customer_id: number
+  customer_name: string
+  date: string
+  grand_total: number
+  paid_amount: number
+  balance_amount: number
+  status: string
+  due_date?: string
+  items: Array<{
+    id: number
+    product_id: number
+    product_name: string
+    qty: number
+    rate: number
+    total: number
+  }>
+}
+
 export interface CashflowTransactionFilters {
   search?: string
   type_filter?: string
@@ -1505,6 +1548,100 @@ export async function apiGetInventoryDashboard(): Promise<InventoryDashboardMetr
   }
   
   return r.json()
+}
+
+// Stock Movement Types
+export type StockTransaction = {
+  id: number
+  product_id: number
+  product_name: string
+  transaction_date: string
+  entry_type: 'in' | 'out' | 'adjust'
+  quantity: number
+  unit_price: number
+  total_value: number
+  ref_type: string | null
+  ref_id: number | null
+  reference_number: string | null
+  notes: string | null
+  financial_year: string
+  running_balance: number
+}
+
+export type StockMovement = {
+  product_id: number
+  product_name: string
+  financial_year: string
+  opening_stock: number
+  opening_value: number
+  total_incoming: number
+  total_incoming_value: number
+  total_outgoing: number
+  total_outgoing_value: number
+  closing_stock: number
+  closing_value: number
+  transactions: StockTransaction[]
+}
+
+// Stock Movement Functions
+export async function apiGetStockMovementHistory(
+  financialYear: string,
+  productId?: number
+): Promise<StockMovement[]> {
+  const params = new URLSearchParams()
+  params.append('financial_year', financialYear)
+  if (productId) {
+    params.append('product_id', productId.toString())
+  }
+  
+  const r = await fetch(`/api/stock/movement-history?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiDownloadStockMovementHistoryPDF(
+  financialYear: string,
+  productId?: number,
+  productFilter?: string,
+  entryTypeFilter?: string,
+  referenceTypeFilter?: string,
+  referenceSearch?: string,
+  stockLevelFilter?: string
+): Promise<Blob> {
+  const params = new URLSearchParams()
+  params.append('financial_year', financialYear)
+  if (productId) params.append('product_id', productId.toString())
+  if (productFilter) params.append('product_filter', productFilter)
+  if (entryTypeFilter) params.append('entry_type_filter', entryTypeFilter)
+  if (referenceTypeFilter) params.append('reference_type_filter', referenceTypeFilter)
+  if (referenceSearch) params.append('reference_search', referenceSearch)
+  if (stockLevelFilter) params.append('stock_level_filter', stockLevelFilter)
+  
+  const r = await fetch(`/api/stock/movement-history/pdf?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.blob()
 }
 
 
