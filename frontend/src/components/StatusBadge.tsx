@@ -15,6 +15,8 @@ export function StatusBadge({ status, size = 'medium', onClick, clickable = fals
         return { bg: '#fff3cd', color: '#856404', border: '#ffeaa7' } // Orange
       case 'sent':
         return { bg: '#d4edda', color: '#155724', border: '#c3e6cb' } // Green
+      case 'complete':
+        return { bg: '#d4edda', color: '#155724', border: '#c3e6cb' } // Green
       case 'partial payment':
       case 'partially paid':
         return { bg: '#fff3cd', color: '#856404', border: '#ffeaa7' } // Yellow

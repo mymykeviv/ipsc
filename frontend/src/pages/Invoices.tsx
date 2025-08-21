@@ -529,7 +529,25 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
                   })()}
                 </td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
-                  <StatusBadge status={invoice.status} />
+                  {(() => {
+                    // Determine invoice state based on status and payment
+                    let invoiceState = invoice.status
+                    
+                    // If status is payment-related, determine actual invoice state
+                    if (invoice.status === 'Partially Paid' || invoice.status === 'Paid') {
+                      if (invoice.balance_amount === 0) {
+                        invoiceState = 'Complete' // Fully paid
+                      } else if (invoice.paid_amount > 0) {
+                        invoiceState = 'Sent' // Partially paid but invoice was sent
+                      } else {
+                        invoiceState = 'Draft' // No payments made
+                      }
+                    } else if (invoice.status === 'Overdue') {
+                      invoiceState = 'Sent' // Overdue invoices were sent
+                    }
+                    
+                    return <StatusBadge status={invoiceState} />
+                  })()}
                 </td>
                 <td style={{ padding: '12px' }}>
                   <ActionButtons
