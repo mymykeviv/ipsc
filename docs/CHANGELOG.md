@@ -30,6 +30,7 @@ All notable changes to this project will be documented in this file.
 - **Invoice Status Update**: Fixed missing apiUpdateInvoiceStatus function causing 422 errors when marking invoices as sent
 - **INR Symbol Rendering**: Fixed currency symbol display in PDF generation (black square issue)
 - **Payment Submission**: Fixed missing payment_date field causing 422 errors when adding payments
+- **Filter Clear All**: Fixed Clear All filter functionality not properly clearing date filters
 
 ### ✨ Enhanced
 - **Currency Display**: Updated invoice PDFs to show ₹ symbol instead of INR code
