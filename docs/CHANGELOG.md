@@ -34,6 +34,7 @@ All notable changes to this project will be documented in this file.
 - **Invoice Status Logic**: Fixed status field showing payment information instead of invoice state
 - **Invoice Payments Display**: Fixed missing API functions causing payments not to display after submission
 - **API Compilation**: Fixed duplicate function declarations causing esbuild transform errors
+- **Payment Display**: Fixed backend PaymentOut model validation errors preventing payment history display
 
 ### ✨ Enhanced
 - **Currency Display**: Updated invoice PDFs to show ₹ symbol instead of INR code
