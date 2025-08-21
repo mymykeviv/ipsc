@@ -1,0 +1,260 @@
+name: Pre-commit Quality Gates
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop, feature/* ]
+
+jobs:
+  # Code Quality Checks
+  code-quality:
+    name: Code Quality & Standards
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # Backend Code Quality
+      - name: Install Python dependencies
+        run: |
+          cd backend
+          pip install flake8 black isort mypy pytest-cov
+
+      - name: Run Black (Python code formatting)
+        run: |
+          cd backend
+          black --check --diff .
+
+      - name: Run isort (Import sorting)
+        run: |
+          cd backend
+          isort --check-only --diff .
+
+      - name: Run Flake8 (Linting)
+        run: |
+          cd backend
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Run MyPy (Type checking)
+        run: |
+          cd backend
+          mypy app/ --ignore-missing-imports
+
+      # Frontend Code Quality
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run ESLint
+        run: |
+          cd frontend
+          npm run lint
+
+      - name: Run TypeScript type checking
+        run: |
+          cd frontend
+          npx tsc --noEmit
+
+      - name: Run Prettier check
+        run: |
+          cd frontend
+          npx prettier --check .
+
+  # Security Scanning
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Bandit (Python security)
+        run: |
+          cd backend
+          pip install bandit
+          bandit -r app/ -f json -o bandit-report.json || true
+
+      - name: Run npm audit
+        run: |
+          cd frontend
+          npm audit --audit-level moderate
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+        continue-on-error: true
+
+  # Test Coverage Check
+  test-coverage:
+    name: Test Coverage Check
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: profitpath_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # Backend Test Coverage
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pip install pytest pytest-cov psycopg2-binary
+
+      - name: Run backend tests with coverage
+        run: |
+          cd backend
+          pytest tests/ --cov=app --cov-report=xml --cov-report=term-missing --cov-fail-under=70
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/profitpath_test
+
+      # Frontend Test Coverage
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run frontend tests with coverage
+        run: |
+          cd frontend
+          npm test -- --coverage --watchAll=false --coverageThreshold='{"global":{"branches":70,"functions":70,"lines":70,"statements":70}}'
+
+  # Build Verification
+  build-verification:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Verify Backend Build
+        run: |
+          cd backend
+          docker build -t backend-test .
+
+      - name: Verify Frontend Build
+        run: |
+          cd frontend
+          docker build -t frontend-test .
+
+  # Documentation Check
+  documentation-check:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check README files
+        run: |
+          # Check if README files exist and are not empty
+          for readme in README.md docs/README.md backend/README.md frontend/README.md; do
+            if [ -f "$readme" ]; then
+              if [ ! -s "$readme" ]; then
+                echo "❌ $readme is empty"
+                exit 1
+              else
+                echo "✅ $readme exists and has content"
+              fi
+            else
+              echo "⚠️  $readme not found"
+            fi
+          done
+
+      - name: Check API documentation
+        run: |
+          # Check if API documentation exists
+          if [ -f "docs/API.md" ] || [ -f "backend/docs/API.md" ]; then
+            echo "✅ API documentation found"
+          else
+            echo "⚠️  API documentation not found"
+          fi
+
+  # Quality Gate Summary
+  quality-summary:
+    name: Quality Gate Summary
+    runs-on: ubuntu-latest
+    needs: [code-quality, security-scan, test-coverage, build-verification, documentation-check]
+    if: always()
+    
+    steps:
+      - name: Create Quality Summary
+        run: |
+          echo "## 🔍 Quality Gate Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Code Quality: ${{ needs.code-quality.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Security Scan: ${{ needs.security-scan.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Coverage: ${{ needs.test-coverage.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Verification: ${{ needs.build-verification.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Documentation: ${{ needs.documentation-check.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Determine overall status
+          if [[ "${{ needs.code-quality.result }}" == "success" && 
+                "${{ needs.security-scan.result }}" == "success" && 
+                "${{ needs.test-coverage.result }}" == "success" && 
+                "${{ needs.build-verification.result }}" == "success" ]]; then
+            echo "**Overall Status:** ✅ PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Overall Status:** ❌ FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Required Actions:" >> $GITHUB_STEP_SUMMARY
+            echo "- Fix any failing quality checks" >> $GITHUB_STEP_SUMMARY
+            echo "- Ensure test coverage meets minimum thresholds" >> $GITHUB_STEP_SUMMARY
+            echo "- Address security vulnerabilities" >> $GITHUB_STEP_SUMMARY
+            echo "- Verify all builds pass" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Fail if quality gates not met
+        if: needs.code-quality.result != 'success' || needs.security-scan.result != 'success' || needs.test-coverage.result != 'success' || needs.build-verification.result != 'success'
+        run: |
+          echo "❌ Quality gates not met. Please fix the issues above before merging."
+          exit 1

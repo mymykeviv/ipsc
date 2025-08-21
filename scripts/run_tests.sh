@@ -11,7 +11,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-TEST_DIR="backend/tests"
+TEST_DIR="tests/backend"
 COVERAGE_DIR="backend/coverage"
 REPORTS_DIR="backend/test_reports"
 
@@ -30,15 +30,13 @@ run_tests_with_coverage() {
     
     echo -e "${YELLOW}Running ${test_type} tests...${NC}"
     
-    cd backend
     python -m pytest "$test_path" \
-        --cov=app \
+        --cov=backend/app \
         --cov-report=xml:"$coverage_file" \
         --cov-report=html:"$report_file" \
         --cov-report=term-missing \
         --tb=short \
         -v
-    cd ..
 }
 
 # Function to run specific test categories
@@ -47,14 +45,12 @@ run_test_category() {
     local pattern=$2
     
     echo -e "${YELLOW}Running ${category} tests...${NC}"
-    cd backend
     python -m pytest "$pattern" -v --tb=short
-    cd ..
 }
 
 # 1. Unit Tests
 echo -e "${GREEN}📋 Phase 1: Unit Tests${NC}"
-run_test_category "Unit" "tests/test_*.py"
+run_test_category "Unit" "tests/backend/test_*.py"
 
 # 2. Integration Tests
 echo -e "${GREEN}📋 Phase 2: Integration Tests${NC}"

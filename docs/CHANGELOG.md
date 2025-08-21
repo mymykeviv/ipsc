@@ -2,6 +2,63 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.48.8] - 2025-08-21
+
+### 🧹 Cleaned Up
+- **Testing Script Consolidation**: Replaced 4+ redundant testing scripts with unified `test-runner.sh`
+- **Root Directory Cleanup**: Removed all temporary test files, PDFs, and redundant scripts from root
+- **Test Output Cleanup**: Removed old test reports, coverage files, and temporary directories
+- **Documentation Consolidation**: Merged multiple testing docs into single comprehensive `TESTING.md`
+- **Git Ignore Updates**: Enhanced .gitignore to prevent future test file clutter
+
+### 🔧 Enhanced
+- **Automated Deployment Integration**: Updated `automated_deploy.sh` to use unified test runner
+- **Service Management**: Enhanced deployment script to automatically start services before testing
+- **Health Check Replacement**: Created new health check system to replace deleted `test_suite.py`
+- **Test Type Support**: Added support for running specific test types (backend, frontend, e2e, health)
+- **Backward Compatibility**: Maintained compatibility with existing deployment workflows
+- **Test Database Management**: Created comprehensive test database setup and cleanup scripts
+- **Docker Integration**: Fixed container naming and database interaction for automated testing
+- **Locale Configuration**: Set up India-English locale for proper currency formatting with ₹ symbol
+- **Currency API Fix**: Fixed currencies endpoint to return proper dictionary format instead of list
+- **Test Authentication**: Fixed authentication issues in cashflow integration tests
+- **Test Data Consistency**: Fixed cashflow data consistency test by properly setting invoice status and balance amounts
+- **API Field Requirements**: Fixed payment and expense API tests by adding required date fields (`payment_date`, `expense_date`)
+
+### 🗑️ Removed
+- **Redundant Scripts**: Removed 4+ individual test runners and consolidated into unified approach
+- **Root Directory Clutter**: Removed all temporary test files, PDFs, and redundant scripts
+- **Old Test Reports**: Removed outdated test reports and coverage files
+- **Fragmented Documentation**: Merged multiple testing docs into single comprehensive guide
+- **Test Database Issues**: Resolved "database does not exist" errors with proper setup automation
+  - `run_comprehensive_tests.py`
+  - `run_tests_manually.sh`
+  - `quality_test_runner.py`
+  - `run_quality_tests.sh`
+  - `test_gst_reports.py`
+  - `scripts/run-github-issues-tests.sh`
+  - `scripts/run-ui-ux-tests.sh`
+- **Temporary Files**: 
+  - All `test_*.pdf` files
+  - All `test_results_*.json` files
+  - All `test_report.json` files
+  - All `deployment_*_report.json` files
+- **Test Directories**: 
+  - `test-results/`
+  - `coverage_reports/`
+  - `test_env/`
+  - `.pytest_cache/`
+- **Documentation**: 
+  - `docs/TEST_RUNNING_GUIDE.md`
+  - `docs/UI_UX_TESTING_FRAMEWORK.md`
+  - `docs/MANUAL_TEST_EXECUTION_GUIDE.md`
+
+### ✨ Enhanced
+- **Unified Testing**: Single `./scripts/test-runner.sh` command for all testing needs
+- **Backward Compatibility**: `./scripts/run-tests.sh` wrapper for legacy commands
+- **Comprehensive Documentation**: Single `docs/TESTING.md` with all testing information
+- **Proper Structure**: All test outputs now go to organized `test_reports/` directory
+
 ## [1.48.7] - 2025-08-21
 
 ### 🐛 Fixed

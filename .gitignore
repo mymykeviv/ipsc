@@ -199,6 +199,25 @@ temp_files/
 temp/
 tmp/
 
+# Test Output Files
+test_reports/
+test-results/
+coverage_reports/
+test_env/
+.pytest_cache/
+*.test_results_*.json
+test_*.pdf
+test_*.py
+run_*_tests.py
+run_*_tests.sh
+quality_*_runner.py
+quality_*_tests.sh
+*.pid
+
+# Backend Coverage
+backend/coverage/
+backend/backend/coverage/
+
 # Application Specific
 uploads/
 media/

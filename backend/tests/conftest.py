@@ -20,7 +20,7 @@ import os
 
 
 # Test database configuration - Using PostgreSQL for tests
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/profitpath_test"
+SQLALCHEMY_DATABASE_URL = "postgresql+psycopg://postgres:postgres@localhost:5432/profitpath_test"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
@@ -46,6 +46,21 @@ def test_settings():
 @pytest.fixture(scope="function")
 def db_session():
     """Create a fresh database session for each test"""
+    # Create tables
+    Base.metadata.create_all(bind=engine)
+    
+    # Create session
+    session = TestingSessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+        # Drop tables after test
+        Base.metadata.drop_all(bind=engine)
+
+@pytest.fixture(scope="function")
+def db():
+    """Alias for db_session for compatibility"""
     # Create tables
     Base.metadata.create_all(bind=engine)
     

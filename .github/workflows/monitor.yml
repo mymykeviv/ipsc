@@ -1,0 +1,248 @@
+name: Health Monitoring & Alerting
+on:
+  schedule:
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [health-check]
+
+jobs:
+  # Health Check
+  health-check:
+    name: Application Health Check
+    runs-on: ubuntu-latest
+    outputs:
+      backend-health: ${{ steps.backend-health.outputs.status }}
+      frontend-health: ${{ steps.frontend-health.outputs.status }}
+      database-health: ${{ steps.database-health.outputs.status }}
+    
+    steps:
+      - name: Check Backend Health
+        id: backend-health
+        run: |
+          echo "Checking backend health..."
+          
+          # Check if backend is responding
+          if curl -f -s http://localhost:8000/api/health > /dev/null; then
+            echo "✅ Backend is healthy"
+            echo "status=healthy" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Backend is unhealthy"
+            echo "status=unhealthy" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
+      - name: Check Frontend Health
+        id: frontend-health
+        run: |
+          echo "Checking frontend health..."
+          
+          # Check if frontend is responding
+          if curl -f -s http://localhost:3000/ > /dev/null; then
+            echo "✅ Frontend is healthy"
+            echo "status=healthy" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Frontend is unhealthy"
+            echo "status=unhealthy" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
+      - name: Check Database Health
+        id: database-health
+        run: |
+          echo "Checking database health..."
+          
+          # Check if database is accessible
+          if curl -f -s http://localhost:8000/api/health | grep -q "database"; then
+            echo "✅ Database is healthy"
+            echo "status=healthy" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Database is unhealthy"
+            echo "status=unhealthy" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
+  # Performance Monitoring
+  performance-check:
+    name: Performance Check
+    runs-on: ubuntu-latest
+    needs: health-check
+    if: always()
+    
+    steps:
+      - name: Check API Response Times
+        run: |
+          echo "Checking API response times..."
+          
+          # Test critical API endpoints
+          endpoints=(
+            "/api/health"
+            "/api/invoices"
+            "/api/customers"
+            "/api/products"
+          )
+          
+          for endpoint in "${endpoints[@]}"; do
+            start_time=$(date +%s%N)
+            response=$(curl -s -w "%{http_code}" "http://localhost:8000$endpoint" -o /dev/null)
+            end_time=$(date +%s%N)
+            
+            duration=$(( (end_time - start_time) / 1000000 ))  # Convert to milliseconds
+            
+            if [ "$response" = "200" ] && [ "$duration" -lt 5000 ]; then
+              echo "✅ $endpoint: ${duration}ms"
+            else
+              echo "❌ $endpoint: ${duration}ms (HTTP: $response)"
+            fi
+          done
+        continue-on-error: true
+
+      - name: Check Memory Usage
+        run: |
+          echo "Checking container memory usage..."
+          
+          # Check Docker container memory usage
+          docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}" | head -10
+        continue-on-error: true
+
+  # Critical Flow Testing
+  critical-flows:
+    name: Critical User Flows Test
+    runs-on: ubuntu-latest
+    needs: health-check
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Playwright
+        run: |
+          cd frontend
+          npm ci
+          npx playwright install --with-deps
+
+      - name: Run Critical Flow Tests
+        run: |
+          cd frontend
+          npx playwright test tests/e2e/critical-flows.spec.ts --reporter=list
+        continue-on-error: true
+
+  # Alerting
+  alerting:
+    name: Send Alerts
+    runs-on: ubuntu-latest
+    needs: [health-check, performance-check, critical-flows]
+    if: always() && (needs.health-check.result == 'failure' || needs.performance-check.result == 'failure' || needs.critical-flows.result == 'failure')
+    
+    steps:
+      - name: Create Issue for Health Problems
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['health-alert']
+            });
+            
+            // Check if there's already an open health alert
+            const existingAlert = issues.find(issue => 
+              issue.title.includes('Health Alert') && 
+              issue.created_at > new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+            );
+            
+            if (!existingAlert) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 Health Alert - ${new Date().toISOString()}`,
+                body: `
+                  ## Health Check Failed
+                  
+                  **Backend Health:** ${{ needs.health-check.outputs.backend-health }}
+                  **Frontend Health:** ${{ needs.health-check.outputs.frontend-health }}
+                  **Database Health:** ${{ needs.health-check.outputs.database-health }}
+                  
+                  **Performance Check:** ${{ needs.performance-check.result }}
+                  **Critical Flows:** ${{ needs.critical-flows.result }}
+                  
+                  ### Immediate Actions Required:
+                  1. Check application logs
+                  2. Verify service status
+                  3. Review recent deployments
+                  4. Check resource usage
+                  
+                  ### Next Steps:
+                  - [ ] Investigate root cause
+                  - [ ] Implement fix
+                  - [ ] Verify resolution
+                  - [ ] Update monitoring if needed
+                `,
+                labels: ['health-alert', 'urgent', 'monitoring']
+              });
+            }
+
+      - name: Send Slack Notification (if configured)
+        if: env.SLACK_WEBHOOK_URL
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{
+              "text": "🚨 *Health Alert* - Application health check failed\n\nBackend: ${{ needs.health-check.outputs.backend-health }}\nFrontend: ${{ needs.health-check.outputs.frontend-health }}\nDatabase: ${{ needs.health-check.outputs.database-health }}\n\nCheck GitHub Issues for details."
+            }' \
+            ${{ env.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
+
+  # Health Dashboard Update
+  update-dashboard:
+    name: Update Health Dashboard
+    runs-on: ubuntu-latest
+    needs: [health-check, performance-check, critical-flows]
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Update Health Status
+        run: |
+          # Create health status file
+          cat > health-status.json << EOF
+          {
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "backend": "${{ needs.health-check.outputs.backend-health }}",
+            "frontend": "${{ needs.health-check.outputs.frontend-health }}",
+            "database": "${{ needs.health-check.outputs.database-health }}",
+            "performance": "${{ needs.performance-check.result }}",
+            "critical_flows": "${{ needs.critical-flows.result }}",
+            "overall_status": "${{ job.status }}"
+          }
+          EOF
+          
+          # Commit and push health status
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add health-status.json
+          git commit -m "Update health status - ${{ job.status }}" || exit 0
+          git push
+
+      - name: Create Health Summary
+        run: |
+          echo "## 📊 Health Status Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Backend:** ${{ needs.health-check.outputs.backend-health }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Frontend:** ${{ needs.health-check.outputs.frontend-health }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Database:** ${{ needs.health-check.outputs.database-health }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Performance:** ${{ needs.performance-check.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Critical Flows:** ${{ needs.critical-flows.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Overall Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY

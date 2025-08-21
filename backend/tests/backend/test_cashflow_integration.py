@@ -5,8 +5,41 @@ import pytest
 from datetime import datetime, date
 from decimal import Decimal
 from sqlalchemy.orm import Session
-from app.models import Payment, PurchasePayment, Expense, Invoice, Purchase, Party, Product
+from app.models import Payment, PurchasePayment, Expense, Invoice, Purchase, Party, Product, User, Role
 from app.cashflow_service import CashflowService
+from app.auth import get_password_hash
+
+
+@pytest.fixture
+def auth_headers(client, db: Session):
+    """Create authentication headers for testing"""
+    # Create test role if it doesn't exist
+    role = db.query(Role).filter_by(name="Admin").first()
+    if not role:
+        role = Role(name="Admin")
+        db.add(role)
+        db.commit()
+        db.refresh(role)
+    
+    # Create test user with proper password hashing
+    user = User(
+        username="testuser", 
+        password_hash=get_password_hash("testpassword"), 
+        role_id=role.id
+    )
+    db.add(user)
+    db.commit()
+    
+    # Login to get token
+    login_data = {"username": "testuser", "password": "testpassword"}
+    response = client.post("/api/auth/login", json=login_data)
+    
+    if response.status_code == 200:
+        token = response.json()["access_token"]
+        return {"Authorization": f"Bearer {token}"}
+    else:
+        # Return empty headers if login fails
+        return {}
 
 
 class TestCashflowIntegration:
@@ -150,8 +183,8 @@ class TestCashflowIntegration:
         """Test that cashflow data is consistent across different endpoints"""
         # Create test data
         customer = Party(
-            name="Test Customer", 
-            gstin="123456789012345", 
+            name="Test Customer",
+            gstin="123456789012345",
             type="Customer",
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
@@ -159,8 +192,8 @@ class TestCashflowIntegration:
             billing_country="India"
         )
         vendor = Party(
-            name="Test Vendor", 
-            gstin="987654321098765", 
+            name="Test Vendor",
+            gstin="987654321098765",
             type="Vendor",
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
@@ -176,6 +209,7 @@ class TestCashflowIntegration:
             supplier_id=vendor.id,  # Add required supplier_id
             invoice_no="INV-001",
             grand_total=Decimal("1000.00"),
+            status="Sent",  # Set status to Sent for pending calculation
             due_date=datetime.utcnow(),  # Add required due_date
             place_of_supply="Mumbai, Maharashtra",  # Add required place_of_supply
             place_of_supply_state_code="27",  # Add required place_of_supply_state_code
@@ -196,6 +230,10 @@ class TestCashflowIntegration:
             account_head="Bank"
         )
         db_session.add(payment)
+        
+        # Update invoice with payment information
+        invoice.paid_amount = Decimal("600.00")
+        invoice.balance_amount = invoice.grand_total - invoice.paid_amount
         
         # Create expense
         expense = Expense(
@@ -421,8 +459,9 @@ class TestCashflowBackwardCompatibility:
         
         # Test payment creation
         payment_data = {
-            "amount": 300.0,
-            "method": "Bank Transfer",
+            "payment_date": datetime.now().strftime("%Y-%m-%d"),
+            "payment_amount": 300.0,
+            "payment_method": "Bank Transfer",
             "account_head": "Bank",
             "reference_number": "TEST123",
             "notes": "Test payment"
@@ -458,11 +497,11 @@ class TestCashflowBackwardCompatibility:
         """Test that existing expense flows still work after cashflow changes"""
         # Test expense creation
         expense_data = {
+            "expense_date": datetime.now().strftime("%Y-%m-%d"),
             "expense_type": "Test Expense",
             "category": "Direct",
             "description": "Test expense for compatibility",
             "amount": 150.0,  # Add required amount field
-            "total_amount": 150.0,
             "payment_method": "Cash",
             "account_head": "Cash"
         }

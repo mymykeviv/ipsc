@@ -130,6 +130,8 @@ function generateInvoiceNumber(): string {
 
 export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveInvoiceFormProps) {
   console.log('🔄 ComprehensiveInvoiceForm rendered - Searchable inputs enabled - VERSION 2.0')
+  console.log('🔍 Debug: Component props:', { onSuccess, onCancel })
+  
   const [customers, setCustomers] = useState<Party[]>([])
   const [suppliers, setSuppliers] = useState<Party[]>([])
   const [products, setProducts] = useState<Product[]>([])
@@ -138,6 +140,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  console.log('🔍 Debug: Initial state:', { customers, suppliers, products, companySettings, templates, loading, error })
   
   const [formData, setFormData] = useState<InvoiceFormData>({
     // Invoice Details
@@ -197,7 +200,8 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
 
   const loadData = async () => {
     try {
-      console.log('Starting to load data...')
+      console.log('🚀 Starting to load data...')
+      console.log('🔍 Debug: About to call API endpoints')
       const [customersData, suppliersData, productsData, companySettingsData, templatesData] = await Promise.all([
         apiListCustomers('', true), // Include inactive customers
         apiListVendors('', true),   // Include inactive vendors
@@ -217,7 +221,12 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
       setCompanySettings(companySettingsData)
       setTemplates(templatesData)
     } catch (err: any) {
-      console.error('Error loading data:', err)
+      console.error('❌ Error loading data:', err)
+      console.error('❌ Error details:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name
+      })
       setError(err.message || 'Failed to load data')
     }
   }

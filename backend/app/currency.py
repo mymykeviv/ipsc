@@ -399,20 +399,38 @@ def convert_amount(amount: Decimal, from_currency: str, to_currency: str = 'INR'
     return currency_manager.convert_amount(amount, from_currency, to_currency)
 
 
-def format_currency(amount: float, currency_code: str = 'INR', locale: str = 'en-IN') -> str:
+def format_currency(amount: float, currency_code: str = 'INR', locale: str = 'en_IN') -> str:
     """
     Format currency for display in the UI.
     This function is used for frontend display.
     """
     try:
         import locale as locale_module
-        locale_module.setlocale(locale_module.LC_ALL, locale)
+        
+        # Set locale to India-English
+        try:
+            locale_module.setlocale(locale_module.LC_ALL, 'en_IN.UTF-8')
+        except locale_module.Error:
+            try:
+                locale_module.setlocale(locale_module.LC_ALL, 'en_IN')
+            except locale_module.Error:
+                try:
+                    # Fallback to US locale
+                    locale_module.setlocale(locale_module.LC_ALL, 'en_US.UTF-8')
+                except locale_module.Error:
+                    # Final fallback - don't set locale
+                    pass
         
         symbol = get_currency_symbol(currency_code)
         
         if currency_code.upper() == 'INR':
-            # Use Indian number formatting
-            return f"{symbol}{amount:,.2f}"
+            # Use Indian number formatting with proper locale
+            try:
+                formatted = locale_module.currency(amount, grouping=True, symbol=symbol)
+                return formatted
+            except (locale_module.Error, AttributeError):
+                # Fallback to manual formatting
+                return f"{symbol}{amount:,.2f}"
         else:
             # Use standard formatting
             return f"{symbol}{amount:,.2f}"
@@ -423,11 +441,11 @@ def format_currency(amount: float, currency_code: str = 'INR', locale: str = 'en
         return f"{currency_code} {amount:.2f}"
 
 
-def get_supported_currencies() -> list[str]:
+def get_supported_currencies() -> dict[str, dict[str, str]]:
     """
-    Get list of supported currency codes.
+    Get dictionary of supported currencies with their symbols and names.
     """
-    return list(CURRENCY_SYMBOLS.keys())
+    return currency_manager.get_supported_currencies()
 
 
 def is_supported_currency(currency: str) -> bool:
