@@ -6,7 +6,7 @@ from datetime import datetime, date
 from decimal import Decimal
 from sqlalchemy.orm import Session
 from app.models import Payment, PurchasePayment, Expense, Invoice, Purchase, Party, Product, User, Role
-from app.cashflow_service import CashflowService
+from app.profitpath_service import ProfitPathService as CashflowService
 from app.auth import get_password_hash
 
 
@@ -253,7 +253,7 @@ class TestCashflowIntegration:
         service = CashflowService(db_session)
         
         # Test summary
-        summary = service.get_cashflow_summary()
+        summary = service.get_profitpath_summary()
         assert summary["total_income"] == 600.0
         assert summary["total_outflow"] == 100.0
         assert summary["net_cashflow"] == 500.0
@@ -365,7 +365,7 @@ class TestCashflowIntegration:
         service = CashflowService(db_session)
         
         # Test with empty database
-        summary = service.get_cashflow_summary()
+        summary = service.get_profitpath_summary()
         assert summary["total_income"] == 0.0
         assert summary["total_outflow"] == 0.0
         assert summary["net_cashflow"] == 0.0
@@ -382,7 +382,7 @@ class TestCashflowIntegration:
         # Test with date filters
         start_date = date(2020, 1, 1)
         end_date = date(2020, 12, 31)
-        filtered_summary = service.get_cashflow_summary(start_date, end_date)
+        filtered_summary = service.get_profitpath_summary(start_date, end_date)
         assert filtered_summary["total_income"] == 0.0
         assert filtered_summary["total_outflow"] == 0.0
     
@@ -400,7 +400,7 @@ class TestCashflowIntegration:
         
         # Test with invalid date ranges
         try:
-            result = service.get_cashflow_summary(
+            result = service.get_profitpath_summary(
                 start_date=date(2025, 12, 31),
                 end_date=date(2025, 1, 1)  # End before start
             )

@@ -1,5 +1,5 @@
 from passlib.context import CryptContext
-from backend.app.db import SessionLocal
+from backend.app.db import LegacySessionLocal as SessionLocal
 from backend.app.models import Role, User
 import pytest
 from httpx import AsyncClient, ASGITransport

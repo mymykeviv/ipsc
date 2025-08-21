@@ -1,5 +1,5 @@
 from backend.app.seed import run_seed
-from backend.app.db import engine, SessionLocal
+from backend.app.db import legacy_engine as engine, LegacySessionLocal as SessionLocal
 from backend.app.models import Base, User, Role, Product, Party, CompanySettings, StockLedgerEntry
 
 

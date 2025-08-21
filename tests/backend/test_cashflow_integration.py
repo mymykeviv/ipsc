@@ -6,7 +6,7 @@ from datetime import datetime, date
 from decimal import Decimal
 from sqlalchemy.orm import Session
 from app.models import Payment, PurchasePayment, Expense, Invoice, Purchase, Party, Product
-from app.cashflow_service import CashflowService
+from app.profitpath_service import ProfitPathService
 
 
 class TestCashflowIntegration:
@@ -187,7 +187,7 @@ class TestCashflowIntegration:
         db_session.commit()
         
         # Test consistency
-        service = CashflowService(db_session)
+        service = ProfitPathService(db_session)
         
         # Test summary
         summary = service.get_cashflow_summary()
@@ -248,7 +248,7 @@ class TestCashflowIntegration:
         
         db_session.commit()
         
-        service = CashflowService(db_session)
+        service = ProfitPathService(db_session)
         
         # Test type filter
         inflow_transactions = service.get_cashflow_transactions(type_filter="inflow")
@@ -272,7 +272,7 @@ class TestCashflowIntegration:
     
     def test_cashflow_edge_cases(self, db_session: Session):
         """Test cashflow functionality with edge cases"""
-        service = CashflowService(db_session)
+        service = ProfitPathService(db_session)
         
         # Test with empty database
         summary = service.get_cashflow_summary()
@@ -298,7 +298,7 @@ class TestCashflowIntegration:
     
     def test_cashflow_service_error_handling(self, db_session: Session):
         """Test error handling in cashflow service"""
-        service = CashflowService(db_session)
+        service = ProfitPathService(db_session)
         
         # Test with invalid financial year format
         try:

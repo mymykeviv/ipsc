@@ -5228,7 +5228,7 @@ def get_cashflow_summary(
     start_dt = datetime.fromisoformat(start_date).date() if start_date else None
     end_dt = datetime.fromisoformat(end_date).date() if end_date else None
     
-    return service.get_cashflow_summary(start_dt, end_dt)
+    return service.get_profitpath_summary(start_dt, end_dt)
 
 
 @api.get('/cashflow/transactions')

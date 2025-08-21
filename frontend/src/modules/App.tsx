@@ -30,6 +30,16 @@ import { Header } from '../components/Header'
 function Shell() {
   const { token, isAuthenticated, logout, expiresAt } = useAuth()
   const location = useLocation()
+  
+  // If not authenticated, show login routes
+  if (!isAuthenticated) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    )
+  }
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     products: true,
     invoices: false, // Keep invoices section open by default

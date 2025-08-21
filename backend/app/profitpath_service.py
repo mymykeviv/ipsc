@@ -61,10 +61,10 @@ class ProfitPathService:
         
         # Direct expenses
         expenses_query = self.db.query(
-            func.sum(Expense.total_amount).label('total_expenses'),
+            func.sum(Expense.amount).label('total_expenses'),
             func.count(Expense.id).label('expense_count')
         ).filter(and_(*expense_filter)) if expense_filter else self.db.query(
-            func.sum(Expense.total_amount).label('total_expenses'),
+            func.sum(Expense.amount).label('total_expenses'),
             func.count(Expense.id).label('expense_count')
         )
         
@@ -363,7 +363,7 @@ class ProfitPathService:
         start_date = date(start_year, 4, 1)  # April 1st
         end_date = date(start_year + 1, 3, 31)  # March 31st
         
-        return self.get_cashflow_summary(start_date, end_date)
+        return self.get_profitpath_summary(start_date, end_date)
     
     def get_expense_history_by_financial_year(self, financial_year: str) -> List[Dict[str, Any]]:
         """Get expense history for a specific financial year"""

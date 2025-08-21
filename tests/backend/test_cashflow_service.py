@@ -5,7 +5,7 @@ import pytest
 from datetime import datetime, date
 from decimal import Decimal
 from sqlalchemy.orm import Session
-from backend.app.cashflow_service import CashflowService
+from backend.app.profitpath_service import ProfitPathService
 from backend.app.models import Payment, PurchasePayment, Expense, Invoice, Purchase, Party, Product
 
 
@@ -14,7 +14,7 @@ class TestCashflowService:
     
     def test_get_cashflow_summary_empty_database(self, db_session: Session):
         """Test cashflow summary with empty database"""
-        service = CashflowService(db_session)
+        service = ProfitPathService(db_session)
         summary = service.get_cashflow_summary()
         
         assert summary["total_income"] == 0.0
@@ -85,7 +85,7 @@ class TestCashflowService:
         db_session.commit()
         
         # Test summary
-        service = CashflowService(db_session)
+        service = ProfitPathService(db_session)
         summary = service.get_cashflow_summary()
         
         assert summary["total_income"] == 600.0
@@ -98,7 +98,7 @@ class TestCashflowService:
     
     def test_get_cashflow_transactions_empty(self, db_session: Session):
         """Test cashflow transactions with empty database"""
-        service = CashflowService(db_session)
+        service = ProfitPathService(db_session)
         result = service.get_cashflow_transactions()
         
         assert result["transactions"] == []
@@ -154,7 +154,7 @@ class TestCashflowService:
         db_session.commit()
         
         # Test transactions
-        service = CashflowService(db_session)
+        service = ProfitPathService(db_session)
         result = service.get_cashflow_transactions()
         
         assert result["total_count"] == 2
@@ -221,7 +221,7 @@ class TestCashflowService:
         db_session.commit()
         
         # Test type filter
-        service = CashflowService(db_session)
+        service = ProfitPathService(db_session)
         
         # Test inflow filter
         inflow_result = service.get_cashflow_transactions(type_filter="inflow")
@@ -240,7 +240,7 @@ class TestCashflowService:
     
     def test_get_pending_payments_empty(self, db_session: Session):
         """Test pending payments with empty database"""
-        service = CashflowService(db_session)
+        service = ProfitPathService(db_session)
         result = service.get_pending_payments()
         
         assert result["pending_invoices"] == []
@@ -282,7 +282,7 @@ class TestCashflowService:
         db_session.commit()
         
         # Test pending payments
-        service = CashflowService(db_session)
+        service = ProfitPathService(db_session)
         result = service.get_pending_payments()
         
         assert len(result["pending_invoices"]) == 1
@@ -333,7 +333,7 @@ class TestCashflowService:
         db_session.commit()
         
         # Test financial year summary
-        service = CashflowService(db_session)
+        service = ProfitPathService(db_session)
         result = service.get_financial_year_summary("2024-25")
         
         assert result["total_income"] == 1000.0
@@ -356,7 +356,7 @@ class TestCashflowService:
         db_session.commit()
         
         # Test expense history
-        service = CashflowService(db_session)
+        service = ProfitPathService(db_session)
         result = service.get_expense_history_by_financial_year("2024-25")
         
         assert len(result) == 1

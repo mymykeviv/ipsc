@@ -33,6 +33,72 @@ export function createApiErrorHandler(forceLogout: () => void) {
   }
 }
 
+export function createInvoiceErrorHandler(forceLogout: () => void) {
+  return (error: any): string => {
+    console.error('Invoice API Error:', error)
+    
+    // Handle different types of errors
+    if (error.status === 401) {
+      forceLogout()
+      return "Session expired. Please log in again."
+    } else if (error.status === 403) {
+      return "You don't have permission to perform this action."
+    } else if (error.status === 404) {
+      return "Invoice not found."
+    } else if (error.status === 422) {
+      // Validation errors
+      if (error.data && error.data.detail) {
+        if (Array.isArray(error.data.detail)) {
+          return error.data.detail.map((err: any) => err.msg).join(', ')
+        }
+        return error.data.detail
+      }
+      return "Please check your invoice data and try again."
+    } else if (error.status === 500) {
+      return "Server error. Please try again later."
+    } else if (error.status === 0 || error.message === 'Network Error') {
+      return "Network error. Please check your connection and try again."
+    } else if (error.message) {
+      return error.message
+    }
+    
+    return "An unexpected error occurred while processing the invoice."
+  }
+}
+
+export function createInvoiceGridErrorHandler(forceLogout: () => void) {
+  return (error: any): string => {
+    console.error('Invoice Grid API Error:', error)
+    
+    // Handle different types of errors
+    if (error.status === 401) {
+      forceLogout()
+      return "Session expired. Please log in again."
+    } else if (error.status === 403) {
+      return "You don't have permission to view invoices."
+    } else if (error.status === 404) {
+      return "Invoice data not found."
+    } else if (error.status === 422) {
+      // Validation errors
+      if (error.data && error.data.detail) {
+        if (Array.isArray(error.data.detail)) {
+          return error.data.detail.map((err: any) => err.msg).join(', ')
+        }
+        return error.data.detail
+      }
+      return "Please check your filter criteria and try again."
+    } else if (error.status === 500) {
+      return "Server error. Please try again later."
+    } else if (error.status === 0 || error.message === 'Network Error') {
+      return "Network error. Please check your connection and try again."
+    } else if (error.message) {
+      return error.message
+    }
+    
+    return "An unexpected error occurred while loading invoice data."
+  }
+}
+
 export function handleApiError(error: any): string {
   console.error('API Error:', error)
   
