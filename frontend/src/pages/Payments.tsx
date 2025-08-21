@@ -33,7 +33,7 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
     endDate: new Date().toISOString().slice(0, 10)
   })
-  const [isDateFilterActive, setIsDateFilterActive] = useState(true)
+  const [isDateFilterActive, setIsDateFilterActive] = useState(false)
 
   // Create error handler that will automatically log out on 401 errors
   const handleApiError = createApiErrorHandler(forceLogout)

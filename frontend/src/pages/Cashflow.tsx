@@ -25,6 +25,7 @@ export function Cashflow() {
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
     endDate: new Date().toISOString().slice(0, 10)
   })
+  const [isDateFilterActive, setIsDateFilterActive] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(25)
 
@@ -38,7 +39,7 @@ export function Cashflow() {
     if (token) {
       loadTransactions()
     }
-  }, [searchTerm, typeFilter, transactionTypeFilter, paymentMethodFilter, accountHeadFilter, amountRangeFilter, dateFilter, currentPage])
+  }, [searchTerm, typeFilter, transactionTypeFilter, paymentMethodFilter, accountHeadFilter, amountRangeFilter, dateFilter, isDateFilterActive, currentPage])
 
   const loadTransactions = async () => {
     try {
@@ -57,9 +58,11 @@ export function Cashflow() {
         if (min) params.append('amount_min', min)
         if (max) params.append('amount_max', max)
       }
-      // Always use the date range from the DateFilter component
-      params.append('start_date', dateFilter.startDate)
-      params.append('end_date', dateFilter.endDate)
+      // Only use date range if filter is active
+      if (isDateFilterActive) {
+        params.append('start_date', dateFilter.startDate)
+        params.append('end_date', dateFilter.endDate)
+      }
       
       params.append('page', currentPage.toString())
       params.append('limit', itemsPerPage.toString())
@@ -91,11 +94,14 @@ export function Cashflow() {
                          transaction.payment_method.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesType = typeFilter === 'all' || transaction.type === typeFilter
     
-    // Date filtering using DateRange
-    const transactionDate = new Date(transaction.transaction_date)
-    const startDate = new Date(dateFilter.startDate)
-    const endDate = new Date(dateFilter.endDate)
-    const matchesDate = transactionDate >= startDate && transactionDate <= endDate
+    // Date filtering using DateRange (only if active)
+    let matchesDate = true
+    if (isDateFilterActive) {
+      const transactionDate = new Date(transaction.transaction_date)
+      const startDate = new Date(dateFilter.startDate)
+      const endDate = new Date(dateFilter.endDate)
+      matchesDate = transactionDate >= startDate && transactionDate <= endDate
+    }
     
     return matchesSearch && matchesType && matchesDate
   })
@@ -140,7 +146,7 @@ export function Cashflow() {
           (paymentMethodFilter !== 'all' ? 1 : 0) +
           (accountHeadFilter !== 'all' ? 1 : 0) +
           (amountRangeFilter !== 'all' ? 1 : 0) +
-          1 // Date filter is always active
+          (isDateFilterActive ? 1 : 0)
         }
         onClearAll={() => {
           setSearchTerm('')
@@ -149,10 +155,7 @@ export function Cashflow() {
           setPaymentMethodFilter('all')
           setAccountHeadFilter('all')
           setAmountRangeFilter('all')
-          setDateFilter({
-            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-            endDate: new Date().toISOString().slice(0, 10)
-          })
+          setIsDateFilterActive(false)
         }}
         showQuickActions={true}
         quickActions={[
@@ -164,6 +167,7 @@ export function Cashflow() {
                 startDate: `${currentYear}-04-01`,
                 endDate: `${currentYear + 1}-03-31`
               })
+              setIsDateFilterActive(true)
             },
             icon: '📅'
           },
@@ -279,7 +283,10 @@ export function Cashflow() {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
           <DateFilter
             value={dateFilter}
-            onChange={setDateFilter}
+            onChange={(newDateFilter) => {
+              setDateFilter(newDateFilter)
+              setIsDateFilterActive(true)
+            }}
           />
         </div>
       </EnhancedFilterBar>
