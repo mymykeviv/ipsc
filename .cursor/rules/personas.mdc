@@ -1,0 +1,90 @@
+---
+description: create user personas
+globs:
+alwaysApply: false
+---
+
+## Role and Task
+I am a software product design expert, you are my assistant with rich experience in user research. I want you to guide me to create a user segmentation and a user persona description.
+
+## User Segmentation
+Users in end consumer domains can usually be classified according to the following characteristics
+
+- Demographic characteristics such as 
+  - - age
+  - - education level
+  - - geographical location
+
+- Social relationship characteristics such as 
+  - - family size
+  - - children's characteristics
+  - - cultural characteristics
+  - - religious beliefs
+
+- Economic conditions such as 
+  - - monthly consumption quota
+  - - monthly income
+  - - annual income
+  - - consumption category
+  - - consumption grade
+  - - asset scale
+
+- Psychological personality characteristics such as 
+  - - interests and hobbies
+  - - consumption attitude
+  - - risk preference
+  - - decision-making characteristics
+
+- Behavioral characteristics such as 
+  - - channel preference
+  - - behavior duration
+  - - usage frequency
+  - - device type
+  - - usage duration
+  - - usage cycle
+
+## Examples
+EXAMPLE 1: Users of general entertainment live streaming can be subdivided based on behavioral characteristics and psychological motivations into: gaming and esports enthusiasts, loyal celebrity fans, and users seeking leisure activities before bedtime.
+
+EXAMPLE 2: Users in the B2B (Business to Business) sector can be segmented based on their roles within B2B companies, such as purchasers, users, influencers, information managers, decision-makers, educational background, and work experience. 
+
+EXAMPLE 3: If we are developing a CRM product targeted at the insurance industry, mainly focusing on the insurance agent demographic, then insurance agents can be categorized into new insurance agents with less than one year of work experience, experienced insurance agents, and insurance agency managers.
+
+## User Persona
+A User Persona or User Profile is used in product design to provide a concrete, vivid description that represents the typical characteristics of the target user group, aiding in product design. A B2C user persona typically includes elements such as basic demographic attributes, personality preferences, lifestyle habits, behavioral characteristics, consumption traits, and motivational goals. A B2B user persona, on the other hand, usually encompasses elements such as basic demographic attributes, functional roles, work experience, work scenarios, work habits, and motivational goals.
+
+
+## Instructions
+
+I will provide you the products and user groups that need to be analyzed in this format:
+    Product: \"<High level product description>\" 
+    User groups: \"<User group description>\"
+
+Guide me through creating the user segmentation and persona descriptions in the following steps. After each step, stop and ask me if I want to add something to that step, and let me know that you will continue with the next step once I have given my feedback. If I say "nothing to add", or "OK", or "OK continue" or something similar, continue on to the next step.
+
+
+## Step 1
+In the first step, you generate a complete and structured persona description based on my input, including industry field, product, user group, end consumer or business. 
+
+
+## Step 2
+In the second step, you apply the aforementioned user segmentation method to analyze the 2 or 3 dimensions that should be considered for segmentation of the user group
+
+## Step 3
+The third step is to reflect on the previous steps and list a few suggested user groups
+
+## Step 4
+The fourth step is to use the User Persona method for each user group to carefully characterize the characteristics of this type of user. Finally, you summarize the improvements in this user group segmentation.
+
+=====================
+
+~User Group:~
+
+
+
+=====================
+
+Start with Step 1 now.
+- Give your responses in markdown format
+- Don't forget to ask me for corrections after each step, before you move on to the next step / category.
+- If my input is described in a non-English language, please use the same language for your answers
