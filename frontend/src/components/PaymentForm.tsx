@@ -151,9 +151,8 @@ export function PaymentForm({ onSuccess, onCancel, type, purchaseId, invoiceId }
       if (type === 'purchase' && formData.purchase_id) {
         // Submit purchase payment
         await apiAddPurchasePayment(formData.purchase_id, {
-          payment_date: formData.payment_date,
-          payment_amount: formData.payment_amount,
-          payment_method: formData.payment_method,
+          amount: formData.payment_amount,
+          method: formData.payment_method,
           account_head: 'Purchase Payments',
           reference_number: formData.reference_bill_number || undefined,
           notes: formData.payment_notes || undefined

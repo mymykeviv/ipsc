@@ -1,4 +1,60 @@
 export type LoginResponse = { access_token: string; token_type: string }
+
+// Cashflow Types
+export type CashflowSummary = {
+  period: {
+    start_date: string
+    end_date: string
+  }
+  total_income: number
+  total_outflow: number
+  net_cashflow: number
+  income: {
+    total_invoice_amount: number
+    total_payments_received: number
+  }
+  expenses: {
+    total_expenses: number
+    total_purchase_payments: number
+    total_outflow: number
+  }
+  cashflow: {
+    net_cashflow: number
+    cash_inflow: number
+    cash_outflow: number
+  }
+}
+
+export type CashflowTransaction = {
+  id: string
+  transaction_date: string
+  type: 'inflow' | 'outflow'
+  description: string
+  reference_number: string | null
+  payment_method: string
+  amount: number
+  account_head: string
+  source_type: string
+  source_id: number
+  reference_document: string
+  party_name: string
+  created_at: string
+}
+
+// Inventory Dashboard Types
+export type InventoryDashboardMetrics = {
+  total_products: number
+  low_stock_items: number
+  out_of_stock_items: number
+  total_stock_value: number
+  recent_movements: Array<{
+    product_name: string
+    movement_type: 'in' | 'out'
+    quantity: number
+    date: string
+  }>
+}
+
 export async function apiLogin(username: string, password: string): Promise<LoginResponse> {
   const r = await fetch('/api/auth/login', {
     method: 'POST',
@@ -115,6 +171,14 @@ export type PaymentCreate = {
   payment_date: string
   payment_amount: number
   payment_method: string
+  account_head: string
+  reference_number?: string
+  notes?: string
+}
+
+export type PurchasePaymentCreate = {
+  amount: number
+  method: string
   account_head: string
   reference_number?: string
   notes?: string
@@ -790,12 +854,12 @@ export async function apiDeleteExpense(id: number): Promise<{message: string}> {
 }
 
 // Cashflow APIs
-export async function apiGetCashflowSummary(start_date?: string, end_date?: string): Promise<CashflowSummary> {
+export async function apiGetCashflowSummary(startDate: string, endDate: string): Promise<CashflowSummary> {
   const params = new URLSearchParams()
-  if (start_date) params.append('start_date', start_date)
-  if (end_date) params.append('end_date', end_date)
+  params.append('start_date', startDate)
+  params.append('end_date', endDate)
   
-  const url = `/api/cashflow/summary${params.toString() ? '?' + params.toString() : ''}`
+  const url = `/api/cashflow/summary?${params.toString()}`
   const r = await fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
   
   if (!r.ok) {
@@ -1443,6 +1507,51 @@ export async function apiGetInventoryDashboard(): Promise<InventoryDashboardMetr
   return r.json()
 }
 
+// Payment Functions
+export async function apiAddPayment(invoiceId: number, payment: PaymentCreate): Promise<Payment> {
+  const r = await fetch(`/api/invoices/${invoiceId}/payments`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('auth_token')}` 
+    },
+    body: JSON.stringify(payment)
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiAddPurchasePayment(purchaseId: number, payment: PurchasePaymentCreate): Promise<any> {
+  const r = await fetch(`/api/purchases/${purchaseId}/payments`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('auth_token')}` 
+    },
+    body: JSON.stringify(payment)
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
 
 // Payment Management API Functions
 export async function apiAddPayment(invoiceId: number, payload: PaymentCreate): Promise<Payment> {
@@ -1555,8 +1664,33 @@ export type CashflowTransactionsResponse = {
   total_pages: number
 }
 
-export async function apiGetCashflowTransactions(): Promise<CashflowTransaction[]> {
-  const r = await fetch('/api/cashflow/transactions', {
+export async function apiGetCashflowTransactions(
+  search?: string,
+  typeFilter?: string,
+  transactionType?: string,
+  paymentMethod?: string,
+  accountHead?: string,
+  amountMin?: number,
+  amountMax?: number,
+  startDate?: string,
+  endDate?: string,
+  page: number = 1,
+  limit: number = 25
+): Promise<{ transactions: CashflowTransaction[], total_count: number, page: number, limit: number, total_pages: number }> {
+  const params = new URLSearchParams()
+  if (search) params.append('search', search)
+  if (typeFilter) params.append('type_filter', typeFilter)
+  if (transactionType) params.append('transaction_type', transactionType)
+  if (paymentMethod) params.append('payment_method', paymentMethod)
+  if (accountHead) params.append('account_head', accountHead)
+  if (amountMin) params.append('amount_min', amountMin.toString())
+  if (amountMax) params.append('amount_max', amountMax.toString())
+  if (startDate) params.append('start_date', startDate)
+  if (endDate) params.append('end_date', endDate)
+  params.append('page', page.toString())
+  params.append('limit', limit.toString())
+  
+  const r = await fetch(`/api/cashflow/transactions?${params.toString()}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
   })
   
@@ -1569,8 +1703,7 @@ export async function apiGetCashflowTransactions(): Promise<CashflowTransaction[
     }
   }
   
-  const response: CashflowTransactionsResponse = await r.json()
-  return response.transactions
+  return r.json()
 }
 
 export async function apiGetGstFilingReport(
@@ -1948,140 +2081,7 @@ export async function apiGetInvoicePDF(invoiceId: number, templateId?: number): 
   return r.blob()
 }
 
-// Cashflow Types and Functions
-export type CashflowSummary = {
-  period: {
-    start_date: string
-    end_date: string
-  }
-  total_income: number
-  total_outflow: number
-  net_cashflow: number
-  income: {
-    total_invoice_amount: number
-    total_payments_received: number
-  }
-  expenses: {
-    total_expenses: number
-    total_purchase_payments: number
-    total_outflow: number
-  }
-  cashflow: {
-    net_cashflow: number
-    cash_inflow: number
-    cash_outflow: number
-  }
-}
 
-export type CashflowTransaction = {
-  id: string
-  transaction_date: string
-  type: 'inflow' | 'outflow'
-  description: string
-  reference_number: string | null
-  payment_method: string
-  amount: number
-  account_head: string
-  source_type: string
-  source_id: number
-  reference_document: string
-  party_name: string
-  created_at: string
-}
-
-export async function apiGetCashflowSummary(startDate: string, endDate: string): Promise<CashflowSummary> {
-  const params = new URLSearchParams()
-  params.append('start_date', startDate)
-  params.append('end_date', endDate)
-  
-  const r = await fetch(`/api/cashflow/summary?${params.toString()}`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  
-  return r.json()
-}
-
-export async function apiGetCashflowTransactions(
-  search?: string,
-  typeFilter?: string,
-  transactionType?: string,
-  paymentMethod?: string,
-  accountHead?: string,
-  amountMin?: number,
-  amountMax?: number,
-  startDate?: string,
-  endDate?: string,
-  page: number = 1,
-  limit: number = 25
-): Promise<{ transactions: CashflowTransaction[], total_count: number, page: number, limit: number, total_pages: number }> {
-  const params = new URLSearchParams()
-  if (search) params.append('search', search)
-  if (typeFilter) params.append('type_filter', typeFilter)
-  if (transactionType) params.append('transaction_type', transactionType)
-  if (paymentMethod) params.append('payment_method', paymentMethod)
-  if (accountHead) params.append('account_head', accountHead)
-  if (amountMin) params.append('amount_min', amountMin.toString())
-  if (amountMax) params.append('amount_max', amountMax.toString())
-  if (startDate) params.append('start_date', startDate)
-  if (endDate) params.append('end_date', endDate)
-  params.append('page', page.toString())
-  params.append('limit', limit.toString())
-  
-  const r = await fetch(`/api/cashflow/transactions?${params.toString()}`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  
-  return r.json()
-}
-
-// Inventory Dashboard Types and Functions
-export type InventoryDashboardMetrics = {
-  total_products: number
-  low_stock_items: number
-  out_of_stock_items: number
-  total_stock_value: number
-  recent_movements: Array<{
-    product_name: string
-    movement_type: 'in' | 'out'
-    quantity: number
-    date: string
-  }>
-}
-
-export async function apiGetInventoryDashboard(): Promise<InventoryDashboardMetrics> {
-  const r = await fetch('/api/inventory/dashboard', {
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  
-  return r.json()
-}
 
 
 
