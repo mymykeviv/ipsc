@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Local Development Startup Script for IPSC Application (without Docker)
+# Local Development Startup Script for ProfitPath Application (without Docker)
 # This script sets up and starts the application for local development using SQLite
 
 set -e
 
-echo "🚀 Starting IPSC Local Development Environment..."
+echo "🚀 Starting ProfitPath Local Development Environment..."
 
 # Check Python version
 if ! command -v python3 &> /dev/null; then
@@ -101,7 +101,7 @@ else
 fi
 
 echo ""
-echo "🎉 IPSC Application is running successfully!"
+echo "🎉 ProfitPath Application is running successfully!"
 echo ""
 echo "📊 Backend API: http://localhost:8000"
 echo "🌐 Frontend UI: http://localhost:5173"

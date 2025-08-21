@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: cashflow_uat
+      POSTGRES_DB: profitpath_uat
     ports:
       - "5433:5432"  # Different port to avoid conflicts
     volumes:
@@ -17,7 +17,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - cashflow-uat-network
+      - profitpath-uat-network
 
   backend:
     build:
@@ -26,7 +26,7 @@ services:
       target: production
     environment:
       ENVIRONMENT: uat
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/cashflow_uat
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/profitpath_uat
       SECRET_KEY: ${SECRET_KEY:-uat-secret-key-change-in-production}
       DEBUG: "false"
       LOG_LEVEL: INFO
@@ -47,7 +47,7 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - cashflow-uat-network
+      - profitpath-uat-network
     restart: unless-stopped
 
   frontend:
@@ -68,7 +68,7 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - cashflow-uat-network
+      - profitpath-uat-network
     restart: unless-stopped
 
 volumes:
@@ -76,5 +76,5 @@ volumes:
   backend_uat_logs:
 
 networks:
-  cashflow-uat-network:
+  profitpath-uat-network:
     driver: bridge

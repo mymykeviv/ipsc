@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: cashflow-backend-service
-  namespace: cashflow-prod
+  name: profitpath-backend-service
+  namespace: profitpath-prod
   labels:
-    app: cashflow-backend
+    app: profitpath-backend
 spec:
   selector:
-    app: cashflow-backend
+    app: profitpath-backend
   ports:
   - name: http
     port: 8000
@@ -18,13 +18,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: cashflow-frontend-service
-  namespace: cashflow-prod
+  name: profitpath-frontend-service
+  namespace: profitpath-prod
   labels:
-    app: cashflow-frontend
+    app: profitpath-frontend
 spec:
   selector:
-    app: cashflow-frontend
+    app: profitpath-frontend
   ports:
   - name: http
     port: 80

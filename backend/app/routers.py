@@ -18,7 +18,7 @@ from .gst_reports import generate_gstr1_report, generate_gstr3b_report
 from .currency import get_exchange_rate, get_supported_currencies, format_currency, format_currency_for_pdf
 from .recurring_invoices import RecurringInvoiceService, generate_recurring_invoices
 from .purchase_orders import PurchaseOrderService, convert_po_to_purchase
-from .cashflow_service import CashflowService
+from .profitpath_service import ProfitPathService
 from .payment_scheduler import PaymentScheduler, PaymentStatus, PaymentReminderType
 from .inventory_manager import InventoryManager, StockValuationMethod
 from .financial_reports import FinancialReports, ReportType
@@ -2678,11 +2678,11 @@ def get_cashflow_report(
         end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
         
         # Initialize cashflow service
-        from .cashflow_service import CashflowService
-        cashflow_service = CashflowService(db)
+        from .profitpath_service import ProfitPathService
+        profitpath_service = ProfitPathService(db)
         
         # Get cashflow summary
-        summary = cashflow_service.get_cashflow_summary(start_dt, end_dt)
+        summary = profitpath_service.get_profitpath_summary(start_dt, end_dt)
         
         # Get detailed transactions
         transactions = []
@@ -2789,7 +2789,7 @@ def get_cashflow_report(
             month_start = (datetime.now() - timedelta(days=30*i)).replace(day=1)
             month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
             
-            month_summary = cashflow_service.get_cashflow_summary(month_start.date(), month_end.date())
+            month_summary = profitpath_service.get_profitpath_summary(month_start.date(), month_end.date())
             trends["monthly_breakdown"].append({
                 "month": month_start.strftime('%Y-%m'),
                 "income": month_summary["total_income"],
@@ -5223,7 +5223,7 @@ def get_cashflow_summary(
     db: Session = Depends(get_db)
 ):
     """Get cashflow summary for dashboard widgets"""
-    service = CashflowService(db)
+    service = ProfitPathService(db)
     
     start_dt = datetime.fromisoformat(start_date).date() if start_date else None
     end_dt = datetime.fromisoformat(end_date).date() if end_date else None
@@ -5248,7 +5248,7 @@ def get_cashflow_transactions(
     db: Session = Depends(get_db)
 ):
     """Get consolidated cashflow transactions from all source tables"""
-    service = CashflowService(db)
+    service = ProfitPathService(db)
     
     start_dt = datetime.fromisoformat(start_date).date() if start_date else None
     end_dt = datetime.fromisoformat(end_date).date() if end_date else None
@@ -5274,7 +5274,7 @@ def get_pending_payments(
     db: Session = Depends(get_db)
 ):
     """Get pending payments for invoices and purchases"""
-    service = CashflowService(db)
+    service = ProfitPathService(db)
     return service.get_pending_payments()
 
 
@@ -5285,7 +5285,7 @@ def get_financial_year_summary(
     db: Session = Depends(get_db)
 ):
     """Get cashflow summary for a specific financial year (e.g., '2024-25')"""
-    service = CashflowService(db)
+    service = ProfitPathService(db)
     return service.get_financial_year_summary(financial_year)
 
 
@@ -5296,7 +5296,7 @@ def get_expense_history_by_financial_year(
     db: Session = Depends(get_db)
 ):
     """Get expense history for a specific financial year"""
-    service = CashflowService(db)
+    service = ProfitPathService(db)
     return service.get_expense_history_by_financial_year(financial_year)
 
 

@@ -17,7 +17,7 @@ import { Login } from '../pages/Login'
 import { AuthProvider, useAuth } from './AuthContext'
 import { Invoices } from '../pages/Invoices'
 import { Expenses } from '../pages/Expenses'
-import { Cashflow } from '../pages/Cashflow'
+import { ProfitPath } from '../pages/ProfitPath'
 import { Payments } from '../pages/Payments'
 import { PurchasePayments } from '../pages/PurchasePayments'
 import TemplateManagement from '../pages/TemplateManagement'
@@ -281,12 +281,12 @@ function Shell() {
               onClick={() => toggleSection('cashflow')}
               style={{ cursor: 'pointer', userSelect: 'none' }}
             >
-              💰 Cashflow {collapsedSections.cashflow ? '▼' : '▶'}
+              💰 ProfitPath {collapsedSections.cashflow ? '▼' : '▶'}
             </div>
             {!collapsedSections.cashflow && (
               <>
                 <Link className={`nav-link sub-link ${isActive('/cashflow') ? 'active' : ''}`} to="/cashflow">
-                  View Cashflow Transactions
+                  View ProfitPath Transactions
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/expenses') ? 'active' : ''}`} to="/expenses">
                   Manage Expenses
@@ -313,7 +313,7 @@ function Shell() {
                   GST Reports (GSTR-1 & GSTR-3B)
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/reports/cashflow') ? 'active' : ''}`} to="/reports/cashflow">
-                  Cashflow Analytics
+                  ProfitPath Analytics
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/reports/income') ? 'active' : ''}`} to="/reports/income">
                   Income Analytics
@@ -442,7 +442,7 @@ function Shell() {
           <Route path="/parties/add" element={<Parties type="customer" mode="add" />} />
           
           {/* Cashflow Routes */}
-          <Route path="/cashflow" element={<Cashflow />} />
+          <Route path="/cashflow" element={<ProfitPath />} />
           
           {/* Settings Routes */}
           <Route path="/settings" element={<Settings />} />

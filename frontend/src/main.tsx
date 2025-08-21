@@ -10,7 +10,7 @@ const VERSION = "1.0.0"
 const BUILD_DATE = "2024-01-15"
 
 // Log version info
-console.log(`IPSC Frontend v${VERSION} (${BUILD_DATE})`)
+console.log(`ProfitPath Frontend v${VERSION} (${BUILD_DATE})`)
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

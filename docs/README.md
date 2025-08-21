@@ -1,6 +1,6 @@
-# IPSC Documentation
+# ProfitPath Documentation
 
-Welcome to the IPSC (Inventory, Products, Sales, Cashflow) documentation. This directory contains comprehensive documentation for the entire project.
+Welcome to the ProfitPath (Inventory, Products, Sales, Cashflow) documentation. This directory contains comprehensive documentation for the entire project.
 
 ## 📁 Documentation Structure
 

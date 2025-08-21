@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Stop Local Development Environment Script for IPSC Application
+# Stop Local Development Environment Script for ProfitPath Application
 
-echo "🛑 Stopping IPSC Local Development Environment..."
+echo "🛑 Stopping ProfitPath Local Development Environment..."
 
 # Kill processes by PID if available
 if [ -f ".backend.pid" ]; then

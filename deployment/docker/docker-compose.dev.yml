@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: cashflow
+      POSTGRES_DB: profitpath
     ports:
       - "5432:5432"
     volumes:
@@ -15,7 +15,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - cashflow-network
+      - profitpath-network
 
   backend:
     build:
@@ -24,7 +24,7 @@ services:
       target: development
     environment:
       ENVIRONMENT: development
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/cashflow
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/profitpath
       SECRET_KEY: dev-secret-key-change-in-production
       DEBUG: "true"
       LOG_LEVEL: DEBUG
@@ -46,7 +46,7 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - cashflow-network
+      - profitpath-network
 
   frontend:
     build:
@@ -70,7 +70,7 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - cashflow-network
+      - profitpath-network
 
   mailhog:
     image: mailhog/mailhog:latest
@@ -79,7 +79,7 @@ services:
       - "1025:1025"  # SMTP
       - "8025:8025"  # Web UI
     networks:
-      - cashflow-network
+      - profitpath-network
 
 volumes:
   db_data:
@@ -87,5 +87,5 @@ volumes:
   frontend_cache:
 
 networks:
-  cashflow-network:
+  profitpath-network:
     driver: bridge

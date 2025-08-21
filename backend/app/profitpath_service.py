@@ -1,5 +1,5 @@
 """
-Cashflow Service - Consolidates cashflow data from source tables
+ProfitPath Service - Consolidates profitpath data from source tables
 """
 from datetime import datetime, date
 from decimal import Decimal
@@ -9,12 +9,12 @@ from sqlalchemy import and_, or_, func, case, text, String
 from .models import Payment, PurchasePayment, Expense, Invoice, Purchase, Party
 
 
-class CashflowService:
+class ProfitPathService:
     def __init__(self, db: Session):
         self.db = db
     
-    def get_cashflow_summary(self, start_date: Optional[date] = None, end_date: Optional[date] = None) -> Dict[str, Any]:
-        """Get cashflow summary for dashboard widgets"""
+    def get_profitpath_summary(self, start_date: Optional[date] = None, end_date: Optional[date] = None) -> Dict[str, Any]:
+        """Get profitpath summary for dashboard widgets"""
         
         # Base query filters
         date_filter = []

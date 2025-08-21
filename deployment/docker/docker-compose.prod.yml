@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-cashflow_prod}
+      POSTGRES_DB: ${POSTGRES_DB:-profitpath_prod}
     ports:
       - "5432:5432"
     volumes:
@@ -17,7 +17,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - cashflow-prod-network
+      - profitpath-prod-network
     restart: unless-stopped
     deploy:
       resources:
@@ -33,7 +33,7 @@ services:
       target: production
     environment:
       ENVIRONMENT: production
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-cashflow_prod}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-profitpath_prod}
       SECRET_KEY: ${SECRET_KEY}
       DEBUG: "false"
       LOG_LEVEL: WARNING
@@ -54,7 +54,7 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - cashflow-prod-network
+      - profitpath-prod-network
     restart: unless-stopped
     deploy:
       resources:
@@ -82,7 +82,7 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - cashflow-prod-network
+      - profitpath-prod-network
     restart: unless-stopped
     deploy:
       resources:
@@ -96,5 +96,5 @@ volumes:
   backend_prod_logs:
 
 networks:
-  cashflow-prod-network:
+  profitpath-prod-network:
     driver: bridge

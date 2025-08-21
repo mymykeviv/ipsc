@@ -1,8 +1,8 @@
-# IPSC Application Architecture
+# ProfitPath Application Architecture
 
 ## Overview
 
-The IPSC application is a web-based, platform-agnostic system for digitizing and streamlining inventory, invoicing, GST compliance, and business analytics for small-scale Indian manufacturers. It is designed for local deployment, with strong data integrity, security, and extensibility.
+The ProfitPath application is a web-based, platform-agnostic system for digitizing and streamlining inventory, invoicing, GST compliance, and business analytics for small-scale Indian manufacturers. It is designed for local deployment, with strong data integrity, security, and extensibility.
 
 ---
 
@@ -92,14 +92,14 @@ The IPSC application is a web-based, platform-agnostic system for digitizing and
 - `/backend/` — FastAPI app
 - `/backend/app/gst_reports.py` — GST report generation module
 - `/backend/app/gst.py` — GST calculation and validation utilities
-- `/backend/app/cashflow_service.py` — Consolidated cashflow data service
+- `/backend/app/profitpath_service.py` — Consolidated profitpath data service
 - `/backend/app/payment_scheduler.py` — Advanced payment tracking and scheduling service
 - `/backend/app/inventory_manager.py` — Advanced inventory management and analytics service
 - `/backend/app/financial_reports.py` — Comprehensive financial reporting service
 - `/scripts/seed_test_data.py` — Comprehensive test data seeding
 - `/tests/backend/test_gst_reports.py` — GST reports test suite
 - `/tests/backend/test_gst_toggle.py` — GST toggle functionality tests
-- `/tests/backend/test_cashflow_integration.py` — Cashflow integration tests
+- `/tests/backend/test_profitpath_integration.py` — Cashflow integration tests
 - `/tests/backend/test_payment_scheduler.py` — Payment scheduler functionality tests
 - `/tests/backend/test_financial_reports.py` — Financial reports functionality tests
 - `/db/` — DB migrations, seed data

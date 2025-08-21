@@ -1,8 +1,8 @@
-# CashFlow - Invoicing, Purchases, Payment & Stock Control
+# ProfitPath - Invoicing, Purchases, Payment & Stock Control
 
 A comprehensive business management system designed for Indian businesses with GST compliance, inventory management, and financial tracking capabilities.
 
-## 🚀 Current Version: 1.48.5
+## 🚀 Current Version: 1.49.0
 
 **Latest Features:**
 - ✅ Consolidated Deployment System for dev, UAT, and production
@@ -23,7 +23,7 @@ A comprehensive business management system designed for Indian businesses with G
 1. **Clone and Setup**
    ```bash
    git clone <repository-url>
-   cd ipsc
+   cd profitpath
    ```
 
 2. **Start Services**
@@ -97,7 +97,7 @@ Our documentation is now organized in a dedicated `docs/` folder for better stru
 ## 🎯 Key Features
 
 ### ✅ Implemented (v1.48.5)
-- **Dashboard**: Cashflow summary with working quick action buttons
+- **Dashboard**: ProfitPath summary with working quick action buttons
 - **Product Management**: Complete CRUD with enhanced error handling
 - **Authentication**: JWT-based with role-based access control
 - **Stock Management**: Real-time stock tracking and adjustments
@@ -106,7 +106,7 @@ Our documentation is now organized in a dedicated `docs/` folder for better stru
 - **Invoice Management**: Generate and email invoices with payment tracking
 - **Purchase Management**: Complete purchase system with GST compliance
 - **Expense Management**: Comprehensive expense tracking with categorization
-- **Cashflow Management**: Income vs expense analysis with date range filtering
+- **ProfitPath Management**: Income vs expense analysis with date range filtering
 - **Payment Management**: Enhanced payment system with multiple methods
 - **Party Management**: Customer and vendor management with GST toggle
 - **Audit Trail**: Comprehensive logging of all user actions
@@ -125,7 +125,7 @@ Our documentation is now organized in a dedicated `docs/` folder for better stru
 
 ### Code Organization
 ```
-ipsc/
+profitpath/
 ├── backend/           # FastAPI backend
 ├── frontend/          # React frontend
 ├── docs/             # 📁 Organized documentation

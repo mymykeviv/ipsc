@@ -2,6 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.49.0] - 2025-08-21
+
+### 🔄 **MAJOR REBRANDING: IPSC/CashFlow → ProfitPath**
+- **Complete Application Rebranding**: Systematic replacement of all "IPSC", "CashFlow", and Docker-specific terminology with "ProfitPath"
+- **Frontend Component Updates**: Renamed core components (Cashflow → ProfitPath) and updated all UI references
+- **Backend Service Refactoring**: Renamed `CashflowService` → `ProfitPathService` with updated method signatures
+- **Database Schema Updates**: Updated database names across all environments (dev: `profitpath`, prod: `profitpath_prod`, uat: `profitpath_uat`)
+- **Container Network Rebranding**: Updated Docker networks from `cashflow-network` → `profitpath-network`
+- **Kubernetes Deployment Updates**: Complete Kubernetes manifest updates for production deployment
+- **API Endpoint Consistency**: Updated internal service names while maintaining API backward compatibility
+- **Test Suite Updates**: Comprehensive test file updates and renamed test specifications
+- **Documentation Overhaul**: Updated all documentation, README files, and architectural diagrams
+- **Script Modernization**: Updated all deployment, testing, and utility scripts
+- **Version Increment**: Backend v1.49.0, Frontend v1.5.0 to reflect major rebranding
+
+### 🔧 **Infrastructure & Configuration**
+- **Environment Variable Updates**: Updated all `.env` examples and Kubernetes secrets
+- **Service Discovery**: Updated internal service references across microservices
+- **Container Orchestration**: Updated docker-compose files for all environments
+- **Build Pipeline**: Updated build configuration and deployment scripts
+- **Health Checks**: Maintained system reliability during rebranding process
+
+### 📝 **Migration & Compatibility**
+- **Zero-Downtime Transition**: Maintained API compatibility during rebranding
+- **Database Migration Safety**: Preserved all existing data during database name changes
+- **Backward Compatibility**: Ensured existing integrations continue to work
+- **User Experience**: Maintained consistent user workflows despite internal changes
+- **Testing Coverage**: Comprehensive testing to ensure no functional regressions
+
+### 🚨 **Breaking Changes**
+- **Database Names**: All environments now use `profitpath` database naming convention
+- **Container Names**: Docker containers follow new `profit-path-*` naming pattern
+- **Service References**: Internal service discovery updated to use ProfitPath terminology
+- **Configuration Files**: All environment files require database URL updates
+
+### 📋 **Deployment Notes**
+- **Migration Required**: Database connection strings need updating in production
+- **Container Rebuild**: All Docker images require rebuilding with new configurations
+- **Secret Updates**: Kubernetes secrets need updating for new database names
+- **DNS Updates**: Internal service DNS may require updates in some deployments
+
 ## [1.48.8] - 2025-08-21
 
 ### 🧹 Cleaned Up
@@ -21,8 +62,8 @@ All notable changes to this project will be documented in this file.
 - **Docker Integration**: Fixed container naming and database interaction for automated testing
 - **Locale Configuration**: Set up India-English locale for proper currency formatting with ₹ symbol
 - **Currency API Fix**: Fixed currencies endpoint to return proper dictionary format instead of list
-- **Test Authentication**: Fixed authentication issues in cashflow integration tests
-- **Test Data Consistency**: Fixed cashflow data consistency test by properly setting invoice status and balance amounts
+- **Test Authentication**: Fixed authentication issues in profitpath integration tests
+- **Test Data Consistency**: Fixed profitpath data consistency test by properly setting invoice status and balance amounts
 - **API Field Requirements**: Fixed payment and expense API tests by adding required date fields (`payment_date`, `expense_date`)
 
 ### 🗑️ Removed
@@ -98,7 +139,7 @@ All notable changes to this project will be documented in this file.
 - **Invoice Payments UI**: Fixed date filter always active causing payments to not display despite successful API response
 - **Cashflow Transactions**: Fixed missing payment_method filter and date comparison issues preventing invoice payments from appearing
 - **Filter Behavior**: Fixed automatic filter application when navigating to Cashflow and Payments pages - now shows all data by default
-- **Dashboard Calculations**: Fixed missing cashflow API functions causing incorrect dashboard display values
+- **Dashboard Calculations**: Fixed missing profitpath API functions causing incorrect dashboard display values
 - **Purchase Payment Failure**: Fixed 422 error due to incorrect field names (amount/method vs payment_amount/payment_method)
 - **API Compilation Errors**: Fixed duplicate function declarations and missing TypeScript types
 - **Duplicate Function Declarations**: Removed duplicate apiAddPayment and apiAddPurchasePayment functions causing esbuild errors

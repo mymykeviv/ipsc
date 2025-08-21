@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Comprehensive UI/UX Testing Framework Runner (MVP)
-# This script runs all UI/UX tests for the IPSC application
+# This script runs all UI/UX tests for the ProfitPath application
 # MVP Browser Support: Chrome and Firefox (Desktop only)
 # Mobile and Responsive Design: Not included in MVP
 
@@ -22,7 +22,7 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 # Create test results directory
 mkdir -p "$TEST_RESULTS_DIR"
 
-echo -e "${BLUE}🧪 IPSC UI/UX Testing Framework${NC}"
+echo -e "${BLUE}🧪 ProfitPath UI/UX Testing Framework${NC}"
 echo -e "${BLUE}================================${NC}"
 echo "Timestamp: $TIMESTAMP"
 echo ""

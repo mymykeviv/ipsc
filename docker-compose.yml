@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: cashflow
+      POSTGRES_DB: profitpath
     ports:
       - "5432:5432"
     volumes:
@@ -21,7 +21,7 @@ services:
       dockerfile: Dockerfile
     environment:
       ENVIRONMENT: development
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/cashflow
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/profitpath
       SECRET_KEY: dev-secret-key-change-in-production
       DEBUG: "true"
       LOG_LEVEL: INFO

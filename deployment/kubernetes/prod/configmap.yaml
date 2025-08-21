@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: cashflow-config
-  namespace: cashflow-prod
+  name: profitpath-config
+  namespace: profitpath-prod
 data:
-  api-url: "https://api.cashflow.example.com"
-  cors-origins: "https://cashflow.example.com,https://www.cashflow.example.com"
+  api-url: "https://api.profitpath.example.com"
+  cors-origins: "https://profitpath.example.com,https://www.profitpath.example.com"
   app-version: "v1.48.4"
   environment: "production"

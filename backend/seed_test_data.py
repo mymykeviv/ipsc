@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test Data Seeding Script for Cashflow Application
+Test Data Seeding Script for ProfitPath Application
 
 This script populates the database with comprehensive test data for testing
 all functionalities including GST reports, invoices, purchases, parties, etc.

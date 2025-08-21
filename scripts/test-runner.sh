@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Unified Test Runner for IPSC Application
+# Unified Test Runner for ProfitPath Application
 # Consolidates all testing functionality into a single, maintainable approach
 # Supports: Backend (Unit/Integration), Frontend (Unit), E2E (Playwright), and Health Checks
 
@@ -377,7 +377,7 @@ generate_test_summary() {
     
     # Generate summary report
     cat > "$summary_file" << EOF
-# IPSC Test Summary Report
+# ProfitPath Test Summary Report
 
 **Date:** $(date)
 **Timestamp:** $TIMESTAMP
@@ -451,7 +451,7 @@ cleanup_temp_files() {
 main() {
     local test_type="${1:-all}"
     
-    echo -e "${BLUE}🧪 IPSC Unified Test Runner${NC}"
+    echo -e "${BLUE}🧪 ProfitPath Unified Test Runner${NC}"
     echo -e "${BLUE}========================${NC}"
     echo "Timestamp: $TIMESTAMP"
     echo "Test Type: $test_type"
