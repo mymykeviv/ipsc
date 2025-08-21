@@ -42,6 +42,8 @@ All notable changes to this project will be documented in this file.
 - **Purchase Payment Failure**: Fixed 422 error due to incorrect field names (amount/method vs payment_amount/payment_method)
 - **API Compilation Errors**: Fixed duplicate function declarations and missing TypeScript types
 - **Duplicate Function Declarations**: Removed duplicate apiAddPayment and apiAddPurchasePayment functions causing esbuild errors
+- **Stock Movement History**: Fixed missing API functions preventing all products from being displayed
+- **Purchase Payment Amount**: Fixed incorrect pending amount calculation causing payment failures
 
 ### ✨ Enhanced
 - **Currency Display**: Updated invoice PDFs to show ₹ symbol instead of INR code
