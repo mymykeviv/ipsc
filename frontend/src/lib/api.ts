@@ -1948,5 +1948,140 @@ export async function apiGetInvoicePDF(invoiceId: number, templateId?: number): 
   return r.blob()
 }
 
+// Cashflow Types and Functions
+export type CashflowSummary = {
+  period: {
+    start_date: string
+    end_date: string
+  }
+  total_income: number
+  total_outflow: number
+  net_cashflow: number
+  income: {
+    total_invoice_amount: number
+    total_payments_received: number
+  }
+  expenses: {
+    total_expenses: number
+    total_purchase_payments: number
+    total_outflow: number
+  }
+  cashflow: {
+    net_cashflow: number
+    cash_inflow: number
+    cash_outflow: number
+  }
+}
+
+export type CashflowTransaction = {
+  id: string
+  transaction_date: string
+  type: 'inflow' | 'outflow'
+  description: string
+  reference_number: string | null
+  payment_method: string
+  amount: number
+  account_head: string
+  source_type: string
+  source_id: number
+  reference_document: string
+  party_name: string
+  created_at: string
+}
+
+export async function apiGetCashflowSummary(startDate: string, endDate: string): Promise<CashflowSummary> {
+  const params = new URLSearchParams()
+  params.append('start_date', startDate)
+  params.append('end_date', endDate)
+  
+  const r = await fetch(`/api/cashflow/summary?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiGetCashflowTransactions(
+  search?: string,
+  typeFilter?: string,
+  transactionType?: string,
+  paymentMethod?: string,
+  accountHead?: string,
+  amountMin?: number,
+  amountMax?: number,
+  startDate?: string,
+  endDate?: string,
+  page: number = 1,
+  limit: number = 25
+): Promise<{ transactions: CashflowTransaction[], total_count: number, page: number, limit: number, total_pages: number }> {
+  const params = new URLSearchParams()
+  if (search) params.append('search', search)
+  if (typeFilter) params.append('type_filter', typeFilter)
+  if (transactionType) params.append('transaction_type', transactionType)
+  if (paymentMethod) params.append('payment_method', paymentMethod)
+  if (accountHead) params.append('account_head', accountHead)
+  if (amountMin) params.append('amount_min', amountMin.toString())
+  if (amountMax) params.append('amount_max', amountMax.toString())
+  if (startDate) params.append('start_date', startDate)
+  if (endDate) params.append('end_date', endDate)
+  params.append('page', page.toString())
+  params.append('limit', limit.toString())
+  
+  const r = await fetch(`/api/cashflow/transactions?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+// Inventory Dashboard Types and Functions
+export type InventoryDashboardMetrics = {
+  total_products: number
+  low_stock_items: number
+  out_of_stock_items: number
+  total_stock_value: number
+  recent_movements: Array<{
+    product_name: string
+    movement_type: 'in' | 'out'
+    quantity: number
+    date: string
+  }>
+}
+
+export async function apiGetInventoryDashboard(): Promise<InventoryDashboardMetrics> {
+  const r = await fetch('/api/inventory/dashboard', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
 
 

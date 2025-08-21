@@ -194,6 +194,11 @@ desktop.ini
 *.sock
 *.socket
 
+# Temp Files Directory
+temp_files/
+temp/
+tmp/
+
 # Application Specific
 uploads/
 media/
