@@ -151,6 +151,7 @@ export function PaymentForm({ onSuccess, onCancel, type, purchaseId, invoiceId }
       if (type === 'purchase' && formData.purchase_id) {
         // Submit purchase payment
         await apiAddPurchasePayment(formData.purchase_id, {
+          payment_date: formData.payment_date,
           payment_amount: formData.payment_amount,
           payment_method: formData.payment_method,
           account_head: 'Purchase Payments',
@@ -160,6 +161,7 @@ export function PaymentForm({ onSuccess, onCancel, type, purchaseId, invoiceId }
       } else if (type === 'invoice' && formData.invoice_id) {
         // Submit invoice payment
         await apiAddPayment(formData.invoice_id, {
+          payment_date: formData.payment_date,
           payment_amount: formData.payment_amount,
           payment_method: formData.payment_method,
           account_head: 'Invoice Payments',
