@@ -44,6 +44,7 @@ All notable changes to this project will be documented in this file.
 - **Duplicate Function Declarations**: Removed duplicate apiAddPayment and apiAddPurchasePayment functions causing esbuild errors
 - **Stock Movement History**: Fixed missing API functions preventing all products from being displayed
 - **Purchase Payment Amount**: Fixed incorrect pending amount calculation causing payment failures
+- **Stock Movement Functions**: Removed duplicate function declarations causing esbuild compilation errors
 
 ### ✨ Enhanced
 - **Currency Display**: Updated invoice PDFs to show ₹ symbol instead of INR code
