@@ -774,32 +774,7 @@ export async function apiAddPurchasePayment(purchaseId: number, payload: Purchas
   return r.json()
 }
 
-export async function apiListPurchasePayments(purchaseId: number): Promise<{
-  payments: Array<{
-    id: number
-    payment_date: string
-    amount: number
-    method: string
-    account_head: string
-    reference_number: string | null
-    notes: string | null
-  }>
-  total_paid: number
-  outstanding: number
-}> {
-  const r = await fetch(`/api/purchases/${purchaseId}/payments`, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
-  
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  
-  return r.json()
-}
+
 
 // Expense Management APIs
 export async function apiCreateExpense(payload: ExpenseCreate): Promise<{id: number}> {
@@ -1535,6 +1510,64 @@ export async function apiGetInventoryDashboard(): Promise<InventoryDashboardMetr
   const url = '/api/reports/inventory-dashboard'
   
   const r = await fetch(url, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+// Purchase Payment Functions
+export async function apiListPurchasePayments(purchaseId: number): Promise<{
+  payments: Array<{
+    id: number
+    payment_date: string
+    amount: number
+    method: string
+    account_head: string
+    reference_number: string | null
+    notes: string | null
+  }>
+  total_paid: number
+  outstanding: number
+}> {
+  const r = await fetch(`/api/purchases/${purchaseId}/payments`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiListAllPurchasePayments(): Promise<Array<{
+  id: number
+  purchase_id: number
+  payment_amount: number
+  payment_method: string
+  account_head: string
+  reference_number: string | null
+  payment_date: string
+  notes: string | null
+  vendor_name: string
+  purchase_number: string
+}>> {
+  const r = await fetch('/api/purchase-payments', {
     headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
   })
   
