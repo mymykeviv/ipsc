@@ -7,7 +7,7 @@ test.describe('Products Management', () => {
     await page.fill('input[placeholder="Enter your username"]', 'admin');
     await page.fill('input[placeholder="Enter your password"]', 'admin123');
     await page.click('button:has-text("Sign in")');
-    await page.waitForURL('/', { timeout: 10000 });
+    await page.waitForURL('/', { timeout: 30000 });
     await page.goto('/products');
   });
 

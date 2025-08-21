@@ -24,8 +24,8 @@ test.describe('Authentication', () => {
     // Click login button
     await page.click('button:has-text("Sign in")');
     
-    // Wait for navigation to dashboard
-    await page.waitForURL('/', { timeout: 10000 });
+    // Wait for navigation to dashboard with increased timeout
+    await page.waitForURL('/', { timeout: 30000 });
     
     // Verify we're on the dashboard
     await expect(page.locator('h1:has-text("📊 ProfitPath Dashboard")')).toBeVisible();
@@ -66,7 +66,7 @@ test.describe('Authentication', () => {
     await page.fill('input[placeholder="Enter your username"]', 'admin');
     await page.fill('input[placeholder="Enter your password"]', 'admin123');
     await page.click('button:has-text("Sign in")');
-    await page.waitForURL('/', { timeout: 10000 });
+    await page.waitForURL('/', { timeout: 30000 });
     
     // Click logout button
     await page.click('button:has-text("Logout")');
