@@ -1,0 +1,98 @@
+{
+  "timestamp": "2025-08-21T05:14:59.234045+00:00",
+  "environment": "dev",
+  "tests": [
+    {
+      "name": "Backend Health Check",
+      "status": "PASSED",
+      "details": "Status: 200",
+      "duration": 0.18604302406311035,
+      "timestamp": "2025-08-21T05:14:59.420241+00:00"
+    },
+    {
+      "name": "Frontend Health Check",
+      "status": "PASSED",
+      "details": "Status: 200",
+      "duration": 0.0029761791229248047,
+      "timestamp": "2025-08-21T05:14:59.423287+00:00"
+    },
+    {
+      "name": "Database Connection",
+      "status": "PASSED",
+      "details": "Database is accessible",
+      "duration": 0.001940011978149414,
+      "timestamp": "2025-08-21T05:14:59.425307+00:00"
+    },
+    {
+      "name": "API GET /api/invoices",
+      "status": "PASSED",
+      "details": "Status: 401",
+      "duration": 0.0022428035736083984,
+      "timestamp": "2025-08-21T05:14:59.427594+00:00"
+    },
+    {
+      "name": "API GET /api/parties/customers",
+      "status": "PASSED",
+      "details": "Status: 401",
+      "duration": 0.0014789104461669922,
+      "timestamp": "2025-08-21T05:14:59.429087+00:00"
+    },
+    {
+      "name": "API GET /api/products",
+      "status": "PASSED",
+      "details": "Status: 401",
+      "duration": 0.0016300678253173828,
+      "timestamp": "2025-08-21T05:14:59.430729+00:00"
+    },
+    {
+      "name": "API GET /api/parties/vendors",
+      "status": "PASSED",
+      "details": "Status: 401",
+      "duration": 0.0013990402221679688,
+      "timestamp": "2025-08-21T05:14:59.432139+00:00"
+    },
+    {
+      "name": "Authentication Flow",
+      "status": "PASSED",
+      "details": "Login and token validation successful",
+      "duration": 0.19682097434997559,
+      "timestamp": "2025-08-21T05:14:59.637174+00:00"
+    },
+    {
+      "name": "Invoice Creation",
+      "status": "PASSED",
+      "details": "Invoice created successfully",
+      "duration": 0.1874399185180664,
+      "timestamp": "2025-08-21T05:14:59.824813+00:00"
+    },
+    {
+      "name": "Performance /health",
+      "status": "PASSED",
+      "details": "Response time: 0.00s",
+      "duration": 0.002264261245727539,
+      "timestamp": "2025-08-21T05:14:59.827249+00:00"
+    },
+    {
+      "name": "Performance /api/invoices",
+      "status": "PASSED",
+      "details": "Response time: 0.00s",
+      "duration": 0.002366781234741211,
+      "timestamp": "2025-08-21T05:14:59.829656+00:00"
+    },
+    {
+      "name": "Performance /api/parties/customers",
+      "status": "PASSED",
+      "details": "Response time: 0.00s",
+      "duration": 0.0020868778228759766,
+      "timestamp": "2025-08-21T05:14:59.831789+00:00"
+    }
+  ],
+  "summary": {
+    "total": 12,
+    "passed": 12,
+    "failed": 0,
+    "skipped": 0,
+    "success_rate": 100.0
+  },
+  "overall_status": "PASSED"
+}

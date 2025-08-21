@@ -606,8 +606,14 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
     # Validation
     if payload.invoice_no and len(payload.invoice_no) > 16:
         raise HTTPException(status_code=400, detail="Invoice number must be 16 characters or less as per GST law")
-    if payload.invoice_no and not re.match(r'^[a-zA-Z0-9\s-]+$', payload.invoice_no):
-        raise HTTPException(status_code=400, detail="Invoice number must be alphanumeric with spaces and hyphens only")
+    if payload.invoice_no and not re.match(r'^[a-zA-Z0-9\s\-/]+$', payload.invoice_no):
+        raise HTTPException(status_code=400, detail="Invoice number must be alphanumeric with spaces, hyphens, and forward slashes only")
+    
+    # Check for duplicate invoice number (AC1)
+    if payload.invoice_no:
+        existing_invoice = db.query(Invoice).filter(Invoice.invoice_no == payload.invoice_no).first()
+        if existing_invoice:
+            raise HTTPException(status_code=400, detail="Invoice number already exists")
     if len(payload.bill_to_address) > 200:
         raise HTTPException(status_code=400, detail="Bill to address must be 200 characters or less")
     if len(payload.ship_to_address) > 200:
@@ -623,14 +629,43 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
     if not payload.place_of_supply_state_code:
         raise HTTPException(status_code=400, detail="Place of supply state code is mandatory as per GST law")
     
+    # Enhanced required fields validation (AC10)
+    if not payload.bill_to_address:
+        raise HTTPException(status_code=400, detail="Bill to address is required")
+    if not payload.ship_to_address:
+        raise HTTPException(status_code=400, detail="Ship to address is required")
+    if not payload.date:
+        raise HTTPException(status_code=400, detail="Invoice date is required")
+    
+    # Validate date format and future date (AC14)
+    try:
+        invoice_date = datetime.fromisoformat(payload.date.replace('Z', '+00:00'))
+        if invoice_date > datetime.now():
+            raise HTTPException(status_code=400, detail="Invoice date cannot be in the future")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid invoice date format")
+    
     company = db.query(CompanySettings).first()
     customer = db.query(Party).filter(Party.id == payload.customer_id).first()
     supplier = db.query(Party).filter(Party.id == payload.supplier_id).first()
     
     if not customer:
-        raise HTTPException(status_code=400, detail='Invalid customer')
+        raise HTTPException(status_code=400, detail='Customer not found')
     if not supplier:
-        raise HTTPException(status_code=400, detail='Invalid supplier')
+        raise HTTPException(status_code=400, detail='Supplier not found')
+    
+    # Validate company profile exists (AC8)
+    if not company:
+        raise HTTPException(status_code=400, detail='Company profile not configured')
+    
+    # Validate GSTIN format if provided (AC9)
+    if hasattr(customer, 'gstin') and customer.gstin:
+        if not re.match(r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$', customer.gstin):
+            raise HTTPException(status_code=400, detail='Invalid customer GSTIN format')
+    
+    if hasattr(company, 'gstin') and company.gstin:
+        if not re.match(r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$', company.gstin):
+            raise HTTPException(status_code=400, detail='Invalid company GSTIN format')
     
     # Generate invoice number if not provided
     invoice_no = payload.invoice_no if payload.invoice_no else _next_invoice_no(db)
@@ -1023,8 +1058,8 @@ def update_invoice(invoice_id: int, payload: InvoiceCreate, _: User = Depends(ge
     # Validation (same as create_invoice)
     if payload.invoice_no and len(payload.invoice_no) > 16:
         raise HTTPException(status_code=400, detail="Invoice number must be 16 characters or less as per GST law")
-    if payload.invoice_no and not re.match(r'^[a-zA-Z0-9\s-]+$', payload.invoice_no):
-        raise HTTPException(status_code=400, detail="Invoice number must be alphanumeric with spaces and hyphens only")
+    if payload.invoice_no and not re.match(r'^[a-zA-Z0-9\s\-/]+$', payload.invoice_no):
+        raise HTTPException(status_code=400, detail="Invoice number must be alphanumeric with spaces, hyphens, and forward slashes only")
     if len(payload.bill_to_address) > 200:
         raise HTTPException(status_code=400, detail="Bill to address must be 200 characters or less")
     if len(payload.ship_to_address) > 200:
