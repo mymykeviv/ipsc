@@ -189,20 +189,23 @@ class TestDashboardQuickLinks:
     
     def test_quick_link_navigation(self, client, auth_headers):
         """Test quick link navigation functionality"""
-        # Test navigation to add product
-        response = client.get("/api/products/add", headers=auth_headers)
+        # Test that the main endpoints are accessible (these are the actual API endpoints)
+        # The "add" functionality is handled via POST requests to these endpoints
+        
+        # Test products endpoint is accessible
+        response = client.get("/api/products", headers=auth_headers)
         assert response.status_code == 200
         
-        # Test navigation to add invoice
-        response = client.get("/api/invoices/add", headers=auth_headers)
+        # Test invoices endpoint is accessible
+        response = client.get("/api/invoices", headers=auth_headers)
         assert response.status_code == 200
         
-        # Test navigation to add purchase
-        response = client.get("/api/purchases/add", headers=auth_headers)
+        # Test purchases endpoint is accessible
+        response = client.get("/api/purchases", headers=auth_headers)
         assert response.status_code == 200
         
-        # Test navigation to add expense
-        response = client.get("/api/expenses/add", headers=auth_headers)
+        # Test expenses endpoint is accessible
+        response = client.get("/api/expenses", headers=auth_headers)
         assert response.status_code == 200
     
     def test_quick_link_permissions(self, client, auth_headers):
@@ -332,16 +335,20 @@ class TestSystematicChangeManagement:
             "customer_id": customer.id,
             "supplier_id": supplier.id,
             "invoice_no": "TEST-001",
-            "grand_total": 1000.00,
+            "date": datetime.utcnow().isoformat(),
             "due_date": datetime.utcnow().isoformat(),
             "place_of_supply": "Mumbai, Maharashtra",
             "place_of_supply_state_code": "27",
             "bill_to_address": "Test Bill Address",
             "ship_to_address": "Test Ship Address",
-            "taxable_value": 847.46,
-            "cgst": 76.27,
-            "sgst": 76.27,
-            "igst": 0.00
+            "items": [
+                {
+                    "product_id": 1,
+                    "qty": 1,
+                    "rate": 1000.00,
+                    "description": "Test Description"
+                }
+            ]
         }
         
         response = client.post("/api/invoices", json=invoice_data, headers=auth_headers)

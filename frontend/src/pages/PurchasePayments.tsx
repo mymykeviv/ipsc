@@ -303,58 +303,148 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
         overflow: 'visible',
         backgroundColor: 'white'
       }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #e9ecef' }}>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Purchase No</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Vendor</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Payment Date</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Amount</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Method</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Reference</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Total Paid</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Outstanding</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedPayments.map(payment => (
-              <tr key={payment.id} style={{ 
-                borderBottom: '1px solid #e9ecef',
-                backgroundColor: 'white'
-              }}>
-                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{payment.purchase_no}</td>
-                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{payment.vendor_name}</td>
-                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{new Date(payment.payment_date).toLocaleDateString()}</td>
-                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>₹{payment.amount.toFixed(2)}</td>
-                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{payment.method}</td>
-                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{payment.reference_number || '-'}</td>
-                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>₹{payment.total_paid.toFixed(2)}</td>
-                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
-                  <span style={{
-                    padding: '4px 8px', 
-                    borderRadius: '4px', 
-                    fontSize: '12px',
-                    fontWeight: '500',
-                    backgroundColor: payment.outstanding > 0 ? '#fff3cd' : '#d4edda',
-                    color: payment.outstanding > 0 ? '#856404' : '#155724'
-                  }}>
-                    ₹{payment.outstanding.toFixed(2)}
-                  </span>
-                </td>
-                <td style={{ padding: '12px' }}>
-                  <ActionButtons
-                    {...ActionButtonSets.purchasePayments(payment, {
-                      onViewPurchase: () => navigate(`/purchases/edit/${payment.purchase_id}`),
-                      onAddPayment: () => navigate(`/payments/purchase/add/${payment.purchase_id}`)
-                    })}
-                    maxVisible={1}
-                  />
-                </td>
+        {loading ? (
+          <div style={{
+            textAlign: 'center', 
+            padding: '40px', 
+            color: '#6c757d'
+          }}>
+            <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
+              Loading purchase payments...
+            </div>
+            <div style={{ fontSize: '14px' }}>
+              Please wait while we fetch your payment data
+            </div>
+          </div>
+        ) : error ? (
+          <div style={{
+            textAlign: 'center', 
+            padding: '40px', 
+            color: '#dc3545',
+            border: '1px solid #f5c6cb',
+            borderRadius: '8px',
+            backgroundColor: '#f8d7da'
+          }}>
+            <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
+              Failed to load purchase payments
+            </div>
+            <div style={{ fontSize: '14px', marginBottom: '16px' }}>
+              {error}
+            </div>
+            <Button 
+              variant="primary" 
+              onClick={loadPurchasePayments}
+              style={{ marginRight: '8px' }}
+            >
+              Try Again
+            </Button>
+            <Button 
+              variant="secondary" 
+              onClick={() => navigate('/purchases')}
+            >
+              Go to Purchases
+            </Button>
+          </div>
+        ) : paginatedPayments.length === 0 ? (
+          <div style={{
+            textAlign: 'center', 
+            padding: '40px', 
+            color: '#6c757d',
+            border: '1px solid #e9ecef',
+            borderRadius: '8px',
+            backgroundColor: '#f8f9fa'
+          }}>
+            <div style={{ fontSize: '24px', marginBottom: '16px' }}>📋</div>
+            <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
+              No purchase payments found
+            </div>
+            <div style={{ fontSize: '14px', marginBottom: '20px', maxWidth: '400px', margin: '0 auto 20px auto' }}>
+              {searchTerm || vendorFilter !== 'all' || paymentMethodFilter !== 'all' || amountRangeFilter !== 'all' || financialYearFilter !== 'all' 
+                ? 'No payments match your current filters. Try adjusting your search criteria.'
+                : 'You haven\'t made any purchase payments yet. Start by adding payments to your purchases.'
+              }
+            </div>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <Button 
+                variant="primary" 
+                onClick={() => navigate('/purchases')}
+              >
+                View Purchases
+              </Button>
+              {(searchTerm || vendorFilter !== 'all' || paymentMethodFilter !== 'all' || amountRangeFilter !== 'all' || financialYearFilter !== 'all') && (
+                <Button 
+                  variant="secondary" 
+                  onClick={() => {
+                    setSearchTerm('')
+                    setVendorFilter('all')
+                    setPaymentMethodFilter('all')
+                    setAmountRangeFilter('all')
+                    setFinancialYearFilter('all')
+                    setDateFilter({
+                      startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+                      endDate: new Date().toISOString().slice(0, 10)
+                    })
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #e9ecef' }}>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Purchase No</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Vendor</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Payment Date</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Amount</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Method</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Reference</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Total Paid</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Outstanding</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {paginatedPayments.map(payment => (
+                <tr key={payment.id} style={{ 
+                  borderBottom: '1px solid #e9ecef',
+                  backgroundColor: 'white'
+                }}>
+                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{payment.purchase_no}</td>
+                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{payment.vendor_name}</td>
+                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{new Date(payment.payment_date).toLocaleDateString()}</td>
+                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>₹{payment.amount.toFixed(2)}</td>
+                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{payment.method}</td>
+                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{payment.reference_number || '-'}</td>
+                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>₹{payment.total_paid.toFixed(2)}</td>
+                  <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
+                    <span style={{
+                      padding: '4px 8px', 
+                      borderRadius: '4px', 
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      backgroundColor: payment.outstanding > 0 ? '#fff3cd' : '#d4edda',
+                      color: payment.outstanding > 0 ? '#856404' : '#155724'
+                    }}>
+                      ₹{payment.outstanding.toFixed(2)}
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px' }}>
+                    <ActionButtons
+                      {...ActionButtonSets.purchasePayments(payment, {
+                        onViewPurchase: () => navigate(`/purchases/edit/${payment.purchase_id}`),
+                        onAddPayment: () => navigate(`/payments/purchase/add/${payment.purchase_id}`)
+                      })}
+                      maxVisible={1}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Pagination */}
@@ -397,24 +487,6 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
             >
               Next
             </Button>
-          </div>
-        </div>
-      )}
-
-      {paginatedPayments.length === 0 && !loading && (
-        <div style={{
-          textAlign: 'center', 
-          padding: '40px', 
-          color: '#6c757d',
-          border: '1px solid #e9ecef',
-          borderRadius: '8px',
-          backgroundColor: '#f8f9fa'
-        }}>
-          <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
-            No purchase payments available
-          </div>
-          <div style={{ fontSize: '14px' }}>
-            Add payments to purchases to see them here
           </div>
         </div>
       )}

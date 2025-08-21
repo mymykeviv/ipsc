@@ -139,7 +139,7 @@ export function PaymentForm({ onSuccess, onCancel, type, purchaseId, invoiceId }
       return
     }
 
-    if (formData.payment_amount > formData.pending_amount) {
+    if (formData.payment_amount > (formData.pending_amount || 0)) {
       setError('Payment amount cannot exceed pending amount')
       return
     }
@@ -261,7 +261,7 @@ export function PaymentForm({ onSuccess, onCancel, type, purchaseId, invoiceId }
               <label style={formStyles.label}>Amount (Total)</label>
               <input
                 type="text"
-                value={`₹${formData.total_amount.toFixed(2)}`}
+                value={`₹${(formData.total_amount || 0).toFixed(2)}`}
                 readOnly
                 style={{ ...formStyles.input, backgroundColor: '#f9f9f9' }}
               />
@@ -270,7 +270,7 @@ export function PaymentForm({ onSuccess, onCancel, type, purchaseId, invoiceId }
               <label style={formStyles.label}>Pending Amount</label>
               <input
                 type="text"
-                value={`₹${formData.pending_amount.toFixed(2)}`}
+                value={`₹${(formData.pending_amount || 0).toFixed(2)}`}
                 readOnly
                 style={{ ...formStyles.input, backgroundColor: '#f9f9f9' }}
               />
@@ -323,7 +323,7 @@ export function PaymentForm({ onSuccess, onCancel, type, purchaseId, invoiceId }
                 type="number"
                 step="0.01"
                 min="0"
-                max={formData.pending_amount}
+                max={formData.pending_amount || 0}
                 value={formData.payment_amount}
                 onChange={(e) => setFormData(prev => ({ ...prev, payment_amount: Number(e.target.value) }))}
                 required
@@ -386,7 +386,7 @@ export function PaymentForm({ onSuccess, onCancel, type, purchaseId, invoiceId }
         <Button 
           type="submit" 
           variant="primary" 
-          disabled={loading || formData.payment_amount <= 0 || formData.payment_amount > formData.pending_amount}
+          disabled={loading || formData.payment_amount <= 0 || formData.payment_amount > (formData.pending_amount || 0)}
         >
           {loading ? 'Adding Payment...' : 'Add Payment'}
         </Button>

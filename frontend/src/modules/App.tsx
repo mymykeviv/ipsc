@@ -296,7 +296,7 @@ function Shell() {
             {!collapsedSections.cashflow && (
               <>
                 <Link className={`nav-link sub-link ${isActive('/cashflow') ? 'active' : ''}`} to="/cashflow">
-                  View ProfitPath Transactions
+                  View Cashflow Transactions
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/expenses') ? 'active' : ''}`} to="/expenses">
                   Manage Expenses

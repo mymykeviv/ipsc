@@ -8,6 +8,7 @@ import { apiGetInvoicePayments, Payment, apiGetAllInvoicePayments } from '../lib
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { DateFilter, DateRange } from '../components/DateFilter'
+import { ErrorBoundary } from '../components/ErrorBoundary'
 
 interface PaymentsProps {
   mode?: 'add' | 'edit' | 'list'
@@ -417,13 +418,15 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
         </div>
       )}
 
-      <PaymentForm 
-        onSuccess={handleSuccess}
-        onCancel={handleCancel}
-        type={type}
-        purchaseId={type === 'purchase' && id ? parseInt(id) : undefined}
-        invoiceId={type === 'invoice' && id ? parseInt(id) : undefined}
-      />
+      <ErrorBoundary>
+        <PaymentForm 
+          onSuccess={handleSuccess}
+          onCancel={handleCancel}
+          type={type}
+          purchaseId={type === 'purchase' && id ? parseInt(id) : undefined}
+          invoiceId={type === 'invoice' && id ? parseInt(id) : undefined}
+        />
+      </ErrorBoundary>
     </div>
   )
 }

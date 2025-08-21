@@ -707,12 +707,83 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
           borderRadius: '8px',
           backgroundColor: '#f8f9fa'
         }}>
+          <div style={{ fontSize: '24px', marginBottom: '16px' }}>📊</div>
           <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
             No stock movements found
           </div>
-          <div style={{ fontSize: '14px' }}>
-            {productName ? `No stock movements for ${productName} in the selected period` : 'No stock movements in the selected period'}
+          <div style={{ fontSize: '14px', marginBottom: '20px', maxWidth: '500px', margin: '0 auto 20px auto' }}>
+            {stockHistory.length === 0 ? (
+              'No stock movement data is available for the selected criteria. This could be due to:'
+            ) : (
+              'No stock movements match your current filters. Try adjusting your search criteria.'
+            )}
           </div>
+          {stockHistory.length === 0 && (
+            <div style={{ 
+              fontSize: '12px', 
+              textAlign: 'left', 
+              maxWidth: '400px', 
+              margin: '0 auto 20px auto',
+              padding: '12px',
+              backgroundColor: '#e9ecef',
+              borderRadius: '4px'
+            }}>
+              <div style={{ fontWeight: '500', marginBottom: '8px' }}>Possible reasons:</div>
+              <ul style={{ margin: '0', paddingLeft: '20px' }}>
+                <li>No stock transactions have been recorded yet</li>
+                <li>The selected financial year has no data</li>
+                <li>Database connection issues</li>
+                <li>Insufficient permissions to access stock data</li>
+              </ul>
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            <Button 
+              variant="primary" 
+              onClick={() => {
+                setForceReload(prev => prev + 1)
+                loadStockHistory()
+              }}
+            >
+              Refresh Data
+            </Button>
+            {(productFilter !== 'all' || categoryFilter !== 'all' || supplierFilter !== 'all' || 
+              stockLevelFilter !== 'all' || entryTypeFilter !== 'all' || financialYearFilter !== 'all') && (
+              <Button 
+                variant="secondary" 
+                onClick={handleClearAll}
+              >
+                Clear All Filters
+              </Button>
+            )}
+          </div>
+          {process.env.NODE_ENV === 'development' && (
+            <details style={{ marginTop: '20px', textAlign: 'left', maxWidth: '600px', margin: '0 auto' }}>
+              <summary style={{ cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
+                Debug Information (Development)
+              </summary>
+              <div style={{ 
+                marginTop: '10px', 
+                padding: '10px', 
+                backgroundColor: '#f8f9fa', 
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontFamily: 'monospace'
+              }}>
+                <div><strong>Raw Data Count:</strong> {stockHistory.length}</div>
+                <div><strong>Filtered Data Count:</strong> {filteredStockHistory.length}</div>
+                <div><strong>Current Page:</strong> {currentPage}</div>
+                <div><strong>Items Per Page:</strong> {itemsPerPage}</div>
+                <div><strong>Financial Year:</strong> {financialYearFilter}</div>
+                <div><strong>Product Filter:</strong> {productFilter}</div>
+                <div><strong>Category Filter:</strong> {categoryFilter}</div>
+                <div><strong>Supplier Filter:</strong> {supplierFilter}</div>
+                <div><strong>Stock Level Filter:</strong> {stockLevelFilter}</div>
+                <div><strong>Entry Type Filter:</strong> {entryTypeFilter}</div>
+                <div><strong>Date Range:</strong> {dateRangeFilter.startDate} to {dateRangeFilter.endDate}</div>
+              </div>
+            </details>
+          )}
         </div>
       ) : (
         <>

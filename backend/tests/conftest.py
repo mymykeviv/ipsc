@@ -93,9 +93,33 @@ def client(db_session):
 
 
 @pytest.fixture
-def auth_headers():
+def auth_headers(db_session):
     """Authentication headers for testing"""
-    return {"Authorization": "Bearer test-token"}
+    from app.auth import create_access_token
+    from app.models import User, Role
+    from app.auth import get_password_hash
+    
+    # Create Admin role if it doesn't exist
+    admin_role = db_session.query(Role).filter(Role.name == "Admin").first()
+    if not admin_role:
+        admin_role = Role(name="Admin")
+        db_session.add(admin_role)
+        db_session.commit()
+    
+    # Create test user if it doesn't exist
+    test_user = db_session.query(User).filter(User.username == "testuser").first()
+    if not test_user:
+        test_user = User(
+            username="testuser",
+            password_hash=get_password_hash("testpass123"),
+            role_id=admin_role.id
+        )
+        db_session.add(test_user)
+        db_session.commit()
+    
+    # Create access token
+    token = create_access_token(subject=test_user.username)
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture

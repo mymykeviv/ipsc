@@ -308,6 +308,106 @@ All notable changes to this project will be documented in this file.
 - **Testing**: Fixed test configuration and execution
 - **Documentation**: Corrected documentation errors and inconsistencies
 
+## [1.41.0] - 2025-08-21
+
+### Fixed
+- **BUG-001**: Fixed Payment Form JavaScript Error - Undefined pending_amount
+  - Added null/undefined checks for formData.pending_amount and formData.total_amount
+  - Implemented ErrorBoundary component for graceful error handling
+  - Fixed toFixed() method calls to prevent crashes when data is undefined
+  - Added proper validation for payment amount limits
+
+- **BUG-002**: Fixed Empty Purchase Payments Screen Display
+  - Enhanced empty state handling with helpful guidance messages
+  - Added loading states and error handling for better user experience
+  - Implemented filter-aware empty states with clear action buttons
+  - Added debug information for development environment
+
+- **BUG-003**: Fixed Rebranding Menu Inconsistency
+  - Updated menu item text from "View ProfitPath Transactions" to "View Cashflow Transactions"
+  - Ensured consistent branding throughout the navigation menu
+
+- **BUG-004**: Fixed Income Analytics 500 Internal Server Error
+  - Added proper date validation with error handling for invalid date formats
+  - Fixed payment_status field references to use correct status field
+  - Implemented status mapping for payment status filters
+  - Added comprehensive error handling and validation
+
+- **BUG-005**: Fixed Stock Movement History Display Issue
+  - Enhanced empty state with detailed debugging information
+  - Added refresh functionality and clear filter options
+  - Improved error handling and user guidance for data loading issues
+  - Added development mode debug information
+
+- **BUG-006**: Fixed Inconsistent Party Data Display (Customer/Vendor Visibility)
+  - Added comprehensive logging for data loading operations
+  - Implemented manual refresh functionality with refresh button
+  - Enhanced error handling and empty state management
+  - Added type dependency to useEffect for proper data reloading
+  - Improved user feedback for data loading issues
+
+### Added
+- ErrorBoundary component for React error handling
+- Enhanced empty states with actionable guidance
+- Debug information panels for development environment
+- Manual refresh buttons for data consistency
+- Comprehensive error handling and validation
+
+### Changed
+- Improved user experience with better loading states
+- Enhanced error messages with actionable guidance
+- Updated menu labeling for brand consistency
+- Improved data loading reliability and consistency
+
+### Technical Improvements
+- Added proper null/undefined checks throughout the application
+- Implemented comprehensive error handling patterns
+- Enhanced logging for debugging data loading issues
+- Improved state management for data consistency
+- Added development-friendly debugging features
+
+---
+
+## [1.40.0] - 2025-08-21
+
+### 🎨 Added
+- **Invoice Template System**: Comprehensive template system with customization options
+- **Enhanced Parties Management**: Complete UX overhaul with improved navigation and filtering
+- **Contextual Action Buttons**: Widget-specific action buttons for better user experience
+- **Dashboard Layout Improvements**: Standardized 2-column grid layout across all sections
+
+### 🔧 Changed
+- **Parties Navigation**: Renamed side menu to 'Parties' with simplified structure
+- **Filter System**: Enhanced with 10 visual quick filters and consistent labels
+- **Visual Design**: Comprehensive improvements with better colors, spacing, and typography
+- **Action Button Patterns**: Converted to kebab menu for cleaner interface
+
+### 🐛 Fixed
+- **Layout Issues**: Fixed SessionTimer and header layout problems
+- **Table Overflow**: Prevented kebab menu dropdown clipping
+- **Modal Positioning**: Enhanced Modal z-index to appear above sidebar
+- **Dashboard Alignment**: Fixed alignment issues for larger screens
+
+## [1.48.0] - 2025-08-16
+
+### 🎨 Added
+- **Dashboard**: Cashflow summary with working quick action buttons
+- **Core Application**: Basic application structure and navigation
+- **Database Integration**: PostgreSQL database with SQLAlchemy ORM
+- **API Framework**: FastAPI backend with comprehensive endpoints
+
+### 🔧 Changed
+- **Project Structure**: Organized codebase with proper separation of concerns
+- **Development Environment**: Docker-based development setup
+- **Testing Framework**: Comprehensive testing setup with pytest and vitest
+- **Documentation**: Initial documentation structure and guides
+
+### 🐛 Fixed
+- **Setup Issues**: Fixed initial project setup and configuration
+- **Development Environment**: Resolved Docker and development environment issues
+- **Testing**: Fixed test configuration and execution
+- **Documentation**: Corrected documentation errors and inconsistencies
+
 ---
 
 ## Version History

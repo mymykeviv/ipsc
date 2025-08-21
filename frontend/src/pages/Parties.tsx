@@ -194,27 +194,33 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
       setLoading(true)
       setError(null)
       
+      console.log('Loading parties with type:', type, 'and filters:', filters)
+      
       if (type === 'customer') {
         const customersData = await apiListCustomers(filters.search, showInactive)
+        console.log('Loaded customers:', customersData.length)
         setCustomers(customersData)
         setVendors([])
       } else if (type === 'vendor') {
         const vendorsData = await apiListVendors(filters.search, showInactive)
+        console.log('Loaded vendors:', vendorsData.length)
         setVendors(vendorsData)
         setCustomers([])
       } else {
         // Load both when no specific type is specified
+        console.log('Loading both customers and vendors')
         const [customersData, vendorsData] = await Promise.all([
           apiListCustomers(filters.search, showInactive),
           apiListVendors(filters.search, showInactive)
         ])
+        console.log('Loaded customers:', customersData.length, 'vendors:', vendorsData.length)
         setCustomers(customersData)
         setVendors(vendorsData)
       }
     } catch (err) {
       console.error('Failed to load parties:', err)
-      handleApiError(err)
-      setError('Failed to load parties')
+      const errorMessage = handleApiError(err)
+      setError(errorMessage || 'Failed to load parties')
     } finally {
       setLoading(false)
     }
@@ -225,7 +231,13 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
       loadParties()
       setCurrentPage(1) // Reset to first page when filters change
     }
-  }, [filters.search, showInactive, mode])
+  }, [filters.search, showInactive, mode, type]) // Added type dependency
+
+  // Add a manual refresh function
+  const handleRefresh = () => {
+    console.log('Manual refresh triggered')
+    loadParties()
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -882,6 +894,21 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
           placeholder="GST Status"
         />
         <Button
+          variant="primary"
+          onClick={handleRefresh}
+          style={{ 
+            fontSize: '12px', 
+            padding: '8px 16px',
+            backgroundColor: '#007bff',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '6px',
+            fontWeight: '500'
+          }}
+        >
+          🔄 Refresh
+        </Button>
+        <Button
           variant="secondary"
           onClick={clearAllFilters}
           style={{ 
@@ -903,7 +930,66 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
       {/* Parties Table */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px' }}>
-          <div>Loading...</div>
+          <div style={{ fontSize: '18px', color: '#6c757d' }}>Loading parties...</div>
+        </div>
+      ) : error ? (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px', 
+          color: '#dc3545',
+          border: '1px solid #f5c6cb',
+          borderRadius: '8px',
+          backgroundColor: '#f8d7da'
+        }}>
+          <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
+            Failed to load parties
+          </div>
+          <div style={{ fontSize: '14px', marginBottom: '16px' }}>
+            {error}
+          </div>
+          <Button 
+            variant="primary" 
+            onClick={handleRefresh}
+            style={{ marginRight: '8px' }}
+          >
+            Try Again
+          </Button>
+        </div>
+      ) : paginatedParties.length === 0 ? (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px', 
+          color: '#6c757d',
+          border: '1px solid #e9ecef',
+          borderRadius: '8px',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <div style={{ fontSize: '24px', marginBottom: '16px' }}>👥</div>
+          <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
+            No parties found
+          </div>
+          <div style={{ fontSize: '14px', marginBottom: '20px', maxWidth: '400px', margin: '0 auto 20px auto' }}>
+            {filters.search || filters.status !== 'all' || filters.gstStatus !== '' 
+              ? 'No parties match your current filters. Try adjusting your search criteria.'
+              : `No ${activeTab} have been added yet. Start by adding your first ${activeTab === 'customers' ? 'customer' : 'vendor'}.`
+            }
+          </div>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            <Button 
+              variant="primary" 
+              onClick={() => navigate(`/${activeTab === 'vendors' ? 'vendors' : 'customers'}/add`)}
+            >
+              Add {activeTab === 'customers' ? 'Customer' : 'Vendor'}
+            </Button>
+            {(filters.search || filters.status !== 'all' || filters.gstStatus !== '') && (
+              <Button 
+                variant="secondary" 
+                onClick={clearAllFilters}
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
         </div>
       ) : (
         <div style={{ 

@@ -1765,10 +1765,18 @@ def list_invoices(
         query = query.filter(Invoice.customer_id == customer_id)
     
     if date_from:
-        query = query.filter(Invoice.date >= datetime.fromisoformat(date_from))
+        try:
+            date_from_dt = datetime.fromisoformat(date_from)
+            query = query.filter(Invoice.date >= date_from_dt)
+        except ValueError:
+            raise HTTPException(status_code=422, detail="Invalid date_from format. Use ISO format (YYYY-MM-DD)")
     
     if date_to:
-        query = query.filter(Invoice.date <= datetime.fromisoformat(date_to))
+        try:
+            date_to_dt = datetime.fromisoformat(date_to)
+            query = query.filter(Invoice.date <= date_to_dt)
+        except ValueError:
+            raise HTTPException(status_code=422, detail="Invalid date_to format. Use ISO format (YYYY-MM-DD)")
     
     if amount_min is not None:
         query = query.filter(Invoice.grand_total >= amount_min)
@@ -2841,9 +2849,16 @@ def get_income_report(
         if not end_date:
             end_date = datetime.now().strftime('%Y-%m-%d')
         
-        # Convert to datetime objects
-        start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
-        end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+        # Validate date format
+        try:
+            start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
+        
+        # Validate date range
+        if start_dt > end_dt:
+            raise HTTPException(status_code=400, detail="Start date cannot be after end date")
         
         # Build base query
         query = db.query(Invoice).join(Party, Invoice.customer_id == Party.id)
@@ -2853,7 +2868,15 @@ def get_income_report(
         if customer_id:
             query = query.filter(Invoice.customer_id == customer_id)
         if payment_status:
-            query = query.filter(Invoice.payment_status == payment_status)
+            # Map payment_status to status field
+            status_mapping = {
+                'paid': 'Paid',
+                'unpaid': 'Sent',
+                'partially_paid': 'Partially Paid',
+                'overdue': 'Overdue'
+            }
+            mapped_status = status_mapping.get(payment_status.lower(), payment_status)
+            query = query.filter(Invoice.status == mapped_status)
         
         invoices = query.all()
         
@@ -2866,7 +2889,7 @@ def get_income_report(
         paid_amount = 0
         outstanding_amount = 0
         for inv in invoices:
-            if inv.payment_status == 'paid':
+            if inv.status == 'Paid':
                 paid_amount += float(inv.grand_total)
             else:
                 outstanding_amount += float(inv.grand_total)
@@ -2902,7 +2925,7 @@ def get_income_report(
                 taxable_value=float(inv.taxable_value),
                 total_tax=float(inv.cgst + inv.sgst + inv.igst),
                 grand_total=float(inv.grand_total),
-                payment_status=inv.payment_status,
+                payment_status=inv.status,
                 payment_amount=payment_amount,
                 outstanding_amount=outstanding
             ))
@@ -2915,14 +2938,28 @@ def get_income_report(
             customer_name = customer.name if customer else "Unknown"
             
             if customer_name not in customer_totals:
-                customer_totals[customer_name] = 0
-            customer_totals[customer_name] += float(inv.grand_total)
+                customer_totals[customer_name] = {
+                    "total_revenue": 0,
+                    "invoice_count": 0,
+                    "paid_amount": 0,
+                    "outstanding_amount": 0
+                }
+            
+            customer_totals[customer_name]["total_revenue"] += float(inv.grand_total)
+            customer_totals[customer_name]["invoice_count"] += 1
+            
+            if inv.status == 'Paid':
+                customer_totals[customer_name]["paid_amount"] += float(inv.grand_total)
+            else:
+                customer_totals[customer_name]["outstanding_amount"] += float(inv.grand_total)
         
-        for customer_name, total in customer_totals.items():
+        for customer_name, totals in customer_totals.items():
             customer_breakdown.append({
                 "customer_name": customer_name,
-                "total_revenue": total,
-                "invoice_count": len([inv for inv in invoices if db.query(Party).filter(Party.id == inv.customer_id).first().name == customer_name])
+                "total_revenue": totals["total_revenue"],
+                "invoice_count": totals["invoice_count"],
+                "paid_amount": totals["paid_amount"],
+                "outstanding_amount": totals["outstanding_amount"]
             })
         
         # Product breakdown
@@ -2998,6 +3035,8 @@ def get_income_report(
             }
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error generating income report: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to generate income report")
@@ -8070,6 +8109,46 @@ def export_invoice_template(
         media_type="application/json",
         headers={"Content-Disposition": f"attachment; filename=template_{template_id}.json"}
     )
+
+
+@api.get('/dashboard')
+def get_dashboard(
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get dashboard data with quick links"""
+    
+    quick_links = [
+        {
+            "text": "Add Product",
+            "url": "/api/products",
+            "icon": "product",
+            "description": "Create a new product"
+        },
+        {
+            "text": "Add Invoice", 
+            "url": "/api/invoices",
+            "icon": "invoice",
+            "description": "Create a new invoice"
+        },
+        {
+            "text": "Add Purchase",
+            "url": "/api/purchases", 
+            "icon": "purchase",
+            "description": "Create a new purchase"
+        },
+        {
+            "text": "Add Expense",
+            "url": "/api/expenses",
+            "icon": "expense", 
+            "description": "Create a new expense"
+        }
+    ]
+    
+    return {
+        "quick_links": quick_links,
+        "dashboard_type": "main"
+    }
 
 
 # Include branding router
