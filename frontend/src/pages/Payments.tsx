@@ -33,6 +33,7 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
     endDate: new Date().toISOString().slice(0, 10)
   })
+  const [isDateFilterActive, setIsDateFilterActive] = useState(true)
 
   // Create error handler that will automatically log out on 401 errors
   const handleApiError = createApiErrorHandler(forceLogout)
@@ -109,16 +110,18 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
     }
 
     // Date filtering is handled by the DateFilter component
-    // Filter payments based on date range
-    filtered = filtered.filter(payment => {
-      const paymentDate = new Date(payment.payment_date)
-      const startDate = new Date(dateFilter.startDate)
-      const endDate = new Date(dateFilter.endDate)
-      return paymentDate >= startDate && paymentDate <= endDate
-    })
+    // Filter payments based on date range only when date filter is active
+    if (isDateFilterActive) {
+      filtered = filtered.filter(payment => {
+        const paymentDate = new Date(payment.payment_date)
+        const startDate = new Date(dateFilter.startDate)
+        const endDate = new Date(dateFilter.endDate)
+        return paymentDate >= startDate && paymentDate <= endDate
+      })
+    }
 
     setFilteredPayments(filtered)
-  }, [payments, invoices, invoiceNumberFilter, paymentAmountFilter, paymentMethodFilter, financialYearFilter, dateFilter])
+  }, [payments, invoices, invoiceNumberFilter, paymentAmountFilter, paymentMethodFilter, financialYearFilter, dateFilter, isDateFilterActive])
 
   const getInvoiceNumber = (invoiceId: number) => {
     const invoice = invoices.find(inv => inv.id === invoiceId)
@@ -189,13 +192,14 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
             (paymentAmountFilter !== 'all' ? 1 : 0) +
             (paymentMethodFilter !== 'all' ? 1 : 0) +
             (financialYearFilter !== 'all' ? 1 : 0) +
-            0 // DateFilter is always active now
+            (isDateFilterActive ? 1 : 0)
           }
           onClearAll={() => {
             setInvoiceNumberFilter('all')
             setPaymentAmountFilter('all')
             setPaymentMethodFilter('all')
             setFinancialYearFilter('all')
+            setIsDateFilterActive(false)
             setDateFilter({
               startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
               endDate: new Date().toISOString().slice(0, 10)
@@ -287,10 +291,13 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
-                          <DateFilter
-                value={dateFilter}
-                onChange={setDateFilter}
-              />
+                                      <DateFilter
+              value={dateFilter}
+              onChange={(newDateFilter) => {
+                setDateFilter(newDateFilter)
+                setIsDateFilterActive(true)
+              }}
+            />
           </div>
         </EnhancedFilterBar>
 
