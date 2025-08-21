@@ -1909,6 +1909,28 @@ export async function apiGetPresetThemes(): Promise<Record<string, any>> {
   return r.json()
 }
 
+export async function apiUpdateInvoiceStatus(invoiceId: number, status: string): Promise<Invoice> {
+  const params = new URLSearchParams()
+  params.append('status', status)
+  
+  const url = `/api/invoices/${invoiceId}/status?${params.toString()}`
+  const r = await fetch(url, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
 export async function apiGetInvoicePDF(invoiceId: number, templateId?: number): Promise<Blob> {
   const params = new URLSearchParams()
   if (templateId) {
