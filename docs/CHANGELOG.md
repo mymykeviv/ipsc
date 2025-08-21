@@ -37,6 +37,7 @@ All notable changes to this project will be documented in this file.
 - **Payment Display**: Fixed backend PaymentOut model validation errors preventing payment history display
 - **Invoice Payments UI**: Fixed date filter always active causing payments to not display despite successful API response
 - **Cashflow Transactions**: Fixed missing payment_method filter and date comparison issues preventing invoice payments from appearing
+- **Filter Behavior**: Fixed automatic filter application when navigating to Cashflow and Payments pages - now shows all data by default
 
 ### ✨ Enhanced
 - **Currency Display**: Updated invoice PDFs to show ₹ symbol instead of INR code
