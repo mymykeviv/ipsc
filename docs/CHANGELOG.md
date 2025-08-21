@@ -31,12 +31,17 @@ All notable changes to this project will be documented in this file.
 - **INR Symbol Rendering**: Fixed currency symbol display in PDF generation (black square issue)
 - **Payment Submission**: Fixed missing payment_date field causing 422 errors when adding payments
 
+### ✨ Enhanced
+- **Currency Display**: Updated invoice PDFs to show ₹ symbol instead of INR code
+- **Professional Appearance**: Invoice PDFs now display proper currency symbols for better presentation
+
 ### 🧪 Testing
 - **Test Suite Validation**: Comprehensive test suite validation successful
 - **Automated Deployment**: CI/CD pipeline tests passing consistently
 - **API Endpoint Testing**: All critical endpoints responding correctly
 - **PDF Generation**: Verified PDF generation with proper currency formatting
 - **Payment Functionality**: Verified payment submission works correctly for invoices and purchases
+- **Currency Formatting**: Verified ₹ symbol displays correctly in all formats
 
 ### 📚 Documentation
 - **Test Results**: Updated test results documentation with latest successful runs
