@@ -1935,3 +1935,50 @@ export async function apiGetInvoicePDF(invoiceId: number, templateId?: number): 
   return r.blob()
 }
 
+export type Payment = {
+  id: number
+  invoice_id: number
+  payment_date: string
+  payment_amount: number
+  payment_method: string
+  account_head: string
+  reference_number: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export async function apiGetAllInvoicePayments(): Promise<Payment[]> {
+  const r = await fetch('/api/invoice-payments', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiGetInvoicePayments(invoiceId: number): Promise<Payment[]> {
+  const r = await fetch(`/api/invoices/${invoiceId}/payments`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+

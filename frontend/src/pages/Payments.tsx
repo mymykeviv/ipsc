@@ -126,10 +126,16 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
   }
 
   const handleSuccess = () => {
-    if (type === 'purchase') {
-      navigate('/purchases')
+    if (mode === 'list') {
+      // If in list mode, refresh the payments list
+      loadInvoicePayments()
     } else {
-      navigate('/invoices')
+      // If in add/edit mode, navigate back
+      if (type === 'purchase') {
+        navigate('/purchases')
+      } else {
+        navigate('/invoices')
+      }
     }
   }
 
