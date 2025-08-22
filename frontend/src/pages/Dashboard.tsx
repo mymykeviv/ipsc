@@ -4,6 +4,8 @@ import { useAuth } from '../modules/AuthContext'
 import { apiGetCashflowSummary, CashflowSummary, apiGetInventoryDashboard, InventoryDashboardMetrics } from '../lib/api'
 import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
+import { DateFilter, DateRange } from '../components/DateFilter'
+import { useSavedPresets } from '../hooks/useSavedPresets'
 
 // GST Summary Types
 interface GstSummary {
@@ -39,8 +41,13 @@ export function Dashboard() {
   // Create error handler that will automatically log out on 401 errors
   const handleApiError = createApiErrorHandler(forceLogout)
   const [periodType, setPeriodType] = useState<'month' | 'quarter' | 'year' | 'custom'>('month')
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0].substring(0, 7) + '-01')
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0])
+  const [dateFilter, setDateFilter] = useState<DateRange>({
+    startDate: new Date().toISOString().split('T')[0].substring(0, 7) + '-01',
+    endDate: new Date().toISOString().split('T')[0]
+  })
+  
+  // Saved presets functionality
+  const { savedPresets, savePreset, deletePreset } = useSavedPresets()
 
   useEffect(() => {
     if (!token) {
@@ -54,13 +61,13 @@ export function Dashboard() {
     loadAnalyticsData()
     loadInventoryData()
     loadGstData()
-  }, [token, startDate, endDate, navigate])
+  }, [token, dateFilter.startDate, dateFilter.endDate, navigate])
 
   const loadCashflowData = async () => {
     try {
       setLoading(true)
       setError(null)
-      const data = await apiGetCashflowSummary(startDate, endDate)
+      const data = await apiGetCashflowSummary(dateFilter.startDate, dateFilter.endDate)
       setCashflowData(data)
     } catch (err) {
       console.error('Failed to load cashflow data:', err)
@@ -69,8 +76,8 @@ export function Dashboard() {
       // Set default data to prevent app from breaking
       setCashflowData({
         period: {
-          start_date: startDate,
-          end_date: endDate
+          start_date: dateFilter.startDate,
+          end_date: dateFilter.endDate
         },
         total_income: 0,
         total_outflow: 0,
@@ -191,7 +198,7 @@ export function Dashboard() {
       loadInventoryData()
       loadGstData()
     }
-  }, [startDate, endDate, periodType, token])
+  }, [dateFilter.startDate, dateFilter.endDate, periodType, token])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -207,14 +214,14 @@ export function Dashboard() {
 
   const getPeriodLabel = () => {
     if (periodType === 'month') {
-      return `${new Date(startDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`
+      return `${new Date(dateFilter.startDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`
     } else if (periodType === 'quarter') {
-      const quarter = Math.ceil((new Date(startDate).getMonth() + 1) / 3)
-      return `Q${quarter} ${new Date(startDate).getFullYear()}`
+      const quarter = Math.ceil((new Date(dateFilter.startDate).getMonth() + 1) / 3)
+      return `Q${quarter} ${new Date(dateFilter.startDate).getFullYear()}`
     } else if (periodType === 'year') {
-      return `${new Date(startDate).getFullYear()}`
+      return `${new Date(dateFilter.startDate).getFullYear()}`
     } else {
-      return `${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}`
+      return `${new Date(dateFilter.startDate).toLocaleDateString()} - ${new Date(dateFilter.endDate).toLocaleDateString()}`
     }
   }
 
@@ -236,8 +243,10 @@ export function Dashboard() {
     }
     
     if (newStartDate) {
-      setStartDate(newStartDate)
-      setEndDate(newEndDate)
+      setDateFilter({
+        startDate: newStartDate,
+        endDate: newEndDate
+      })
     }
   }
 
@@ -336,54 +345,29 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Custom Date Range */}
-      {periodType === 'custom' && (
-        <div style={{ 
-          display: 'flex', 
-          gap: '16px', 
-          marginBottom: '24px',
-          alignItems: 'center',
-          padding: '20px',
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
+      {/* Date Filter */}
+      <div style={{ 
+        marginBottom: '24px',
+        padding: '20px',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div>
             <label style={{ fontSize: '14px', color: '#495057', marginBottom: '8px', display: 'block', fontWeight: '500' }}>
-              Start Date
+              Date Range
             </label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              style={{
-                padding: '10px 16px',
-                border: '1px solid #dee2e6',
-                borderRadius: '8px',
-                fontSize: '14px',
-                backgroundColor: 'white'
-              }}
-            />
-          </div>
-          <div>
-            <label style={{ fontSize: '14px', color: '#495057', marginBottom: '8px', display: 'block', fontWeight: '500' }}>
-              End Date
-            </label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              style={{
-                padding: '10px 16px',
-                border: '1px solid #dee2e6',
-                borderRadius: '8px',
-                fontSize: '14px',
-                backgroundColor: 'white'
-              }}
+            <DateFilter
+              value={dateFilter}
+              onChange={setDateFilter}
+              savedPresets={savedPresets}
+              onSavePreset={savePreset}
+              onDeletePreset={deletePreset}
             />
           </div>
         </div>
-      )}
+      </div>
 
       {error && (
         <div style={{ 
