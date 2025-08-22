@@ -402,66 +402,20 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
     
     // Only trigger reload if there are actual changes
     if (hasChanges) {
-      // Debounce the reload to prevent rapid API calls
-      const timer = setTimeout(() => {
-        console.log('Triggering data reload due to filter changes:', filters)
-        dispatch({ type: 'SET_FORCE_RELOAD', payload: prev => prev + 1 })
-      }, 500) // 500ms delay
+              // Debounce the reload to prevent rapid API calls
+        const timer = setTimeout(() => {
+          console.log('Triggering data reload due to filter changes:', filters)
+          dispatch({ type: 'SET_FORCE_RELOAD', payload: forceReload + 1 })
+        }, 500) // 500ms delay
       
       dispatch({ type: 'SET_DEBOUNCE_TIMER', payload: timer })
     }
   }, [debounceTimer]) // Simplified dependencies to prevent infinite loops
 
-  // Filter stock history based on all filters
-  const filteredStockHistory = stockHistory.filter(movement => {
-    // Product filter - if productId is present, always include that product
-    const matchesProduct = (productId && movement.product_id === parseInt(productId)) ||
-                          productFilter === 'all' || 
-                          movement.product_name === productFilter
-    
-    // Category filter
-    const product = products.find(p => p.name === movement.product_name)
-    const matchesCategory = categoryFilter === 'all' ||
-                          (product && product.category === categoryFilter)
-    
-    // Supplier filter
-    const matchesSupplier = supplierFilter === 'all' ||
-                          (product && product.supplier === supplierFilter)
-    
-    // Entry type filter (based on transaction types)
-    const hasIncoming = movement.total_incoming > 0
-    const hasOutgoing = movement.total_outgoing > 0
-    const hasEntryAdjustments = movement.transactions.some(t => t.entry_type === 'adjust')
-    
-    const matchesEntryType = entryTypeFilter === 'all' ||
-                            (entryTypeFilter === 'incoming' && hasIncoming) ||
-                            (entryTypeFilter === 'outgoing' && hasOutgoing) ||
-                            (entryTypeFilter === 'adjustment' && hasEntryAdjustments)
-    
-    // Date range filter - filter transactions within the date range
-    const matchesDateRange = movement.transactions.some(transaction => {
-      const transactionDate = new Date(transaction.transaction_date)
-      const startDate = new Date(dateRangeFilter.startDate)
-      const endDate = new Date(dateRangeFilter.endDate)
-      return transactionDate >= startDate && transactionDate <= endDate
-    })
-    
-    // Stock level filter
-    const matchesStockLevel = stockLevelFilter === 'all' ||
-                             (stockLevelFilter === 'in_stock' && movement.closing_stock > 0) ||
-                             (stockLevelFilter === 'out_of_stock' && movement.closing_stock === 0) ||
-                             (stockLevelFilter === 'low_stock' && movement.closing_stock > 0 && movement.closing_stock < 10) // Assuming 10 is low stock threshold
-    
-    return matchesProduct && matchesCategory && matchesSupplier && matchesEntryType && 
-           matchesDateRange && matchesStockLevel
-  })
-
-  // Pagination logic
-  const totalItems = filteredStockHistory.length
-  const totalPages = Math.ceil(totalItems / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const paginatedStockHistory = filteredStockHistory.slice(startIndex, endIndex)
+  // Reset to first page when filters change
+  useEffect(() => {
+    dispatch({ type: 'SET_CURRENT_PAGE', payload: 1 })
+  }, [productFilter, categoryFilter, supplierFilter, stockLevelFilter, entryTypeFilter, dateRangeFilter])
 
   // Reset to first page when filters change
   useEffect(() => {
