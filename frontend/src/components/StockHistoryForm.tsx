@@ -76,6 +76,7 @@ type StockHistoryAction =
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'SET_SHOW_PDF_PREVIEW'; payload: boolean }
   | { type: 'SET_CURRENT_PAGE'; payload: number }
+  | { type: 'SET_ITEMS_PER_PAGE'; payload: number }
   | { type: 'SET_FILTER'; payload: { key: keyof StockHistoryState['filters']; value: string | DateRange } }
   | { type: 'SET_FORCE_RELOAD'; payload: number }
   | { type: 'SET_DEBOUNCE_TIMER'; payload: NodeJS.Timeout | null }
@@ -125,6 +126,8 @@ function stockHistoryReducer(state: StockHistoryState, action: StockHistoryActio
       return { ...state, showPDFPreview: action.payload }
     case 'SET_CURRENT_PAGE':
       return { ...state, currentPage: action.payload }
+    case 'SET_ITEMS_PER_PAGE':
+      return { ...state, itemsPerPage: action.payload }
     case 'SET_FILTER':
       return {
         ...state,
@@ -380,11 +383,11 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
 
   useEffect(() => {
     loadProducts()
-  }, []) // Only load products once on mount
+  }, [loadProducts])
 
   useEffect(() => {
     loadStockHistory()
-  }, [loadStockHistory]) // Simplified dependency
+  }, [loadStockHistory])
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
@@ -438,20 +441,15 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
     
     // Only trigger reload if there are actual changes
     if (hasChanges) {
-              // Debounce the reload to prevent rapid API calls
-        const timer = setTimeout(() => {
-          console.log('Triggering data reload due to filter changes:', filters)
-          dispatch({ type: 'SET_FORCE_RELOAD', payload: forceReload + 1 })
-        }, 500) // 500ms delay
+      // Debounce the reload to prevent rapid API calls
+      const timer = setTimeout(() => {
+        console.log('Triggering data reload due to filter changes:', filters)
+        dispatch({ type: 'SET_FORCE_RELOAD', payload: forceReload + 1 })
+      }, 500) // 500ms delay
       
       dispatch({ type: 'SET_DEBOUNCE_TIMER', payload: timer })
     }
-  }, [debounceTimer]) // Simplified dependencies to prevent infinite loops
-
-  // Reset to first page when filters change
-  useEffect(() => {
-    dispatch({ type: 'SET_CURRENT_PAGE', payload: 1 })
-  }, [productFilter, categoryFilter, supplierFilter, stockLevelFilter, entryTypeFilter, dateRangeFilter])
+  }, [debounceTimer, forceReload])
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -466,7 +464,7 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
   }
 
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
-    dispatch({ type: 'SET_FILTER', payload: { key: 'itemsPerPage', value: newItemsPerPage } })
+    dispatch({ type: 'SET_ITEMS_PER_PAGE', payload: newItemsPerPage })
     dispatch({ type: 'SET_CURRENT_PAGE', payload: 1 }) // Reset to first page
   }
 
@@ -490,18 +488,8 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
     return calculatedBalance
   }
 
-  // Get product name for title when filtering by specific product
-  const getProductName = () => {
-    if (productId && stockHistory.length > 0) {
-      return stockHistory[0].product_name
-    }
-    return null
-  }
-
-  const productName = getProductName()
-
   // Calculate grand totals across current filtered dataset (independent of pagination)
-  const calculateGrandTotals = () => {
+  const grandTotals = useMemo(() => {
     // If we have a specific product selected, show only that product's data
     if (productId || productFilter !== 'all') {
       const targetProduct = stockHistory.find(movement => 
@@ -543,18 +531,16 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
       closing_stock: 0,
       closing_value: 0,
     })
-  }
-
-  const grandTotals = calculateGrandTotals()
+  }, [productId, productFilter, stockHistory, filteredStockHistory])
 
   // Get available financial years from data
-  const getAvailableFinancialYears = () => {
+  const availableFinancialYears = useMemo(() => {
     const years = new Set<string>()
     stockHistory.forEach(movement => {
       years.add(movement.financial_year)
     })
     return Array.from(years).sort().reverse()
-  }
+  }, [stockHistory])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -627,7 +613,7 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
   // Enhanced Clear All functionality
   const handleClearAll = () => {
     dispatch({ type: 'RESET_FILTERS' })
-    dispatch({ type: 'SET_FORCE_RELOAD', payload: prev => prev + 1 })
+    dispatch({ type: 'SET_FORCE_RELOAD', payload: forceReload + 1 })
     
     // If we have a productId from URL, remove it and reload
     if (productId) {
@@ -636,6 +622,43 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
       setSearchParams(newSearchParams)
     }
   }
+
+  // Quick filter actions
+  const quickFilterActions = [
+    {
+      label: 'Current FY',
+      icon: '📅',
+      action: () => dispatch({ type: 'SET_FILTER', payload: { key: 'financialYearFilter', value: getCurrentFinancialYear() } }),
+      isActive: financialYearFilter === getCurrentFinancialYear()
+    },
+    {
+      label: 'Previous FY',
+      icon: '📅',
+      action: () => {
+        const currentYear = new Date().getFullYear()
+        dispatch({ type: 'SET_FILTER', payload: { key: 'financialYearFilter', value: `${currentYear - 1}-${currentYear}` } })
+      },
+      isActive: financialYearFilter === `${new Date().getFullYear() - 1}-${new Date().getFullYear()}`
+    },
+    {
+      label: 'Incoming Only',
+      icon: '📥',
+      action: () => dispatch({ type: 'SET_FILTER', payload: { key: 'entryTypeFilter', value: 'incoming' } }),
+      isActive: entryTypeFilter === 'incoming'
+    },
+    {
+      label: 'Outgoing Only',
+      icon: '📤',
+      action: () => dispatch({ type: 'SET_FILTER', payload: { key: 'entryTypeFilter', value: 'outgoing' } }),
+      isActive: entryTypeFilter === 'outgoing'
+    },
+    {
+      label: 'Low Stock',
+      icon: '⚠️',
+      action: () => dispatch({ type: 'SET_FILTER', payload: { key: 'stockLevelFilter', value: 'low_stock' } }),
+      isActive: stockLevelFilter === 'low_stock'
+    }
+  ]
 
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
@@ -684,525 +707,234 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
 
       {/* Unified Filter System with real-time updates */}
       <UnifiedFilterSystem
-        title="Stock Movement Filters"
-        defaultCollapsed={true} // Filter section collapsed by default
-        filters={[
-          {
-            id: 'financialYear',
-            type: 'dropdown' as const,
-            label: 'Financial Year',
-            options: [
-              { value: 'all', label: 'All Years' },
-              ...getAvailableFinancialYears().map(year => ({ value: year, label: year }))
-            ],
-            width: 'third'
-          },
-          {
-            id: 'product',
-            type: 'dropdown' as const,
-            label: 'Product',
-            options: [
-              { value: 'all', label: 'All Products' },
-              ...products.map(product => ({ value: product.name, label: product.name }))
-            ],
-            width: 'third'
-          },
-          {
-            id: 'category',
-            type: 'dropdown' as const,
-            label: 'Product Category',
-            options: [
-              { value: 'all', label: 'All Categories' },
-              ...Array.from(new Set(products.map(p => p.category).filter(Boolean))).map(category => ({ value: category!, label: category! }))
-            ],
-            width: 'third'
-          },
-          {
-            id: 'supplier',
-            type: 'dropdown' as const,
-            label: 'Supplier',
-            options: [
-              { value: 'all', label: 'All Suppliers' },
-              ...Array.from(new Set(products.map(p => p.supplier).filter(Boolean))).map(supplier => ({ value: supplier!, label: supplier! }))
-            ],
-            width: 'third'
-          },
-          {
-            id: 'stockLevel',
-            type: 'dropdown' as const,
-            label: 'Stock Level',
-            options: [
-              { value: 'all', label: 'All Stock Levels' },
-              { value: 'in_stock', label: 'In Stock' },
-              { value: 'out_of_stock', label: 'Out of Stock' },
-              { value: 'low_stock', label: 'Low Stock (< 10)' }
-            ],
-            width: 'third'
-          },
-          {
-            id: 'entryType',
-            type: 'dropdown' as const,
-            label: 'Entry Type',
-            options: [
-              { value: 'all', label: 'All Entries' },
-              { value: 'incoming', label: 'Incoming' },
-              { value: 'outgoing', label: 'Outgoing' },
-              { value: 'adjustment', label: 'Adjustment' }
-            ],
-            width: 'third'
-          },
-          {
-            id: 'dateRange',
-            type: 'date-range' as const,
-            label: 'Date Range',
-            width: 'third'
-          }
-        ]}
-        quickFilters={[
-          {
-            id: 'currentFY',
-            label: 'Current FY',
-            icon: '📅',
-            action: () => dispatch({ type: 'SET_FILTER', payload: { key: 'financialYearFilter', value: getCurrentFinancialYear() } }),
-            isActive: financialYearFilter === getCurrentFinancialYear()
-          },
-          {
-            id: 'lastFY',
-            label: 'Last FY',
-            icon: '📊',
-            action: () => {
-              const currentYear = new Date().getFullYear()
-              dispatch({ type: 'SET_FILTER', payload: { key: 'financialYearFilter', value: `${currentYear - 1}-${currentYear}` } })
-            },
-            isActive: financialYearFilter === `${new Date().getFullYear() - 1}-${new Date().getFullYear()}`
-          },
-          {
-            id: 'incoming',
-            label: 'Incoming Only',
-            icon: '📥',
-            action: () => dispatch({ type: 'SET_FILTER', payload: { key: 'entryTypeFilter', value: 'incoming' } }),
-            isActive: entryTypeFilter === 'incoming'
-          },
-          {
-            id: 'outgoing',
-            label: 'Outgoing Only',
-            icon: '📤',
-            action: () => dispatch({ type: 'SET_FILTER', payload: { key: 'entryTypeFilter', value: 'outgoing' } }),
-            isActive: entryTypeFilter === 'outgoing'
-          },
-          {
-            id: 'lowStock',
-            label: 'Low Stock',
-            icon: '⚠️',
-            action: () => dispatch({ type: 'SET_FILTER', payload: { key: 'stockLevelFilter', value: 'low_stock' } }),
-            isActive: stockLevelFilter === 'low_stock'
-          }
-        ]}
+        filters={{
+          financialYear: financialYearFilter,
+          product: productFilter,
+          category: categoryFilter,
+          supplier: supplierFilter,
+          stockLevel: stockLevelFilter,
+          entryType: entryTypeFilter,
+          dateRange: dateRangeFilter
+        }}
+        options={filterOptions}
         onFilterChange={handleFilterChange}
+        quickActions={quickFilterActions}
         onClearAll={handleClearAll}
-        activeFiltersCount={
-          (financialYearFilter !== 'all' ? 1 : 0) +
-          (productFilter !== 'all' ? 1 : 0) +
-          (categoryFilter !== 'all' ? 1 : 0) +
-          (supplierFilter !== 'all' ? 1 : 0) +
-          (stockLevelFilter !== 'all' ? 1 : 0) +
-          (entryTypeFilter !== 'all' ? 1 : 0) +
-          (productId ? 1 : 0) // Count productId from URL as an active filter
-        }
-        showQuickActions={true}
       />
 
-      {/* Summary Section - computed from filtered dataset (not paginated) */}
-      {filteredStockHistory.length > 0 && (
+      {/* Loading State */}
+      {historyLoading && (
         <div style={{ 
-          backgroundColor: '#f8f9fa', 
-          border: '1px solid #e9ecef', 
-          borderRadius: '8px', 
-          padding: '20px',
-          marginBottom: '24px',
-          marginTop: '20px' // Add space for dropdowns to expand
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          padding: '40px',
+          fontSize: '16px',
+          color: '#6c757d'
         }}>
-          <h3 style={{ margin: '0 0 16px 0', color: '#495057', fontSize: '18px' }}>
-            {(() => {
-              const selectedFY = financialYearFilter === 'all' ? getCurrentFinancialYear() : financialYearFilter
-              return `Summary - FY ${selectedFY}`
-            })()}
-          </h3>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '4px' }}>Opening Stock</div>
-              <div style={{ fontSize: '18px', fontWeight: '600', color: '#495057' }}>
-                {grandTotals.opening_stock.toFixed(2)}
-              </div>
-              <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                {formatCurrency(grandTotals.opening_value)}
-              </div>
-            </div>
-            
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '4px' }}>Total Incoming</div>
-              <div style={{ fontSize: '18px', fontWeight: '600', color: '#28a745' }}>
-                {grandTotals.total_incoming.toFixed(2)}
-              </div>
-              <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                {formatCurrency(grandTotals.total_incoming_value)}
-              </div>
-            </div>
-            
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '4px' }}>Total Outgoing</div>
-              <div style={{ fontSize: '18px', fontWeight: '600', color: '#dc3545' }}>
-                {grandTotals.total_outgoing.toFixed(2)}
-              </div>
-              <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                {formatCurrency(grandTotals.total_outgoing_value)}
-              </div>
-            </div>
-            
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '4px' }}>Closing Stock</div>
-              <div style={{ fontSize: '18px', fontWeight: '600', color: '#495057' }}>
-                {grandTotals.closing_stock.toFixed(2)}
-              </div>
-              <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                {formatCurrency(grandTotals.closing_value)}
-              </div>
-            </div>
+          <span style={{ marginRight: '8px' }}>⏳</span>
+          Loading stock movement history...
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !historyLoading && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          padding: '40px',
+          fontSize: '16px',
+          color: '#dc3545'
+        }}>
+          <span style={{ marginRight: '8px' }}>❌</span>
+          {error}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!historyLoading && !error && paginatedStockHistory.length === 0 && (
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          padding: '40px',
+          fontSize: '16px',
+          color: '#6c757d',
+          textAlign: 'center'
+        }}>
+          <span style={{ fontSize: '48px', marginBottom: '16px' }}>📊</span>
+          <h3 style={{ margin: '0 0 8px 0', color: '#495057' }}>No Stock Movement Data Found</h3>
+          <p style={{ margin: '0 0 16px 0', maxWidth: '400px' }}>
+            No stock movement history matches your current filters. Try adjusting your search criteria or check if there's data for the selected time period.
+          </p>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Button 
+              variant="primary" 
+              onClick={() => {
+                dispatch({ type: 'SET_FORCE_RELOAD', payload: forceReload + 1 })
+                loadStockHistory()
+              }}
+            >
+              🔄 Refresh Data
+            </Button>
+            <Button variant="secondary" onClick={handleClearAll}>
+              🗑️ Clear Filters
+            </Button>
           </div>
         </div>
       )}
 
-      {historyLoading ? (
-        <div style={{ 
-          textAlign: 'center', 
-          padding: '40px', 
-          color: '#6c757d',
-          fontSize: '16px'
-        }}>
-          <div style={{ marginBottom: '12px' }}>⏳</div>
-          Loading stock movement history...
-        </div>
-      ) : paginatedStockHistory.length === 0 ? (
-        <div style={{ 
-          textAlign: 'center', 
-          padding: '40px', 
-          color: '#6c757d',
-          border: '1px solid #e9ecef',
-          borderRadius: '8px',
-          backgroundColor: '#f8f9fa'
-        }}>
-          <div style={{ fontSize: '24px', marginBottom: '16px' }}>📊</div>
-          <div style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '500' }}>
-            No stock movements found
-          </div>
-          <div style={{ fontSize: '14px', marginBottom: '20px', maxWidth: '500px', margin: '0 auto 20px auto' }}>
-            {stockHistory.length === 0 ? (
-              'No stock movement data is available for the selected criteria. This could be due to:'
-            ) : (
-              'No stock movements match your current filters. Try adjusting your search criteria.'
-            )}
-          </div>
-          {stockHistory.length === 0 && (
+      {/* Data Display */}
+      {!historyLoading && !error && paginatedStockHistory.length > 0 && (
+        <>
+          {/* Grand Totals Summary */}
+          <div style={{ 
+            backgroundColor: '#f8f9fa', 
+            padding: '16px', 
+            borderRadius: '8px', 
+            marginBottom: '20px',
+            border: '1px solid #dee2e6'
+          }}>
+            <h3 style={{ margin: '0 0 12px 0', color: '#495057' }}>Summary Totals</h3>
             <div style={{ 
-              fontSize: '12px', 
-              textAlign: 'left', 
-              maxWidth: '400px', 
-              margin: '0 auto 20px auto',
-              padding: '12px',
-              backgroundColor: '#e9ecef',
-              borderRadius: '4px'
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+              gap: '16px' 
             }}>
-              <div style={{ fontWeight: '500', marginBottom: '8px' }}>Possible reasons:</div>
-              <ul style={{ margin: '0', paddingLeft: '20px' }}>
-                <li>No stock transactions have been recorded yet</li>
-                <li>The selected financial year has no data</li>
-                <li>Database connection issues</li>
-                <li>Insufficient permissions to access stock data</li>
-              </ul>
+              <div>
+                <strong>Opening Stock:</strong> {grandTotals.opening_stock.toFixed(2)} units
+                <br />
+                <small>Value: {formatCurrency(grandTotals.opening_value)}</small>
+              </div>
+              <div>
+                <strong>Total Incoming:</strong> {grandTotals.total_incoming.toFixed(2)} units
+                <br />
+                <small>Value: {formatCurrency(grandTotals.total_incoming_value)}</small>
+              </div>
+              <div>
+                <strong>Total Outgoing:</strong> {grandTotals.total_outgoing.toFixed(2)} units
+                <br />
+                <small>Value: {formatCurrency(grandTotals.total_outgoing_value)}</small>
+              </div>
+              <div>
+                <strong>Closing Stock:</strong> {grandTotals.closing_stock.toFixed(2)} units
+                <br />
+                <small>Value: {formatCurrency(grandTotals.closing_value)}</small>
+              </div>
             </div>
-          )}
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-            <Button 
-              variant="primary" 
-              onClick={() => {
-                dispatch({ type: 'SET_FORCE_RELOAD', payload: prev => prev + 1 })
-                loadStockHistory()
-              }}
-            >
-              Refresh Data
-            </Button>
-            {(productFilter !== 'all' || categoryFilter !== 'all' || supplierFilter !== 'all' || 
-              stockLevelFilter !== 'all' || entryTypeFilter !== 'all' || financialYearFilter !== 'all') && (
+          </div>
+
+          {/* Stock Movement Table */}
+          <div style={{ 
+            backgroundColor: 'white', 
+            borderRadius: '8px', 
+            overflow: 'hidden',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            marginBottom: '20px'
+          }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ 
+                width: '100%', 
+                borderCollapse: 'collapse',
+                fontSize: '14px'
+              }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f8f9fa' }}>
+                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>Product</th>
+                    <th style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid #dee2e6' }}>Opening Stock</th>
+                    <th style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid #dee2e6' }}>Incoming</th>
+                    <th style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid #dee2e6' }}>Outgoing</th>
+                    <th style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid #dee2e6' }}>Closing Stock</th>
+                    <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #dee2e6' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedStockHistory.map((movement, index) => (
+                    <tr key={`${movement.product_id}-${movement.financial_year}`} style={{ 
+                      borderBottom: '1px solid #f1f3f4',
+                      backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa'
+                    }}>
+                      <td style={{ padding: '12px', borderBottom: '1px solid #f1f3f4' }}>
+                        <div>
+                          <strong>{movement.product_name}</strong>
+                          <br />
+                          <small style={{ color: '#6c757d' }}>FY: {movement.financial_year}</small>
+                        </div>
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid #f1f3f4' }}>
+                        <div>{movement.opening_stock.toFixed(2)}</div>
+                        <small style={{ color: '#6c757d' }}>{formatCurrency(movement.opening_value)}</small>
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid #f1f3f4' }}>
+                        <div style={{ color: '#28a745' }}>+{movement.total_incoming.toFixed(2)}</div>
+                        <small style={{ color: '#6c757d' }}>{formatCurrency(movement.total_incoming_value)}</small>
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid #f1f3f4' }}>
+                        <div style={{ color: '#dc3545' }}>-{movement.total_outgoing.toFixed(2)}</div>
+                        <small style={{ color: '#6c757d' }}>{formatCurrency(movement.total_outgoing_value)}</small>
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid #f1f3f4' }}>
+                        <div style={{ 
+                          fontWeight: 'bold',
+                          color: movement.closing_stock > 0 ? '#28a745' : '#dc3545'
+                        }}>
+                          {movement.closing_stock.toFixed(2)}
+                        </div>
+                        <small style={{ color: '#6c757d' }}>{formatCurrency(movement.closing_value)}</small>
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #f1f3f4' }}>
+                        <Button 
+                          variant="primary" 
+                          size="small"
+                          onClick={() => {
+                            dispatch({ type: 'SET_FORCE_RELOAD', payload: forceReload + 1 })
+                            loadStockHistory()
+                          }}
+                        >
+                          📊 View Details
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              gap: '8px',
+              marginTop: '20px'
+            }}>
               <Button 
                 variant="secondary" 
-                onClick={handleClearAll}
+                size="small"
+                disabled={currentPage === 1}
+                onClick={() => handlePageChange(currentPage - 1)}
               >
-                Clear All Filters
+                ← Previous
               </Button>
-            )}
-          </div>
-          {process.env.NODE_ENV === 'development' && (
-            <details style={{ marginTop: '20px', textAlign: 'left', maxWidth: '600px', margin: '0 auto' }}>
-              <summary style={{ cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
-                Debug Information (Development)
-              </summary>
-              <div style={{ 
-                marginTop: '10px', 
-                padding: '10px', 
-                backgroundColor: '#f8f9fa', 
-                borderRadius: '4px',
-                fontSize: '12px',
-                fontFamily: 'monospace'
-              }}>
-                <div><strong>Raw Data Count:</strong> {stockHistory.length}</div>
-                <div><strong>Filtered Data Count:</strong> {filteredStockHistory.length}</div>
-                <div><strong>Current Page:</strong> {currentPage}</div>
-                <div><strong>Items Per Page:</strong> {itemsPerPage}</div>
-                <div><strong>Financial Year:</strong> {financialYearFilter}</div>
-                <div><strong>Product Filter:</strong> {productFilter}</div>
-                <div><strong>Category Filter:</strong> {categoryFilter}</div>
-                <div><strong>Supplier Filter:</strong> {supplierFilter}</div>
-                <div><strong>Stock Level Filter:</strong> {stockLevelFilter}</div>
-                <div><strong>Entry Type Filter:</strong> {entryTypeFilter}</div>
-                <div><strong>Date Range:</strong> {dateRangeFilter.startDate} to {dateRangeFilter.endDate}</div>
-              </div>
-            </details>
-          )}
-        </div>
-      ) : (
-        <>
-          {/* Individual Transactions Table */}
-          {paginatedStockHistory.map((movement, index) => {
-            // Validate running balance for debugging
-            validateRunningBalance(movement)
-            
-            return (
-            <div key={`${movement.product_id}-${movement.financial_year}`} style={{ marginBottom: '32px' }}>
-              {/* Product Header */}
-              {!productName && (
-                <div style={{ 
-                  backgroundColor: '#f8f9fa', 
-                  padding: '16px', 
-                  borderRadius: '8px 8px 0 0',
-                  border: '1px solid #e9ecef',
-                  borderBottom: 'none'
-                }}>
-                  <h3 style={{ margin: '0', color: '#495057', fontSize: '18px' }}>
-                    {movement.product_name} - FY {movement.financial_year}
-                  </h3>
-                </div>
-              )}
               
-              {/* Transactions Table */}
-              <div style={{ 
-                border: '1px solid #e9ecef', 
-                borderRadius: productName ? '8px' : '0 0 8px 8px', 
-                overflow: 'hidden',
-                backgroundColor: 'white'
-              }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #e9ecef' }}>
-                      <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Date</th>
-                      <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Type</th>
-                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: '600', color: '#495057' }}>Quantity</th>
-                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: '600', color: '#495057' }}>Unit Price</th>
-                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: '600', color: '#495057' }}>Total Value</th>
-                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: '600', color: '#495057' }}>Running Balance</th>
-                      <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Reference</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {/* Opening Balance Row */}
-                    <tr style={{ backgroundColor: '#f8f9fa' }}>
-                      <td style={{ padding: '12px', fontWeight: '500', color: '#495057' }}>
-                        {movement.financial_year.split('-')[0]}-04-01
-                      </td>
-                      <td style={{ padding: '12px', fontWeight: '500', color: '#495057' }}>
-                        Opening Balance
-                      </td>
-                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: '500', color: '#495057' }}>
-                        {movement.opening_stock.toFixed(2)}
-                      </td>
-                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: '500', color: '#495057' }}>
-                        {formatCurrency(movement.opening_value / movement.opening_stock || 0)}
-                      </td>
-                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: '500', color: '#495057' }}>
-                        {formatCurrency(movement.opening_value)}
-                      </td>
-                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: '500', color: '#495057' }}>
-                        {movement.opening_stock.toFixed(2)}
-                      </td>
-                      <td style={{ padding: '12px', color: '#6c757d' }}>
-                        -
-                      </td>
-                    </tr>
-                    
-                    {/* Individual Transactions */}
-                    {movement.transactions.map((transaction) => (
-                      <tr key={transaction.id} style={{ borderBottom: '1px solid #f1f3f4' }}>
-                        <td style={{ padding: '12px', color: '#495057' }}>
-                          {formatDate(transaction.transaction_date)}
-                        </td>
-                        <td style={{ padding: '12px' }}>
-                          <span style={{ 
-                            color: getEntryTypeColor(transaction.entry_type),
-                            fontWeight: '500'
-                          }}>
-                            {getEntryTypeLabel(transaction.entry_type)}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px', textAlign: 'right', color: '#495057' }}>
-                          {transaction.quantity.toFixed(2)}
-                        </td>
-                        <td style={{ padding: '12px', textAlign: 'right', color: '#495057' }}>
-                          {transaction.unit_price ? formatCurrency(transaction.unit_price) : '-'}
-                        </td>
-                        <td style={{ padding: '12px', textAlign: 'right', color: '#495057' }}>
-                          {transaction.total_value ? formatCurrency(transaction.total_value) : '-'}
-                        </td>
-                        <td style={{ padding: '12px', textAlign: 'right', color: '#495057' }}>
-                          {transaction.running_balance.toFixed(2)}
-                        </td>
-                        <td style={{ padding: '12px', color: '#6c757d' }}>
-                          {transaction.reference_number || '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )
-          })}
-
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div style={{
-              marginTop: '24px',
-              padding: '20px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #e9ecef',
-              borderRadius: '8px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '16px'
-            }}>
-              {/* Items per page selector */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#495057' }}>Show:</span>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                  style={{
-                    padding: '6px 8px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px',
-                    fontSize: '14px',
-                    outline: 'none'
-                  }}
-                >
-                  <option value={3}>3 per page</option>
-                  <option value={5}>5 per page</option>
-                  <option value={10}>10 per page</option>
-                  <option value={20}>20 per page</option>
-                </select>
-              </div>
-
-              {/* Page info */}
-              <div style={{ fontSize: '14px', color: '#495057' }}>
-                Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} products
-              </div>
-
-              {/* Pagination buttons */}
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <Button
-                  variant="secondary"
-                  onClick={() => handlePageChange(1)}
-                  disabled={currentPage === 1}
-                  style={{ padding: '6px 12px', fontSize: '14px' }}
-                >
-                  First
-                </Button>
-                
-                <Button
-                  variant="secondary"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  style={{ padding: '6px 12px', fontSize: '14px' }}
-                >
-                  Previous
-                </Button>
-
-                {/* Page numbers */}
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum
-                    if (totalPages <= 5) {
-                      pageNum = i + 1
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i
-                    } else {
-                      pageNum = currentPage - 2 + i
-                    }
-                    
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "primary" : "secondary"}
-                        onClick={() => handlePageChange(pageNum)}
-                        style={{ 
-                          padding: '6px 12px', 
-                          fontSize: '14px',
-                          minWidth: '40px'
-                        }}
-                      >
-                        {pageNum}
-                      </Button>
-                    )
-                  })}
-                </div>
-
-                <Button
-                  variant="secondary"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  style={{ padding: '6px 12px', fontSize: '14px' }}
-                >
-                  Next
-                </Button>
-                
-                <Button
-                  variant="secondary"
-                  onClick={() => handlePageChange(totalPages)}
-                  disabled={currentPage === totalPages}
-                  style={{ padding: '6px 12px', fontSize: '14px' }}
-                >
-                  Last
-                </Button>
-              </div>
+              <span style={{ fontSize: '14px', color: '#6c757d' }}>
+                Page {currentPage} of {totalPages}
+              </span>
+              
+              <Button 
+                variant="secondary" 
+                size="small"
+                disabled={currentPage === totalPages}
+                onClick={() => handlePageChange(currentPage + 1)}
+              >
+                Next →
+              </Button>
             </div>
           )}
-
-          {/* Note */}
-          <div style={{ 
-            marginTop: '16px', 
-            padding: '12px', 
-            backgroundColor: '#fff3cd', 
-            border: '1px solid #ffeaa7', 
-            borderRadius: '4px',
-            fontSize: '14px',
-            color: '#856404'
-          }}>
-            <strong>Note:</strong> Stock movement history shows individual transactions for each financial year (April 1st to March 31st). 
-            Opening stock, incoming, and outgoing calculations are based on stock adjustment records. 
-            Values are calculated using average cost method.
-          </div>
         </>
       )}
 
@@ -1217,13 +949,14 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
         type="stock-history"
         title={`Stock Movement History - ${financialYearFilter === 'all' ? getCurrentFinancialYear() : financialYearFilter}`}
         financialYear={financialYearFilter === 'all' ? getCurrentFinancialYear() : financialYearFilter}
-        productId={(productId && forceReload === 0) ? parseInt(productId) : undefined}
+        productId={productId ? parseInt(productId) : undefined}
         filters={{
-          productFilter: productFilter !== 'all' ? productFilter : undefined,
-          categoryFilter: categoryFilter !== 'all' ? categoryFilter : undefined,
-          supplierFilter: supplierFilter !== 'all' ? supplierFilter : undefined,
-          stockLevelFilter: stockLevelFilter !== 'all' ? stockLevelFilter : undefined,
-          entryTypeFilter: entryTypeFilter !== 'all' ? entryTypeFilter : undefined
+          product: productFilter,
+          category: categoryFilter,
+          supplier: supplierFilter,
+          stockLevel: stockLevelFilter,
+          entryType: entryTypeFilter,
+          dateRange: dateRangeFilter
         }}
       />
       */}
