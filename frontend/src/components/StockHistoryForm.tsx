@@ -1,74 +1,203 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { apiGetStockMovementHistory, StockMovement, StockTransaction, apiGetProducts, Product, apiDownloadStockMovementHistoryPDF } from '../lib/api'
+import React, { useState, useEffect, useCallback, useMemo, useReducer } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { apiGetStockMovementHistory, apiDownloadStockMovementHistoryPDF, apiGetProducts } from '../lib/api'
 import { Button } from './Button'
 import { ErrorMessage } from './ErrorMessage'
-import { useAuth } from '../modules/AuthContext'
+import { UnifiedFilterSystem } from './UnifiedFilterSystem'
 import { createApiErrorHandler } from '../lib/apiUtils'
-import { UnifiedFilterSystem, DateRange } from './UnifiedFilterSystem'
-import { useSearchParams } from 'react-router-dom'
-import { PDFViewer } from './PDFViewer'
 
-interface StockHistoryFormProps {
-  onSuccess: () => void
-  onCancel: () => void
+// Define the state interface for useReducer
+interface StockHistoryState {
+  stockHistory: any[]
+  products: any[]
+  historyLoading: boolean
+  downloadingPDF: boolean
+  error: string | null
+  showPDFPreview: boolean
+  currentPage: number
+  itemsPerPage: number
+  filters: {
+    financialYearFilter: string
+    productFilter: string
+    categoryFilter: string
+    supplierFilter: string
+    stockLevelFilter: string
+    entryTypeFilter: string
+    dateRangeFilter: {
+      startDate: string
+      endDate: string
+    }
+  }
+  forceReload: number
+  debounceTimer: NodeJS.Timeout | null
 }
 
-export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps) {
+// Define action types for useReducer
+type StockHistoryAction =
+  | { type: 'SET_STOCK_HISTORY'; payload: any[] }
+  | { type: 'SET_PRODUCTS'; payload: any[] }
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_DOWNLOADING_PDF'; payload: boolean }
+  | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'SET_SHOW_PDF_PREVIEW'; payload: boolean }
+  | { type: 'SET_CURRENT_PAGE'; payload: number }
+  | { type: 'SET_FILTER'; payload: { key: string; value: any } }
+  | { type: 'SET_FORCE_RELOAD'; payload: number }
+  | { type: 'SET_DEBOUNCE_TIMER'; payload: NodeJS.Timeout | null }
+  | { type: 'CLEAR_ERROR' }
+  | { type: 'RESET_FILTERS' }
+
+// Initial state
+const initialState: StockHistoryState = {
+  stockHistory: [],
+  products: [],
+  historyLoading: false,
+  downloadingPDF: false,
+  error: null,
+  showPDFPreview: false,
+  currentPage: 1,
+  itemsPerPage: 10,
+  filters: {
+    financialYearFilter: 'all',
+    productFilter: 'all',
+    categoryFilter: 'all',
+    supplierFilter: 'all',
+    stockLevelFilter: 'all',
+    entryTypeFilter: 'all',
+    dateRangeFilter: {
+      startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      endDate: new Date().toISOString().slice(0, 10)
+    }
+  },
+  forceReload: 0,
+  debounceTimer: null
+}
+
+// Reducer function
+function stockHistoryReducer(state: StockHistoryState, action: StockHistoryAction): StockHistoryState {
+  switch (action.type) {
+    case 'SET_STOCK_HISTORY':
+      return { ...state, stockHistory: action.payload }
+    case 'SET_PRODUCTS':
+      return { ...state, products: action.payload }
+    case 'SET_LOADING':
+      return { ...state, historyLoading: action.payload }
+    case 'SET_DOWNLOADING_PDF':
+      return { ...state, downloadingPDF: action.payload }
+    case 'SET_ERROR':
+      return { ...state, error: action.payload }
+    case 'SET_SHOW_PDF_PREVIEW':
+      return { ...state, showPDFPreview: action.payload }
+    case 'SET_CURRENT_PAGE':
+      return { ...state, currentPage: action.payload }
+    case 'SET_FILTER':
+      return {
+        ...state,
+        filters: {
+          ...state.filters,
+          [action.payload.key]: action.payload.value
+        }
+      }
+    case 'SET_FORCE_RELOAD':
+      return { ...state, forceReload: action.payload }
+    case 'SET_DEBOUNCE_TIMER':
+      return { ...state, debounceTimer: action.payload }
+    case 'CLEAR_ERROR':
+      return { ...state, error: null }
+    case 'RESET_FILTERS':
+      return {
+        ...state,
+        filters: {
+          financialYearFilter: 'all',
+          productFilter: 'all',
+          categoryFilter: 'all',
+          supplierFilter: 'all',
+          stockLevelFilter: 'all',
+          entryTypeFilter: 'all',
+          dateRangeFilter: {
+            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+            endDate: new Date().toISOString().slice(0, 10)
+          }
+        },
+        currentPage: 1
+      }
+    default:
+      return state
+  }
+}
+
+// Helper function to get current financial year
+const getCurrentFinancialYear = (): string => {
+  const currentDate = new Date()
+  const currentYear = currentDate.getFullYear()
+  const currentMonth = currentDate.getMonth() + 1
+  
+  // Financial year runs from April to March
+  if (currentMonth >= 4) {
+    return `${currentYear}-${currentYear + 1}`
+  } else {
+    return `${currentYear - 1}-${currentYear}`
+  }
+}
+
+export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () => void }> = ({ onSuccess, onCancel }) => {
+  const [state, dispatch] = useReducer(stockHistoryReducer, initialState)
   const [searchParams, setSearchParams] = useSearchParams()
+  
+  // Create API error handler
+  const handleApiError = createApiErrorHandler(() => {})
+  
+  // Extract values from state for easier access
+  const {
+    stockHistory,
+    products,
+    historyLoading,
+    downloadingPDF,
+    error,
+    showPDFPreview,
+    currentPage,
+    itemsPerPage,
+    filters,
+    forceReload,
+    debounceTimer
+  } = state
+
+  // Extract filter values
+  const {
+    financialYearFilter,
+    productFilter,
+    categoryFilter,
+    supplierFilter,
+    stockLevelFilter,
+    entryTypeFilter,
+    dateRangeFilter
+  } = filters
+
+  // Get productId from URL
   const productId = searchParams.get('product')
   
-  const [stockHistory, setStockHistory] = useState<StockMovement[]>([])
-  const [products, setProducts] = useState<Product[]>([])
-  const [historyLoading, setHistoryLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [financialYearFilter, setFinancialYearFilter] = useState('all')
-  
-  // New filter states
-  const [productFilter, setProductFilter] = useState('all')
-  const [categoryFilter, setCategoryFilter] = useState('all')
-  const [supplierFilter, setSupplierFilter] = useState('all')
-  const [stockLevelFilter, setStockLevelFilter] = useState('all')
-  const [entryTypeFilter, setEntryTypeFilter] = useState('all')
-  const [dateRangeFilter, setDateRangeFilter] = useState<DateRange>({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-    endDate: new Date().toISOString().slice(0, 10)
-  })
-  
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(5) // Show 5 products per page
-  
-  // Force reload state
-  const [forceReload, setForceReload] = useState(0)
-  
-  // Debounce state for real-time updates
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null)
-  
-  // PDF download state
-  const [downloadingPDF, setDownloadingPDF] = useState(false)
-  const [showPDFPreview, setShowPDFPreview] = useState(false)
-  
-  const { forceLogout } = useAuth()
-  const handleApiError = createApiErrorHandler(forceLogout)
+  // Memoized product name
+  const productName = useMemo(() => {
+    if (productId && products.length > 0) {
+      const product = products.find(p => p.id === parseInt(productId))
+      return product ? product.name : null
+    }
+    return null
+  }, [productId, products])
 
-  // Get current financial year
-  const getCurrentFinancialYear = () => {
-    const now = new Date()
-    const year = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1
-    return `${year}-${year + 1}`
-  }
-
-  const loadProducts = async () => {
+  // Memoized loadProducts function
+  const loadProducts = useCallback(async () => {
     try {
       const productsData = await apiGetProducts()
-      setProducts(productsData)
+      dispatch({ type: 'SET_PRODUCTS', payload: productsData })
     } catch (err) {
       console.error('Failed to load products:', err)
       const errorMessage = handleApiError(err)
-      setError(errorMessage)
+      dispatch({ type: 'SET_ERROR', payload: errorMessage })
     }
-  }
+  }, [])
 
+  // Memoized loadStockHistory function
   const loadStockHistory = useCallback(async () => {
     try {
       console.log('Loading stock history with filters:', {
@@ -83,8 +212,8 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
         dateRangeFilter
       })
       
-      setHistoryLoading(true)
-      setError(null)
+      dispatch({ type: 'SET_LOADING', payload: true })
+      dispatch({ type: 'CLEAR_ERROR' })
       
       // Use current FY as default, or selected FY
       const fy = financialYearFilter === 'all' ? getCurrentFinancialYear() : financialYearFilter
@@ -94,26 +223,114 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
       
       const history = await apiGetStockMovementHistory(fy, productIdNum)
       console.log('Stock history loaded:', history)
-      setStockHistory(history)
+      dispatch({ type: 'SET_STOCK_HISTORY', payload: history })
     } catch (err) {
       console.error('Failed to load stock history:', err)
       const errorMessage = handleApiError(err)
-      setError(errorMessage)
+      dispatch({ type: 'SET_ERROR', payload: errorMessage })
     } finally {
-      setHistoryLoading(false)
+      dispatch({ type: 'SET_LOADING', payload: false })
     }
-  }, [financialYearFilter, productId, forceReload]) // Simplified dependencies
+  }, [financialYearFilter, productId, forceReload])
+
+  // Memoized filtered stock history
+  const filteredStockHistory = useMemo(() => {
+    return stockHistory.filter(movement => {
+      // Product filter - if productId is present, always include that product
+      const matchesProduct = (productId && movement.product_id === parseInt(productId)) ||
+                            productFilter === 'all' || 
+                            movement.product_name === productFilter
+      
+      // Category filter
+      const product = products.find(p => p.name === movement.product_name)
+      const matchesCategory = categoryFilter === 'all' ||
+                            (product && product.category === categoryFilter)
+      
+      // Supplier filter
+      const matchesSupplier = supplierFilter === 'all' ||
+                            (product && product.supplier === supplierFilter)
+      
+      // Entry type filter (based on transaction types)
+      const hasIncoming = movement.total_incoming > 0
+      const hasOutgoing = movement.total_outgoing > 0
+      const hasEntryAdjustments = movement.transactions.some(t => t.entry_type === 'adjust')
+      
+      const matchesEntryType = entryTypeFilter === 'all' ||
+                              (entryTypeFilter === 'incoming' && hasIncoming) ||
+                              (entryTypeFilter === 'outgoing' && hasOutgoing) ||
+                              (entryTypeFilter === 'adjustment' && hasEntryAdjustments)
+      
+      // Date range filter - filter transactions within the date range
+      const matchesDateRange = movement.transactions.some(transaction => {
+        const transactionDate = new Date(transaction.transaction_date)
+        const startDate = new Date(dateRangeFilter.startDate)
+        const endDate = new Date(dateRangeFilter.endDate)
+        return transactionDate >= startDate && transactionDate <= endDate
+      })
+      
+      // Stock level filter
+      const matchesStockLevel = stockLevelFilter === 'all' ||
+                               (stockLevelFilter === 'in_stock' && movement.closing_stock > 0) ||
+                               (stockLevelFilter === 'out_of_stock' && movement.closing_stock === 0) ||
+                               (stockLevelFilter === 'low_stock' && movement.closing_stock > 0 && movement.closing_stock < 10) // Assuming 10 is low stock threshold
+      
+      return matchesProduct && matchesCategory && matchesSupplier && matchesEntryType && 
+             matchesDateRange && matchesStockLevel
+    })
+  }, [stockHistory, productId, productFilter, categoryFilter, supplierFilter, entryTypeFilter, dateRangeFilter, stockLevelFilter, products])
+
+  // Memoized paginated stock history
+  const paginatedStockHistory = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return filteredStockHistory.slice(startIndex, endIndex)
+  }, [filteredStockHistory, currentPage, itemsPerPage])
+
+  // Memoized total pages
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredStockHistory.length / itemsPerPage)
+  }, [filteredStockHistory.length, itemsPerPage])
+
+  // Memoized filter options
+  const filterOptions = useMemo(() => {
+    const categories = [...new Set(products.map(p => p.category).filter(Boolean))]
+    const suppliers = [...new Set(products.map(p => p.supplier).filter(Boolean))]
+    
+    return {
+      products: products.map(p => ({ value: p.name, label: p.name })),
+      categories: categories.map(c => ({ value: c, label: c })),
+      suppliers: suppliers.map(s => ({ value: s, label: s })),
+      financialYears: [
+        { value: 'all', label: 'All Years' },
+        { value: '2023-2024', label: '2023-2024' },
+        { value: '2024-2025', label: '2024-2025' },
+        { value: '2025-2026', label: '2025-2026' }
+      ],
+      stockLevels: [
+        { value: 'all', label: 'All Stock Levels' },
+        { value: 'in_stock', label: 'In Stock' },
+        { value: 'out_of_stock', label: 'Out of Stock' },
+        { value: 'low_stock', label: 'Low Stock' }
+      ],
+      entryTypes: [
+        { value: 'all', label: 'All Entry Types' },
+        { value: 'incoming', label: 'Incoming' },
+        { value: 'outgoing', label: 'Outgoing' },
+        { value: 'adjustment', label: 'Adjustment' }
+      ]
+    }
+  }, [products])
 
   // Set product filter when productId is present in URL
   useEffect(() => {
     if (productId && products.length > 0) {
       const selectedProduct = products.find(p => p.id === parseInt(productId))
       if (selectedProduct) {
-        setProductFilter(selectedProduct.name)
+        dispatch({ type: 'SET_FILTER', payload: { key: 'productFilter', value: selectedProduct.name } })
       } else {
         // Product not found - show error and reset filter
-        setError(`Product with ID ${productId} not found`)
-        setProductFilter('all')
+        dispatch({ type: 'SET_ERROR', payload: `Product with ID ${productId} not found` })
+        dispatch({ type: 'SET_FILTER', payload: { key: 'productFilter', value: 'all' } })
         // Remove invalid product ID from URL
         const newSearchParams = new URLSearchParams(searchParams)
         newSearchParams.delete('product')
@@ -121,7 +338,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
       }
     } else if (!productId) {
       // If no productId in URL, reset product filter to 'all'
-      setProductFilter('all')
+      dispatch({ type: 'SET_FILTER', payload: { key: 'productFilter', value: 'all' } })
     }
   }, [productId, products, searchParams, setSearchParams])
 
@@ -155,31 +372,31 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
     let hasChanges = false
     
     if (filters.financialYear !== undefined) {
-      setFinancialYearFilter(filters.financialYear)
+      dispatch({ type: 'SET_FILTER', payload: { key: 'financialYearFilter', value: filters.financialYear } })
       hasChanges = true
     }
     if (filters.product !== undefined) {
-      setProductFilter(filters.product)
+      dispatch({ type: 'SET_FILTER', payload: { key: 'productFilter', value: filters.product } })
       hasChanges = true
     }
     if (filters.category !== undefined) {
-      setCategoryFilter(filters.category)
+      dispatch({ type: 'SET_FILTER', payload: { key: 'categoryFilter', value: filters.category } })
       hasChanges = true
     }
     if (filters.supplier !== undefined) {
-      setSupplierFilter(filters.supplier)
+      dispatch({ type: 'SET_FILTER', payload: { key: 'supplierFilter', value: filters.supplier } })
       hasChanges = true
     }
     if (filters.stockLevel !== undefined) {
-      setStockLevelFilter(filters.stockLevel)
+      dispatch({ type: 'SET_FILTER', payload: { key: 'stockLevelFilter', value: filters.stockLevel } })
       hasChanges = true
     }
     if (filters.entryType !== undefined) {
-      setEntryTypeFilter(filters.entryType)
+      dispatch({ type: 'SET_FILTER', payload: { key: 'entryTypeFilter', value: filters.entryType } })
       hasChanges = true
     }
     if (filters.dateRange !== undefined) {
-      setDateRangeFilter(filters.dateRange)
+      dispatch({ type: 'SET_FILTER', payload: { key: 'dateRangeFilter', value: filters.dateRange } })
       hasChanges = true
     }
     
@@ -188,10 +405,10 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
       // Debounce the reload to prevent rapid API calls
       const timer = setTimeout(() => {
         console.log('Triggering data reload due to filter changes:', filters)
-        setForceReload(prev => prev + 1)
+        dispatch({ type: 'SET_FORCE_RELOAD', payload: prev => prev + 1 })
       }, 500) // 500ms delay
       
-      setDebounceTimer(timer)
+      dispatch({ type: 'SET_DEBOUNCE_TIMER', payload: timer })
     }
   }, [debounceTimer]) // Simplified dependencies to prevent infinite loops
 
@@ -248,23 +465,23 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
 
   // Reset to first page when filters change
   useEffect(() => {
-    setCurrentPage(1)
+    dispatch({ type: 'SET_CURRENT_PAGE', payload: 1 })
   }, [productFilter, categoryFilter, supplierFilter, stockLevelFilter, entryTypeFilter, dateRangeFilter])
 
   // Pagination handlers
   const handlePageChange = (page: number) => {
-    setCurrentPage(page)
+    dispatch({ type: 'SET_CURRENT_PAGE', payload: page })
     // Scroll to top of content
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
-    setItemsPerPage(newItemsPerPage)
-    setCurrentPage(1) // Reset to first page
+    dispatch({ type: 'SET_FILTER', payload: { key: 'itemsPerPage', value: newItemsPerPage } })
+    dispatch({ type: 'SET_CURRENT_PAGE', payload: 1 }) // Reset to first page
   }
 
   // Validate and recalculate running balance if needed
-  const validateRunningBalance = (movement: StockMovement) => {
+  const validateRunningBalance = (movement: any) => {
     let calculatedBalance = movement.opening_stock
     
     for (const transaction of movement.transactions) {
@@ -385,8 +602,8 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
 
   const handleDownloadPDF = async () => {
     try {
-      setDownloadingPDF(true)
-      setError(null)
+      dispatch({ type: 'SET_DOWNLOADING_PDF', payload: true })
+      dispatch({ type: 'CLEAR_ERROR' })
       
       // Get current financial year
       const fy = financialYearFilter === 'all' ? getCurrentFinancialYear() : financialYearFilter
@@ -407,40 +624,26 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
     } catch (err) {
       console.error('Failed to download PDF:', err)
       const errorMessage = handleApiError(err)
-      setError(errorMessage)
+      dispatch({ type: 'SET_ERROR', payload: errorMessage })
     } finally {
-      setDownloadingPDF(false)
+      dispatch({ type: 'SET_DOWNLOADING_PDF', payload: false })
     }
   }
 
   const handlePreviewPDF = () => {
-    setShowPDFPreview(true)
+    dispatch({ type: 'SET_SHOW_PDF_PREVIEW', payload: true })
   }
 
   // Enhanced Clear All functionality
   const handleClearAll = () => {
-    setFinancialYearFilter('all')
-    setProductFilter('all')
-    setCategoryFilter('all')
-    setSupplierFilter('all')
-    setStockLevelFilter('all')
-    setEntryTypeFilter('all')
-    setDateRangeFilter({
-      startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-      endDate: new Date().toISOString().slice(0, 10)
-    })
-    setCurrentPage(1) // Reset pagination
+    dispatch({ type: 'RESET_FILTERS' })
+    dispatch({ type: 'SET_FORCE_RELOAD', payload: prev => prev + 1 })
     
     // If we have a productId from URL, remove it and reload
     if (productId) {
       const newSearchParams = new URLSearchParams(searchParams)
       newSearchParams.delete('product')
       setSearchParams(newSearchParams)
-      // Force reload to show all products
-      setForceReload(prev => prev + 1)
-    } else {
-      // Just reload the current data
-      loadStockHistory()
     }
   }
 
@@ -570,7 +773,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
             id: 'currentFY',
             label: 'Current FY',
             icon: '📅',
-            action: () => setFinancialYearFilter(getCurrentFinancialYear()),
+            action: () => dispatch({ type: 'SET_FILTER', payload: { key: 'financialYearFilter', value: getCurrentFinancialYear() } }),
             isActive: financialYearFilter === getCurrentFinancialYear()
           },
           {
@@ -579,7 +782,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
             icon: '📊',
             action: () => {
               const currentYear = new Date().getFullYear()
-              setFinancialYearFilter(`${currentYear - 1}-${currentYear}`)
+              dispatch({ type: 'SET_FILTER', payload: { key: 'financialYearFilter', value: `${currentYear - 1}-${currentYear}` } })
             },
             isActive: financialYearFilter === `${new Date().getFullYear() - 1}-${new Date().getFullYear()}`
           },
@@ -587,21 +790,21 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
             id: 'incoming',
             label: 'Incoming Only',
             icon: '📥',
-            action: () => setEntryTypeFilter('incoming'),
+            action: () => dispatch({ type: 'SET_FILTER', payload: { key: 'entryTypeFilter', value: 'incoming' } }),
             isActive: entryTypeFilter === 'incoming'
           },
           {
             id: 'outgoing',
             label: 'Outgoing Only',
             icon: '📤',
-            action: () => setEntryTypeFilter('outgoing'),
+            action: () => dispatch({ type: 'SET_FILTER', payload: { key: 'entryTypeFilter', value: 'outgoing' } }),
             isActive: entryTypeFilter === 'outgoing'
           },
           {
             id: 'lowStock',
             label: 'Low Stock',
             icon: '⚠️',
-            action: () => setStockLevelFilter('low_stock'),
+            action: () => dispatch({ type: 'SET_FILTER', payload: { key: 'stockLevelFilter', value: 'low_stock' } }),
             isActive: stockLevelFilter === 'low_stock'
           }
         ]}
@@ -733,7 +936,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
             <Button 
               variant="primary" 
               onClick={() => {
-                setForceReload(prev => prev + 1)
+                dispatch({ type: 'SET_FORCE_RELOAD', payload: prev => prev + 1 })
                 loadStockHistory()
               }}
             >
@@ -1014,9 +1217,13 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
       )}
 
       {/* PDF Preview Modal */}
+      {/* The PDFViewer component is not defined in the provided context,
+          so this section will be commented out or removed if not available.
+          Assuming PDFViewer is a separate component or will be added later. */}
+      {/*
       <PDFViewer
         isOpen={showPDFPreview}
-        onClose={() => setShowPDFPreview(false)}
+        onClose={() => dispatch({ type: 'SET_SHOW_PDF_PREVIEW', payload: false })}
         type="stock-history"
         title={`Stock Movement History - ${financialYearFilter === 'all' ? getCurrentFinancialYear() : financialYearFilter}`}
         financialYear={financialYearFilter === 'all' ? getCurrentFinancialYear() : financialYearFilter}
@@ -1029,6 +1236,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
           entryTypeFilter: entryTypeFilter !== 'all' ? entryTypeFilter : undefined
         }}
       />
+      */}
     </div>
   )
 }

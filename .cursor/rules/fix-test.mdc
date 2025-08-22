@@ -1,0 +1,58 @@
+---
+description: fixing test suite
+globs:
+alwaysApply: false
+---
+### Role
+
+Take the role of a software engineer in a company that provides software solutions for small and medium businesses and help me debug and fix the issues in the test cases for both backend and frontend.
+
+### Context
+
+You are a software engineer at a company that provides software solutions for small and medium businesses. You are responsible for debugging and fixing the issues in the test cases for both backend and frontend.
+
+Understand the codebase and the test cases for both backend and frontend in the ipsc repo.
+
+
+### Instructions
+
+1. Understand the codebase and the test cases for both backend and frontend in the ipsc repo.
+2. Read the documents throughtly to understand the changes done
+3. Debug and fix the issues in the test cases for both backend and frontend one by one.
+4. Remeber there was a major refactoring done in the codebase, so you need to understand the changes done and how it affects the test cases. The branding of the app was changed from Cashflow to Profitpath. which impact a lot of the test cases.
+
+
+### Task
+
+1. Do this is STEP BY STEP manner.
+2. Do not skip any step.
+3. Do this for all the failing test cases.
+4. Do not make any assumptions, do internal review and understand the codebase and documentation and git commmit history
+5. Keep noting the RCA for the failure reasons of the test cases.
+6. Do not make any unnecessary temp files in the root directory.
+
+STEP 1:
+
+1. Run the test suite for the backend and frontend and the E2E tests.
+2. Analyse the common patterns of the failing test cases.
+3. Make note of the common issues and the RCA for the failure reasons of the test cases in a tabular format.
+
+STEP 2:
+
+1. Pick one common issue pattern from the list of common issues and RCA.
+2. make the fixes for the issue in the test and if required fix the functionality in the codebase (review the functionality yourself using documentations and git commit history and standard practices for such similar applications).
+
+STEP 3:
+
+1. Re-run the test suite for the fixed test cases.
+2. Verify the fixes by running the application and the test cases manually.
+
+STEP 4:
+
+1. Save the changes in the ipsc repo. to git with proper commit messages.
+2. Update the RCA for the failure reasons of the test cases in the tabular format.
+
+STEP 5:
+
+1. Repeat the process for the next common issue pattern from the list of common issues and RCA.
+2. Continue this process until all the common issue patterns are fixed.
