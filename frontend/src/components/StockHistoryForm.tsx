@@ -102,7 +102,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
     } finally {
       setHistoryLoading(false)
     }
-  }, [financialYearFilter, productId, forceReload, productFilter, categoryFilter, supplierFilter, stockLevelFilter, entryTypeFilter, dateRangeFilter])
+  }, [financialYearFilter, productId, forceReload]) // Simplified dependencies
 
   // Set product filter when productId is present in URL
   useEffect(() => {
@@ -131,16 +131,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
 
   useEffect(() => {
     loadStockHistory()
-  }, [financialYearFilter, productId, forceReload, loadStockHistory]) // Only reload when these specific values change
-
-  // Additional effect to handle filter changes that require data reload
-  useEffect(() => {
-    // When any filter changes, we need to reload the data
-    // This ensures the API gets the latest filter state
-    if (forceReload > 0) {
-      loadStockHistory()
-    }
-  }, [forceReload, loadStockHistory])
+  }, [loadStockHistory]) // Simplified dependency
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
@@ -151,7 +142,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
     }
   }, [debounceTimer])
 
-  // Real-time filter update handler with debouncing
+  // Real-time filter update handler with debouncing - simplified to prevent infinite loops
   const handleFilterChange = useCallback((filters: Record<string, any>) => {
     console.log('Filter change detected:', filters)
     
@@ -163,33 +154,31 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
     // Update individual filter states based on unified filter values
     let hasChanges = false
     
-    if (filters.financialYear !== undefined && filters.financialYear !== financialYearFilter) {
+    if (filters.financialYear !== undefined) {
       setFinancialYearFilter(filters.financialYear)
       hasChanges = true
     }
-    if (filters.product !== undefined && filters.product !== productFilter) {
+    if (filters.product !== undefined) {
       setProductFilter(filters.product)
       hasChanges = true
     }
-    if (filters.category !== undefined && filters.category !== categoryFilter) {
+    if (filters.category !== undefined) {
       setCategoryFilter(filters.category)
       hasChanges = true
     }
-    if (filters.supplier !== undefined && filters.supplier !== supplierFilter) {
+    if (filters.supplier !== undefined) {
       setSupplierFilter(filters.supplier)
       hasChanges = true
     }
-    if (filters.stockLevel !== undefined && filters.stockLevel !== stockLevelFilter) {
+    if (filters.stockLevel !== undefined) {
       setStockLevelFilter(filters.stockLevel)
       hasChanges = true
     }
-    if (filters.entryType !== undefined && filters.entryType !== entryTypeFilter) {
+    if (filters.entryType !== undefined) {
       setEntryTypeFilter(filters.entryType)
       hasChanges = true
     }
-    if (filters.dateRange !== undefined && 
-        (filters.dateRange.startDate !== dateRangeFilter.startDate || 
-         filters.dateRange.endDate !== dateRangeFilter.endDate)) {
+    if (filters.dateRange !== undefined) {
       setDateRangeFilter(filters.dateRange)
       hasChanges = true
     }
@@ -204,7 +193,7 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
       
       setDebounceTimer(timer)
     }
-  }, [debounceTimer, financialYearFilter, productFilter, categoryFilter, supplierFilter, stockLevelFilter, entryTypeFilter, dateRangeFilter])
+  }, [debounceTimer]) // Simplified dependencies to prevent infinite loops
 
   // Filter stock history based on all filters
   const filteredStockHistory = stockHistory.filter(movement => {
@@ -405,12 +394,15 @@ export function StockHistoryForm({ onSuccess, onCancel }: StockHistoryFormProps)
       // Get product ID if filtering by specific product
       const productIdNum = (productId && forceReload === 0) ? parseInt(productId) : undefined
       
-      await apiDownloadStockMovementHistoryPDF(fy, productIdNum, {
+      await apiDownloadStockMovementHistoryPDF({
+        product_id: productIdNum,
         productFilter: productFilter !== 'all' ? productFilter : undefined,
         categoryFilter: categoryFilter !== 'all' ? categoryFilter : undefined,
         supplierFilter: supplierFilter !== 'all' ? supplierFilter : undefined,
         stockLevelFilter: stockLevelFilter !== 'all' ? stockLevelFilter : undefined,
-        entryTypeFilter: entryTypeFilter !== 'all' ? entryTypeFilter : undefined
+        entryTypeFilter: entryTypeFilter !== 'all' ? entryTypeFilter : undefined,
+        date_from: dateRangeFilter.startDate,
+        date_to: dateRangeFilter.endDate
       })
     } catch (err) {
       console.error('Failed to download PDF:', err)
