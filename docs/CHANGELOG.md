@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.49.2] - 2025-08-21
+## [1.49.3] - 2025-08-21
 
 ### 🚨 **CRITICAL FIX - Release Workflow Issue Resolved**
 - **FIXED: nginx.conf Copy Error**: Resolved critical GitHub Actions workflow failure
