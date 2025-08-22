@@ -461,7 +461,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
                   {new Date(invoice.date).toLocaleDateString()}
                     </td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
-                  {new Date(invoice.due_date).toLocaleDateString()}
+                  {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'N/A'}
                 </td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
                   ₹{invoice.grand_total.toFixed(2)}
@@ -483,7 +483,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
                 </td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
                   {(() => {
-                    const dueDate = new Date(invoice.due_date)
+                    const dueDate = invoice.due_date ? new Date(invoice.due_date) : new Date()
                     const today = new Date()
                     const daysDiff = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
                     if (daysDiff < 0) {
@@ -649,7 +649,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
             invoiceNo={selectedInvoice.invoice_no}
             customerName={selectedInvoice.customer_name}
             grandTotal={selectedInvoice.grand_total}
-            dueDate={selectedInvoice.due_date}
+            dueDate={selectedInvoice.due_date || ''}
           />
         </>
       )}

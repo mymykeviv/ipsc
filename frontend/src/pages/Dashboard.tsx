@@ -72,6 +72,9 @@ export function Dashboard() {
           start_date: startDate,
           end_date: endDate
         },
+        total_income: 0,
+        total_outflow: 0,
+        net_cashflow: 0,
         income: {
           total_invoice_amount: 0,
           total_payments_received: 0

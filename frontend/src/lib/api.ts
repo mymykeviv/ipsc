@@ -1449,38 +1449,7 @@ export async function apiListAllPurchasePayments(): Promise<Array<{
   return r.json()
 }
 
-// Stock Movement Types
-export type StockTransaction = {
-  id: number
-  product_id: number
-  product_name: string
-  transaction_date: string
-  entry_type: 'in' | 'out' | 'adjust'
-  quantity: number
-  unit_price: number
-  total_value: number
-  ref_type: string | null
-  ref_id: number | null
-  reference_number: string | null
-  notes: string | null
-  financial_year: string
-  running_balance: number
-}
 
-export type StockMovement = {
-  product_id: number
-  product_name: string
-  financial_year: string
-  opening_stock: number
-  opening_value: number
-  total_incoming: number
-  total_incoming_value: number
-  total_outgoing: number
-  total_outgoing_value: number
-  closing_stock: number
-  closing_value: number
-  transactions: StockTransaction[]
-}
 
 
 
