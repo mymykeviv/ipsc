@@ -4,27 +4,32 @@ All notable changes to this project will be documented in this file.
 
 ## [1.49.1] - 2025-08-21
 
-### 🔧 **Easy Deployment Fixes**
-- **Fixed Missing Reverse Proxy**: Added nginx reverse proxy container to handle traffic routing
-- **Added MailHog Container**: Included email testing service for complete functionality
-- **Fixed Frontend Configuration**: Updated frontend to use internal networking instead of direct port exposure
-- **Enhanced Backend Environment**: Added SMTP configuration for email functionality
-- **Improved Health Checks**: Added comprehensive health checks for all services
-- **Created Nginx Configuration**: Added proper nginx.conf with API proxying and security headers
-- **Updated Start Scripts**: Enhanced both Linux and Windows start scripts with better service monitoring
-- **Added Test Scripts**: Created comprehensive test scripts for deployment validation
-- **Enhanced Documentation**: Updated README with complete service information and troubleshooting
+### 🚨 **CRITICAL FIXES - Release vv1.49.1 Issues Resolved**
+- **FIXED: Missing MailHog Container**: Restored email testing service that was completely missing from release package
+- **FIXED: Missing Nginx Reverse Proxy**: Restored nginx container that was removed, causing UI accessibility problems
+- **FIXED: Service Communication**: Corrected frontend API URL from `localhost:8000` to internal `backend:8000`
+- **FIXED: Security Vulnerabilities**: Removed direct service exposure, now properly routed through nginx
+- **FIXED: Network Isolation**: Restored proper service networking with `profitpath-network`
+- **FIXED: Health Monitoring**: Added comprehensive health checks for all services (nginx, mailhog, backend, frontend)
+- **FIXED: Port Conflicts**: Resolved port mapping issues by using internal `expose` instead of external `ports`
+
+### 🔧 **Architecture Improvements**
+- **Enhanced Security**: Backend API no longer directly exposed, protected by nginx reverse proxy
+- **Improved Performance**: Added nginx caching, compression, and load balancing
+- **Better Reliability**: Comprehensive health checks and automatic service recovery
+- **Proper Service Isolation**: All services now communicate through internal network
+
+### 📝 **Documentation Updates**
+- **Complete Service Information**: Added MailHog access details and all service URLs
+- **Enhanced Troubleshooting**: Updated port requirements and common issue solutions
+- **Startup Script Improvements**: Both Windows and Linux scripts now monitor all services
+- **Technical Specifications**: Added detailed service port mapping and network configuration
 
 ### 🐛 **Bug Fixes**
-- **Fixed Port 80 Access**: Application now properly accessible on http://localhost:80
-- **Fixed API Routing**: API calls now properly routed through nginx to backend
-- **Fixed Email Functionality**: MailHog integration enables email testing features
-- **Fixed Service Discovery**: All services now properly networked and discoverable
-
-### 📝 **Documentation**
-- **Updated README**: Complete service documentation with troubleshooting guide
-- **Added Test Scripts**: Both Linux and Windows versions for deployment validation
-- **Enhanced Troubleshooting**: Comprehensive troubleshooting section with common issues
+- **Fixed UI Accessibility**: Application now properly accessible on http://localhost
+- **Fixed Email Functionality**: MailHog integration enables complete email testing features
+- **Fixed API Routing**: All API calls properly routed through nginx with rate limiting
+- **Fixed Service Discovery**: All services properly networked and discoverable
 
 ## [1.49.0] - 2025-08-21
 

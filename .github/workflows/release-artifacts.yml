@@ -94,7 +94,7 @@ jobs:
           mkdir -p profitpath-deployment
           cd profitpath-deployment
           
-          # Create user-friendly docker-compose file
+          # Create user-friendly docker-compose file with ALL services
           cat > docker-compose.yml << 'EOF'
           version: '3.8'
           
@@ -131,11 +131,16 @@ jobs:
                 DEBUG: "false"
                 LOG_LEVEL: INFO
                 CORS_ORIGINS: "*"
+                SMTP_HOST: mailhog
+                SMTP_PORT: 1025
+                SMTP_USERNAME: ""
+                SMTP_PASSWORD: ""
+                SMTP_USE_TLS: "false"
               depends_on:
                 database:
                   condition: service_healthy
-              ports:
-                - "8000:8000"
+              expose:
+                - "8000"
               volumes:
                 - backend_logs:/app/logs
               command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
@@ -152,10 +157,10 @@ jobs:
             frontend:
               image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:${{ steps.version.outputs.version }}
               container_name: profitpath-frontend
-              ports:
-                - "80:80"
+              expose:
+                - "80"
               environment:
-                VITE_API_URL: http://localhost:8000
+                VITE_API_URL: http://backend:8000
                 VITE_APP_ENV: production
               depends_on:
                 - backend
@@ -168,6 +173,37 @@ jobs:
               networks:
                 - profitpath-network
           
+            # Reverse Proxy
+            nginx:
+              image: nginx:alpine
+              container_name: profitpath-nginx
+              ports:
+                - "80:80"
+              volumes:
+                - ./nginx.conf:/etc/nginx/nginx.conf:ro
+              depends_on:
+                - frontend
+                - backend
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:80"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+              restart: unless-stopped
+              networks:
+                - profitpath-network
+          
+            # Email Testing Service
+            mailhog:
+              image: mailhog/mailhog:latest
+              platform: linux/amd64
+              container_name: profitpath-mailhog
+              ports:
+                - "1025:1025"  # SMTP
+                - "8025:8025"  # Web UI
+              networks:
+                - profitpath-network
+          
           volumes:
             database_data:
             backend_logs:
@@ -176,6 +212,9 @@ jobs:
             profitpath-network:
               driver: bridge
           EOF
+          
+          # Copy nginx configuration
+          cp ../../deployment/standalone/nginx.conf ./nginx.conf
           
           # Create Windows startup script
           cat > start.bat << 'EOF'
@@ -225,12 +264,28 @@ jobs:
             echo ✓ Backend is ready
           )
           
-          REM Try to check frontend
-          curl -f http://localhost:80 >nul 2>&1
+          REM Try to check frontend via nginx
+          curl -f http://localhost >nul 2>&1
           if errorlevel 1 (
             echo WARNING: Frontend is still starting up...
           ) else (
             echo ✓ Frontend is ready
+          )
+          
+          REM Try to check nginx
+          curl -f http://localhost/health >nul 2>&1
+          if errorlevel 1 (
+            echo WARNING: Nginx is still starting up...
+          ) else (
+            echo ✓ Nginx is ready
+          )
+          
+          REM Try to check mailhog
+          curl -f http://localhost:8025 >nul 2>&1
+          if errorlevel 1 (
+            echo WARNING: MailHog is still starting up...
+          ) else (
+            echo ✓ MailHog is ready
           )
           
           echo.
@@ -243,6 +298,7 @@ jobs:
           echo.
           echo 🔧 Backend API: http://localhost:8000
           echo 🗄️  Database: localhost:5432
+          echo 📧 Email Testing: http://localhost:8025
           echo.
           echo 💡 Default login:
           echo    Username: admin
@@ -316,11 +372,25 @@ jobs:
             echo "⚠️  Backend is still starting up..."
           fi
           
-          # Try to check frontend
-          if curl -f http://localhost:80 > /dev/null 2>&1; then
+          # Try to check frontend via nginx
+          if curl -f http://localhost > /dev/null 2>&1; then
             echo "✅ Frontend is ready"
           else
             echo "⚠️  Frontend is still starting up..."
+          fi
+          
+          # Try to check nginx
+          if curl -f http://localhost/health > /dev/null 2>&1; then
+            echo "✅ Nginx is ready"
+          else
+            echo "⚠️  Nginx is still starting up..."
+          fi
+          
+          # Try to check mailhog
+          if curl -f http://localhost:8025 > /dev/null 2>&1; then
+            echo "✅ MailHog is ready"
+          else
+            echo "⚠️  MailHog is still starting up..."
           fi
           
           echo ""
@@ -333,6 +403,7 @@ jobs:
           echo ""
           echo "🔧 Backend API: http://localhost:8000"
           echo "🗄️  Database: localhost:5432"
+          echo "📧 Email Testing: http://localhost:8025"
           echo ""
           echo "💡 Default login:"
           echo "   Username: admin"
@@ -406,6 +477,7 @@ jobs:
           - **Web Application**: http://localhost
           - **Backend API**: http://localhost:8000
           - **Database**: localhost:5432
+          - **Email Testing**: http://localhost:8025
           
           ## 🔧 Management Commands
           
@@ -439,7 +511,7 @@ jobs:
           - Check if Docker containers are running
           
           ### "Port already in use" Error
-          - Stop other applications using ports 80, 8000, or 5432
+          - Stop other applications using ports 80, 8000, 5432, 1025, or 8025
           - Or change ports in docker-compose.yml
           
           ## 🔒 Security Notes
@@ -534,6 +606,7 @@ jobs:
             - **Web Application**: http://localhost
             - **Default Login**: admin / admin123
             - **Backend API**: http://localhost:8000
+            - **Email Testing**: http://localhost:8025
             
             ### 🔧 System Requirements
             - Docker Desktop (Windows/Mac) or Docker Engine (Linux)
