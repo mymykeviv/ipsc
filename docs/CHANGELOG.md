@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.49.2] - 2025-08-21
+
+### 🚨 **CRITICAL FIX - Release Workflow Issue Resolved**
+- **FIXED: nginx.conf Copy Error**: Resolved critical GitHub Actions workflow failure
+- **SOLUTION**: Replaced problematic file copy with embedded nginx configuration
+- **IMPACT**: Eliminates 'cp: cannot stat' error that prevented release generation
+- **RELIABILITY**: Ensures consistent and reliable release package creation
+- **MAINTENANCE**: Removes dependency on external file system paths
+
+### 🔧 **Technical Improvements**
+- **Embedded Configuration**: nginx.conf now generated directly in workflow
+- **Path Independence**: No longer dependent on relative file paths
+- **Error Prevention**: Eliminates file system dependency issues
+- **Consistency**: Same nginx configuration across all releases
+
+### 📝 **Release Process**
+- **Workflow Reliability**: GitHub Actions now completes successfully
+- **Package Generation**: All deployment packages created without errors
+- **Service Completeness**: All services (nginx, mailhog, backend, frontend) included
+- **Testing**: Release packages verified to work correctly
+
 ## [1.49.1] - 2025-08-21
 
 ### 🚨 **CRITICAL FIXES - Release vv1.49.1 Issues Resolved**
