@@ -8176,6 +8176,10 @@ api.include_router(manufacturing_management_router)
 from .routers.performance_monitoring import router as performance_monitoring_router
 api.include_router(performance_monitoring_router)
 
+# Include security monitoring router
+from .routers.security_monitoring import router as security_monitoring_router
+api.include_router(security_monitoring_router)
+
 
 
 
