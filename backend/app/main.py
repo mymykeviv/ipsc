@@ -4,7 +4,7 @@ from .db import Base, legacy_engine, init_db, init_tenant_db
 from .seed import run_seed
 from .routers import api
 from .config import settings
-from .middleware.tenant import tenant_middleware, feature_access_middleware
+from .middleware.tenant_routing import TenantRoutingMiddleware, TenantFeatureAccessMiddleware
 from .middleware.security import security_middleware, audit_middleware
 from .tenant_config import tenant_config_manager
 from .database_optimizer import database_optimizer
@@ -64,8 +64,8 @@ def create_app(database_engine=None) -> FastAPI:
 
     # Add tenant middleware if multi-tenant is enabled
     if MULTI_TENANT_ENABLED:
-        app.middleware("http")(tenant_middleware)
-        app.middleware("http")(feature_access_middleware)
+        app.add_middleware(TenantRoutingMiddleware)
+        app.add_middleware(TenantFeatureAccessMiddleware)
         logger.info("Multi-tenant middleware enabled")
     else:
         logger.info("Multi-tenant middleware disabled - running in single-tenant mode")

@@ -8160,6 +8160,18 @@ api.include_router(dental_router)
 # Include manufacturing router
 api.include_router(manufacturing_router)
 
+# Include tenant management router
+from .routers.tenant_management import router as tenant_management_router
+api.include_router(tenant_management_router)
+
+# Include dental management router
+from .routers.dental_management import router as dental_management_router
+api.include_router(dental_management_router)
+
+# Include manufacturing management router
+from .routers.manufacturing_management import router as manufacturing_management_router
+api.include_router(manufacturing_management_router)
+
 
 
 
