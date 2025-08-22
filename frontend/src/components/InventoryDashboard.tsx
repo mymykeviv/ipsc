@@ -181,7 +181,7 @@ export function InventoryDashboardComponent({ onClose }: InventoryDashboardProps
               border: '1px solid #e1bee7'
             }}>
               <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#7b1fa2', marginBottom: '8px' }}>
-                {formatNumber(metrics.recent_movements)}
+                {formatNumber(metrics.recent_movements.length)}
               </div>
               <div style={{ fontSize: '16px', color: '#7b1fa2', fontWeight: '500' }}>Recent Movements</div>
             </div>

@@ -129,7 +129,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
         setError('Invoice not found')
       }
     } catch (err: any) {
-      const errorMessage = handleApiError(err)
+      const errorMessage = handleGridError(err)
       setError(errorMessage)
     } finally {
       setLoading(false)
@@ -141,7 +141,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
       await apiUpdateInvoiceStatus(id, 'Sent')
       loadInvoices()
     } catch (err: any) {
-      const errorMessage = handleApiError(err)
+      const errorMessage = handleGridError(err)
       setError(errorMessage)
     }
   }
@@ -155,7 +155,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
         setPdfModalOpen(true)
       }
     } catch (err: any) {
-      const errorMessage = handleApiError(err)
+      const errorMessage = handleGridError(err)
       setError(errorMessage)
     }
   }
@@ -169,7 +169,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
         setEmailModalOpen(true)
       }
     } catch (err: any) {
-      const errorMessage = handleApiError(err)
+      const errorMessage = handleGridError(err)
       setError(errorMessage)
     }
   }
@@ -180,7 +180,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
         await apiDeleteInvoice(id)
         loadInvoices()
     } catch (err: any) {
-        const errorMessage = handleApiError(err)
+        const errorMessage = handleGridError(err)
         setError(errorMessage)
       }
     }

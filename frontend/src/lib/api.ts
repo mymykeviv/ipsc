@@ -53,6 +53,22 @@ export type InventoryDashboardMetrics = {
     quantity: number
     date: string
   }>
+  average_stock_level: number
+  top_moving_products: Array<{
+    product_id: number
+    product_name: string
+    movement_count: number
+    current_stock: number
+    category: string | null
+  }>
+  low_stock_alerts: Array<{
+    product_id: number
+    product_name: string
+    current_stock: number
+    minimum_stock: number
+    category: string | null
+  }>
+  generated_at: string
 }
 
 export async function apiLogin(username: string, password: string): Promise<LoginResponse> {
@@ -493,61 +509,9 @@ export type InvoiceCreate = {
   notes?: string
 }
 
-export type Invoice = { 
-  id: number
-  invoice_no: string
-  customer_name: string
-  supplier_name?: string
-  date: string
-  due_date: string
-  grand_total: number
-  status: string
-  
-  // Invoice Details
-  invoice_type: string
-  currency: string
-  
-  // GST Compliance Fields
-  place_of_supply: string
-  place_of_supply_state_code: string
-  eway_bill_number: string | null
-  reverse_charge: boolean
-  export_supply: boolean
-  
-  // Amount Details
-  taxable_value: number
-  total_discount: number
-  cgst: number
-  sgst: number
-  igst: number
-  utgst: number
-  cess: number
-  round_off: number
-  
-  // Payment Fields
-  paid_amount: number
-  balance_amount: number
-}
 
-export type Payment = {
-  id: number
-  invoice_id: number
-  payment_date: string
-  payment_amount: number
-  payment_method: string
-  reference_number: string | null
-  notes: string | null
-  created_at: string
-  updated_at: string
-}
 
-export type PaymentCreate = {
-  payment_amount: number
-  payment_method: string
-  account_head: string
-  reference_number?: string
-  notes?: string
-}
+
 
 export type PurchaseCreate = {
   vendor_id: number
@@ -575,42 +539,7 @@ export type PurchaseCreate = {
   }[]
 }
 
-export type Purchase = {
-  id: number
-  purchase_no: string
-  vendor_id: number
-  vendor_name: string
-  date: string
-  due_date: string
-  terms: string
-  place_of_supply: string
-  place_of_supply_state_code: string
-  eway_bill_number: string | null
-  reverse_charge: boolean
-  export_supply: boolean
-  bill_from_address: string
-  ship_from_address: string
-  taxable_value: number
-  total_discount: number
-  cgst: number
-  sgst: number
-  igst: number
-  grand_total: number
-  paid_amount: number
-  balance_amount: number
-  notes: string | null
-  status: string
-  created_at: string
-  updated_at: string
-}
 
-export type PurchasePaymentCreate = {
-  payment_amount: number
-  payment_method: string
-  account_head: string
-  reference_number?: string
-  notes?: string
-}
 
 export type ExpenseCreate = {
   expense_date: string
