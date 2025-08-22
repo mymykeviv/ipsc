@@ -110,6 +110,11 @@ export interface StockHistoryFilters {
   quantity_max?: number
   date_from?: string
   date_to?: string
+  financial_year?: string
+  category?: string
+  supplier?: string
+  stock_level?: string
+  entry_type?: string
 }
 
 export interface InvoicePaymentFilters {
@@ -1349,30 +1354,7 @@ export interface InventoryValuationReport {
   filters_applied: Record<string, any> | null
 }
 
-// Inventory Dashboard Types
-export interface InventoryDashboardMetrics {
-  total_products: number
-  total_stock_value: number
-  low_stock_items: number
-  out_of_stock_items: number
-  recent_movements: number
-  average_stock_level: number
-  top_moving_products: Array<{
-    product_id: number
-    product_name: string
-    movement_count: number
-    current_stock: number
-    category: string | null
-  }>
-  low_stock_alerts: Array<{
-    product_id: number
-    product_name: string
-    current_stock: number
-    minimum_stock: number
-    category: string | null
-  }>
-  generated_at: string
-}
+
 
 export async function apiGetInventorySummary(
   category?: string,
@@ -1664,21 +1646,7 @@ export type GstFilingReport = {
   }
 }
 
-export type CashflowTransaction = {
-  id: string
-  transaction_date: string
-  type: 'inflow' | 'outflow'
-  description: string
-  reference_number?: string
-  payment_method: string
-  amount: number
-  account_head: string
-  source_type: string
-  source_id: number
-  reference_document: string
-  party_name: string
-  created_at: string
-}
+
 
 export type CashflowTransactionsResponse = {
   transactions: CashflowTransaction[]
@@ -2105,30 +2073,7 @@ export async function apiGetInvoicePDF(invoiceId: number, templateId?: number): 
   return r.blob()
 }
 
-// Stock Movement History API Functions
-export async function apiGetStockMovementHistory(financialYear: string, productId?: number): Promise<StockMovement[]> {
-  const params = new URLSearchParams()
-  params.append('financial_year', financialYear)
-  if (productId) {
-    params.append('product_id', productId.toString())
-  }
-  
-  const url = `/api/stock/movement-history?${params.toString()}`
-  const r = await fetch(url, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  
-  return r.json()
-}
+
 
 
 
