@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.49.1] - 2025-08-21
+
+### 🔧 **Easy Deployment Fixes**
+- **Fixed Missing Reverse Proxy**: Added nginx reverse proxy container to handle traffic routing
+- **Added MailHog Container**: Included email testing service for complete functionality
+- **Fixed Frontend Configuration**: Updated frontend to use internal networking instead of direct port exposure
+- **Enhanced Backend Environment**: Added SMTP configuration for email functionality
+- **Improved Health Checks**: Added comprehensive health checks for all services
+- **Created Nginx Configuration**: Added proper nginx.conf with API proxying and security headers
+- **Updated Start Scripts**: Enhanced both Linux and Windows start scripts with better service monitoring
+- **Added Test Scripts**: Created comprehensive test scripts for deployment validation
+- **Enhanced Documentation**: Updated README with complete service information and troubleshooting
+
+### 🐛 **Bug Fixes**
+- **Fixed Port 80 Access**: Application now properly accessible on http://localhost:80
+- **Fixed API Routing**: API calls now properly routed through nginx to backend
+- **Fixed Email Functionality**: MailHog integration enables email testing features
+- **Fixed Service Discovery**: All services now properly networked and discoverable
+
+### 📝 **Documentation**
+- **Updated README**: Complete service documentation with troubleshooting guide
+- **Added Test Scripts**: Both Linux and Windows versions for deployment validation
+- **Enhanced Troubleshooting**: Comprehensive troubleshooting section with common issues
+
 ## [1.49.0] - 2025-08-21
 
 ### 🔄 **MAJOR REBRANDING: IPSC/CashFlow → ProfitPath**

@@ -42,18 +42,39 @@ sleep 30
 echo ""
 echo "🔍 Checking if services are ready..."
 
+# Check database
+if docker-compose exec -T database pg_isready -U profitpath > /dev/null 2>&1; then
+  echo "✅ Database is ready"
+else
+  echo "⚠️  Database is still starting up..."
+fi
+
 # Try to check backend health
-if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+if curl -f http://localhost/api/health > /dev/null 2>&1; then
   echo "✅ Backend is ready"
 else
   echo "⚠️  Backend is still starting up..."
 fi
 
-# Try to check frontend
-if curl -f http://localhost:80 > /dev/null 2>&1; then
+# Try to check frontend via nginx
+if curl -f http://localhost > /dev/null 2>&1; then
   echo "✅ Frontend is ready"
 else
   echo "⚠️  Frontend is still starting up..."
+fi
+
+# Try to check nginx
+if curl -f http://localhost/health > /dev/null 2>&1; then
+  echo "✅ Nginx is ready"
+else
+  echo "⚠️  Nginx is still starting up..."
+fi
+
+# Try to check mailhog
+if curl -f http://localhost:8025 > /dev/null 2>&1; then
+  echo "✅ MailHog is ready"
+else
+  echo "⚠️  MailHog is still starting up..."
 fi
 
 echo ""
@@ -64,8 +85,11 @@ echo ""
 echo "📱 Open your web browser and go to:"
 echo "   http://localhost"
 echo ""
-echo "🔧 Backend API: http://localhost:8000"
-echo "🗄️  Database: localhost:5432"
+echo "🔧 Service URLs:"
+echo "   Web Application: http://localhost"
+echo "   Backend API:     http://localhost:8000"
+echo "   Database:        localhost:5432"
+echo "   Email Testing:   http://localhost:8025"
 echo ""
 echo "💡 Default login:"
 echo "   Username: admin"
@@ -81,4 +105,5 @@ echo "Useful commands:"
 echo "  View logs: docker-compose logs -f"
 echo "  Stop: docker-compose down"
 echo "  Restart: docker-compose restart"
+echo "  Check status: docker-compose ps"
 echo ""
