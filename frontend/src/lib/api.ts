@@ -83,6 +83,8 @@ export type Product = {
   is_active: boolean
 }
 
+
+
 export interface ProductFilters {
   search?: string
   category?: string
@@ -1163,14 +1165,14 @@ export type StockMovement = {
   transactions: StockTransaction[]
 }
 
-export async function apiGetStockMovementHistory(financialYear?: string, productId?: number): Promise<StockMovement[]> {
+export async function apiGetStockMovementHistory(financialYear: string, productId?: number): Promise<StockMovement[]> {
   const params = new URLSearchParams()
-  if (financialYear) params.append('financial_year', financialYear)
-  if (productId) params.append('product_id', productId.toString())
+  params.append('financial_year', financialYear)
+  if (productId) {
+    params.append('product_id', productId.toString())
+  }
   
-  const queryString = params.toString()
-  const url = `/api/stock/movement-history${queryString ? `?${queryString}` : ''}`
-  
+  const url = `/api/stock-movement-history?${params.toString()}`
   const r = await fetch(url, {
     headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
   })
@@ -1215,29 +1217,20 @@ export async function apiGetProductStockMovementHistory(
   return r.json()
 }
 
-export async function apiDownloadStockMovementHistoryPDF(
-  financialYear?: string, 
-  productId?: number,
-  filters?: {
-    productFilter?: string
-    categoryFilter?: string
-    supplierFilter?: string
-    stockLevelFilter?: string
-    entryTypeFilter?: string
-  }
-): Promise<void> {
+export async function apiDownloadStockMovementHistoryPDF(filters: StockHistoryFilters): Promise<Blob> {
   const params = new URLSearchParams()
-  if (financialYear) params.append('financial_year', financialYear)
-  if (productId) params.append('product_id', productId.toString())
-  if (filters?.productFilter && filters.productFilter !== 'all') params.append('product_filter', filters.productFilter)
-  if (filters?.categoryFilter && filters.categoryFilter !== 'all') params.append('category_filter', filters.categoryFilter)
-  if (filters?.supplierFilter && filters.supplierFilter !== 'all') params.append('supplier_filter', filters.supplierFilter)
-  if (filters?.stockLevelFilter && filters.stockLevelFilter !== 'all') params.append('stock_level_filter', filters.stockLevelFilter)
-  if (filters?.entryTypeFilter && filters.entryTypeFilter !== 'all') params.append('entry_type_filter', filters.entryTypeFilter)
   
-  const queryString = params.toString()
-  const url = `/api/stock/movement-history/pdf${queryString ? `?${queryString}` : ''}`
+  if (filters.search) params.append('search', filters.search)
+  if (filters.product_id) params.append('product_id', filters.product_id.toString())
+  if (filters.financial_year) params.append('financial_year', filters.financial_year)
+  if (filters.category) params.append('category', filters.category)
+  if (filters.supplier) params.append('supplier', filters.supplier)
+  if (filters.stock_level) params.append('stock_level', filters.stock_level)
+  if (filters.entry_type) params.append('entry_type', filters.entry_type)
+  if (filters.date_from) params.append('date_from', filters.date_from)
+  if (filters.date_to) params.append('date_to', filters.date_to)
   
+  const url = `/api/stock-movement-history/pdf?${params.toString()}`
   const r = await fetch(url, {
     headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
   })
@@ -1251,26 +1244,7 @@ export async function apiDownloadStockMovementHistoryPDF(
     }
   }
   
-  // Get filename from response headers
-  const contentDisposition = r.headers.get('Content-Disposition')
-  let filename = 'stock_movement_history.pdf'
-  if (contentDisposition) {
-    const filenameMatch = contentDisposition.match(/filename="(.+)"/)
-    if (filenameMatch) {
-      filename = filenameMatch[1]
-    }
-  }
-  
-  // Create blob and download
-  const blob = await r.blob()
-  const url2 = window.URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url2
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  window.URL.revokeObjectURL(url2)
-  document.body.removeChild(a)
+  return r.blob()
 }
 
 export async function apiGetStockMovementHistoryPDFPreview(
