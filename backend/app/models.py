@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey, Date
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import datetime
 from .db import Base
+from .tenant_models import Tenant
 
 
 class Role(Base):
@@ -13,15 +14,21 @@ class Role(Base):
 class User(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     username: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role_id: Mapped[int] = mapped_column(ForeignKey("roles.id"), nullable=False)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     role: Mapped[Role] = relationship()
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
 
 
 class CompanySettings(Base):
     __tablename__ = "company_settings"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     gstin: Mapped[str] = mapped_column(String(15), nullable=False)
     state: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -30,11 +37,15 @@ class CompanySettings(Base):
     # GST System Settings
     gst_enabled_by_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     require_gstin_validation: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
 
 
 class Party(Base):
     __tablename__ = "parties"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     type: Mapped[str] = mapped_column(String(10), nullable=False)  # customer|vendor
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     contact_person: Mapped[str | None] = mapped_column(String(100), nullable=True)
@@ -56,12 +67,14 @@ class Party(Base):
     shipping_pincode: Mapped[str | None] = mapped_column(String(10), nullable=True)
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     gst_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
 class Product(Base):
     __tablename__ = "products"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)  # max length 100
     description: Mapped[str | None] = mapped_column(String(200), nullable=True)  # max length 200
     item_type: Mapped[str] = mapped_column(String(20), nullable=False, default="tradable")  # tradable, consumable, manufactured
@@ -75,23 +88,27 @@ class Product(Base):
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
     hsn: Mapped[str | None] = mapped_column(String(10), nullable=True)
     gst_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
 class StockLedgerEntry(Base):
     __tablename__ = "stock_ledger"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
     qty: Mapped[float] = mapped_column(Float, nullable=False)
     entry_type: Mapped[str] = mapped_column(String(10), nullable=False)  # in|out|adjust
     ref_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
     ref_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class Invoice(Base):
     __tablename__ = "invoices"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     customer_id: Mapped[int] = mapped_column(ForeignKey("parties.id"), nullable=False)
     supplier_id: Mapped[int] = mapped_column(ForeignKey("parties.id"), nullable=False)  # New field for supplier
     invoice_no: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)  # max length 16 as per GST law
@@ -134,6 +151,7 @@ class Invoice(Base):
     # Additional Fields
     notes: Mapped[str | None] = mapped_column(String(200), nullable=True)  # max length 200
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
@@ -143,6 +161,7 @@ class Invoice(Base):
 class InvoiceItem(Base):
     __tablename__ = "invoice_items"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     invoice_id: Mapped[int] = mapped_column(ForeignKey("invoices.id"), nullable=False)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
     description: Mapped[str] = mapped_column(String(200), nullable=False)  # max length 200
@@ -158,12 +177,14 @@ class InvoiceItem(Base):
     igst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     utgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)  # New field for UTGST
     cess: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)  # New field for CESS
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
 
 
 class Payment(Base):
     __tablename__ = "payments"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     invoice_id: Mapped[int] = mapped_column(ForeignKey("invoices.id"), nullable=False)
     payment_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     payment_amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
@@ -172,12 +193,14 @@ class Payment(Base):
     reference_number: Mapped[str | None] = mapped_column(String(100), nullable=True)  # Cheque number, UPI reference, etc.
     notes: Mapped[str | None] = mapped_column(String(200), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
 class Purchase(Base):
     __tablename__ = "purchases"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     vendor_id: Mapped[int] = mapped_column(ForeignKey("parties.id"), nullable=False)
     purchase_no: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)  # max length 16 as per GST law
     date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
@@ -214,12 +237,14 @@ class Purchase(Base):
     notes: Mapped[str | None] = mapped_column(String(200), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="Draft")  # Draft, Received, Paid, Partially Paid
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
 class PurchaseItem(Base):
     __tablename__ = "purchase_items"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     purchase_id: Mapped[int] = mapped_column(ForeignKey("purchases.id"), nullable=False)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
     description: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -235,12 +260,14 @@ class PurchaseItem(Base):
     igst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     utgst: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)  # UTGST for Union Territories
     cess: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)  # CESS amount
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
 
 
 class PurchasePayment(Base):
     __tablename__ = "purchase_payments"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     purchase_id: Mapped[int] = mapped_column(ForeignKey("purchases.id"), nullable=False)
     payment_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     payment_amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
@@ -249,12 +276,14 @@ class PurchasePayment(Base):
     reference_number: Mapped[str | None] = mapped_column(String(100), nullable=True)  # Cheque number, UPI reference, etc.
     notes: Mapped[str | None] = mapped_column(String(200), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
 class Expense(Base):
     __tablename__ = "expenses"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     expense_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     expense_type: Mapped[str] = mapped_column(String(100), nullable=False)  # Salary, Rent, Electricity, etc.
     category: Mapped[str] = mapped_column(String(100), nullable=False)  # Direct/COGS, Indirect/Operating
@@ -270,6 +299,7 @@ class Expense(Base):
     total_amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
@@ -279,6 +309,7 @@ class Expense(Base):
 class AuditTrail(Base):
     __tablename__ = "audit_trail"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     action: Mapped[str] = mapped_column(String(50), nullable=False)  # CREATE, UPDATE, DELETE, LOGIN, LOGOUT
     table_name: Mapped[str] = mapped_column(String(50), nullable=False)  # products, invoices, parties, etc.
@@ -287,12 +318,14 @@ class AuditTrail(Base):
     new_values: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON of new values
     ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)  # IPv4 or IPv6
     user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class RecurringInvoiceTemplate(Base):
     __tablename__ = "recurring_invoice_templates"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     customer_id: Mapped[int] = mapped_column(ForeignKey("parties.id"), nullable=False)
     supplier_id: Mapped[int] = mapped_column(ForeignKey("parties.id"), nullable=False)
@@ -317,12 +350,14 @@ class RecurringInvoiceTemplate(Base):
     # Status
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
 class RecurringInvoiceTemplateItem(Base):
     __tablename__ = "recurring_invoice_template_items"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     template_id: Mapped[int] = mapped_column(ForeignKey("recurring_invoice_templates.id"), nullable=False)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
     description: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -332,23 +367,27 @@ class RecurringInvoiceTemplateItem(Base):
     discount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False, default=0)
     discount_type: Mapped[str] = mapped_column(String(20), nullable=False, default="Percentage")
     gst_rate: Mapped[float] = mapped_column(Float, nullable=False)
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class RecurringInvoice(Base):
     __tablename__ = "recurring_invoices"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     template_id: Mapped[int] = mapped_column(ForeignKey("recurring_invoice_templates.id"), nullable=False)
     invoice_id: Mapped[int] = mapped_column(ForeignKey("invoices.id"), nullable=False)
     generation_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     due_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="Generated")  # Generated, Sent, Paid
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class PurchaseOrder(Base):
     __tablename__ = "purchase_orders"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     vendor_id: Mapped[int] = mapped_column(ForeignKey("parties.id"), nullable=False)
     po_number: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)
     date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
@@ -390,12 +429,14 @@ class PurchaseOrder(Base):
     # Additional Fields
     notes: Mapped[str | None] = mapped_column(String(200), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
 class PurchaseOrderItem(Base):
     __tablename__ = "purchase_order_items"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     purchase_order_id: Mapped[int] = mapped_column(ForeignKey("purchase_orders.id"), nullable=False)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
     description: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -406,12 +447,14 @@ class PurchaseOrderItem(Base):
     discount_type: Mapped[str] = mapped_column(String(20), nullable=False, default="Percentage")
     gst_rate: Mapped[float] = mapped_column(Float, nullable=False)
     amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class InvoiceTemplate(Base):
     __tablename__ = "invoice_templates"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str | None] = mapped_column(String(200), nullable=True)
     
@@ -446,5 +489,6 @@ class InvoiceTemplate(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
