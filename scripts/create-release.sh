@@ -37,7 +37,8 @@ git tag -a "v$VERSION" -m "Release version $VERSION"
 
 # Push to GitHub
 echo "📤 Pushing to GitHub..."
-git push origin main
+CURRENT_BRANCH=$(git branch --show-current)
+git push origin $CURRENT_BRANCH
 git push origin "v$VERSION"
 
 echo ""
