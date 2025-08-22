@@ -643,26 +643,7 @@ export type Expense = {
   updated_at: string
 }
 
-export type CashflowSummary = {
-  period: {
-    start_date: string
-    end_date: string
-  }
-  income: {
-    total_invoice_amount: number
-    total_payments_received: number
-  }
-  expenses: {
-    total_expenses: number
-    total_purchase_payments: number
-    total_outflow: number
-  }
-  cashflow: {
-    net_cashflow: number
-    cash_inflow: number
-    cash_outflow: number
-  }
-}
+
 
 export async function apiCreateInvoice(payload: InvoiceCreate): Promise<Invoice> {
   const r = await fetch('/api/invoices', {
@@ -1172,7 +1153,7 @@ export async function apiGetStockMovementHistory(financialYear: string, productI
     params.append('product_id', productId.toString())
   }
   
-  const url = `/api/stock-movement-history?${params.toString()}`
+  const url = `/api/stock/movement-history?${params.toString()}`
   const r = await fetch(url, {
     headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
   })
@@ -2123,6 +2104,33 @@ export async function apiGetInvoicePDF(invoiceId: number, templateId?: number): 
   }
   return r.blob()
 }
+
+// Stock Movement History API Functions
+export async function apiGetStockMovementHistory(financialYear: string, productId?: number): Promise<StockMovement[]> {
+  const params = new URLSearchParams()
+  params.append('financial_year', financialYear)
+  if (productId) {
+    params.append('product_id', productId.toString())
+  }
+  
+  const url = `/api/stock/movement-history?${params.toString()}`
+  const r = await fetch(url, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+
 
 
 
