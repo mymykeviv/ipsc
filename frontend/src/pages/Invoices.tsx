@@ -9,6 +9,7 @@ import { ComprehensiveInvoiceForm } from '../components/ComprehensiveInvoiceForm
 import { PDFViewer } from '../components/PDFViewer'
 import { EmailFormModal } from '../components/EmailFormModal'
 import { DateFilter, DateRange } from '../components/DateFilter'
+import { useSavedPresets } from '../hooks/useSavedPresets'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
@@ -55,6 +56,9 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
     endDate: new Date().toISOString().slice(0, 10)
   })
   const [isDateFilterActive, setIsDateFilterActive] = useState(true)
+  
+  // Saved presets functionality
+  const { savedPresets, savePreset, deletePreset } = useSavedPresets()
 
   useEffect(() => {
     if (mode === 'manage') {
@@ -418,13 +422,16 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
-          <DateFilter
-            value={dateFilter}
-            onChange={(newDateFilter) => {
-              setDateFilter(newDateFilter)
-              setIsDateFilterActive(true)
-            }}
-          />
+                      <DateFilter
+              value={dateFilter}
+              onChange={(newDateFilter) => {
+                setDateFilter(newDateFilter)
+                setIsDateFilterActive(true)
+              }}
+              savedPresets={savedPresets}
+              onSavePreset={savePreset}
+              onDeletePreset={deletePreset}
+            />
         </div>
       </EnhancedFilterBar>
 

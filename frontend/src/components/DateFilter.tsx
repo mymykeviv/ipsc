@@ -6,6 +6,13 @@ export interface DateRange {
   endDate: string
 }
 
+export interface SavedPreset {
+  id: string
+  name: string
+  range: DateRange
+  createdAt: string
+}
+
 export interface DateFilterProps {
   value: DateRange
   onChange: (range: DateRange) => void
@@ -20,6 +27,10 @@ export interface DateFilterProps {
   onComparisonChange?: (range: DateRange | null) => void
   disabled?: boolean
   className?: string
+  showSavedPresets?: boolean
+  onSavePreset?: (preset: Omit<SavedPreset, 'id' | 'createdAt'>) => void
+  onDeletePreset?: (presetId: string) => void
+  savedPresets?: SavedPreset[]
 }
 
 export function DateFilter({
@@ -31,11 +42,17 @@ export function DateFilter({
   comparisonRange,
   onComparisonChange,
   disabled = false,
-  className = ''
+  className = '',
+  showSavedPresets = true,
+  onSavePreset,
+  onDeletePreset,
+  savedPresets = []
 }: DateFilterProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [tempRange, setTempRange] = useState<DateRange>(value)
   const [tempComparisonRange, setTempComparisonRange] = useState<DateRange | null>(comparisonRange || null)
+  const [showSavePresetModal, setShowSavePresetModal] = useState(false)
+  const [presetName, setPresetName] = useState('')
   const dateFilterRef = useRef<HTMLDivElement>(null)
 
   // Default presets
@@ -143,6 +160,20 @@ export function DateFilter({
       }
     },
     {
+      label: 'Last Quarter',
+      value: 'lastQuarter',
+      getRange: () => {
+        const now = new Date()
+        const quarter = Math.floor(now.getMonth() / 3)
+        const start = new Date(now.getFullYear(), (quarter - 1) * 3, 1)
+        const end = new Date(now.getFullYear(), quarter * 3, 0)
+        return {
+          startDate: start.toISOString().slice(0, 10),
+          endDate: end.toISOString().slice(0, 10)
+        }
+      }
+    },
+    {
       label: 'This Year',
       value: 'thisYear',
       getRange: () => {
@@ -154,365 +185,257 @@ export function DateFilter({
           endDate: end.toISOString().slice(0, 10)
         }
       }
+    },
+    {
+      label: 'Last Year',
+      value: 'lastYear',
+      getRange: () => {
+        const now = new Date()
+        const start = new Date(now.getFullYear() - 1, 0, 1)
+        const end = new Date(now.getFullYear() - 1, 11, 31)
+        return {
+          startDate: start.toISOString().slice(0, 10),
+          endDate: end.toISOString().slice(0, 10)
+        }
+      }
     }
   ], [])
 
-  // Financial year presets (April to March)
-  const financialYearPresets = useMemo(() => {
-    const currentYear = new Date().getFullYear()
-    const currentMonth = new Date().getMonth()
-    const financialYear = currentMonth >= 3 ? currentYear : currentYear - 1
+  // All presets including saved ones
+  const allPresets = useMemo(() => {
+    const defaultPresetItems = defaultPresets.map(preset => ({
+      ...preset,
+      type: 'default' as const
+    }))
     
-    return [
-      {
-        label: `FY ${financialYear}-${financialYear + 1}`,
-        value: 'currentFY',
-        getRange: () => {
-          const start = new Date(financialYear, 3, 1) // April 1st
-          const end = new Date(financialYear + 1, 2, 31) // March 31st
-          return {
-            startDate: start.toISOString().slice(0, 10),
-            endDate: end.toISOString().slice(0, 10)
-          }
-        }
-      },
-      {
-        label: `FY ${financialYear - 1}-${financialYear}`,
-        value: 'previousFY',
-        getRange: () => {
-          const start = new Date(financialYear - 1, 3, 1) // April 1st
-          const end = new Date(financialYear, 2, 31) // March 31st
-          return {
-            startDate: start.toISOString().slice(0, 10),
-            endDate: end.toISOString().slice(0, 10)
-          }
-        }
-      }
-    ]
-  }, [])
+    const savedPresetItems = savedPresets.map(preset => ({
+      label: preset.name,
+      value: preset.id,
+      getRange: () => preset.range,
+      type: 'saved' as const,
+      preset
+    }))
+    
+    return [...defaultPresetItems, ...savedPresetItems]
+  }, [defaultPresets, savedPresets])
 
-  const allPresets = [...defaultPresets, ...(showFinancialPeriods ? financialYearPresets : []), ...presets]
-
-  useEffect(() => {
-    setTempRange(value)
-  }, [value])
-
-  useEffect(() => {
-    setTempComparisonRange(comparisonRange || null)
-  }, [comparisonRange])
-
-  const handlePresetClick = (preset: typeof allPresets[0]) => {
+  // Handle preset selection
+  const handlePresetSelect = (preset: typeof allPresets[0]) => {
     const newRange = preset.getRange()
     setTempRange(newRange)
     onChange(newRange)
     setIsOpen(false)
   }
 
+  // Handle save preset
+  const handleSavePreset = () => {
+    if (presetName.trim() && onSavePreset) {
+      onSavePreset({
+        name: presetName.trim(),
+        range: tempRange
+      })
+      setPresetName('')
+      setShowSavePresetModal(false)
+    }
+  }
+
+  // Handle delete preset
+  const handleDeletePreset = (presetId: string) => {
+    if (onDeletePreset) {
+      onDeletePreset(presetId)
+    }
+  }
+
+  // Handle apply changes
   const handleApply = () => {
     onChange(tempRange)
-    if (showComparison && onComparisonChange) {
+    if (onComparisonChange && tempComparisonRange) {
       onComparisonChange(tempComparisonRange)
     }
     setIsOpen(false)
   }
 
+  // Handle cancel
   const handleCancel = () => {
     setTempRange(value)
     setTempComparisonRange(comparisonRange || null)
     setIsOpen(false)
   }
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dateFilterRef.current && !dateFilterRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  // Update temp range when value changes
+  useEffect(() => {
+    setTempRange(value)
+  }, [value])
+
+  // Update temp comparison range when comparison range changes
+  useEffect(() => {
+    setTempComparisonRange(comparisonRange || null)
+  }, [comparisonRange])
+
   const formatDateRange = (range: DateRange) => {
-    const start = new Date(range.startDate).toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    })
-    const end = new Date(range.endDate).toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    })
+    const start = new Date(range.startDate).toLocaleDateString()
+    const end = new Date(range.endDate).toLocaleDateString()
     return start === end ? start : `${start} - ${end}`
   }
 
-  const getActivePreset = () => {
-    return allPresets.find(preset => {
-      const presetRange = preset.getRange()
-      return presetRange.startDate === value.startDate && presetRange.endDate === value.endDate
-    })
-  }
-
-  const activePreset = getActivePreset()
-
   return (
-    <div ref={dateFilterRef} className={`date-filter ${className}`} style={{ position: 'relative' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '8px 12px',
-          border: '1px solid #ced4da',
-          borderRadius: '4px',
-          backgroundColor: disabled ? '#f8f9fa' : 'white',
-          cursor: disabled ? 'not-allowed' : 'pointer',
-          minWidth: '200px'
-        }}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+    <div className={`relative ${className}`} ref={dateFilterRef}>
+      <Button
+        onClick={() => setIsOpen(!isOpen)}
+        disabled={disabled}
+        className="flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-gray-50"
       >
-        <span style={{ fontSize: '16px' }}>📅</span>
-        <span style={{ 
-          fontSize: '14px', 
-          color: disabled ? '#6c757d' : '#495057',
-          flex: 1,
-          textAlign: 'left'
-        }}>
-          {activePreset ? activePreset.label : formatDateRange(value)}
-        </span>
-        <span style={{ fontSize: '12px', color: '#6c757d' }}>
-          {isOpen ? '▲' : '▼'}
-        </span>
-      </div>
+        <span>📅</span>
+        <span>{formatDateRange(value)}</span>
+        <span>▼</span>
+      </Button>
 
-      {isOpen && !disabled && (
-        <div style={{
-          position: 'fixed', // Use fixed positioning to escape parent containers
-          top: dateFilterRef.current ? dateFilterRef.current.getBoundingClientRect().bottom + 4 : '100%',
-          left: dateFilterRef.current ? dateFilterRef.current.getBoundingClientRect().left : 0,
-          width: '400px', // Fixed width for date picker
-          backgroundColor: 'white',
-          border: '1px solid #ced4da',
-          borderRadius: '4px',
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-          zIndex: 9999,
-          padding: '16px',
-          marginTop: '4px'
-        }}>
-          {/* Presets */}
-          <div style={{ marginBottom: '16px' }}>
-            <h4 style={{ 
-              margin: '0 0 12px 0', 
-              fontSize: '14px', 
-              fontWeight: '600', 
-              color: '#495057' 
-            }}>
-              Quick Presets
-            </h4>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-              gap: '8px'
-            }}>
-              {allPresets.map((preset) => (
-                <button
-                  key={preset.value}
-                  onClick={() => handlePresetClick(preset)}
-                  style={{
-                    padding: '6px 12px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px',
-                    backgroundColor: 'white',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f8f9fa'
-                    e.currentTarget.style.borderColor = '#007bff'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'white'
-                    e.currentTarget.style.borderColor = '#ced4da'
-                  }}
-                >
-                  {preset.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Custom Date Range */}
-          <div style={{ marginBottom: '16px' }}>
-            <h4 style={{ 
-              margin: '0 0 12px 0', 
-              fontSize: '14px', 
-              fontWeight: '600', 
-              color: '#495057' 
-            }}>
-              Custom Range
-            </h4>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '12px'
-            }}>
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '4px', 
-                  fontSize: '12px', 
-                  color: '#6c757d' 
-                }}>
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                  value={tempRange.startDate}
-                  onChange={(e) => setTempRange(prev => ({ ...prev, startDate: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '6px 8px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px',
-                    fontSize: '12px'
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '4px', 
-                  fontSize: '12px', 
-                  color: '#6c757d' 
-                }}>
-                  End Date
-                </label>
-                <input
-                  type="date"
-                  value={tempRange.endDate}
-                  onChange={(e) => setTempRange(prev => ({ ...prev, endDate: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '6px 8px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px',
-                    fontSize: '12px'
-                  }}
-                />
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-1 w-80 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+          <div className="p-4">
+            {/* Presets Section */}
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Quick Presets</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {allPresets.map((preset) => (
+                  <button
+                    key={preset.value}
+                    onClick={() => handlePresetSelect(preset)}
+                    className="text-left px-3 py-2 text-sm border rounded hover:bg-gray-50"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>{preset.label}</span>
+                      {preset.type === 'saved' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeletePreset(preset.preset.id)
+                          }}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
-          </div>
 
-          {/* Comparison Range */}
-          {showComparison && (
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginBottom: '12px'
-              }}>
-                <input
-                  type="checkbox"
-                  id="enableComparison"
-                  checked={tempComparisonRange !== null}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      const comparisonRange = {
-                        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-                        endDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-                      }
-                      setTempComparisonRange(comparisonRange)
-                    } else {
-                      setTempComparisonRange(null)
-                    }
-                  }}
-                  style={{ margin: 0 }}
-                />
-                <label htmlFor="enableComparison" style={{ 
-                  fontSize: '14px', 
-                  fontWeight: '600', 
-                  color: '#495057',
-                  cursor: 'pointer'
-                }}>
-                  Compare with Previous Period
-                </label>
-              </div>
-              
-              {tempComparisonRange && (
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '12px',
-                  padding: '12px',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '4px'
-                }}>
-                  <div>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '4px', 
-                      fontSize: '12px', 
-                      color: '#6c757d' 
-                    }}>
-                      Comparison Start
-                    </label>
-                    <input
-                      type="date"
-                      value={tempComparisonRange.startDate}
-                      onChange={(e) => setTempComparisonRange(prev => 
-                        prev ? { ...prev, startDate: e.target.value } : null
-                      )}
-                      style={{
-                        width: '100%',
-                        padding: '6px 8px',
-                        border: '1px solid #ced4da',
-                        borderRadius: '4px',
-                        fontSize: '12px'
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '4px', 
-                      fontSize: '12px', 
-                      color: '#6c757d' 
-                    }}>
-                      Comparison End
-                    </label>
-                    <input
-                      type="date"
-                      value={tempComparisonRange.endDate}
-                      onChange={(e) => setTempComparisonRange(prev => 
-                        prev ? { ...prev, endDate: e.target.value } : null
-                      )}
-                      style={{
-                        width: '100%',
-                        padding: '6px 8px',
-                        border: '1px solid #ced4da',
-                        borderRadius: '4px',
-                        fontSize: '12px'
-                      }}
-                    />
-                  </div>
+            {/* Custom Date Range */}
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Custom Range</h3>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    value={tempRange.startDate}
+                    onChange={(e) => setTempRange(prev => ({ ...prev, startDate: e.target.value }))}
+                    className="w-full px-2 py-1 text-sm border rounded"
+                  />
                 </div>
-              )}
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">End Date</label>
+                  <input
+                    type="date"
+                    value={tempRange.endDate}
+                    onChange={(e) => setTempRange(prev => ({ ...prev, endDate: e.target.value }))}
+                    className="w-full px-2 py-1 text-sm border rounded"
+                  />
+                </div>
+              </div>
             </div>
-          )}
 
-          {/* Actions */}
-          <div style={{
-            display: 'flex',
-            gap: '8px',
-            justifyContent: 'flex-end'
-          }}>
-            <Button
-              onClick={handleCancel}
-              variant="secondary"
-              style={{ fontSize: '12px', padding: '6px 12px' }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleApply}
-              variant="primary"
-              style={{ fontSize: '12px', padding: '6px 12px' }}
-            >
-              Apply
-            </Button>
+            {/* Save Preset Button */}
+            {showSavedPresets && onSavePreset && (
+              <div className="mb-4">
+                <button
+                  onClick={() => setShowSavePresetModal(true)}
+                  className="w-full px-3 py-2 text-sm text-blue-600 border border-blue-200 rounded hover:bg-blue-50"
+                >
+                  💾 Save Current Range as Preset
+                </button>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={handleApply}
+                className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Apply
+              </button>
+              <button
+                onClick={handleCancel}
+                className="flex-1 px-3 py-2 text-sm border rounded hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Preset Modal */}
+      {showSavePresetModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h3 className="text-lg font-medium mb-4">Save Date Range Preset</h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Preset Name
+              </label>
+              <input
+                type="text"
+                value={presetName}
+                onChange={(e) => setPresetName(e.target.value)}
+                placeholder="Enter preset name..."
+                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoFocus
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Date Range
+              </label>
+              <div className="text-sm text-gray-600">
+                {formatDateRange(tempRange)}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSavePreset}
+                disabled={!presetName.trim()}
+                className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => {
+                  setShowSavePresetModal(false)
+                  setPresetName('')
+                }}
+                className="flex-1 px-3 py-2 text-sm border rounded hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
