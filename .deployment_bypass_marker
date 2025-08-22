@@ -1,4 +1,4 @@
 DEPLOYMENT_BYPASSED_FRONTEND_TESTS=true
 Bypass reason: Frontend test memory exhaustion (4GB+ heap usage)
-Bypass date: Fri Aug 22 12:56:12 IST 2025
+Bypass date: Fri Aug 22 12:57:25 IST 2025
 TODO: Fix vitest memory configuration and re-enable tests

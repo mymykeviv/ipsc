@@ -11,6 +11,27 @@ A comprehensive business management system designed for Indian businesses with G
 - ✅ Automatic Cache Cleaning in all deployments
 - ✅ Kubernetes Production Support
 - ✅ Consolidated Documentation Structure (reduced from 46 to 15 files)
+- ✅ **NEW: One-Click Deployment Packages** - No technical knowledge required!
+
+## 📦 Download & Deploy
+
+### 🎯 **For End Users - Easy Deployment**
+
+**No setup required! Just download and run:**
+
+1. **Download the latest release** from [GitHub Releases](https://github.com/your-username/ipsc/releases)
+2. **Extract the package** to any directory
+3. **Run the startup script:**
+   ```bash
+   # Windows: Double-click start.bat
+   # Mac/Linux: Double-click start.sh or run ./start.sh
+   ```
+4. **Open your browser** and go to http://localhost
+5. **Login** with admin / admin123
+
+**That's it!** No dependencies, no commands, no configuration needed.
+
+### 🚀 **For Developers - Local Development**
 
 ## 📋 Quick Start
 

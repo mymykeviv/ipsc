@@ -1,0 +1,615 @@
+name: Create User-Friendly Deployment Artifacts
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.42.0)'
+        required: true
+        type: string
+      create_release:
+        description: 'Create GitHub release with artifacts'
+        required: true
+        default: true
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-package:
+    name: Build and Create Deployment Package
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+          echo "Version set to: ${{ steps.version.outputs.version }}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          target: production
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/backend:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/backend:latest
+          labels: |
+            version=${{ steps.version.outputs.version }}
+            build-date=${{ github.event.head_commit.timestamp }}
+            commit=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Build and push Frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          target: production
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:latest
+          labels: |
+            version=${{ steps.version.outputs.version }}
+            build-date=${{ github.event.head_commit.timestamp }}
+            commit=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Create deployment package
+        run: |
+          echo "📦 Creating deployment package for version ${{ steps.version.outputs.version }}"
+          
+          # Create package directory
+          mkdir -p profitpath-deployment
+          cd profitpath-deployment
+          
+          # Create user-friendly docker-compose file
+          cat > docker-compose.yml << 'EOF'
+          version: '3.8'
+          
+          services:
+            # Database Service
+            database:
+              image: postgres:16-alpine
+              container_name: profitpath-database
+              environment:
+                POSTGRES_USER: profitpath
+                POSTGRES_PASSWORD: profitpath123
+                POSTGRES_DB: profitpath
+              ports:
+                - "5432:5432"
+              volumes:
+                - database_data:/var/lib/postgresql/data
+              healthcheck:
+                test: ["CMD-SHELL", "pg_isready -U profitpath"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+              restart: unless-stopped
+              networks:
+                - profitpath-network
+          
+            # Backend API Service
+            backend:
+              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/backend:${{ steps.version.outputs.version }}
+              container_name: profitpath-backend
+              environment:
+                ENVIRONMENT: production
+                DATABASE_URL: postgresql+psycopg://profitpath:profitpath123@database:5432/profitpath
+                SECRET_KEY: your-secret-key-change-this-in-production
+                DEBUG: "false"
+                LOG_LEVEL: INFO
+                CORS_ORIGINS: "*"
+              depends_on:
+                database:
+                  condition: service_healthy
+              ports:
+                - "8000:8000"
+              volumes:
+                - backend_logs:/app/logs
+              command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+              restart: unless-stopped
+              networks:
+                - profitpath-network
+          
+            # Frontend Web Application
+            frontend:
+              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:${{ steps.version.outputs.version }}
+              container_name: profitpath-frontend
+              ports:
+                - "80:80"
+              environment:
+                VITE_API_URL: http://localhost:8000
+                VITE_APP_ENV: production
+              depends_on:
+                - backend
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:80"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+              restart: unless-stopped
+              networks:
+                - profitpath-network
+          
+          volumes:
+            database_data:
+            backend_logs:
+          
+          networks:
+            profitpath-network:
+              driver: bridge
+          EOF
+          
+          # Create Windows startup script
+          cat > start.bat << 'EOF'
+          @echo off
+          echo.
+          echo ========================================
+          echo    ProfitPath v${{ steps.version.outputs.version }}
+          echo    Starting Application...
+          echo ========================================
+          echo.
+          
+          REM Check if Docker is running
+          docker info >nul 2>&1
+          if errorlevel 1 (
+            echo ERROR: Docker is not running!
+            echo Please start Docker Desktop and try again.
+            echo.
+            pause
+            exit /b 1
+          )
+          
+          echo Docker is running. Starting services...
+          echo.
+          
+          REM Pull latest images
+          echo Downloading latest application files...
+          docker-compose pull
+          
+          REM Start services
+          echo Starting ProfitPath services...
+          docker-compose up -d
+          
+          REM Wait for services
+          echo.
+          echo Waiting for services to start (this may take a few minutes)...
+          timeout /t 30 /nobreak >nul
+          
+          REM Check if services are running
+          echo.
+          echo Checking if services are ready...
+          
+          REM Try to check backend health
+          curl -f http://localhost:8000/health >nul 2>&1
+          if errorlevel 1 (
+            echo WARNING: Backend is still starting up...
+          ) else (
+            echo ✓ Backend is ready
+          )
+          
+          REM Try to check frontend
+          curl -f http://localhost:80 >nul 2>&1
+          if errorlevel 1 (
+            echo WARNING: Frontend is still starting up...
+          ) else (
+            echo ✓ Frontend is ready
+          )
+          
+          echo.
+          echo ========================================
+          echo    🎉 ProfitPath is starting up!
+          echo ========================================
+          echo.
+          echo 📱 Open your web browser and go to:
+          echo    http://localhost
+          echo.
+          echo 🔧 Backend API: http://localhost:8000
+          echo 🗄️  Database: localhost:5432
+          echo.
+          echo 💡 Default login:
+          echo    Username: admin
+          echo    Password: admin123
+          echo.
+          echo ⏳ If the page doesn't load immediately,
+          echo    wait a few more minutes for all services
+          echo    to fully start up.
+          echo.
+          echo ========================================
+          echo.
+          echo Useful commands:
+          echo   View logs: docker-compose logs -f
+          echo   Stop: docker-compose down
+          echo   Restart: docker-compose restart
+          echo.
+          pause
+          EOF
+          
+          # Create Linux/Mac startup script
+          cat > start.sh << 'EOF'
+          #!/bin/bash
+          
+          echo ""
+          echo "========================================"
+          echo "   ProfitPath v${{ steps.version.outputs.version }}"
+          echo "   Starting Application..."
+          echo "========================================"
+          echo ""
+          
+          # Check if Docker is running
+          if ! docker info > /dev/null 2>&1; then
+            echo "❌ ERROR: Docker is not running!"
+            echo "   Please start Docker and try again."
+            echo ""
+            exit 1
+          fi
+          
+          # Check if docker-compose is available
+          if ! command -v docker-compose &> /dev/null; then
+            echo "❌ ERROR: docker-compose is not installed!"
+            echo "   Please install docker-compose and try again."
+            echo ""
+            exit 1
+          fi
+          
+          echo "✅ Docker is running. Starting services..."
+          echo ""
+          
+          # Pull latest images
+          echo "📥 Downloading latest application files..."
+          docker-compose pull
+          
+          # Start services
+          echo "🚀 Starting ProfitPath services..."
+          docker-compose up -d
+          
+          # Wait for services
+          echo ""
+          echo "⏳ Waiting for services to start (this may take a few minutes)..."
+          sleep 30
+          
+          # Check if services are running
+          echo ""
+          echo "🔍 Checking if services are ready..."
+          
+          # Try to check backend health
+          if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+            echo "✅ Backend is ready"
+          else
+            echo "⚠️  Backend is still starting up..."
+          fi
+          
+          # Try to check frontend
+          if curl -f http://localhost:80 > /dev/null 2>&1; then
+            echo "✅ Frontend is ready"
+          else
+            echo "⚠️  Frontend is still starting up..."
+          fi
+          
+          echo ""
+          echo "========================================"
+          echo "   🎉 ProfitPath is starting up!"
+          echo "========================================"
+          echo ""
+          echo "📱 Open your web browser and go to:"
+          echo "   http://localhost"
+          echo ""
+          echo "🔧 Backend API: http://localhost:8000"
+          echo "🗄️  Database: localhost:5432"
+          echo ""
+          echo "💡 Default login:"
+          echo "   Username: admin"
+          echo "   Password: admin123"
+          echo ""
+          echo "⏳ If the page doesn't load immediately,"
+          echo "   wait a few more minutes for all services"
+          echo "   to fully start up."
+          echo ""
+          echo "========================================"
+          echo ""
+          echo "Useful commands:"
+          echo "  View logs: docker-compose logs -f"
+          echo "  Stop: docker-compose down"
+          echo "  Restart: docker-compose restart"
+          echo ""
+          EOF
+          
+          # Create stop script for Linux/Mac
+          cat > stop.sh << 'EOF'
+          #!/bin/bash
+          
+          echo "🛑 Stopping ProfitPath..."
+          docker-compose down
+          echo "✅ ProfitPath stopped"
+          echo ""
+          echo "To start again, run: ./start.sh"
+          EOF
+          
+          # Create stop script for Windows
+          cat > stop.bat << 'EOF'
+          @echo off
+          echo.
+          echo Stopping ProfitPath...
+          docker-compose down
+          echo.
+          echo ProfitPath stopped.
+          echo.
+          echo To start again, run: start.bat
+          echo.
+          pause
+          EOF
+          
+          # Create user-friendly README
+          cat > README.md << 'EOF'
+          # ProfitPath v${{ steps.version.outputs.version }} - Easy Deployment Package
+          
+          ## 🎉 Welcome to ProfitPath!
+          
+          This package contains everything you need to run ProfitPath on your computer. 
+          **No technical knowledge required!**
+          
+          ## 🚀 Quick Start (3 Simple Steps)
+          
+          ### Step 1: Install Docker
+          - **Windows/Mac**: Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+          - **Linux**: Install Docker using your package manager
+          
+          ### Step 2: Start ProfitPath
+          - **Windows**: Double-click `start.bat`
+          - **Mac/Linux**: Double-click `start.sh` or run `./start.sh` in terminal
+          
+          ### Step 3: Open Your Browser
+          - Go to: **http://localhost**
+          - Login with: **admin** / **admin123**
+          
+          **That's it!** 🎉
+          
+          ## 📱 What You Get
+          
+          - **Web Application**: http://localhost
+          - **Backend API**: http://localhost:8000
+          - **Database**: localhost:5432
+          
+          ## 🔧 Management Commands
+          
+          ### Windows Users:
+          ```cmd
+          start.bat    - Start ProfitPath
+          stop.bat     - Stop ProfitPath
+          ```
+          
+          ### Mac/Linux Users:
+          ```bash
+          ./start.sh   - Start ProfitPath
+          ./stop.sh    - Stop ProfitPath
+          ```
+          
+          ## 📊 System Requirements
+          
+          - **Operating System**: Windows 10+, macOS 10.14+, or Linux
+          - **RAM**: 4GB minimum, 8GB recommended
+          - **Storage**: 10GB free space
+          - **Docker**: Latest version
+          
+          ## 🆘 Troubleshooting
+          
+          ### "Docker is not running" Error
+          - Start Docker Desktop (Windows/Mac)
+          - Start Docker service (Linux)
+          
+          ### "Page not found" Error
+          - Wait 2-3 minutes for services to start
+          - Check if Docker containers are running
+          
+          ### "Port already in use" Error
+          - Stop other applications using ports 80, 8000, or 5432
+          - Or change ports in docker-compose.yml
+          
+          ## 🔒 Security Notes
+          
+          - Change default passwords in production
+          - This setup is for local use only
+          - For production, configure proper security settings
+          
+          ## 📞 Need Help?
+          
+          - Check the logs: `docker-compose logs -f`
+          - Visit our GitHub repository for support
+          - Create an issue if you need help
+          
+          ---
+          *ProfitPath v${{ steps.version.outputs.version }} - Built on ${{ github.event.head_commit.timestamp }}*
+          EOF
+          
+          # Create version file
+          echo "${{ steps.version.outputs.version }}" > VERSION
+          
+          # Make scripts executable
+          chmod +x start.sh
+          chmod +x stop.sh
+          
+          echo "✅ Deployment package created successfully"
+
+      - name: Create compressed packages
+        run: |
+          echo "📦 Creating compressed packages..."
+          
+          # Create ZIP package
+          zip -r profitpath-v${{ steps.version.outputs.version }}-windows.zip profitpath-deployment/
+          
+          # Create TAR.GZ package
+          tar -czf profitpath-v${{ steps.version.outputs.version }}-linux-mac.tar.gz -C profitpath-deployment .
+          
+          # Create universal package
+          tar -czf profitpath-v${{ steps.version.outputs.version }}-universal.tar.gz profitpath-deployment/
+          
+          echo "✅ Compressed packages created:"
+          echo "  - profitpath-v${{ steps.version.outputs.version }}-windows.zip"
+          echo "  - profitpath-v${{ steps.version.outputs.version }}-linux-mac.tar.gz"
+          echo "  - profitpath-v${{ steps.version.outputs.version }}-universal.tar.gz"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: profitpath-v${{ steps.version.outputs.version }}-deployment-packages
+          path: |
+            profitpath-v${{ steps.version.outputs.version }}-windows.zip
+            profitpath-v${{ steps.version.outputs.version }}-linux-mac.tar.gz
+            profitpath-v${{ steps.version.outputs.version }}-universal.tar.gz
+          retention-days: 30
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build-and-package
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true' || github.event_name == 'push'
+    
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: profitpath-v${{ needs.build-and-package.outputs.version }}-deployment-packages
+          path: ./artifacts
+
+      - name: Create Release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ needs.build-and-package.outputs.version }}
+          release_name: ProfitPath v${{ needs.build-and-package.outputs.version }} - Easy Deployment
+          body: |
+            ## 🎉 ProfitPath v${{ needs.build-and-package.outputs.version }} - Easy Deployment Release
+            
+            ### 📦 What's New
+            - **One-click deployment** - No technical knowledge required
+            - **Cross-platform support** - Windows, Mac, and Linux
+            - **Self-contained package** - Everything included
+            - **User-friendly scripts** - Simple start/stop commands
+            
+            ### 🚀 Quick Start (3 Steps)
+            1. **Install Docker** (if not already installed)
+            2. **Download and extract** this package
+            3. **Run start script** and open http://localhost
+            
+            ### 📱 Access Details
+            - **Web Application**: http://localhost
+            - **Default Login**: admin / admin123
+            - **Backend API**: http://localhost:8000
+            
+            ### 🔧 System Requirements
+            - Docker Desktop (Windows/Mac) or Docker Engine (Linux)
+            - 4GB RAM minimum, 8GB recommended
+            - 10GB free disk space
+            
+            ### 📋 Package Contents
+            - `start.bat` / `start.sh` - One-click startup
+            - `stop.bat` / `stop.sh` - Easy shutdown
+            - `docker-compose.yml` - Application configuration
+            - `README.md` - Detailed instructions
+            
+            ### 🆘 Support
+            - Check the README.md file for troubleshooting
+            - Visit our GitHub repository for additional help
+            - Create an issue if you encounter problems
+            
+            ---
+            **Build Details:**
+            - Version: ${{ needs.build-and-package.outputs.version }}
+            - Build Date: ${{ github.event.head_commit.timestamp }}
+            - Commit: ${{ github.sha }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ./artifacts/profitpath-v${{ needs.build-and-package.outputs.version }}-windows.zip
+          asset_name: profitpath-v${{ needs.build-and-package.outputs.version }}-windows.zip
+          asset_content_type: application/zip
+
+      - name: Upload Release Assets (Linux/Mac)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ./artifacts/profitpath-v${{ needs.build-and-package.outputs.version }}-linux-mac.tar.gz
+          asset_name: profitpath-v${{ needs.build-and-package.outputs.version }}-linux-mac.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload Release Assets (Universal)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ./artifacts/profitpath-v${{ needs.build-and-package.outputs.version }}-universal.tar.gz
+          asset_name: profitpath-v${{ needs.build-and-package.outputs.version }}-universal.tar.gz
+          asset_content_type: application/gzip
+
+  notify-completion:
+    name: Notify Completion
+    runs-on: ubuntu-latest
+    needs: [build-and-package, create-release]
+    if: always()
+    
+    steps:
+      - name: Notify Success
+        if: success()
+        run: |
+          echo "🎉 Deployment artifacts created successfully!"
+          echo "Version: ${{ needs.build-and-package.outputs.version }}"
+          echo "Release URL: ${{ needs.create-release.outputs.html_url }}"
+          echo ""
+          echo "📦 Artifacts available:"
+          echo "- Windows: profitpath-v${{ needs.build-and-package.outputs.version }}-windows.zip"
+          echo "- Linux/Mac: profitpath-v${{ needs.build-and-package.outputs.version }}-linux-mac.tar.gz"
+          echo "- Universal: profitpath-v${{ needs.build-and-package.outputs.version }}-universal.tar.gz"
+
+      - name: Notify Failure
+        if: failure()
+        run: |
+          echo "❌ Failed to create deployment artifacts"
+          echo "Please check the workflow logs for details"

@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Database Service
+  database:
+    image: postgres:16-alpine
+    container_name: profitpath-database
+    environment:
+      POSTGRES_USER: profitpath
+      POSTGRES_PASSWORD: profitpath123
+      POSTGRES_DB: profitpath
+    ports:
+      - "5432:5432"
+    volumes:
+      - database_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U profitpath"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - profitpath-network
+
+  # Backend API Service
+  backend:
+    image: ghcr.io/your-username/ipsc/backend:latest
+    container_name: profitpath-backend
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql+psycopg://profitpath:profitpath123@database:5432/profitpath
+      SECRET_KEY: your-secret-key-change-this-in-production
+      DEBUG: "false"
+      LOG_LEVEL: INFO
+      CORS_ORIGINS: "*"
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend_logs:/app/logs
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - profitpath-network
+
+  # Frontend Web Application
+  frontend:
+    image: ghcr.io/your-username/ipsc/frontend:latest
+    container_name: profitpath-frontend
+    ports:
+      - "80:80"
+    environment:
+      VITE_API_URL: http://localhost:8000
+      VITE_APP_ENV: production
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - profitpath-network
+
+volumes:
+  database_data:
+  backend_logs:
+
+networks:
+  profitpath-network:
+    driver: bridge
