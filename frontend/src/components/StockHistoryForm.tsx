@@ -1,15 +1,53 @@
-import React, { useState, useEffect, useCallback, useMemo, useReducer } from 'react'
+import React, { useEffect, useCallback, useMemo, useReducer } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { apiGetStockMovementHistory, apiDownloadStockMovementHistoryPDF, apiGetProducts } from '../lib/api'
+import { apiGetStockMovementHistory, apiDownloadStockMovementHistoryPDF, apiGetProducts, Product } from '../lib/api'
 import { Button } from './Button'
 import { ErrorMessage } from './ErrorMessage'
 import { UnifiedFilterSystem } from './UnifiedFilterSystem'
 import { createApiErrorHandler } from '../lib/apiUtils'
 
-// Define the state interface for useReducer
+// Proper TypeScript interfaces following quality rules - matching backend types
+interface StockMovement {
+  product_id: number
+  product_name: string
+  financial_year: string
+  opening_stock: number
+  opening_value: number
+  total_incoming: number
+  total_incoming_value: number
+  total_outgoing: number
+  total_outgoing_value: number
+  closing_stock: number
+  closing_value: number
+  transactions: StockTransaction[]
+}
+
+interface StockTransaction {
+  id: number
+  product_id: number
+  product_name: string
+  transaction_date: string
+  entry_type: string // 'in', 'out', 'adjust'
+  quantity: number
+  unit_price: number | null
+  total_value: number | null
+  ref_type: string | null
+  ref_id: number | null
+  reference_number: string | null
+  notes: string | null
+  financial_year: string
+  running_balance: number
+}
+
+interface DateRange {
+  startDate: string
+  endDate: string
+}
+
+// Define the state interface for useReducer with proper types
 interface StockHistoryState {
-  stockHistory: any[]
-  products: any[]
+  stockHistory: StockMovement[]
+  products: Product[]
   historyLoading: boolean
   downloadingPDF: boolean
   error: string | null
@@ -23,31 +61,28 @@ interface StockHistoryState {
     supplierFilter: string
     stockLevelFilter: string
     entryTypeFilter: string
-    dateRangeFilter: {
-      startDate: string
-      endDate: string
-    }
+    dateRangeFilter: DateRange
   }
   forceReload: number
   debounceTimer: NodeJS.Timeout | null
 }
 
-// Define action types for useReducer
+// Define action types for useReducer with proper payload types
 type StockHistoryAction =
-  | { type: 'SET_STOCK_HISTORY'; payload: any[] }
-  | { type: 'SET_PRODUCTS'; payload: any[] }
+  | { type: 'SET_STOCK_HISTORY'; payload: StockMovement[] }
+  | { type: 'SET_PRODUCTS'; payload: Product[] }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_DOWNLOADING_PDF'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'SET_SHOW_PDF_PREVIEW'; payload: boolean }
   | { type: 'SET_CURRENT_PAGE'; payload: number }
-  | { type: 'SET_FILTER'; payload: { key: string; value: any } }
+  | { type: 'SET_FILTER'; payload: { key: keyof StockHistoryState['filters']; value: string | DateRange } }
   | { type: 'SET_FORCE_RELOAD'; payload: number }
   | { type: 'SET_DEBOUNCE_TIMER'; payload: NodeJS.Timeout | null }
   | { type: 'CLEAR_ERROR' }
   | { type: 'RESET_FILTERS' }
 
-// Initial state
+// Initial state with proper types
 const initialState: StockHistoryState = {
   stockHistory: [],
   products: [],
@@ -73,7 +108,7 @@ const initialState: StockHistoryState = {
   debounceTimer: null
 }
 
-// Reducer function
+// Reducer function with proper type safety
 function stockHistoryReducer(state: StockHistoryState, action: StockHistoryAction): StockHistoryState {
   switch (action.type) {
     case 'SET_STOCK_HISTORY':
@@ -140,11 +175,12 @@ const getCurrentFinancialYear = (): string => {
   }
 }
 
+// Main component with proper TypeScript types
 export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () => void }> = ({ onSuccess, onCancel }) => {
   const [state, dispatch] = useReducer(stockHistoryReducer, initialState)
   const [searchParams, setSearchParams] = useSearchParams()
   
-  // Create API error handler
+  // Create API error handler following quality rules
   const handleApiError = createApiErrorHandler(() => {})
   
   // Extract values from state for easier access
@@ -176,8 +212,8 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
   // Get productId from URL
   const productId = searchParams.get('product')
   
-  // Memoized product name
-  const productName = useMemo(() => {
+  // Memoized product name with proper types
+  const productName = useMemo((): string | null => {
     if (productId && products.length > 0) {
       const product = products.find(p => p.id === parseInt(productId))
       return product ? product.name : null
@@ -185,8 +221,8 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
     return null
   }, [productId, products])
 
-  // Memoized loadProducts function
-  const loadProducts = useCallback(async () => {
+  // Memoized loadProducts function following quality rules
+  const loadProducts = useCallback(async (): Promise<void> => {
     try {
       const productsData = await apiGetProducts()
       dispatch({ type: 'SET_PRODUCTS', payload: productsData })
@@ -195,10 +231,10 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
       const errorMessage = handleApiError(err)
       dispatch({ type: 'SET_ERROR', payload: errorMessage })
     }
-  }, [])
+  }, [handleApiError])
 
-  // Memoized loadStockHistory function
-  const loadStockHistory = useCallback(async () => {
+  // Memoized loadStockHistory function with proper error handling
+  const loadStockHistory = useCallback(async (): Promise<void> => {
     try {
       console.log('Loading stock history with filters:', {
         financialYearFilter,
@@ -231,11 +267,11 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false })
     }
-  }, [financialYearFilter, productId, forceReload])
+  }, [financialYearFilter, productId, forceReload, handleApiError])
 
-  // Memoized filtered stock history
-  const filteredStockHistory = useMemo(() => {
-    return stockHistory.filter(movement => {
+  // Memoized filtered stock history with proper types
+  const filteredStockHistory = useMemo((): StockMovement[] => {
+    return stockHistory.filter((movement: StockMovement) => {
       // Product filter - if productId is present, always include that product
       const matchesProduct = (productId && movement.product_id === parseInt(productId)) ||
                             productFilter === 'all' || 
@@ -253,7 +289,7 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
       // Entry type filter (based on transaction types)
       const hasIncoming = movement.total_incoming > 0
       const hasOutgoing = movement.total_outgoing > 0
-      const hasEntryAdjustments = movement.transactions.some(t => t.entry_type === 'adjust')
+      const hasEntryAdjustments = movement.transactions.some((t: StockTransaction) => t.entry_type === 'adjust')
       
       const matchesEntryType = entryTypeFilter === 'all' ||
                               (entryTypeFilter === 'incoming' && hasIncoming) ||
@@ -261,7 +297,7 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
                               (entryTypeFilter === 'adjustment' && hasEntryAdjustments)
       
       // Date range filter - filter transactions within the date range
-      const matchesDateRange = movement.transactions.some(transaction => {
+      const matchesDateRange = movement.transactions.some((transaction: StockTransaction) => {
         const transactionDate = new Date(transaction.transaction_date)
         const startDate = new Date(dateRangeFilter.startDate)
         const endDate = new Date(dateRangeFilter.endDate)
@@ -280,14 +316,14 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
   }, [stockHistory, productId, productFilter, categoryFilter, supplierFilter, entryTypeFilter, dateRangeFilter, stockLevelFilter, products])
 
   // Memoized paginated stock history
-  const paginatedStockHistory = useMemo(() => {
+  const paginatedStockHistory = useMemo((): StockMovement[] => {
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
     return filteredStockHistory.slice(startIndex, endIndex)
   }, [filteredStockHistory, currentPage, itemsPerPage])
 
   // Memoized total pages
-  const totalPages = useMemo(() => {
+  const totalPages = useMemo((): number => {
     return Math.ceil(filteredStockHistory.length / itemsPerPage)
   }, [filteredStockHistory.length, itemsPerPage])
 
@@ -435,7 +471,7 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
   }
 
   // Validate and recalculate running balance if needed
-  const validateRunningBalance = (movement: any) => {
+  const validateRunningBalance = (movement: StockMovement) => {
     let calculatedBalance = movement.opening_stock
     
     for (const transaction of movement.transactions) {
