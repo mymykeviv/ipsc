@@ -1971,11 +1971,87 @@ export async function apiGetInvoicePDF(invoiceId: number, templateId?: number): 
   return r.blob()
 }
 
+// Performance Monitoring APIs
+export async function apiGetPerformanceMetrics(): Promise<any> {
+  const r = await fetch('/api/performance/metrics', {
+    method: 'GET',
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('auth_token')}` 
+    }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
 
+export async function apiGetSystemHealth(): Promise<any> {
+  const r = await fetch('/api/performance/health', {
+    method: 'GET',
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('auth_token')}` 
+    }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
 
+export async function apiGetQueryStats(): Promise<any> {
+  const r = await fetch('/api/performance/query-stats', {
+    method: 'GET',
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('auth_token')}` 
+    }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
 
-
-
-
-
-
+export async function apiClearCache(): Promise<any> {
+  const r = await fetch('/api/performance/cache/clear', {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('auth_token')}` 
+    }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}

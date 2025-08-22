@@ -8172,6 +8172,10 @@ api.include_router(dental_management_router)
 from .routers.manufacturing_management import router as manufacturing_management_router
 api.include_router(manufacturing_management_router)
 
+# Include performance monitoring router
+from .routers.performance_monitoring import router as performance_monitoring_router
+api.include_router(performance_monitoring_router)
+
 
 
 
