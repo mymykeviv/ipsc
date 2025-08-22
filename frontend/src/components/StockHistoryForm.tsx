@@ -336,9 +336,9 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
     const suppliers = [...new Set(products.map(p => p.supplier).filter(Boolean))]
     
     return {
-      products: products.map(p => ({ value: p.name, label: p.name })),
-      categories: categories.map(c => ({ value: c, label: c })),
-      suppliers: suppliers.map(s => ({ value: s, label: s })),
+      products: products.map(p => ({ value: p.name || '', label: p.name || '' })),
+      categories: categories.map(c => ({ value: c || '', label: c || '' })),
+      suppliers: suppliers.map(s => ({ value: s || '', label: s || '' })),
       financialYears: [
         { value: 'all', label: 'All Years' },
         { value: '2023-2024', label: '2023-2024' },
@@ -626,12 +626,14 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
   // Quick filter actions
   const quickFilterActions = [
     {
+      id: 'current-fy',
       label: 'Current FY',
       icon: '📅',
       action: () => dispatch({ type: 'SET_FILTER', payload: { key: 'financialYearFilter', value: getCurrentFinancialYear() } }),
       isActive: financialYearFilter === getCurrentFinancialYear()
     },
     {
+      id: 'previous-fy',
       label: 'Previous FY',
       icon: '📅',
       action: () => {
@@ -641,18 +643,21 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
       isActive: financialYearFilter === `${new Date().getFullYear() - 1}-${new Date().getFullYear()}`
     },
     {
+      id: 'incoming-only',
       label: 'Incoming Only',
       icon: '📥',
       action: () => dispatch({ type: 'SET_FILTER', payload: { key: 'entryTypeFilter', value: 'incoming' } }),
       isActive: entryTypeFilter === 'incoming'
     },
     {
+      id: 'outgoing-only',
       label: 'Outgoing Only',
       icon: '📤',
       action: () => dispatch({ type: 'SET_FILTER', payload: { key: 'entryTypeFilter', value: 'outgoing' } }),
       isActive: entryTypeFilter === 'outgoing'
     },
     {
+      id: 'low-stock',
       label: 'Low Stock',
       icon: '⚠️',
       action: () => dispatch({ type: 'SET_FILTER', payload: { key: 'stockLevelFilter', value: 'low_stock' } }),
@@ -707,18 +712,58 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
 
       {/* Unified Filter System with real-time updates */}
       <UnifiedFilterSystem
-        filters={{
-          financialYear: financialYearFilter,
-          product: productFilter,
-          category: categoryFilter,
-          supplier: supplierFilter,
-          stockLevel: stockLevelFilter,
-          entryType: entryTypeFilter,
-          dateRange: dateRangeFilter
-        }}
-        options={filterOptions}
+        filters={[
+          {
+            id: 'financialYear',
+            type: 'dropdown',
+            label: 'Financial Year',
+            options: filterOptions.financialYears,
+            defaultValue: financialYearFilter
+          },
+          {
+            id: 'product',
+            type: 'dropdown',
+            label: 'Product',
+            options: filterOptions.products,
+            defaultValue: productFilter
+          },
+          {
+            id: 'category',
+            type: 'dropdown',
+            label: 'Category',
+            options: filterOptions.categories,
+            defaultValue: categoryFilter
+          },
+          {
+            id: 'supplier',
+            type: 'dropdown',
+            label: 'Supplier',
+            options: filterOptions.suppliers,
+            defaultValue: supplierFilter
+          },
+          {
+            id: 'stockLevel',
+            type: 'stock-level',
+            label: 'Stock Level',
+            options: filterOptions.stockLevels,
+            defaultValue: stockLevelFilter
+          },
+          {
+            id: 'entryType',
+            type: 'dropdown',
+            label: 'Entry Type',
+            options: filterOptions.entryTypes,
+            defaultValue: entryTypeFilter
+          },
+          {
+            id: 'dateRange',
+            type: 'date-range',
+            label: 'Date Range',
+            defaultValue: dateRangeFilter
+          }
+        ]}
+        quickFilters={quickFilterActions}
         onFilterChange={handleFilterChange}
-        quickActions={quickFilterActions}
         onClearAll={handleClearAll}
       />
 
@@ -887,7 +932,6 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
                       <td style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #f1f3f4' }}>
                         <Button 
                           variant="primary" 
-                          size="small"
                           onClick={() => {
                             dispatch({ type: 'SET_FORCE_RELOAD', payload: forceReload + 1 })
                             loadStockHistory()
@@ -914,7 +958,6 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
             }}>
               <Button 
                 variant="secondary" 
-                size="small"
                 disabled={currentPage === 1}
                 onClick={() => handlePageChange(currentPage - 1)}
               >
@@ -927,7 +970,6 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
               
               <Button 
                 variant="secondary" 
-                size="small"
                 disabled={currentPage === totalPages}
                 onClick={() => handlePageChange(currentPage + 1)}
               >
