@@ -98,7 +98,7 @@ build_and_push() {
 
 # Build and push backend
 print_status "INFO" "Starting backend build..."
-if build_and_push "ipsc-backend" "backend/Dockerfile" "backend"; then
+if build_and_push "profitpath-backend" "backend/Dockerfile" "backend"; then
     print_status "SUCCESS" "Backend build and push completed"
 else
     print_status "FAILED" "Backend build and push failed"
@@ -107,7 +107,7 @@ fi
 
 # Build and push frontend
 print_status "INFO" "Starting frontend build..."
-if build_and_push "ipsc-frontend" "frontend/Dockerfile" "frontend"; then
+if build_and_push "profitpath-frontend" "frontend/Dockerfile" "frontend"; then
     print_status "SUCCESS" "Frontend build and push completed"
 else
     print_status "FAILED" "Frontend build and push failed"
@@ -126,31 +126,31 @@ services:
   # Database Service
   database:
     image: postgres:16-alpine
-    container_name: ipsc-database
+    container_name: profitpath-database
     environment:
-      POSTGRES_USER: ipsc
-      POSTGRES_PASSWORD: ipsc123
-      POSTGRES_DB: ipsc
+      POSTGRES_USER: profitpath
+      POSTGRES_PASSWORD: profitpath123
+      POSTGRES_DB: profitpath
     ports:
       - "5432:5432"
     volumes:
       - database_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ipsc"]
+      test: ["CMD-SHELL", "pg_isready -U profitpath"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
     networks:
-      - ipsc-network
+      - profitpath-network
 
   # Backend API Service
   backend:
-    image: $DOCKERHUB_USERNAME/ipsc-backend:$VERSION
-    container_name: ipsc-backend
+    image: $DOCKERHUB_USERNAME/profitpath-backend:$VERSION
+    container_name: profitpath-backend
     environment:
       ENVIRONMENT: production
-      DATABASE_URL: postgresql+psycopg://ipsc:ipsc123@database:5432/ipsc
+      DATABASE_URL: postgresql+psycopg://profitpath:profitpath123@database:5432/profitpath
       SECRET_KEY: your-secret-key-change-this-in-production
       DEBUG: "false"
       LOG_LEVEL: INFO
@@ -170,12 +170,12 @@ services:
       retries: 3
     restart: unless-stopped
     networks:
-      - ipsc-network
+      - profitpath-network
 
   # Frontend Web Application
   frontend:
-    image: $DOCKERHUB_USERNAME/ipsc-frontend:$VERSION
-    container_name: ipsc-frontend
+    image: $DOCKERHUB_USERNAME/profitpath-frontend:$VERSION
+    container_name: profitpath-frontend
     expose:
       - "80"
     environment:
@@ -190,12 +190,12 @@ services:
       retries: 3
     restart: unless-stopped
     networks:
-      - ipsc-network
+      - profitpath-network
 
   # Reverse Proxy
   nginx:
     image: nginx:alpine
-    container_name: ipsc-nginx
+    container_name: profitpath-nginx
     ports:
       - "80:80"
     volumes:
@@ -210,14 +210,14 @@ services:
       retries: 3
     restart: unless-stopped
     networks:
-      - ipsc-network
+      - profitpath-network
 
 volumes:
   database_data:
   backend_logs:
 
 networks:
-  ipsc-network:
+  profitpath-network:
     driver: bridge
 EOF
 
@@ -334,7 +334,7 @@ cat > deployment-package/start.sh << 'EOF'
 
 echo ""
 echo "========================================"
-echo "   IPSC v'$VERSION'"
+echo "   ProfitPath v'$VERSION'"
 echo "   Starting Application..."
 echo "========================================"
 echo ""
@@ -398,7 +398,7 @@ fi
 
 echo ""
 echo "========================================"
-echo "   🎉 IPSC is starting up!"
+echo "   🎉 ProfitPath is starting up!"
 echo "========================================"
 echo ""
 echo "📱 Open your web browser and go to:"
@@ -425,7 +425,7 @@ cat > deployment-package/start.bat << 'EOF'
 @echo off
 echo.
 echo ========================================
-echo    IPSC v'$VERSION'
+echo    ProfitPath v'$VERSION'
 echo    Starting Application...
 echo ========================================
 echo.
@@ -486,7 +486,7 @@ if errorlevel 1 (
 
 echo.
 echo ========================================
-echo    🎉 IPSC is starting up!
+echo    🎉 ProfitPath is starting up!
 echo ========================================
 echo.
 echo 📱 Open your web browser and go to:
@@ -513,9 +513,9 @@ EOF
 cat > deployment-package/stop.sh << 'EOF'
 #!/bin/bash
 
-echo "🛑 Stopping IPSC..."
+echo "🛑 Stopping ProfitPath..."
 docker-compose down
-echo "✅ IPSC stopped"
+echo "✅ ProfitPath stopped"
 echo ""
 echo "To start again, run: ./start.sh"
 EOF
@@ -523,10 +523,10 @@ EOF
 cat > deployment-package/stop.bat << 'EOF'
 @echo off
 echo.
-echo Stopping IPSC...
+echo Stopping ProfitPath...
 docker-compose down
 echo.
-echo IPSC stopped.
+echo ProfitPath stopped.
 echo.
 echo To start again, run: start.bat
 echo.
@@ -535,9 +535,9 @@ EOF
 
 # Create README
 cat > deployment-package/README.md << EOF
-# IPSC v$VERSION - Easy Deployment Package
+# ProfitPath v$VERSION - Easy Deployment Package
 
-## 🎉 Welcome to IPSC!
+## 🎉 Welcome to ProfitPath!
 
 This package contains everything you need to run IPSC on your computer. 
 **No technical knowledge required!**
@@ -548,7 +548,7 @@ This package contains everything you need to run IPSC on your computer.
 - **Windows/Mac**: Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - **Linux**: Install Docker using your package manager
 
-### Step 2: Start IPSC
+### Step 2: Start ProfitPath
 - **Windows**: Double-click \`start.bat\`
 - **Mac/Linux**: Double-click \`start.sh\` or run \`./start.sh\` in terminal
 
@@ -568,14 +568,14 @@ This package contains everything you need to run IPSC on your computer.
 
 ### Windows Users:
 \`\`\`cmd
-start.bat    - Start IPSC
-stop.bat     - Stop IPSC
+start.bat    - Start ProfitPath
+stop.bat     - Stop ProfitPath
 \`\`\`
 
 ### Mac/Linux Users:
 \`\`\`bash
-./start.sh   - Start IPSC
-./stop.sh    - Stop IPSC
+./start.sh   - Start ProfitPath
+./stop.sh    - Stop ProfitPath
 \`\`\`
 
 ## 📊 System Requirements
@@ -612,7 +612,7 @@ stop.bat     - Stop IPSC
 - Create an issue if you need help
 
 ---
-*IPSC v$VERSION - Built on $(date)*
+*ProfitPath v$VERSION - Built on $(date)*
 EOF
 
 # Make scripts executable
@@ -623,24 +623,24 @@ chmod +x deployment-package/stop.sh
 print_status "INFO" "Creating compressed packages..."
 
 # Create ZIP package
-zip -r "ipsc-v$VERSION-windows.zip" deployment-package/
+zip -r "profitpath-v$VERSION-windows.zip" deployment-package/
 
 # Create TAR.GZ package
-tar -czf "ipsc-v$VERSION-linux-mac.tar.gz" -C deployment-package .
+tar -czf "profitpath-v$VERSION-linux-mac.tar.gz" -C deployment-package .
 
 # Create universal package
-tar -czf "ipsc-v$VERSION-universal.tar.gz" deployment-package/
+tar -czf "profitpath-v$VERSION-universal.tar.gz" deployment-package/
 
 print_status "SUCCESS" "Compressed packages created:"
-echo "  - ipsc-v$VERSION-windows.zip"
-echo "  - ipsc-v$VERSION-linux-mac.tar.gz"
-echo "  - ipsc-v$VERSION-universal.tar.gz"
+echo "  - profitpath-v$VERSION-windows.zip"
+echo "  - profitpath-v$VERSION-linux-mac.tar.gz"
+echo "  - profitpath-v$VERSION-universal.tar.gz"
 
 print_status "SUCCESS" "🎉 Docker build and push completed successfully!"
 print_status "INFO" "📦 Deployment packages created in current directory"
 print_status "INFO" "🐳 Images pushed to Docker Hub:"
-echo "  - $DOCKERHUB_USERNAME/ipsc-backend:$VERSION"
-echo "  - $DOCKERHUB_USERNAME/ipsc-frontend:$VERSION"
+echo "  - $DOCKERHUB_USERNAME/profitpath-backend:$VERSION"
+echo "  - $DOCKERHUB_USERNAME/profitpath-frontend:$VERSION"
 print_status "INFO" "📋 Next steps:"
 echo "  1. Share the deployment packages with users"
 echo "  2. Users can run with just Docker installed"

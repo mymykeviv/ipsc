@@ -58,15 +58,15 @@ print_status "INFO" "Building backend..."
 if docker build \
     --platform linux/amd64,linux/arm64 \
     --target production \
-    -t "$DOCKERHUB_USERNAME/ipsc-backend:$VERSION" \
-    -t "$DOCKERHUB_USERNAME/ipsc-backend:latest" \
+    -t "$DOCKERHUB_USERNAME/profitpath-backend:$VERSION" \
+    -t "$DOCKERHUB_USERNAME/profitpath-backend:latest" \
     backend/; then
     
     print_status "SUCCESS" "Backend image built successfully"
     
     print_status "INFO" "Pushing backend image..."
-    if docker push "$DOCKERHUB_USERNAME/ipsc-backend:$VERSION" && \
-       docker push "$DOCKERHUB_USERNAME/ipsc-backend:latest"; then
+    if docker push "$DOCKERHUB_USERNAME/profitpath-backend:$VERSION" && \
+       docker push "$DOCKERHUB_USERNAME/profitpath-backend:latest"; then
         print_status "SUCCESS" "Backend image pushed successfully"
     else
         print_status "FAILED" "Failed to push backend image"
@@ -82,15 +82,15 @@ print_status "INFO" "Building frontend..."
 if docker build \
     --platform linux/amd64,linux/arm64 \
     --target production \
-    -t "$DOCKERHUB_USERNAME/ipsc-frontend:$VERSION" \
-    -t "$DOCKERHUB_USERNAME/ipsc-frontend:latest" \
+    -t "$DOCKERHUB_USERNAME/profitpath-frontend:$VERSION" \
+    -t "$DOCKERHUB_USERNAME/profitpath-frontend:latest" \
     frontend/; then
     
     print_status "SUCCESS" "Frontend image built successfully"
     
     print_status "INFO" "Pushing frontend image..."
-    if docker push "$DOCKERHUB_USERNAME/ipsc-frontend:$VERSION" && \
-       docker push "$DOCKERHUB_USERNAME/ipsc-frontend:latest"; then
+    if docker push "$DOCKERHUB_USERNAME/profitpath-frontend:$VERSION" && \
+       docker push "$DOCKERHUB_USERNAME/profitpath-frontend:latest"; then
         print_status "SUCCESS" "Frontend image pushed successfully"
     else
         print_status "FAILED" "Failed to push frontend image"
@@ -103,9 +103,9 @@ fi
 
 print_status "SUCCESS" "🎉 Quick build and push completed successfully!"
 print_status "INFO" "🐳 Images pushed to Docker Hub:"
-echo "  - $DOCKERHUB_USERNAME/ipsc-backend:$VERSION"
-echo "  - $DOCKERHUB_USERNAME/ipsc-frontend:$VERSION"
+echo "  - $DOCKERHUB_USERNAME/profitpath-backend:$VERSION"
+echo "  - $DOCKERHUB_USERNAME/profitpath-frontend:$VERSION"
 print_status "INFO" "📋 Next steps:"
-echo "  1. Test images locally: docker run -p 8000:8000 $DOCKERHUB_USERNAME/ipsc-backend:$VERSION"
+echo "  1. Test images locally: docker run -p 8000:8000 $DOCKERHUB_USERNAME/profitpath-backend:$VERSION"
 echo "  2. Use in docker-compose.yml with the new image tags"
 echo "  3. For deployment packages, run: ./scripts/build-and-push-docker.sh $VERSION $DOCKERHUB_USERNAME"
