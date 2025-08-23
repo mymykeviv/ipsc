@@ -361,10 +361,37 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
     hasNotes: filters.hasNotes
   })
 
-  // Update form type when type prop changes
+  // Update form type when type prop changes and reset form in add mode
   useEffect(() => {
-    setFormData(prev => ({ ...prev, type }))
-  }, [type])
+    if (mode === 'add') {
+      // Reset form data when entering add mode to prevent prefilling
+      setFormData({
+        type: type, // Set type based on route context
+        name: '',
+        contact_person: '',
+        contact_number: '',
+        email: '',
+        gstin: '',
+        gst_registration_status: 'GST not registered',
+        gst_status: 'GST',
+        billing_address_line1: '',
+        billing_address_line2: '',
+        billing_city: '',
+        billing_state: '',
+        billing_country: 'India',
+        billing_pincode: '',
+        shipping_address_line1: '',
+        shipping_address_line2: '',
+        shipping_city: '',
+        shipping_state: '',
+        shipping_country: '',
+        shipping_pincode: '',
+        notes: ''
+      })
+    } else {
+      setFormData(prev => ({ ...prev, type }))
+    }
+  }, [type, mode])
 
   // Load editing party data when in edit mode
   useEffect(() => {
@@ -656,17 +683,19 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
               <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('basic') }}>
                 📋 Basic Information
               </h3>
+              {/* Party Type is determined by the route context (Add Customer vs Add Vendor) */}
               <div style={formStyles.formGroup}>
-                <label style={formStyles.label}>Party Type *</label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => handleInputChange('type', e.target.value as 'customer' | 'vendor')}
-                  style={formStyles.select}
-                  required
-                >
-                  <option value="customer">Customer</option>
-                  <option value="vendor">Vendor</option>
-                </select>
+                <label style={formStyles.label}>Party Type</label>
+                <input
+                  type="text"
+                  value={type === 'vendor' ? 'Vendor' : 'Customer'}
+                  style={{ ...formStyles.input, backgroundColor: '#f8f9fa', color: '#6c757d' }}
+                  disabled
+                  readOnly
+                />
+                <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+                  {type === 'vendor' ? 'Adding a new vendor' : 'Adding a new customer'}
+                </div>
               </div>
               <div style={formStyles.formGroup}>
                 <label style={formStyles.label}>Name *</label>

@@ -103,10 +103,8 @@ import sys
 sys.path.append('.')
 
 print('Running database migrations step by step...')
-# Run initial schema
-os.system('python -m alembic upgrade 001_initial_schema')
-# Run multi-tenant support
-os.system('python -m alembic upgrade 002')
+# Run all migrations to head
+os.system('python -m alembic upgrade head')
 
 print('Test database initialization complete!')
 "; then

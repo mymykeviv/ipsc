@@ -48,12 +48,33 @@ class Party(Base):
     contact_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
     email: Mapped[str | None] = mapped_column(String(100), nullable=True)
     billing_address_line1: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    billing_address_line2: Mapped[str | None] = mapped_column(String(200), nullable=True)
     billing_city: Mapped[str | None] = mapped_column(String(50), nullable=True)
     billing_state: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    billing_country: Mapped[str | None] = mapped_column(String(50), nullable=True, default="India")
     billing_pincode: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    shipping_address_line1: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    shipping_address_line2: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    shipping_city: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    shipping_state: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    shipping_country: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    shipping_pincode: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    gst_registration_status: Mapped[str | None] = mapped_column(String(50), nullable=True, default="GST not registered")
+    notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=True, default=True)
     is_customer: Mapped[bool] = mapped_column(Boolean, nullable=True)
     is_vendor: Mapped[bool] = mapped_column(Boolean, nullable=True)
     tenant: Mapped[Tenant | None] = relationship("Tenant")
+    
+    @property
+    def type(self) -> str:
+        """Convert boolean flags to type string for API compatibility"""
+        if self.is_vendor:
+            return "vendor"
+        elif self.is_customer:
+            return "customer"
+        else:
+            return "customer"  # Default to customer
 
 
 class Product(Base):
@@ -428,46 +449,38 @@ class PurchaseOrderItem(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
 
-class InvoiceTemplate(Base):
-    __tablename__ = "invoice_templates"
+class GSTInvoiceTemplate(Base):
+    """GST Invoice Template Model for the 5 pre-defined templates"""
+    __tablename__ = "gst_invoice_templates"
+    
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
+    
+    # Template Identification
+    template_id: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)  # e.g., "GST_TABULAR_A4A5_V1"
     name: Mapped[str] = mapped_column(String(100), nullable=False)
-    description: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
     
-    # Template Design Settings
-    template_type: Mapped[str] = mapped_column(String(20), nullable=False, default="professional")  # professional, modern, classic, minimal
-    primary_color: Mapped[str] = mapped_column(String(7), nullable=False, default="#2c3e50")  # Hex color
-    secondary_color: Mapped[str] = mapped_column(String(7), nullable=False, default="#3498db")  # Hex color
-    accent_color: Mapped[str] = mapped_column(String(7), nullable=False, default="#e74c3c")  # Hex color
+    # Template Requirements
+    requires_gst: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    requires_hsn: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    title: Mapped[str] = mapped_column(String(50), nullable=False, default="Tax Invoice")
     
-    # Typography Settings
-    header_font: Mapped[str] = mapped_column(String(50), nullable=False, default="Helvetica-Bold")
-    body_font: Mapped[str] = mapped_column(String(50), nullable=False, default="Helvetica")
-    header_font_size: Mapped[int] = mapped_column(Integer, nullable=False, default=18)
-    body_font_size: Mapped[int] = mapped_column(Integer, nullable=False, default=10)
-    
-    # Layout Settings
-    show_logo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    logo_position: Mapped[str] = mapped_column(String(20), nullable=False, default="top-left")  # top-left, top-right, center
-    show_company_details: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    show_customer_details: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    show_supplier_details: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    show_terms: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    show_notes: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    show_footer: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    
-    # Content Settings
-    header_text: Mapped[str] = mapped_column(String(100), nullable=False, default="TAX INVOICE")
-    footer_text: Mapped[str] = mapped_column(String(200), nullable=False, default="Thank you for your business!")
-    terms_text: Mapped[str] = mapped_column(String(200), nullable=False, default="Payment is due within the terms specified above.")
+    # Template Configuration
+    template_config: Mapped[str] = mapped_column(Text, nullable=False)  # JSON configuration
+    paper_sizes: Mapped[str] = mapped_column(String(50), nullable=False, default="A4,A5")  # comma-separated
     
     # Status
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    
+    # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    tenant: Mapped[Tenant | None] = relationship("Tenant")
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    tenant: Mapped[Tenant | None] = relationship("Tenant")
 
 
 # Dental Clinic Models

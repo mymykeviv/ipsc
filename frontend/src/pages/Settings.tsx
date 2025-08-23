@@ -4,7 +4,7 @@ import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
 import { ErrorMessage } from '../components/ErrorMessage'
-import { InvoiceTemplateManager } from '../components/InvoiceTemplateManager'
+import { GSTTemplateManager } from '../components/GSTTemplateManager'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 
 interface SettingsProps {
@@ -803,7 +803,7 @@ export function Settings({ section = 'company' }: SettingsProps) {
         renderContent()
       )}
 
-      <InvoiceTemplateManager 
+      <GSTTemplateManager 
         isOpen={templateManagerOpen}
         onClose={() => setTemplateManagerOpen(false)}
       />

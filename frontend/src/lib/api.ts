@@ -715,6 +715,55 @@ export async function apiDeletePurchase(id: number): Promise<{message: string}> 
   return r.json()
 }
 
+// Purchase Payment Types
+export interface PurchasePayment {
+  id: number
+  purchase_id: number
+  payment_amount: number
+  payment_method: string
+  account_head: string
+  reference_number: string | null
+  payment_date: string
+  notes: string | null
+  vendor_name: string
+  purchase_number: string
+}
+
+export interface PurchasePaymentCreate {
+  payment_amount: number
+  payment_method: string
+  account_head: string
+  reference_number?: string
+  notes?: string
+}
+
+// Stock Movement Types
+export interface StockMovementSummary {
+  product_id: number
+  product_name: string
+  financial_year: string
+  opening_stock: number
+  opening_value: number
+  total_incoming: number
+  total_incoming_value: number
+  total_outgoing: number
+  total_outgoing_value: number
+  closing_stock: number
+  closing_value: number
+  transactions: StockTransaction[]
+}
+
+export interface StockTransaction {
+  id: number
+  product_id: number
+  entry_type: string
+  qty: number
+  reference_bill_number: string | null
+  notes: string | null
+  created_at: string
+  product_name: string
+}
+
 // Purchase Payment APIs
 export async function apiAddPurchasePayment(purchaseId: number, payload: PurchasePaymentCreate): Promise<{id: number}> {
   const r = await fetch(`/api/purchases/${purchaseId}/payments`, {
@@ -733,6 +782,137 @@ export async function apiAddPurchasePayment(purchaseId: number, payload: Purchas
   }
   
   return r.json()
+}
+
+export async function apiListPurchasePayments(): Promise<PurchasePayment[]> {
+  const r = await fetch('/api/purchase-payments', { 
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } 
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiGetPurchasePayment(id: number): Promise<PurchasePayment> {
+  const r = await fetch(`/api/purchase-payments/${id}`, { 
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } 
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiUpdatePurchasePayment(id: number, payload: PurchasePaymentCreate): Promise<{message: string}> {
+  const r = await fetch(`/api/purchase-payments/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
+    body: JSON.stringify(payload)
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiDeletePurchasePayment(id: number): Promise<{message: string}> {
+  const r = await fetch(`/api/purchase-payments/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+// Stock Movement APIs
+export async function apiGetStockMovementHistory(financial_year?: string): Promise<StockMovementSummary[]> {
+  const params = new URLSearchParams()
+  if (financial_year) params.append('financial_year', financial_year)
+  
+  const url = `/api/stock/movement-history${params.toString() ? '?' + params.toString() : ''}`
+  const r = await fetch(url, { 
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } 
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiGetProductStockMovement(productId: number): Promise<StockTransaction[]> {
+  const r = await fetch(`/api/stock/movement-history/${productId}`, { 
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } 
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiGetStockMovementHistoryPDF(financial_year?: string): Promise<Blob> {
+  const params = new URLSearchParams()
+  if (financial_year) params.append('financial_year', financial_year)
+  
+  const url = `/api/stock/movement-history/pdf${params.toString() ? '?' + params.toString() : ''}`
+  const r = await fetch(url, { 
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } 
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.blob()
 }
 
 
@@ -1722,65 +1902,27 @@ export async function apiUpdateCompanySettings(settings: Partial<CompanySettings
 }
 
 
-// Invoice Template Types and API Functions
+// GST Invoice Template Types and API Functions
 
-export type InvoiceTemplate = {
+export type GSTInvoiceTemplate = {
   id: number
+  template_id: string
   name: string
   description: string | null
-  template_type: string
-  primary_color: string
-  secondary_color: string
-  accent_color: string
-  header_font: string
-  body_font: string
-  header_font_size: number
-  body_font_size: number
-  show_logo: boolean
-  logo_position: string
-  show_company_details: boolean
-  show_customer_details: boolean
-  show_supplier_details: boolean
-  show_terms: boolean
-  show_notes: boolean
-  show_footer: boolean
-  header_text: string
-  footer_text: string
-  terms_text: string
+  requires_gst: boolean
+  requires_hsn: boolean
+  title: string
+  template_config: string
+  paper_sizes: string
   is_active: boolean
   is_default: boolean
+  sort_order: number
   created_at: string
   updated_at: string
 }
 
-export type InvoiceTemplateCreate = {
-  name: string
-  description?: string
-  template_type?: string
-  primary_color?: string
-  secondary_color?: string
-  accent_color?: string
-  header_font?: string
-  body_font?: string
-  header_font_size?: number
-  body_font_size?: number
-  show_logo?: boolean
-  logo_position?: string
-  show_company_details?: boolean
-  show_customer_details?: boolean
-  show_supplier_details?: boolean
-  show_terms?: boolean
-  show_notes?: boolean
-  show_footer?: boolean
-  header_text?: string
-  footer_text?: string
-  terms_text?: string
-}
-
-export type InvoiceTemplateUpdate = Partial<InvoiceTemplateCreate>
-
-export async function apiGetInvoiceTemplates(): Promise<InvoiceTemplate[]> {
-  const r = await fetch('/api/invoice-templates', {
+export async function apiGetGSTInvoiceTemplates(): Promise<GSTInvoiceTemplate[]> {
+  const r = await fetch('/api/gst-invoice-templates', {
     headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
   })
   if (!r.ok) {
@@ -1794,8 +1936,8 @@ export async function apiGetInvoiceTemplates(): Promise<InvoiceTemplate[]> {
   return r.json()
 }
 
-export async function apiGetInvoiceTemplate(templateId: number): Promise<InvoiceTemplate> {
-  const r = await fetch(`/api/invoice-templates/${templateId}`, {
+export async function apiGetGSTInvoiceTemplate(templateId: number): Promise<GSTInvoiceTemplate> {
+  const r = await fetch(`/api/gst-invoice-templates/${templateId}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
   })
   if (!r.ok) {
@@ -1809,8 +1951,8 @@ export async function apiGetInvoiceTemplate(templateId: number): Promise<Invoice
   return r.json()
 }
 
-export async function apiGetDefaultInvoiceTemplate(): Promise<InvoiceTemplate> {
-  const r = await fetch('/api/invoice-templates/default', {
+export async function apiGetDefaultGSTInvoiceTemplate(): Promise<GSTInvoiceTemplate> {
+  const r = await fetch('/api/gst-invoice-templates/default', {
     headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
   })
   if (!r.ok) {
@@ -1824,63 +1966,8 @@ export async function apiGetDefaultInvoiceTemplate(): Promise<InvoiceTemplate> {
   return r.json()
 }
 
-export async function apiCreateInvoiceTemplate(template: InvoiceTemplateCreate): Promise<InvoiceTemplate> {
-  const r = await fetch('/api/invoice-templates', {
-    method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('auth_token')}` 
-    },
-    body: JSON.stringify(template)
-  })
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  return r.json()
-}
-
-export async function apiUpdateInvoiceTemplate(templateId: number, template: InvoiceTemplateUpdate): Promise<InvoiceTemplate> {
-  const r = await fetch(`/api/invoice-templates/${templateId}`, {
-    method: 'PUT',
-    headers: { 
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('auth_token')}` 
-    },
-    body: JSON.stringify(template)
-  })
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  return r.json()
-}
-
-export async function apiDeleteInvoiceTemplate(templateId: number): Promise<void> {
-  const r = await fetch(`/api/invoice-templates/${templateId}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-}
-
-export async function apiSetDefaultInvoiceTemplate(templateId: number): Promise<void> {
-  const r = await fetch(`/api/invoice-templates/${templateId}/set-default`, {
+export async function apiSetDefaultGSTInvoiceTemplate(templateId: number): Promise<void> {
+  const r = await fetch(`/api/gst-invoice-templates/${templateId}/set-default`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
   })
@@ -1892,6 +1979,21 @@ export async function apiSetDefaultInvoiceTemplate(templateId: number): Promise<
       throw new Error(`HTTP ${r.status}: ${r.statusText}`)
     }
   }
+}
+
+export async function apiGetGSTTemplateConfig(templateId: string): Promise<any> {
+  const r = await fetch(`/api/gst-invoice-templates/config/${templateId}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  return r.json()
 }
 
 export async function apiUploadLogo(file: File): Promise<{success: boolean, logo_url: string, filename: string, size: number}> {
@@ -1955,22 +2057,7 @@ export async function apiExportInvoiceTemplate(templateId: number): Promise<Blob
   return r.blob()
 }
 
-export async function apiGetPresetThemes(): Promise<Record<string, any>> {
-  const r = await fetch('/api/invoice-templates/presets', {
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  
-  return r.json()
-}
+
 
 export async function apiUpdateInvoiceStatus(invoiceId: number, status: string): Promise<Invoice> {
   const params = new URLSearchParams()

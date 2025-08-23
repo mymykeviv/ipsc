@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { apiGetInvoicePDF, apiGetInvoiceTemplates, InvoiceTemplate, apiGetStockMovementHistoryPDFPreview } from '../lib/api'
+import { apiGetInvoicePDF, apiGetGSTInvoiceTemplates, GSTInvoiceTemplate, apiGetStockMovementHistoryPDFPreview } from '../lib/api'
 import { Modal } from './Modal'
 import { Button } from './Button'
 
@@ -37,7 +37,7 @@ export function PDFViewer({
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [templates, setTemplates] = useState<InvoiceTemplate[]>([])
+  const [templates, setTemplates] = useState<GSTInvoiceTemplate[]>([])
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | undefined>(undefined)
   const [iframeKey, setIframeKey] = useState(0)
 
@@ -64,7 +64,7 @@ export function PDFViewer({
 
   const loadTemplates = async () => {
     try {
-      const data = await apiGetInvoiceTemplates()
+      const data = await apiGetGSTInvoiceTemplates()
       setTemplates(data)
       // Set default template if available
       const defaultTemplate = data.find(t => t.is_default)
@@ -72,7 +72,7 @@ export function PDFViewer({
         setSelectedTemplateId(defaultTemplate.id)
       }
     } catch (err) {
-      console.error('Failed to load templates:', err)
+      console.error('Failed to load GST templates:', err)
     }
   }
 
@@ -230,7 +230,7 @@ export function PDFViewer({
                       <option value="">Default</option>
                       {templates.map(template => (
                         <option key={template.id} value={template.id}>
-                          {template.name} {template.is_default ? '(Default)' : ''}
+                          {template.name} {template.is_default ? '(Default)' : ''} - {template.requires_gst ? 'GST' : 'Non-GST'}
                         </option>
                       ))}
                     </select>

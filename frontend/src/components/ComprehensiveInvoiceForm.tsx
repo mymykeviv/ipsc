@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { apiCreateInvoice, apiListCustomers, apiListVendors, apiGetProducts, apiGetCompanySettings, apiGetInvoiceTemplates, Party, Product, CompanySettings, InvoiceTemplate } from '../lib/api'
+import { apiCreateInvoice, apiListCustomers, apiListVendors, apiGetProducts, apiGetCompanySettings, apiGetGSTInvoiceTemplates, Party, Product, CompanySettings, GSTInvoiceTemplate } from '../lib/api'
 import { Button } from './Button'
 import { ErrorMessage } from './ErrorMessage'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
@@ -136,7 +136,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
   const [suppliers, setSuppliers] = useState<Party[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null)
-  const [templates, setTemplates] = useState<InvoiceTemplate[]>([])
+  const [templates, setTemplates] = useState<GSTInvoiceTemplate[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -207,7 +207,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
         apiListVendors('', true),   // Include inactive vendors
         apiGetProducts(),
         apiGetCompanySettings(),
-        apiGetInvoiceTemplates()
+        apiGetGSTInvoiceTemplates()
       ])
       console.log('Loaded customers:', customersData)
       console.log('Loaded suppliers:', suppliersData)

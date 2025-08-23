@@ -1,0 +1,27 @@
+# PDF Generation Dependencies for GST Invoice Templates
+
+# Primary HTML to PDF converter (recommended)
+weasyprint>=60.0
+
+# Alternative HTML to PDF converter
+pdfkit>=1.0.0
+
+# Additional dependencies for WeasyPrint
+cairocffi>=0.9.0
+cffi>=1.1.0
+cssselect2>=0.1
+defusedxml>=0.6.0
+html5lib>=1.0.1
+pyphen>=0.10.0
+pydyf>=0.1.0
+pyphen>=0.10.0
+tinycss2>=1.1.0
+
+# Font support
+fonttools>=4.0.0
+
+# Image processing
+Pillow>=8.0.0
+
+# For better font rendering
+freetype-py>=2.2.0

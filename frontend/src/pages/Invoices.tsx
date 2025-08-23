@@ -8,6 +8,7 @@ import { StatusBadge } from '../components/StatusBadge'
 import { ComprehensiveInvoiceForm } from '../components/ComprehensiveInvoiceForm'
 import { PDFViewer } from '../components/PDFViewer'
 import { EmailFormModal } from '../components/EmailFormModal'
+import { GSTTemplateManager } from '../components/GSTTemplateManager'
 import { DateFilter, DateRange } from '../components/DateFilter'
 import { useSavedPresets } from '../hooks/useSavedPresets'
 import { FilterDropdown } from '../components/FilterDropdown'
@@ -33,6 +34,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
   // Modal states
   const [pdfModalOpen, setPdfModalOpen] = useState(false)
   const [emailModalOpen, setEmailModalOpen] = useState(false)
+  const [templateManagerOpen, setTemplateManagerOpen] = useState(false)
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   
   // Create enhanced error handlers for different operations
@@ -410,6 +412,13 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           onClick: () => navigate('/invoices/add'),
           icon: '📄'
         }}
+        secondaryActions={[
+          {
+            label: 'Templates',
+            onClick: () => setTemplateManagerOpen(true),
+            icon: '📋'
+          }
+        ]}
       />
 
       {error && (
@@ -813,6 +822,12 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           />
         </>
       )}
+
+      {/* GST Template Manager */}
+      <GSTTemplateManager
+        isOpen={templateManagerOpen}
+        onClose={() => setTemplateManagerOpen(false)}
+      />
              </div>
   )
 }
