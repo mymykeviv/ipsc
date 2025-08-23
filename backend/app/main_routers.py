@@ -5114,16 +5114,14 @@ def list_parties(
             Party.contact_number.ilike(f"%{search}%") |
             Party.email.ilike(f"%{search}%") |
             Party.gstin.ilike(f"%{search}%") |
-            Party.gst_registration_status.ilike(f"%{search}%") |
             Party.billing_address_line1.ilike(f"%{search}%") |
-            Party.shipping_address_line1.ilike(f"%{search}%") |
-            Party.notes.ilike(f"%{search}%")
+            Party.billing_city.ilike(f"%{search}%") |
+            Party.billing_state.ilike(f"%{search}%")
         )
         query = query.filter(search_filter)
     
-    # Include inactive parties if requested
-    if not include_inactive:
-        query = query.filter(Party.is_active == True)
+    # Note: Party model doesn't have is_active field, so we can't filter by it
+    # TODO: Add is_active field to Party model if needed
     
     return query.order_by(Party.name).all()
 
@@ -5135,7 +5133,7 @@ def list_customers(
     _: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
-    query = db.query(Party).filter(Party.type == "customer")
+    query = db.query(Party).filter(Party.is_customer == True)
     
     if search:
         search_filter = (
@@ -5144,16 +5142,14 @@ def list_customers(
             Party.contact_number.ilike(f"%{search}%") |
             Party.email.ilike(f"%{search}%") |
             Party.gstin.ilike(f"%{search}%") |
-            Party.gst_registration_status.ilike(f"%{search}%") |
             Party.billing_address_line1.ilike(f"%{search}%") |
-            Party.shipping_address_line1.ilike(f"%{search}%") |
-            Party.notes.ilike(f"%{search}%")
+            Party.billing_city.ilike(f"%{search}%") |
+            Party.billing_state.ilike(f"%{search}%")
         )
         query = query.filter(search_filter)
     
-    # Include inactive customers if requested
-    if not include_inactive:
-        query = query.filter(Party.is_active == True)
+    # Note: Party model doesn't have is_active field, so we can't filter by it
+    # TODO: Add is_active field to Party model if needed
     
     return query.order_by(Party.name).all()
 
@@ -5165,7 +5161,7 @@ def list_vendors(
     _: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
-    query = db.query(Party).filter(Party.type == "vendor")
+    query = db.query(Party).filter(Party.is_vendor == True)
     
     if search:
         search_filter = (
@@ -5174,16 +5170,14 @@ def list_vendors(
             Party.contact_number.ilike(f"%{search}%") |
             Party.email.ilike(f"%{search}%") |
             Party.gstin.ilike(f"%{search}%") |
-            Party.gst_registration_status.ilike(f"%{search}%") |
             Party.billing_address_line1.ilike(f"%{search}%") |
-            Party.shipping_address_line1.ilike(f"%{search}%") |
-            Party.notes.ilike(f"%{search}%")
+            Party.billing_city.ilike(f"%{search}%") |
+            Party.billing_state.ilike(f"%{search}%")
         )
         query = query.filter(search_filter)
     
-    # Include inactive vendors if requested
-    if not include_inactive:
-        query = query.filter(Party.is_active == True)
+    # Note: Party model doesn't have is_active field, so we can't filter by it
+    # TODO: Add is_active field to Party model if needed
     
     return query.order_by(Party.name).all()
 
