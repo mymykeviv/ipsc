@@ -256,6 +256,14 @@ class Settings(BaseSettings):
     debug: bool = False
     environment: str = "development"
     
+    # Multi-Tenancy Settings
+    multi_tenant_enabled: bool = False
+    default_tenant_slug: str = "default"
+    tenant_database_prefix: str = "tenant_"
+    max_tenants_per_instance: int = 100
+    tenant_isolation_level: str = "row_level"
+    tenant_routing_method: str = "subdomain"
+    
     # Database Settings - PostgreSQL Only
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/cashflow"
     database_pool_size: int = 10

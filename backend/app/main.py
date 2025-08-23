@@ -36,8 +36,8 @@ logger = get_logger(__name__)
 VERSION = settings.version
 BUILD_DATE = datetime.now().strftime("%Y-%m-%d")
 
-# Feature flags
-MULTI_TENANT_ENABLED = os.getenv('MULTI_TENANT_ENABLED', 'false').lower() == 'true'
+# Feature flags - use settings for consistency
+MULTI_TENANT_ENABLED = settings.multi_tenant_enabled
 SECURITY_ENABLED = os.getenv('SECURITY_ENABLED', 'true').lower() == 'true'
 DATABASE_OPTIMIZATION_ENABLED = os.getenv('DATABASE_OPTIMIZATION_ENABLED', 'true').lower() == 'true'
 

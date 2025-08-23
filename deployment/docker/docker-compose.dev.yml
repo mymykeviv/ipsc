@@ -29,7 +29,7 @@ services:
       DEBUG: "true"
       LOG_LEVEL: DEBUG
       CORS_ORIGINS: "http://localhost:5173,http://127.0.0.1:5173"
-      MULTI_TENANT_ENABLED: "true"
+      MULTI_TENANT_ENABLED: "false"
       TENANT_DATABASE_PREFIX: "tenant_"
       DEFAULT_TENANT_SLUG: "default"
       MAX_TENANTS_PER_INSTANCE: "100"
