@@ -184,7 +184,7 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
   const [searchParams, setSearchParams] = useSearchParams()
   
   // Create API error handler following quality rules
-  const handleApiError = createApiErrorHandler(() => {})
+  const handleApiError = createApiErrorHandler({})
   
   // Extract values from state for easier access
   const {

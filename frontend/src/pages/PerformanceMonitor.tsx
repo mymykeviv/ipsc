@@ -3,10 +3,10 @@ import { Card, Row, Col, Progress, Statistic, Alert, Button, Table, Tag, Space, 
 import { 
   DashboardOutlined, 
   DatabaseOutlined, 
-  MemoryOutlined, 
-  CpuOutlined,
+  DesktopOutlined, 
+  MonitorOutlined,
   HddOutlined,
-  NetworkOutlined,
+  WifiOutlined,
   ReloadOutlined,
   ClearOutlined,
   WarningOutlined,
@@ -284,7 +284,7 @@ const PerformanceMonitor: React.FC = () => {
                   title="CPU Usage"
                   value={metrics.system_health.system.cpu.percent}
                   suffix="%"
-                  prefix={<CpuOutlined />}
+                  prefix={<MonitorOutlined />}
                   valueStyle={{ color: getStatusColor(metrics.system_health.system.cpu.percent) }}
                 />
                 <Progress
@@ -300,7 +300,7 @@ const PerformanceMonitor: React.FC = () => {
                   title="Memory Usage"
                   value={metrics.system_health.system.memory.percent}
                   suffix="%"
-                  prefix={<MemoryOutlined />}
+                  prefix={<DesktopOutlined />}
                   valueStyle={{ color: getStatusColor(metrics.system_health.system.memory.percent) }}
                 />
                 <Progress
@@ -331,7 +331,7 @@ const PerformanceMonitor: React.FC = () => {
                 <Statistic
                   title="Network I/O"
                   value={formatBytes(metrics.system_health.system.network.bytes_recv)}
-                  prefix={<NetworkOutlined />}
+                  prefix={<WifiOutlined />}
                 />
                 <div style={{ fontSize: '12px', color: '#666' }}>
                   Sent: {formatBytes(metrics.system_health.system.network.bytes_sent)}

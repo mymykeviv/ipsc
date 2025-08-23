@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../modules/AuthContext'
 import { apiGetCashflowSummary, CashflowSummary, apiGetInventoryDashboard, InventoryDashboardMetrics } from '../lib/api'
-import { createApiErrorHandler } from '../lib/apiUtils'
+import { createApiErrorHandler } from '../lib/api'
 import { Button } from '../components/Button'
 import { DateFilter, DateRange } from '../components/DateFilter'
 import { useSavedPresets } from '../hooks/useSavedPresets'
@@ -39,7 +39,7 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null)
   
   // Create error handler that will automatically log out on 401 errors
-  const handleApiError = createApiErrorHandler(forceLogout)
+  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
   const [periodType, setPeriodType] = useState<'month' | 'quarter' | 'year' | 'custom'>('month')
   const [dateFilter, setDateFilter] = useState<DateRange>({
     startDate: new Date().toISOString().split('T')[0].substring(0, 7) + '-01',
@@ -114,7 +114,7 @@ export function Dashboard() {
 
   const loadGstData = async () => {
     try {
-      const response = await fetch(`/api/reports/gst-summary?from=${startDate}&to=${endDate}`, {
+      const response = await fetch(`/api/reports/gst-summary?from=${dateFilter.startDate}&to=${dateFilter.endDate}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (response.ok) {

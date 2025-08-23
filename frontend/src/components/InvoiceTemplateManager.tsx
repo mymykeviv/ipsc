@@ -29,7 +29,7 @@ interface InvoiceTemplateManagerProps {
 
 export function InvoiceTemplateManager({ isOpen, onClose }: InvoiceTemplateManagerProps) {
   const { forceLogout } = useAuth()
-  const handleApiError = createApiErrorHandler(forceLogout)
+  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
   
   const [templates, setTemplates] = useState<InvoiceTemplate[]>([])
   const [selectedTemplate, setSelectedTemplate] = useState<InvoiceTemplate | null>(null)

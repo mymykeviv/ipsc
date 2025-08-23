@@ -20,7 +20,7 @@ export function InventoryValuationReportComponent({ onClose }: InventoryValuatio
   const [includeZeroStock, setIncludeZeroStock] = useState(true)
   
   const { forceLogout } = useAuth()
-  const handleApiError = createApiErrorHandler(forceLogout)
+  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
 
   const loadReport = async () => {
     try {

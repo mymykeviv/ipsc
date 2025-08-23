@@ -37,7 +37,7 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
   const [isDateFilterActive, setIsDateFilterActive] = useState(false)
 
   // Create error handler that will automatically log out on 401 errors
-  const handleApiError = createApiErrorHandler(forceLogout)
+  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
 
   useEffect(() => {
     if (!token) {

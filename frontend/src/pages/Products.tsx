@@ -83,7 +83,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null)
   
   // Create error handler that will automatically log out on 401 errors
-  const handleApiError = createApiErrorHandler(forceLogout)
+  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
   const [showStockModal, setShowStockModal] = useState(false)
   const [showStockHistoryModal, setShowStockHistoryModal] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -1376,7 +1376,7 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
   const preSelectedProductId = searchParams.get('product')
   
   const { forceLogout } = useAuth()
-  const handleApiError = createApiErrorHandler(forceLogout)
+  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
   const [products, setProducts] = useState<Product[]>([])
   const [vendors, setVendors] = useState<Party[]>([])
   const [loading, setLoading] = useState(true)

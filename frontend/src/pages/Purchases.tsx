@@ -52,7 +52,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
   const [itemsPerPage] = useState(10)
 
   // Create error handler that will automatically log out on 401 errors
-  const handleApiError = createApiErrorHandler(forceLogout)
+  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
 
 
 

@@ -1,3 +1,47 @@
+// Error Handler Configuration
+export interface ErrorHandlerConfig {
+  onUnauthorized?: () => void
+  onForbidden?: () => void
+  onNotFound?: () => void
+  onServerError?: () => void
+  onNetworkError?: () => void
+}
+
+export function createApiErrorHandler(config: ErrorHandlerConfig = {}) {
+  return (error: any): string => {
+    console.error('API Error:', error)
+    
+    const errorMessage = error?.message || 'An unexpected error occurred'
+    
+    if (errorMessage.includes('401') || errorMessage.includes('unauthorized')) {
+      config.onUnauthorized?.()
+      return 'Session expired. Please log in again.'
+    }
+    
+    if (errorMessage.includes('403') || errorMessage.includes('forbidden')) {
+      config.onForbidden?.()
+      return 'Access denied. You do not have permission to perform this action.'
+    }
+    
+    if (errorMessage.includes('404') || errorMessage.includes('not found')) {
+      config.onNotFound?.()
+      return 'The requested resource was not found.'
+    }
+    
+    if (errorMessage.includes('500') || errorMessage.includes('server error')) {
+      config.onServerError?.()
+      return 'Server error. Please try again later.'
+    }
+    
+    if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+      config.onNetworkError?.()
+      return 'Network error. Please check your connection and try again.'
+    }
+    
+    return errorMessage
+  }
+}
+
 export type LoginResponse = { access_token: string; token_type: string }
 
 // Cashflow Types

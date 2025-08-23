@@ -61,7 +61,7 @@ interface InvoiceSettings {
 export function Settings({ section = 'company' }: SettingsProps) {
   const navigate = useNavigate()
   const { forceLogout } = useAuth()
-  const handleApiError = createApiErrorHandler(forceLogout)
+  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
   
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

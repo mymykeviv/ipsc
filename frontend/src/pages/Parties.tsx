@@ -76,7 +76,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
   const { forceLogout } = useAuth()
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
-  const handleApiError = createApiErrorHandler(forceLogout)
+  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
   
   const [activeTab, setActiveTab] = useState<'customers' | 'vendors'>(type === 'vendor' ? 'vendors' : 'customers')
   const [customers, setCustomers] = useState<Party[]>([])
