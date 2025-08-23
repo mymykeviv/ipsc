@@ -5,7 +5,7 @@ from datetime import datetime, date
 from decimal import Decimal
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, func, case, text, String
+from sqlalchemy import and_, or_, func, case, text, String, DateTime
 from .models import Payment, PurchasePayment, Expense, Invoice, Purchase, Party
 
 
@@ -25,10 +25,10 @@ class ProfitPathService:
         
         # Income (Invoice Payments)
         income_query = self.db.query(
-            func.sum(Payment.payment_amount).label('total_income'),
+            func.sum(Payment.amount).label('total_income'),
             func.count(Payment.id).label('income_count')
         ).filter(and_(*date_filter)) if date_filter else self.db.query(
-            func.sum(Payment.payment_amount).label('total_income'),
+            func.sum(Payment.amount).label('total_income'),
             func.count(Payment.id).label('income_count')
         )
         
@@ -142,15 +142,15 @@ class ProfitPathService:
         if not type_filter or type_filter == 'inflow':
             payment_query = self.db.query(
                 Payment.payment_date.label('transaction_date'),
-                Payment.payment_amount.label('amount'),
+                Payment.amount.label('amount'),
                 Payment.payment_method,
-                Payment.account_head,
+                func.cast('', String).label('account_head'),
                 Payment.reference_number,
                 Payment.notes.label('description'),
                 func.cast('inflow', String).label('type'),
                 func.cast('invoice_payment', String).label('source_type'),
                 Payment.id.label('source_id'),
-                Payment.created_at,
+                func.cast(datetime.utcnow(), DateTime).label('created_at'),
                 Invoice.invoice_no.label('reference_document'),
                 Party.name.label('party_name')
             ).join(Invoice, Payment.invoice_id == Invoice.id).join(Party, Invoice.customer_id == Party.id)
@@ -255,8 +255,8 @@ class ProfitPathService:
             expense_transactions = expense_query.all()
             transactions.extend(expense_transactions)
         
-        # Sort by transaction date (newest first)
-        transactions.sort(key=lambda x: x.transaction_date, reverse=True)
+        # Sort by transaction date (newest first), handle None values
+        transactions.sort(key=lambda x: x.transaction_date or datetime.min, reverse=True)
         
         # Apply pagination
         total_count = len(transactions)
@@ -268,18 +268,18 @@ class ProfitPathService:
             "transactions": [
                 {
                     "id": f"{t.source_type}_{t.source_id}",
-                    "transaction_date": t.transaction_date.isoformat(),
+                    "transaction_date": t.transaction_date.isoformat() if t.transaction_date else None,
                     "type": t.type,
                     "description": t.description or f"{t.source_type.replace('_', ' ').title()}",
                     "reference_number": t.reference_number,
                     "payment_method": t.payment_method,
-                    "amount": float(t.amount),
+                    "amount": float(t.amount) if t.amount else 0.0,
                     "account_head": t.account_head,
                     "source_type": t.source_type,
                     "source_id": t.source_id,
                     "reference_document": t.reference_document,
                     "party_name": t.party_name,
-                    "created_at": t.created_at.isoformat()
+                    "created_at": t.created_at.isoformat() if t.created_at else None
                 }
                 for t in paginated_transactions
             ],

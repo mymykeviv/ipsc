@@ -185,20 +185,18 @@ class TestCashflowIntegration:
         customer = Party(
             name="Test Customer",
             gstin="123456789012345",
-            type="Customer",
+            is_customer=True, is_vendor=False,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
-            billing_state="Test State",
-            billing_country="India"
+            billing_state="Test State"
         )
         vendor = Party(
             name="Test Vendor",
             gstin="987654321098765",
-            type="Vendor",
+            is_customer=False, is_vendor=True,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
-            billing_state="Test State",
-            billing_country="India"
+            billing_state="Test State"
         )
         db_session.add_all([customer, vendor])
         db_session.flush()
@@ -225,9 +223,8 @@ class TestCashflowIntegration:
         
         payment = Payment(
             invoice_id=invoice.id,
-            payment_amount=Decimal("600.00"),
-            payment_method="Bank Transfer",
-            account_head="Bank"
+            amount=Decimal("600.00"),
+            payment_method="Bank Transfer"
         )
         db_session.add(payment)
         
@@ -277,22 +274,20 @@ class TestCashflowIntegration:
         """Test cashflow functionality with various filters"""
         # Create test data
         customer = Party(
-            name="Test Customer", 
-            gstin="123456789012345", 
-            type="Customer",
+            name="Test Customer",
+            gstin="123456789012345",
+            is_customer=True, is_vendor=False,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
-            billing_state="Test State",
-            billing_country="India"
+            billing_state="Test State"
         )
         vendor = Party(
-            name="Test Vendor", 
-            gstin="987654321098765", 
-            type="Vendor",
+            name="Test Vendor",
+            gstin="987654321098765",
+            is_customer=False, is_vendor=True,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
-            billing_state="Test State",
-            billing_country="India"
+            billing_state="Test State"
         )
         db_session.add_all([customer, vendor])
         db_session.flush()
@@ -318,9 +313,8 @@ class TestCashflowIntegration:
         
         payment = Payment(
             invoice_id=invoice.id,
-            payment_amount=Decimal("600.00"),
-            payment_method="Bank Transfer",
-            account_head="Bank"
+            amount=Decimal("600.00"),
+            payment_method="Bank Transfer"
         )
         db_session.add(payment)
         
@@ -419,20 +413,18 @@ class TestCashflowBackwardCompatibility:
         customer = Party(
             name="Test Customer",
             gstin="123456789012345",
-            type="Customer",
+            is_customer=True, is_vendor=False,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
-            billing_state="Test State",
-            billing_country="India"
+            billing_state="Test State"
         )
         vendor = Party(
             name="Test Vendor",
             gstin="987654321098765",
-            type="Vendor",
+            is_customer=False, is_vendor=True,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
-            billing_state="Test State",
-            billing_country="India"
+            billing_state="Test State"
         )
         db_session.add_all([customer, vendor])
         db_session.flush()
@@ -472,6 +464,10 @@ class TestCashflowBackwardCompatibility:
             json=payment_data,
             headers=auth_headers
         )
+    
+        if response.status_code != 201:
+            print(f"Response status: {response.status_code}")
+            print(f"Response body: {response.text}")
         
         assert response.status_code == 201
         

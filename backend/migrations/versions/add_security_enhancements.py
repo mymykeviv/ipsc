@@ -1,7 +1,7 @@
 """Add security enhancements to database
 
 Revision ID: add_security_enhancements_001
-Revises: add_tenant_support_001
+Revises: 002
 Create Date: 2024-01-20 11:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'add_security_enhancements_001'
-down_revision = 'add_tenant_support_001'
+down_revision = '002'
 branch_labels = None
 depends_on = None
 

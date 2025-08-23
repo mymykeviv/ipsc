@@ -101,14 +101,12 @@ init_test_schema() {
 import os
 import sys
 sys.path.append('.')
-from app.db import init_db
-from app.seed import run_seed
 
-print('Creating database tables...')
-init_db()
-
-print('Running seed data...')
-run_seed()
+print('Running database migrations step by step...')
+# Run initial schema
+os.system('python -m alembic upgrade 001_initial_schema')
+# Run multi-tenant support
+os.system('python -m alembic upgrade 002')
 
 print('Test database initialization complete!')
 "; then

@@ -84,23 +84,23 @@ class TestRecurringInvoiceService:
         # Create test data
         customer = Party(
             name="Test Customer",
-            type="Customer",
             gstin="27AAAAA0000A1Z5",
             gst_enabled=True,
+            is_customer=True,
+            is_vendor=False,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
-            billing_state="Test State",
-            billing_country="India"
+            billing_state="Test State"
         )
         supplier = Party(
             name="Test Supplier",
-            type="Supplier",
             gstin="27AAAAA0000A1Z5",
             gst_enabled=True,
+            is_customer=False,
+            is_vendor=True,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
-            billing_state="Test State",
-            billing_country="India"
+            billing_state="Test State"
         )
         db.add(customer)
         db.add(supplier)
@@ -139,21 +139,21 @@ class TestRecurringInvoiceService:
         # Create test data
         customer = Party(
             name="Test Customer", 
-            type="Customer", 
             gst_enabled=True,
+            is_customer=True,
+            is_vendor=False,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
-            billing_state="Test State",
-            billing_country="India"
+            billing_state="Test State"
         )
         supplier = Party(
             name="Test Supplier", 
-            type="Supplier", 
             gst_enabled=True,
+            is_customer=False,
+            is_vendor=True,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
-            billing_state="Test State",
-            billing_country="India"
+            billing_state="Test State"
         )
         product = Product(
             name="Test Product",
@@ -211,22 +211,24 @@ class TestRecurringInvoiceService:
         """Test getting active templates"""
         # Create test data
         customer = Party(
-            name="Test Customer", 
-            type="Customer", 
+            name="Test Customer",
             gst_enabled=True,
+            is_customer=True,
+            is_vendor=False,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
             billing_state="Test State",
-            billing_country="India"
+            
         )
         supplier = Party(
-            name="Test Supplier", 
-            type="Supplier", 
+            name="Test Supplier",
             gst_enabled=True,
+            is_customer=False,
+            is_vendor=True,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
             billing_state="Test State",
-            billing_country="India"
+            
         )
         db.add_all([customer, supplier])
         db.commit()
@@ -269,22 +271,24 @@ class TestRecurringInvoiceService:
         """Test deactivating a recurring invoice template"""
         # Create test data
         customer = Party(
-            name="Test Customer", 
-            type="Customer", 
+            name="Test Customer",
             gst_enabled=True,
+            is_customer=True,
+            is_vendor=False,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
             billing_state="Test State",
-            billing_country="India"
+            
         )
         supplier = Party(
-            name="Test Supplier", 
-            type="Supplier", 
+            name="Test Supplier",
             gst_enabled=True,
+            is_customer=False,
+            is_vendor=True,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
             billing_state="Test State",
-            billing_country="India"
+            
         )
         db.add_all([customer, supplier])
         db.commit()
@@ -386,22 +390,24 @@ class TestAdvancedInvoiceAPI:
         """Test creating a recurring invoice template"""
         # Create test data with required fields
         customer = Party(
-            name="Test Customer", 
-            type="Customer", 
+            name="Test Customer",
             gst_enabled=True,
+            is_customer=True,
+            is_vendor=False,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
             billing_state="Test State",
-            billing_country="India"
+            
         )
         supplier = Party(
-            name="Test Supplier", 
-            type="Supplier", 
+            name="Test Supplier",
             gst_enabled=True,
+            is_customer=False,
+            is_vendor=True,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
             billing_state="Test State",
-            billing_country="India"
+            
         )
         db.add_all([customer, supplier])
         db.commit()
@@ -441,22 +447,24 @@ class TestAdvancedInvoiceAPI:
         """Test getting recurring invoice templates"""
         # Create test data with required fields
         customer = Party(
-            name="Test Customer", 
-            type="Customer", 
+            name="Test Customer",
             gst_enabled=True,
+            is_customer=True,
+            is_vendor=False,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
             billing_state="Test State",
-            billing_country="India"
+            
         )
         supplier = Party(
-            name="Test Supplier", 
-            type="Supplier", 
+            name="Test Supplier",
             gst_enabled=True,
+            is_customer=False,
+            is_vendor=True,
             billing_address_line1="Test Address Line 1",
             billing_city="Test City",
             billing_state="Test State",
-            billing_country="India"
+            
         )
         db.add_all([customer, supplier])
         db.commit()

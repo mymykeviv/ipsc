@@ -4,7 +4,7 @@ Pytest configuration and fixtures for backend tests
 import pytest
 import asyncio
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 import os
@@ -13,7 +13,11 @@ import sys
 # Add the app directory to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from app.main import create_app
+# Import create_app function but don't call it immediately
+def get_create_app():
+    # Only import when needed to avoid triggering app creation
+    import app.main
+    return app.main.create_app
 from app.db import Base, get_db
 from app.config import TestingSettings
 import os
@@ -55,8 +59,11 @@ def db_session():
         yield session
     finally:
         session.close()
-        # Drop tables after test
-        Base.metadata.drop_all(bind=engine)
+        # Drop tables after test with CASCADE
+        with engine.connect() as conn:
+            conn.execute(text("DROP SCHEMA public CASCADE"))
+            conn.execute(text("CREATE SCHEMA public"))
+            conn.commit()
 
 @pytest.fixture(scope="function")
 def db():
@@ -70,8 +77,11 @@ def db():
         yield session
     finally:
         session.close()
-        # Drop tables after test
-        Base.metadata.drop_all(bind=engine)
+        # Drop tables after test with CASCADE
+        with engine.connect() as conn:
+            conn.execute(text("DROP SCHEMA public CASCADE"))
+            conn.execute(text("CREATE SCHEMA public"))
+            conn.commit()
 
 
 @pytest.fixture(scope="function")
@@ -85,10 +95,15 @@ def client(db_session):
     
     # Set testing environment
     os.environ["ENVIRONMENT"] = "testing"
-    app = create_app()
-    app.dependency_overrides[get_db] = override_get_db
     
-    with TestClient(app) as test_client:
+    # Create app lazily only when needed
+    def create_test_app():
+        # Create full app but with testing environment to prevent database operations
+        app = get_create_app()()
+        app.dependency_overrides[get_db] = override_get_db
+        return app
+    
+    with TestClient(create_test_app()) as test_client:
         yield test_client
 
 

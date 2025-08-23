@@ -94,26 +94,22 @@ class TestInvoiceTemplateSystem:
         template_id = response.json()["id"]
         
         # Create test invoice
-        customer = Party(
-            name="Test Customer",
-            type="Customer",
-            gstin="27AAAAA0000A1Z5",
-            gst_enabled=True,
-            billing_address_line1="Test Address",
-            billing_city="Test City",
-            billing_state="Test State",
+        customer = Party(name="Test Customer", is_customer=True, is_vendor=False,
+            gstin="27AAAAA0000A1Z5", is_customer=True, is_vendor=False,
+            gst_enabled=True, is_customer=True, is_vendor=False,
+            billing_address_line1="Test Address", is_customer=True, is_vendor=False,
+            billing_city="Test City", is_customer=True, is_vendor=False,
+            billing_state="Test State", is_customer=True, is_vendor=False,
             billing_country="India"
-        )
-        supplier = Party(
-            name="Test Supplier",
-            type="Supplier",
-            gstin="27BBBBB0000B1Z5",
-            gst_enabled=True,
-            billing_address_line1="Test Address",
-            billing_city="Test City",
-            billing_state="Test State",
+        , is_customer=True, is_vendor=False)
+        supplier = Party(name="Test Supplier", is_customer=False, is_vendor=True,
+            gstin="27BBBBB0000B1Z5", is_customer=False, is_vendor=True,
+            gst_enabled=True, is_customer=False, is_vendor=True,
+            billing_address_line1="Test Address", is_customer=False, is_vendor=True,
+            billing_city="Test City", is_customer=False, is_vendor=True,
+            billing_state="Test State", is_customer=False, is_vendor=True,
             billing_country="India"
-        )
+        , is_customer=False, is_vendor=True)
         db_session.add_all([customer, supplier])
         db_session.flush()
         

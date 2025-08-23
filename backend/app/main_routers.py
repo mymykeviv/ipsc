@@ -438,16 +438,24 @@ class PaymentIn(BaseModel):
 class PaymentOut(BaseModel):
     id: int
     invoice_id: int
-    payment_date: datetime
+    payment_date: datetime | None
     payment_amount: float
-    payment_method: str
+    payment_method: str | None
     reference_number: str | None
     notes: str | None
-    created_at: datetime
-    updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    @classmethod
+    def from_orm(cls, obj):
+        """Custom from_orm method to map amount to payment_amount"""
+        return cls(
+            id=obj.id,
+            invoice_id=obj.invoice_id,
+            payment_date=obj.payment_date,
+            payment_amount=float(obj.amount) if obj.amount else 0.0,
+            payment_method=obj.payment_method,
+            reference_number=obj.reference_number,
+            notes=obj.notes
+        )
 
 
 class PurchasePaymentOut(BaseModel):
@@ -1236,9 +1244,8 @@ def add_payment(invoice_id: int, payload: PaymentIn, _: User = Depends(get_curre
     try:
         pay = Payment(
             invoice_id=invoice_id, 
-            payment_amount=money(payload.payment_amount), 
+            amount=money(payload.payment_amount), 
             payment_method=payload.payment_method, 
-            account_head=payload.account_head,
             reference_number=payload.reference_number,
             notes=payload.notes
         )
@@ -1289,9 +1296,9 @@ def list_invoice_payments(
     
     if payment_status:
         if payment_status == 'paid':
-            query = query.filter(Payment.payment_amount > 0)
+            query = query.filter(Payment.amount > 0)
         elif payment_status == 'pending':
-            query = query.filter(Payment.payment_amount == 0)
+            query = query.filter(Payment.amount == 0)
     
     if payment_method:
         query = query.filter(Payment.payment_method == payment_method)
@@ -1300,10 +1307,10 @@ def list_invoice_payments(
         query = query.filter(Invoice.customer_id == customer_id)
     
     if amount_min is not None:
-        query = query.filter(Payment.payment_amount >= amount_min)
+        query = query.filter(Payment.amount >= amount_min)
     
     if amount_max is not None:
-        query = query.filter(Payment.payment_amount <= amount_max)
+        query = query.filter(Payment.amount <= amount_max)
     
     if date_from:
         query = query.filter(Payment.payment_date >= datetime.fromisoformat(date_from))
@@ -1318,18 +1325,7 @@ def list_invoice_payments(
         invoice = db.query(Invoice).filter(Invoice.id == payment.invoice_id).first()
         customer = db.query(Party).filter(Party.id == invoice.customer_id).first() if invoice else None
         
-        result.append(PaymentOut(
-            id=payment.id,
-            invoice_id=payment.invoice_id,
-            payment_amount=float(payment.payment_amount),
-            payment_method=payment.payment_method,
-            account_head=payment.account_head,
-            reference_number=payment.reference_number,
-            payment_date=payment.payment_date,
-            notes=payment.notes,
-            created_at=payment.created_at,
-            updated_at=payment.updated_at
-        ))
+        result.append(PaymentOut.from_orm(payment))
     
     return result
 
@@ -1340,7 +1336,7 @@ def get_invoice_payments(invoice_id: int, _: User = Depends(get_current_user), d
         raise HTTPException(status_code=404, detail='Invoice not found')
     
     pays = db.query(Payment).filter(Payment.invoice_id == invoice_id).order_by(Payment.payment_date.desc()).all()
-    return pays
+    return [PaymentOut.from_orm(payment) for payment in pays]
 
 
 @api.delete('/payments/{payment_id}')

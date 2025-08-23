@@ -18,16 +18,13 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role_id: Mapped[int] = mapped_column(ForeignKey("roles.id"), nullable=False)
-    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     role: Mapped[Role] = relationship()
-    tenant: Mapped[Tenant | None] = relationship("Tenant")
     tenant: Mapped[Tenant | None] = relationship("Tenant")
 
 
 class CompanySettings(Base):
     __tablename__ = "company_settings"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     gstin: Mapped[str] = mapped_column(String(15), nullable=False)
@@ -38,37 +35,25 @@ class CompanySettings(Base):
     gst_enabled_by_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     require_gstin_validation: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     tenant: Mapped[Tenant | None] = relationship("Tenant")
-    tenant: Mapped[Tenant | None] = relationship("Tenant")
 
 
 class Party(Base):
     __tablename__ = "parties"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
-    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
-    type: Mapped[str] = mapped_column(String(10), nullable=False)  # customer|vendor
-    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    gstin: Mapped[str | None] = mapped_column(String(15), nullable=True)
+    gst_enabled: Mapped[bool] = mapped_column(Boolean, nullable=True)
     contact_person: Mapped[str | None] = mapped_column(String(100), nullable=True)
     contact_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
     email: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    gstin: Mapped[str | None] = mapped_column(String(15), nullable=True)
-    gst_registration_status: Mapped[str] = mapped_column(String(20), nullable=False, default="GST not registered")  # GST registered, GST not registered
-    billing_address_line1: Mapped[str] = mapped_column(String(200), nullable=False)
-    billing_address_line2: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    billing_city: Mapped[str] = mapped_column(String(100), nullable=False)
-    billing_state: Mapped[str] = mapped_column(String(100), nullable=False)
-    billing_country: Mapped[str] = mapped_column(String(100), nullable=False, default="India")
+    billing_address_line1: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    billing_city: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    billing_state: Mapped[str | None] = mapped_column(String(50), nullable=True)
     billing_pincode: Mapped[str | None] = mapped_column(String(10), nullable=True)
-    shipping_address_line1: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    shipping_address_line2: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    shipping_city: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    shipping_state: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    shipping_country: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    shipping_pincode: Mapped[str | None] = mapped_column(String(10), nullable=True)
-    notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    is_customer: Mapped[bool] = mapped_column(Boolean, nullable=True)
+    is_vendor: Mapped[bool] = mapped_column(Boolean, nullable=True)
     tenant: Mapped[Tenant | None] = relationship("Tenant")
-    gst_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
 class Product(Base):
@@ -185,16 +170,13 @@ class Payment(Base):
     __tablename__ = "payments"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
-    invoice_id: Mapped[int] = mapped_column(ForeignKey("invoices.id"), nullable=False)
-    payment_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    payment_amount: Mapped[Numeric] = mapped_column(Numeric(12, 2), nullable=False)
-    payment_method: Mapped[str] = mapped_column(String(50), nullable=False)  # Cash, Bank Transfer, Cheque, UPI, etc.
-    account_head: Mapped[str] = mapped_column(String(50), nullable=False)  # Cash, Bank, Funds, etc.
+    invoice_id: Mapped[int | None] = mapped_column(ForeignKey("invoices.id"), nullable=True)
+    amount: Mapped[Numeric | None] = mapped_column(Numeric(12, 2), nullable=True)
+    payment_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    payment_method: Mapped[str | None] = mapped_column(String(50), nullable=True)  # Cash, Bank Transfer, Cheque, UPI, etc.
     reference_number: Mapped[str | None] = mapped_column(String(100), nullable=True)  # Cheque number, UPI reference, etc.
-    notes: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
     tenant: Mapped[Tenant | None] = relationship("Tenant")
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
 class Purchase(Base):

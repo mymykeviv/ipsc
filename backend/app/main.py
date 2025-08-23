@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from .db import Base, legacy_engine, init_db, init_tenant_db
 from .seed import run_seed
-from .routers import api
+from . import main_routers
 from .config import settings
 from .middleware.tenant_routing import TenantRoutingMiddleware, TenantFeatureAccessMiddleware
 from .middleware.security import security_middleware, audit_middleware
@@ -420,7 +420,8 @@ def create_app(database_engine=None) -> FastAPI:
     db_engine = database_engine or legacy_engine
     
     # DB init for dev (only if not in testing)
-    if not settings.environment == "testing":
+    # Check environment variable directly to avoid caching issues
+    if os.getenv("ENVIRONMENT") != "testing":
         if MULTI_TENANT_ENABLED:
             # Initialize tenant databases - will be done on startup
             logger.info("Multi-tenant mode: Database initialization will be done on startup")
@@ -429,6 +430,9 @@ def create_app(database_engine=None) -> FastAPI:
             Base.metadata.create_all(bind=db_engine)
             # Seed database
             run_seed()
+    else:
+        # In testing mode, don't initialize database or seed data
+        logger.info("Testing mode: Skipping database initialization and seeding")
 
     @app.on_event("startup")
     async def startup_event():
@@ -451,7 +455,7 @@ def create_app(database_engine=None) -> FastAPI:
             except Exception as e:
                 logger.error(f"Error initializing tenant databases: {e}")
 
-    app.include_router(api, prefix="/api")
+    app.include_router(main_routers.api, prefix="/api")
 
     logger.info(f"Application started in {settings.environment} mode")
     logger.info(f"Multi-tenant architecture: {'ENABLED' if MULTI_TENANT_ENABLED else 'DISABLED'}")
@@ -460,6 +464,15 @@ def create_app(database_engine=None) -> FastAPI:
     return app
 
 
-# Create app instance
-app = create_app()
+# Create app instance - lazy loading for tests
+def get_app():
+    """Get the FastAPI application instance (lazy loading for tests)"""
+    return create_app()
+
+# Create app instance only when not in testing
+# Check environment variable directly to avoid caching issues
+if os.getenv("ENVIRONMENT") != "testing":
+    app = get_app()
+else:
+    app = None
 
