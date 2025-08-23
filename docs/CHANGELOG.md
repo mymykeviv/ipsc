@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.5] - 2025-08-23
+
+### 🪟 **Windows Deployment Support**
+- **Windows Batch Files**: Added start.bat, stop.bat, and test-deployment.bat
+- **Easy Windows Setup**: One-click deployment for Windows users
+- **Docker Integration**: Automatic Docker checks and service management
+- **User-Friendly Interface**: Clear instructions and status messages
+- **Health Checks**: Built-in deployment testing and validation
+
 ## [1.4.4] - 2025-08-23
 
 ### 🏢 **MAJOR FEATURE: Multi-Tenancy Implementation Complete**
