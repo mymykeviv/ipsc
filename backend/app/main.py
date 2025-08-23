@@ -6,9 +6,7 @@ from . import main_routers
 from .config import settings
 from .middleware.tenant_routing import (
     tenant_routing_middleware, 
-    tenant_feature_access_middleware,
-    TenantRoutingMiddleware,
-    TenantFeatureAccessMiddleware
+    tenant_feature_access_middleware
 )
 from .middleware.security import security_middleware, audit_middleware
 from .tenant_config import tenant_config_manager
@@ -69,10 +67,10 @@ def create_app(database_engine=None) -> FastAPI:
 
     # Add tenant middleware if multi-tenant is enabled
     if MULTI_TENANT_ENABLED:
-        # Temporarily disabled to fix startup issues
+        # Temporarily disabled - middleware needs further fixes
         # app.middleware("http")(tenant_routing_middleware)
         # app.middleware("http")(tenant_feature_access_middleware)
-        logger.info("Multi-tenant middleware temporarily disabled for startup fix")
+        logger.info("Multi-tenant middleware temporarily disabled - needs further fixes")
     else:
         logger.info("Multi-tenant middleware disabled - running in single-tenant mode")
 
