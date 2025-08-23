@@ -17,7 +17,7 @@ import { Login } from '../pages/Login'
 import { AuthProvider, useAuth } from './AuthContext'
 import { Invoices } from '../pages/Invoices'
 import { Expenses } from '../pages/Expenses'
-import { ProfitPath } from '../pages/ProfitPath'
+import { CashflowTransactions } from '../pages/ProfitPath'
 import { Payments } from '../pages/Payments'
 import { PurchasePayments } from '../pages/PurchasePayments'
 import TemplateManagement from '../pages/TemplateManagement'
@@ -291,7 +291,7 @@ function Shell() {
               onClick={() => toggleSection('cashflow')}
               style={{ cursor: 'pointer', userSelect: 'none' }}
             >
-              💰 ProfitPath {collapsedSections.cashflow ? '▼' : '▶'}
+              💰 CashFlow {collapsedSections.cashflow ? '▼' : '▶'}
             </div>
             {!collapsedSections.cashflow && (
               <>
@@ -452,7 +452,7 @@ function Shell() {
           <Route path="/parties/add" element={<Parties type="customer" mode="add" />} />
           
           {/* Cashflow Routes */}
-          <Route path="/cashflow" element={<ProfitPath />} />
+          <Route path="/cashflow" element={<CashflowTransactions />} />
           
           {/* Settings Routes */}
           <Route path="/settings" element={<Settings />} />

@@ -10,7 +10,7 @@ import { FilterDropdown } from '../components/FilterDropdown'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 
-export function ProfitPath() {
+export function CashflowTransactions() {
   const { token } = useAuth()
   const [transactions, setTransactions] = useState<CashflowTransaction[]>([])
   const [loading, setLoading] = useState(false)
