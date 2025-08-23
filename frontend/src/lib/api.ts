@@ -1131,27 +1131,37 @@ export type StockMovement = {
 }
 
 export async function apiGetStockMovementHistory(financialYear: string, productId?: number): Promise<StockMovement[]> {
-  const params = new URLSearchParams()
-  params.append('financial_year', financialYear)
-  if (productId) {
-    params.append('product_id', productId.toString())
-  }
-  
-  const url = `/api/stock/movement-history?${params.toString()}`
-  const r = await fetch(url, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+  try {
+    const params = new URLSearchParams()
+    params.append('financial_year', financialYear)
+    if (productId) {
+      params.append('product_id', productId.toString())
     }
+    
+    const url = `/api/stock/movement-history?${params.toString()}`
+    const r = await fetch(url, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+    })
+    
+    if (!r.ok) {
+      const errorData = await r.json().catch(() => ({}))
+      console.error('Stock movement API error:', { status: r.status, error: errorData })
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    }
+    
+    const data = await r.json()
+    
+    // Validate response structure
+    if (!Array.isArray(data)) {
+      console.error('Stock movement API returned non-array:', data)
+      throw new Error('Invalid response format: expected array')
+    }
+    
+    return data
+  } catch (error) {
+    console.error('Failed to fetch stock movement history:', error)
+    throw error
   }
-  
-  return r.json()
 }
 
 export async function apiGetProductStockMovementHistory(
@@ -1483,20 +1493,38 @@ export async function apiListAllPurchasePayments(): Promise<Array<{
   vendor_name: string
   purchase_number: string
 }>> {
-  const r = await fetch('/api/purchase-payments', {
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
+  try {
+    const r = await fetch('/api/purchase-payments', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+    })
+    
+    if (!r.ok) {
+      const errorData = await r.json().catch(() => ({}))
+      console.error('Purchase payments API error:', { status: r.status, error: errorData })
       throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
     }
+    
+    const data = await r.json()
+    
+    // Validate response structure
+    if (!Array.isArray(data)) {
+      console.error('Purchase payments API returned non-array:', data)
+      throw new Error('Invalid response format: expected array')
+    }
+    
+    // Validate each item has required fields
+    data.forEach((item, index) => {
+      if (!item.id || !item.purchase_id || !item.payment_amount || !item.payment_method) {
+        console.error(`Purchase payment item ${index} missing required fields:`, item)
+        throw new Error(`Invalid payment data at index ${index}`)
+      }
+    })
+    
+    return data
+  } catch (error) {
+    console.error('Failed to fetch purchase payments:', error)
+    throw error
   }
-  
-  return r.json()
 }
 
 
@@ -1528,20 +1556,30 @@ export async function apiAddPayment(invoiceId: number, payload: PaymentCreate): 
 }
 
 export async function apiGetInvoicePayments(invoiceId: number): Promise<Payment[]> {
-  const r = await fetch(`/api/invoices/${invoiceId}/payments`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
+  try {
+    const r = await fetch(`/api/invoices/${invoiceId}/payments`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+    })
+    
+    if (!r.ok) {
+      const errorData = await r.json().catch(() => ({}))
+      console.error('Invoice payments API error:', { status: r.status, error: errorData })
       throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
     }
+    
+    const data = await r.json()
+    
+    // Validate response structure
+    if (!Array.isArray(data)) {
+      console.error('Invoice payments API returned non-array:', data)
+      throw new Error('Invalid response format: expected array')
+    }
+    
+    return data
+  } catch (error) {
+    console.error('Failed to fetch invoice payments:', error)
+    throw error
   }
-  
-  return r.json()
 }
 
 export async function apiGetAllInvoicePayments(): Promise<Payment[]> {
