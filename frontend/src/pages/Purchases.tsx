@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useEffect, useState, useCallback } from 'react'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
 import { 
@@ -24,6 +24,9 @@ import { FilterDropdown } from '../components/FilterDropdown'
 import { DateFilter, DateRange } from '../components/DateFilter'
 import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
 import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
+import { useFilterNavigation } from '../utils/filterNavigation'
+import { useFilterReset } from '../hooks/useFilterReset'
+import { getDefaultFilterState } from '../config/defaultFilterStates'
 
 interface PurchasesProps {
   mode?: 'manage' | 'add' | 'edit' | 'payments'
@@ -39,20 +42,137 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
   const [currentPurchase, setCurrentPurchase] = useState<Purchase | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [vendorFilter, setVendorFilter] = useState('all')
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState('all')
-  const [amountRangeFilter, setAmountRangeFilter] = useState('all')
-  const [dateFilter, setDateFilter] = useState<DateRange>({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-    endDate: new Date().toISOString().slice(0, 10)
-  })
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
 
+  // Enhanced Filter System - Unified State Management
+  const defaultState = getDefaultFilterState('purchases') as {
+    searchTerm: string
+    statusFilter: string
+    vendorFilter: string
+    paymentStatusFilter: string
+    amountRangeFilter: string
+    dateFilter: DateRange
+  }
+  const { getFiltersFromURL, updateURLWithFilters, clearURLFilters } = useFilterNavigation(defaultState)
+  const { resetAllFilters, getActiveFilterCount } = useFilterReset({
+    pageName: 'purchases',
+    onReset: (newState) => {
+      // Update all filter states
+      setSearchTerm(newState.searchTerm)
+      setStatusFilter(newState.statusFilter)
+      setVendorFilter(newState.vendorFilter)
+      setPaymentStatusFilter(newState.paymentStatusFilter)
+      setAmountRangeFilter(newState.amountRangeFilter)
+      setDateFilter(newState.dateFilter)
+    }
+  })
+
+  // Filter state with URL integration
+  const [searchTerm, setSearchTerm] = useState<string>(defaultState.searchTerm)
+  const [statusFilter, setStatusFilter] = useState<string>(defaultState.statusFilter)
+  const [vendorFilter, setVendorFilter] = useState<string>(defaultState.vendorFilter)
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>(defaultState.paymentStatusFilter)
+  const [amountRangeFilter, setAmountRangeFilter] = useState<string>(defaultState.amountRangeFilter)
+  const [dateFilter, setDateFilter] = useState<DateRange>(defaultState.dateFilter)
+
   // Create error handler that will automatically log out on 401 errors
   const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
+
+  // URL Parameter Integration - Apply filters from URL on component mount
+  useEffect(() => {
+    if (mode === 'manage') {
+      const urlFilters = getFiltersFromURL()
+      
+      // Apply URL filters to state
+      if (urlFilters.searchTerm) setSearchTerm(urlFilters.searchTerm)
+      if (urlFilters.statusFilter) setStatusFilter(urlFilters.statusFilter)
+      if (urlFilters.vendorFilter) setVendorFilter(urlFilters.vendorFilter)
+      if (urlFilters.paymentStatusFilter) setPaymentStatusFilter(urlFilters.paymentStatusFilter)
+      if (urlFilters.amountRangeFilter) setAmountRangeFilter(urlFilters.amountRangeFilter)
+      if (urlFilters.dateFilter) setDateFilter(urlFilters.dateFilter)
+    }
+  }, [mode, getFiltersFromURL])
+
+  // Update URL when filters change
+  const updateFiltersAndURL = useCallback((newFilters: Partial<typeof defaultState>) => {
+    const currentFilters = {
+      searchTerm,
+      statusFilter,
+      vendorFilter,
+      paymentStatusFilter,
+      amountRangeFilter,
+      dateFilter
+    }
+    
+    const updatedFilters = { ...currentFilters, ...newFilters }
+    updateURLWithFilters(updatedFilters)
+  }, [searchTerm, statusFilter, vendorFilter, paymentStatusFilter, 
+      amountRangeFilter, dateFilter, updateURLWithFilters])
+
+  // Enhanced filter setters with URL integration
+  const setSearchTermWithURL = useCallback((value: string) => {
+    setSearchTerm(value)
+    updateFiltersAndURL({ searchTerm: value })
+  }, [updateFiltersAndURL])
+
+  const setStatusFilterWithURL = useCallback((value: string) => {
+    setStatusFilter(value)
+    updateFiltersAndURL({ statusFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setVendorFilterWithURL = useCallback((value: string) => {
+    setVendorFilter(value)
+    updateFiltersAndURL({ vendorFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setPaymentStatusFilterWithURL = useCallback((value: string) => {
+    setPaymentStatusFilter(value)
+    updateFiltersAndURL({ paymentStatusFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setAmountRangeFilterWithURL = useCallback((value: string) => {
+    setAmountRangeFilter(value)
+    updateFiltersAndURL({ amountRangeFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setDateFilterWithURL = useCallback((value: DateRange) => {
+    setDateFilter(value)
+    updateFiltersAndURL({ dateFilter: value })
+  }, [updateFiltersAndURL])
+
+  // Clear all filters handler
+  const handleClearAllFilters = useCallback(() => {
+    const currentState = {
+      searchTerm,
+      statusFilter,
+      vendorFilter,
+      paymentStatusFilter,
+      amountRangeFilter,
+      dateFilter
+    }
+    
+    const newState = resetAllFilters(currentState)
+    
+    // Update all filter states
+    setSearchTerm(newState.searchTerm)
+    setStatusFilter(newState.statusFilter)
+    setVendorFilter(newState.vendorFilter)
+    setPaymentStatusFilter(newState.paymentStatusFilter)
+    setAmountRangeFilter(newState.amountRangeFilter)
+    setDateFilter(newState.dateFilter)
+  }, [searchTerm, statusFilter, vendorFilter, paymentStatusFilter, 
+      amountRangeFilter, dateFilter, resetAllFilters])
+
+  // Get active filter count
+  const activeFilterCount = getActiveFilterCount({
+    searchTerm,
+    statusFilter,
+    vendorFilter,
+    paymentStatusFilter,
+    amountRangeFilter,
+    dateFilter
+  })
 
 
 
@@ -292,44 +412,54 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
       {/* Enhanced Filter Options */}
       <EnhancedFilterBar 
         title="Purchase Filters"
-        activeFiltersCount={
-          (searchTerm ? 1 : 0) +
-          (statusFilter !== 'all' ? 1 : 0) +
-          (vendorFilter !== 'all' ? 1 : 0) +
-          (paymentStatusFilter !== 'all' ? 1 : 0) +
-          (amountRangeFilter !== 'all' ? 1 : 0) +
-          0 // DateFilter is always active now
-        }
-        onClearAll={() => {
-          setSearchTerm('')
-          setStatusFilter('all')
-          setVendorFilter('all')
-          setPaymentStatusFilter('all')
-          setAmountRangeFilter('all')
-          setDateFilter({
-            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-            endDate: new Date().toISOString().slice(0, 10)
-          })
-        }}
+        activeFiltersCount={activeFilterCount}
+        onClearAll={handleClearAllFilters}
         showQuickActions={true}
+        showQuickFiltersWhenCollapsed={true}
         quickActions={[
           {
+            id: 'currentFY',
             label: 'Current FY',
             action: () => {
               const currentYear = new Date().getFullYear()
-              setDateFilter({
+              setDateFilterWithURL({
                 startDate: `${currentYear}-04-01`,
                 endDate: `${currentYear + 1}-03-31`
               })
             },
-            icon: '📅'
+            icon: '📅',
+            isActive: false
           },
           {
+            id: 'duePayment',
             label: 'Due Payment',
             action: () => {
-              setPaymentStatusFilter('unpaid')
+              setPaymentStatusFilterWithURL('unpaid')
             },
-            icon: '💰'
+            icon: '💰',
+            isActive: paymentStatusFilter === 'unpaid'
+          },
+          {
+            id: 'recentPurchases',
+            label: 'Recent Purchases',
+            action: () => {
+              const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+              setDateFilterWithURL({
+                startDate: thirtyDaysAgo,
+                endDate: new Date().toISOString().slice(0, 10)
+              })
+            },
+            icon: '📋',
+            isActive: false
+          },
+          {
+            id: 'highValuePurchases',
+            label: 'High Value (>50K)',
+            action: () => {
+              setAmountRangeFilterWithURL('50000-')
+            },
+            icon: '💰',
+            isActive: amountRangeFilter === '50000-'
           }
         ]}
       >
@@ -339,7 +469,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
             type="text"
             placeholder="Search purchases by number or vendor..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTermWithURL(e.target.value)}
             style={{
               padding: '8px 12px',
               border: '1px solid #ced4da',
@@ -354,7 +484,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Status</span>
           <FilterDropdown
             value={statusFilter}
-            onChange={(value) => setStatusFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setStatusFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Status' },
               { value: 'Draft', label: 'Draft' },
@@ -370,7 +500,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Vendor</span>
           <FilterDropdown
             value={vendorFilter}
-            onChange={(value) => setVendorFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setVendorFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Vendors' },
               ...vendors.map(vendor => ({ 
@@ -386,7 +516,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Payment Status</span>
           <FilterDropdown
             value={paymentStatusFilter}
-            onChange={(value) => setPaymentStatusFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setPaymentStatusFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Payment Status' },
               { value: 'paid', label: 'Paid' },
@@ -401,7 +531,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Amount Range</span>
           <FilterDropdown
             value={amountRangeFilter}
-            onChange={(value) => setAmountRangeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setAmountRangeFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Amounts' },
               { value: '0-1000', label: '₹0 - ₹1,000' },
@@ -418,7 +548,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
           <DateFilter
             value={dateFilter}
-            onChange={setDateFilter}
+            onChange={setDateFilterWithURL}
           />
         </div>
       </EnhancedFilterBar>

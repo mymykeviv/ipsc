@@ -1,4 +1,4 @@
-from backend.app.seed import run_seed
+from backend.app.test_seed import run_test_seed
 from backend.app.db import legacy_engine as engine, LegacySessionLocal as SessionLocal
 from backend.app.models import Base, User, Role, Product, Party, CompanySettings, StockLedgerEntry
 
@@ -11,7 +11,7 @@ def test_seed_creates_minimum_data(tmp_path, monkeypatch):
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
-    run_seed()
+    run_test_seed()
 
     db = SessionLocal()
     try:

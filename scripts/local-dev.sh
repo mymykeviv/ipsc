@@ -77,7 +77,7 @@ create_env_file() {
     
     cat > .env.local << EOF
 # Local Development Environment Variables
-DATABASE_URL=sqlite:///./cashflow.db
+DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/profitpath
 SECRET_KEY=dev-secret-key-change-in-production
 DEBUG=true
 LOG_LEVEL=DEBUG
@@ -112,25 +112,46 @@ setup_node_env() {
     print_success "Node.js dependencies installed"
 }
 
-# Setup SQLite database
-setup_database() {
-    print_status "Setting up SQLite database..."
-    
-    # SQLite database will be created automatically when the backend starts
-    # Just ensure the directory exists
-    touch cashflow.db
-    print_success "SQLite database setup completed"
-}
-
 # Start MailHog for email testing
+# Start PostgreSQL database
+start_postgresql() {
+    print_status "Starting PostgreSQL database..."
+    
+    # Remove existing container if it exists
+    docker rm -f profitpath-postgres-dev 2>/dev/null || true
+    
+    docker run -d \
+        --name profitpath-postgres-dev \
+        -e POSTGRES_USER=postgres \
+        -e POSTGRES_PASSWORD=postgres \
+        -e POSTGRES_DB=profitpath \
+        -p 5432:5432 \
+        postgres:16-alpine
+    
+    print_success "PostgreSQL started on localhost:5432"
+    
+    # Wait for PostgreSQL to be ready
+    print_status "Waiting for PostgreSQL to be ready..."
+    for i in {1..30}; do
+        if docker exec profitpath-postgres-dev pg_isready -U postgres > /dev/null 2>&1; then
+            print_success "PostgreSQL is ready"
+            break
+        fi
+        if [ $i -eq 30 ]; then
+            print_warning "PostgreSQL health check failed, but continuing..."
+            break
+        fi
+        sleep 1
+    done
+}
 start_mailhog() {
     print_status "Starting MailHog for email testing..."
     
     # Remove existing container if it exists
-    docker rm -f cashflow-mailhog-dev 2>/dev/null || true
+    docker rm -f profitpath-mailhog-dev 2>/dev/null || true
     
     docker run -d \
-        --name cashflow-mailhog-dev \
+        --name profitpath-mailhog-dev \
         -p 1025:1025 \
         -p 8025:8025 \
         mailhog/mailhog:v1.0.1
@@ -147,9 +168,20 @@ start_backend() {
     # Environment variables are loaded from .env.local file
     
     # SQLite database will be created automatically by SQLAlchemy
-    print_status "SQLite database will be created automatically"
+    print_status "PostgreSQL database will be created automatically"
     
     # Start backend with auto-reload
+    # Set environment variables for development
+    export DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/profitpath"
+    export SECRET_KEY="dev-secret-key-change-in-production"
+    export DEBUG="true"
+    export LOG_LEVEL="DEBUG"
+    export ENVIRONMENT="development"
+    export SECURITY_ENABLED="false"
+    export MULTI_TENANT_ENABLED="false"
+    export DATABASE_OPTIMIZATION_ENABLED="false"
+    export PERFORMANCE_MONITORING_ENABLED="false"
+    export SECURITY_MONITORING_ENABLED="false"
     cd backend
     uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --log-level debug &
     BACKEND_PID=$!
@@ -192,7 +224,8 @@ start_frontend() {
 create_pid_file() {
     echo "BACKEND_PID=$BACKEND_PID" > .dev-pids
     echo "FRONTEND_PID=$FRONTEND_PID" >> .dev-pids
-    echo "MAILHOG_CONTAINER=cashflow-mailhog-dev" >> .dev-pids
+    echo "MAILHOG_CONTAINER=profitpath-mailhog-dev" >> .dev-pids
+    echo "POSTGRES_CONTAINER=profitpath-postgres-dev" >> .dev-pids
 }
 
 # Show status and URLs
@@ -204,7 +237,7 @@ show_status() {
     echo "📱 Frontend:     http://localhost:5173"
     echo "🔧 Backend API:  http://localhost:8000"
     echo "📧 MailHog:      http://localhost:8025"
-    echo "🗄️  Database:     SQLite (cashflow.db)"
+    echo "🗄️  Database:     PostgreSQL (localhost:5432)"
     echo ""
     echo "🔍 Debug Features Enabled:"
     echo "   - Hot reload for frontend and backend"
@@ -214,8 +247,8 @@ show_status() {
     echo ""
     echo "📝 Useful Commands:"
     echo "   - View logs: tail -f logs/dev.log"
-    echo "   - Stop services: ./scripts/stop-local.sh"
-    echo "   - Restart services: ./scripts/restart-local.sh"
+    echo "   - Stop services: ./scripts/stop-local-dev.sh"
+    echo "   - Restart services: ./scripts/restart-local-dev.sh"
     echo ""
     echo "⚠️  Press Ctrl+C to stop all services"
 }
@@ -236,7 +269,8 @@ cleanup() {
     fi
     
     # Stop Docker containers
-    docker stop cashflow-mailhog-dev 2>/dev/null || true
+    docker stop profitpath-mailhog-dev 2>/dev/null || true
+    docker stop profitpath-postgres-dev 2>/dev/null || true
     
     # Remove PID file
     rm -f .dev-pids
@@ -255,7 +289,7 @@ main() {
     setup_python_env
     create_env_file
     setup_node_env
-    setup_database
+    start_postgresql
     start_mailhog
     start_backend
     start_frontend

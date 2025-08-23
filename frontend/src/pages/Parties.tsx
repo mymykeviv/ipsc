@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Button } from '../components/Button'
 import { ErrorMessage } from '../components/ErrorMessage'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
@@ -12,6 +12,9 @@ import { Party, apiListCustomers, apiListVendors, apiCreateParty, apiUpdateParty
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
+import { useFilterNavigation } from '../utils/filterNavigation'
+import { useFilterReset } from '../hooks/useFilterReset'
+import { getDefaultFilterState } from '../config/defaultFilterStates'
 
 interface PartyFormData {
   type: 'customer' | 'vendor'
@@ -89,24 +92,66 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const [showInactive, setShowInactive] = useState(false)
+
+  // Enhanced Filter System - Unified State Management
+  const defaultState = getDefaultFilterState('parties') as {
+    search: string
+    contactPerson: string
+    email: string
+    phone: string
+    city: string
+    state: string
+    country: string
+    gstStatus: string
+    gstRegistration: string
+    gstStateCode: string
+    partyType: 'customer' | 'vendor' | 'both'
+    status: 'active' | 'inactive' | 'all'
+    dateRange: { start: string; end: string }
+    hasNotes: boolean
+  }
+  const { getFiltersFromURL, updateURLWithFilters, clearURLFilters } = useFilterNavigation(defaultState)
+  const { resetAllFilters, getActiveFilterCount } = useFilterReset({
+    pageName: 'parties',
+    onReset: (newState) => {
+      // Update all filter states
+      setFilters(prev => ({
+        ...prev,
+        search: newState.search,
+        contactPerson: newState.contactPerson,
+        email: newState.email,
+        phone: newState.phone,
+        city: newState.city,
+        state: newState.state,
+        country: newState.country,
+        gstStatus: newState.gstStatus,
+        gstRegistration: newState.gstRegistration,
+        gstStateCode: newState.gstStateCode,
+        partyType: newState.partyType,
+        status: newState.status,
+        dateRange: newState.dateRange,
+        hasNotes: newState.hasNotes
+      }))
+    }
+  })
   
-  // Filter state
+  // Filter state with URL integration
   const [filters, setFilters] = useState<PartiesFilterState>({
     quickFilter: 'all',
-    search: '',
-    contactPerson: '',
-    email: '',
-    phone: '',
-    city: '',
-    state: '',
-    country: '',
-    gstStatus: '',
-    gstRegistration: '',
-    gstStateCode: '',
-    partyType: 'both',
-    status: 'all',
-    dateRange: { start: '', end: '' },
-    hasNotes: false,
+    search: defaultState.search,
+    contactPerson: defaultState.contactPerson,
+    email: defaultState.email,
+    phone: defaultState.phone,
+    city: defaultState.city,
+    state: defaultState.state,
+    country: defaultState.country,
+    gstStatus: defaultState.gstStatus,
+    gstRegistration: defaultState.gstRegistration,
+    gstStateCode: defaultState.gstStateCode,
+    partyType: defaultState.partyType,
+    status: defaultState.status,
+    dateRange: defaultState.dateRange,
+    hasNotes: defaultState.hasNotes,
     sortBy: 'name',
     sortOrder: 'asc',
     page: 1,
@@ -135,6 +180,185 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
     shipping_country: '',
     shipping_pincode: '',
     notes: ''
+  })
+
+  // URL Parameter Integration - Apply filters from URL on component mount
+  useEffect(() => {
+    if (mode === 'manage') {
+      const urlFilters = getFiltersFromURL()
+      
+      // Apply URL filters to state
+      setFilters(prev => ({
+        ...prev,
+        search: urlFilters.search || prev.search,
+        contactPerson: urlFilters.contactPerson || prev.contactPerson,
+        email: urlFilters.email || prev.email,
+        phone: urlFilters.phone || prev.phone,
+        city: urlFilters.city || prev.city,
+        state: urlFilters.state || prev.state,
+        country: urlFilters.country || prev.country,
+        gstStatus: urlFilters.gstStatus || prev.gstStatus,
+        gstRegistration: urlFilters.gstRegistration || prev.gstRegistration,
+        gstStateCode: urlFilters.gstStateCode || prev.gstStateCode,
+        partyType: urlFilters.partyType || prev.partyType,
+        status: urlFilters.status || prev.status,
+        dateRange: urlFilters.dateRange || prev.dateRange,
+        hasNotes: urlFilters.hasNotes || prev.hasNotes
+      }))
+    }
+  }, [mode, getFiltersFromURL])
+
+  // Update URL when filters change
+  const updateFiltersAndURL = useCallback((newFilters: Partial<typeof defaultState>) => {
+    const currentFilters = {
+      search: filters.search,
+      contactPerson: filters.contactPerson,
+      email: filters.email,
+      phone: filters.phone,
+      city: filters.city,
+      state: filters.state,
+      country: filters.country,
+      gstStatus: filters.gstStatus,
+      gstRegistration: filters.gstRegistration,
+      gstStateCode: filters.gstStateCode,
+      partyType: filters.partyType,
+      status: filters.status,
+      dateRange: filters.dateRange,
+      hasNotes: filters.hasNotes
+    }
+    
+    const updatedFilters = { ...currentFilters, ...newFilters }
+    updateURLWithFilters(updatedFilters)
+  }, [filters, updateURLWithFilters])
+
+  // Enhanced filter setters with URL integration
+  const setSearchWithURL = useCallback((value: string) => {
+    setFilters(prev => ({ ...prev, search: value }))
+    updateFiltersAndURL({ search: value })
+  }, [updateFiltersAndURL])
+
+  const setContactPersonWithURL = useCallback((value: string) => {
+    setFilters(prev => ({ ...prev, contactPerson: value }))
+    updateFiltersAndURL({ contactPerson: value })
+  }, [updateFiltersAndURL])
+
+  const setEmailWithURL = useCallback((value: string) => {
+    setFilters(prev => ({ ...prev, email: value }))
+    updateFiltersAndURL({ email: value })
+  }, [updateFiltersAndURL])
+
+  const setPhoneWithURL = useCallback((value: string) => {
+    setFilters(prev => ({ ...prev, phone: value }))
+    updateFiltersAndURL({ phone: value })
+  }, [updateFiltersAndURL])
+
+  const setCityWithURL = useCallback((value: string) => {
+    setFilters(prev => ({ ...prev, city: value }))
+    updateFiltersAndURL({ city: value })
+  }, [updateFiltersAndURL])
+
+  const setStateWithURL = useCallback((value: string) => {
+    setFilters(prev => ({ ...prev, state: value }))
+    updateFiltersAndURL({ state: value })
+  }, [updateFiltersAndURL])
+
+  const setCountryWithURL = useCallback((value: string) => {
+    setFilters(prev => ({ ...prev, country: value }))
+    updateFiltersAndURL({ country: value })
+  }, [updateFiltersAndURL])
+
+  const setGstStatusWithURL = useCallback((value: string) => {
+    setFilters(prev => ({ ...prev, gstStatus: value }))
+    updateFiltersAndURL({ gstStatus: value })
+  }, [updateFiltersAndURL])
+
+  const setGstRegistrationWithURL = useCallback((value: string) => {
+    setFilters(prev => ({ ...prev, gstRegistration: value }))
+    updateFiltersAndURL({ gstRegistration: value })
+  }, [updateFiltersAndURL])
+
+  const setGstStateCodeWithURL = useCallback((value: string) => {
+    setFilters(prev => ({ ...prev, gstStateCode: value }))
+    updateFiltersAndURL({ gstStateCode: value })
+  }, [updateFiltersAndURL])
+
+  const setPartyTypeWithURL = useCallback((value: 'customer' | 'vendor' | 'both') => {
+    setFilters(prev => ({ ...prev, partyType: value }))
+    updateFiltersAndURL({ partyType: value })
+  }, [updateFiltersAndURL])
+
+  const setStatusWithURL = useCallback((value: 'active' | 'inactive' | 'all') => {
+    setFilters(prev => ({ ...prev, status: value }))
+    updateFiltersAndURL({ status: value })
+  }, [updateFiltersAndURL])
+
+  const setDateRangeWithURL = useCallback((value: { start: string; end: string }) => {
+    setFilters(prev => ({ ...prev, dateRange: value }))
+    updateFiltersAndURL({ dateRange: value })
+  }, [updateFiltersAndURL])
+
+  const setHasNotesWithURL = useCallback((value: boolean) => {
+    setFilters(prev => ({ ...prev, hasNotes: value }))
+    updateFiltersAndURL({ hasNotes: value })
+  }, [updateFiltersAndURL])
+
+  // Clear all filters handler
+  const handleClearAllFilters = useCallback(() => {
+    const currentState = {
+      search: filters.search,
+      contactPerson: filters.contactPerson,
+      email: filters.email,
+      phone: filters.phone,
+      city: filters.city,
+      state: filters.state,
+      country: filters.country,
+      gstStatus: filters.gstStatus,
+      gstRegistration: filters.gstRegistration,
+      gstStateCode: filters.gstStateCode,
+      partyType: filters.partyType,
+      status: filters.status,
+      dateRange: filters.dateRange,
+      hasNotes: filters.hasNotes
+    }
+    
+    const newState = resetAllFilters(currentState)
+    
+    // Update all filter states
+    setFilters(prev => ({
+      ...prev,
+      search: newState.search,
+      contactPerson: newState.contactPerson,
+      email: newState.email,
+      phone: newState.phone,
+      city: newState.city,
+      state: newState.state,
+      country: newState.country,
+      gstStatus: newState.gstStatus,
+      gstRegistration: newState.gstRegistration,
+      gstStateCode: newState.gstStateCode,
+      partyType: newState.partyType,
+      status: newState.status,
+      dateRange: newState.dateRange,
+      hasNotes: newState.hasNotes
+    }))
+  }, [filters, resetAllFilters])
+
+  // Get active filter count
+  const activeFilterCount = getActiveFilterCount({
+    search: filters.search,
+    contactPerson: filters.contactPerson,
+    email: filters.email,
+    phone: filters.phone,
+    city: filters.city,
+    state: filters.state,
+    country: filters.country,
+    gstStatus: filters.gstStatus,
+    gstRegistration: filters.gstRegistration,
+    gstStateCode: filters.gstStateCode,
+    partyType: filters.partyType,
+    status: filters.status,
+    dateRange: filters.dateRange,
+    hasNotes: filters.hasNotes
   })
 
   // Update form type when type prop changes
@@ -854,78 +1078,172 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
         </div>
       ) : null}
 
-      {/* Simple Search and Basic Filters */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '16px', 
-        marginBottom: '20px',
-        alignItems: 'center',
-        padding: '16px',
-        backgroundColor: '#f8f9fa',
-        borderRadius: '8px',
-        border: '1px solid #e9ecef'
-      }}>
-        <div style={{ flex: 1 }}>
-          <SearchBar
+      {/* Enhanced Filter Options */}
+      <EnhancedFilterBar 
+        title="Party Filters"
+        activeFiltersCount={activeFilterCount}
+        onClearAll={handleClearAllFilters}
+        showQuickActions={true}
+        showQuickFiltersWhenCollapsed={true}
+        quickActions={[
+          {
+            id: 'activeParties',
+            label: 'Active Parties',
+            action: () => {
+              setStatusWithURL('active')
+            },
+            icon: '✅',
+            isActive: filters.status === 'active'
+          },
+          {
+            id: 'gstParties',
+            label: 'GST Parties',
+            action: () => {
+              setGstStatusWithURL('GST')
+            },
+            icon: '📋',
+            isActive: filters.gstStatus === 'GST'
+          },
+          {
+            id: 'customersOnly',
+            label: 'Customers Only',
+            action: () => {
+              setPartyTypeWithURL('customer')
+            },
+            icon: '👥',
+            isActive: filters.partyType === 'customer'
+          },
+          {
+            id: 'vendorsOnly',
+            label: 'Vendors Only',
+            action: () => {
+              setPartyTypeWithURL('vendor')
+            },
+            icon: '🏢',
+            isActive: filters.partyType === 'vendor'
+          },
+          {
+            id: 'withNotes',
+            label: 'With Notes',
+            action: () => {
+              setHasNotesWithURL(true)
+            },
+            icon: '📝',
+            isActive: filters.hasNotes === true
+          }
+        ]}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Search</span>
+          <input
+            type="text"
             placeholder="Search parties by name, contact, email..."
             value={filters.search}
-            onChange={(value) => handleFilterChange('search', value)}
+            onChange={(e) => setSearchWithURL(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '13px',
+              minWidth: '160px'
+            }}
           />
         </div>
-        <FilterDropdown
-          value={filters.status}
-          onChange={(value) => handleFilterChange('status', value)}
-          options={[
-            { value: 'all', label: 'All Status' },
-            { value: 'active', label: 'Active' },
-            { value: 'inactive', label: 'Inactive' }
-          ]}
-          placeholder="Status"
-        />
-        <FilterDropdown
-          value={filters.gstStatus}
-          onChange={(value) => handleFilterChange('gstStatus', value)}
-          options={[
-            { value: '', label: 'All GST Status' },
-            { value: 'GST', label: 'GST' },
-            { value: 'Non-GST', label: 'Non-GST' },
-            { value: 'Exempted', label: 'Exempted' }
-          ]}
-          placeholder="GST Status"
-        />
-        <Button
-          variant="primary"
-          onClick={handleRefresh}
-          style={{ 
-            fontSize: '12px', 
-            padding: '8px 16px',
-            backgroundColor: '#007bff',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            fontWeight: '500'
-          }}
-        >
-          🔄 Refresh
-        </Button>
-        <Button
-          variant="secondary"
-          onClick={clearAllFilters}
-          style={{ 
-            fontSize: '12px', 
-            padding: '8px 16px',
-            backgroundColor: '#6c757d',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            fontWeight: '500'
-          }}
-        >
-          🗑️ Clear
-        </Button>
-      </div>
-
-      {/* Removed Enhanced Advanced Filters - simplified as per user feedback */}
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Status</span>
+          <FilterDropdown
+            value={filters.status}
+            onChange={(value) => setStatusWithURL(Array.isArray(value) ? value[0] || 'all' : value) as 'all' | 'active' | 'inactive'}
+            options={[
+              { value: 'all', label: 'All Status' },
+              { value: 'active', label: 'Active' },
+              { value: 'inactive', label: 'Inactive' }
+            ]}
+            placeholder="Status"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>GST Status</span>
+          <FilterDropdown
+            value={filters.gstStatus}
+            onChange={(value) => setGstStatusWithURL(Array.isArray(value) ? value[0] || '' : value)}
+            options={[
+              { value: '', label: 'All GST Status' },
+              { value: 'GST', label: 'GST' },
+              { value: 'Non-GST', label: 'Non-GST' },
+              { value: 'Exempted', label: 'Exempted' }
+            ]}
+            placeholder="GST Status"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Party Type</span>
+          <FilterDropdown
+            value={filters.partyType}
+            onChange={(value) => setPartyTypeWithURL(Array.isArray(value) ? value[0] || 'both' : value) as 'customer' | 'vendor' | 'both'}
+            options={[
+              { value: 'both', label: 'All Parties' },
+              { value: 'customer', label: 'Customers' },
+              { value: 'vendor', label: 'Vendors' }
+            ]}
+            placeholder="Party Type"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Contact Person</span>
+          <input
+            type="text"
+            placeholder="Search by contact person..."
+            value={filters.contactPerson}
+            onChange={(e) => setContactPersonWithURL(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '13px',
+              minWidth: '160px'
+            }}
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Email</span>
+          <input
+            type="text"
+            placeholder="Search by email..."
+            value={filters.email}
+            onChange={(e) => setEmailWithURL(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '13px',
+              minWidth: '160px'
+            }}
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>City</span>
+          <input
+            type="text"
+            placeholder="Search by city..."
+            value={filters.city}
+            onChange={(e) => setCityWithURL(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '13px',
+              minWidth: '160px'
+            }}
+          />
+        </div>
+      </EnhancedFilterBar>
 
       {/* Parties Table */}
       {loading ? (

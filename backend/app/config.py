@@ -91,7 +91,7 @@ FEATURE_PATHS: Dict[str, List[str]] = {
         '/api/invoices',
         '/api/payments',
         '/api/expenses',
-        '/api/cashflow'
+        '/api/profitpath'
     ],
     'reporting': [
         '/api/reports',
@@ -265,7 +265,7 @@ class Settings(BaseSettings):
     tenant_routing_method: str = "subdomain"
     
     # Database Settings - PostgreSQL Only
-    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/cashflow"
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/profitpath"
     database_pool_size: int = 10
     database_max_overflow: int = 20
     database_pool_timeout: int = 30
@@ -298,6 +298,9 @@ class Settings(BaseSettings):
     smtp_username: Optional[str] = None
     smtp_password: Optional[str] = None
     smtp_use_tls: bool = True
+    smtp_user: Optional[str] = None
+    smtp_from: Optional[str] = None
+    smtp_enabled: bool = False
     
     # File Upload Settings
     upload_dir: str = "uploads"
@@ -310,8 +313,14 @@ class Settings(BaseSettings):
     enable_metrics: bool = False
     metrics_port: int = 9090
     
+    # Docker Settings (for build scripts)
+    docker_username: Optional[str] = None
+    docker_password: Optional[str] = None
+    docker_buildkit: Optional[str] = None
+    docker_default_platform: Optional[str] = None
+    
     class Config:
-        env_file = ".env"
+        env_file = [".env", ".env.local"]
         env_file_encoding = "utf-8"
         case_sensitive = False
         
@@ -335,7 +344,7 @@ class DevelopmentSettings(Settings):
     environment: str = "development"
     log_level: str = "DEBUG"
     reload: bool = True
-    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/cashflow"
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/profitpath"
 
 
 class ProductionSettings(Settings):

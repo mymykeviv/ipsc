@@ -63,7 +63,7 @@ describe('Filter Feedback Fixes', () => {
     test('should not open dropdown when quick action is clicked while collapsed', () => {
       const mockQuickAction = vi.fn()
       const quickActions = [
-        { label: 'Test Action', action: mockQuickAction, icon: '🔍' }
+        { id: 'testAction', label: 'Test Action', action: mockQuickAction, icon: '🔍' }
       ]
 
       render(

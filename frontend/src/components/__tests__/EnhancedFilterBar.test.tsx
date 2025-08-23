@@ -46,8 +46,8 @@ describe('EnhancedFilterBar', () => {
 
     test('should render quick actions when provided', () => {
       const quickActions = [
-        { label: 'Action 1', action: vi.fn() },
-        { label: 'Action 2', action: vi.fn() }
+        { id: 'action1', label: 'Action 1', action: vi.fn() },
+        { id: 'action2', label: 'Action 2', action: vi.fn() }
       ]
       
       render(<EnhancedFilterBar {...defaultProps} showQuickActions={true} quickActions={quickActions} />)
@@ -216,8 +216,8 @@ describe('EnhancedFilterBar', () => {
       const action1 = vi.fn()
       const action2 = vi.fn()
       const quickActions = [
-        { label: 'Action 1', action: action1 },
-        { label: 'Action 2', action: action2 }
+        { id: 'action1', label: 'Action 1', action: action1 },
+        { id: 'action2', label: 'Action 2', action: action2 }
       ]
       
       render(<EnhancedFilterBar {...defaultProps} showQuickActions={true} quickActions={quickActions} />)
@@ -234,7 +234,7 @@ describe('EnhancedFilterBar', () => {
 
     test('should prevent event bubbling when quick action is clicked', () => {
       const action = vi.fn()
-      const quickActions = [{ label: 'Action', action }]
+      const quickActions = [{ id: 'action', label: 'Action', action }]
       
       render(<EnhancedFilterBar {...defaultProps} showQuickActions={true} quickActions={quickActions} />)
       

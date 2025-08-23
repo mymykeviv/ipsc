@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from backend.app.models import Purchase, PurchasePayment, Party, Product, User, Role
-from backend.app.seed import run_seed
+from backend.app.test_seed import run_test_seed
 from decimal import Decimal
 
 

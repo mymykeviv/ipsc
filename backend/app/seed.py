@@ -82,13 +82,13 @@ def run_seed():
             db.add_all(
                 [
                     Party(
-                        type="customer", 
+                        is_customer=True, is_vendor=False, 
                         name="Acme Industries", 
                         contact_person="John Smith",
                         contact_number="+91-9876543210",
                         email="john.smith@acme.com",
                         gstin="27AACCA1234A1Z9", 
-                        gst_registration_status="GST registered",
+                        
                         billing_address_line1="123 Industrial Area",
                         billing_city="Mumbai",
                         billing_state="Maharashtra",
@@ -102,13 +102,13 @@ def run_seed():
                         notes="Regular customer with good payment history"
                     ),
                     Party(
-                        type="customer", 
+                        is_customer=True, is_vendor=False, 
                         name="Retail Walk-in", 
                         contact_person=None,
                         contact_number=None,
                         email=None,
                         gstin=None, 
-                        gst_registration_status="GST not registered",
+                        
                         billing_address_line1="Walk-in Customer",
                         billing_city="Bangalore",
                         billing_state="Karnataka",
@@ -122,13 +122,13 @@ def run_seed():
                         notes="Walk-in retail customers"
                     ),
                     Party(
-                        type="vendor", 
+                        is_customer=False, is_vendor=True, 
                         name="Fabrication Vendor", 
                         contact_person="Rajesh Kumar",
                         contact_number="+91-8765432109",
                         email="rajesh@fabrication.com",
                         gstin="29AABCF1234M1Z7", 
-                        gst_registration_status="GST registered",
+                        
                         billing_address_line1="456 Factory Lane",
                         billing_city="Bangalore",
                         billing_state="Karnataka",

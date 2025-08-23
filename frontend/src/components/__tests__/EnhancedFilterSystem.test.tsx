@@ -7,11 +7,13 @@ import { DateFilter } from '../DateFilter'
 // Mock data for testing
 const mockQuickActions = [
   {
+    id: 'currentFY',
     label: 'Current FY',
     action: vi.fn(),
     icon: '📅'
   },
   {
+    id: 'cashPayment',
     label: 'Cash Payment',
     action: vi.fn(),
     icon: '💰'

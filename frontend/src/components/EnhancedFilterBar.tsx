@@ -7,6 +7,15 @@ interface FilterOption {
   count?: number
 }
 
+interface QuickFilter {
+  id: string
+  label: string
+  icon?: string
+  action: () => void
+  isActive?: boolean
+  visibleWhenCollapsed?: boolean
+}
+
 interface EnhancedFilterBarProps {
   children: React.ReactNode
   onClearAll?: () => void
@@ -18,11 +27,10 @@ interface EnhancedFilterBarProps {
   defaultCollapsed?: boolean
   showFilterCount?: boolean
   showQuickActions?: boolean
-  quickActions?: Array<{
-    label: string
-    action: () => void
-    icon?: string
-  }>
+  quickActions?: QuickFilter[]
+  showQuickFiltersWhenCollapsed?: boolean
+  onFilterChange?: (filters: Record<string, any>) => void
+  activeFilters?: Record<string, any>
 }
 
 export function EnhancedFilterBar({
@@ -33,10 +41,13 @@ export function EnhancedFilterBar({
   title = 'Advanced Filters',
   activeFiltersCount = 0,
   onToggleCollapse,
-  defaultCollapsed = true, // Changed to true - filter sections collapsed by default
+  defaultCollapsed = true, // Always collapsed by default
   showFilterCount = true,
   showQuickActions = false,
-  quickActions = []
+  quickActions = [],
+  showQuickFiltersWhenCollapsed = true, // Quick filters visible in collapsed state
+  onFilterChange,
+  activeFilters = {}
 }: EnhancedFilterBarProps) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed)
   const [isHovered, setIsHovered] = useState(false)
@@ -133,34 +144,40 @@ export function EnhancedFilterBar({
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}> {/* Reduced gap */}
-          {showQuickActions && (
-            <div style={{ display: 'flex', gap: '6px' }}> {/* Reduced gap - removed !isCollapsed condition */}
-              {quickActions.map((action, index) => (
+          {/* Quick Filters - Always visible when showQuickFiltersWhenCollapsed is true */}
+          {showQuickActions && showQuickFiltersWhenCollapsed && (
+            <div style={{ display: 'flex', gap: '6px' }}>
+              {quickActions.map((action) => (
                 <button
-                  key={index}
+                  key={action.id}
                   onClick={(e) => handleQuickAction(action.action, e)}
                   style={{
-                    padding: '4px 8px', // Reduced padding
-                    border: '1px solid #ced4da',
+                    padding: '4px 8px',
+                    border: `1px solid ${action.isActive ? '#007bff' : '#ced4da'}`,
                     borderRadius: '4px',
-                    backgroundColor: 'white',
-                    color: '#495057',
+                    backgroundColor: action.isActive ? '#e3f2fd' : 'white',
+                    color: action.isActive ? '#007bff' : '#495057',
                     cursor: 'pointer',
-                    fontSize: '11px', // Reduced font size
+                    fontSize: '11px',
                     fontWeight: '500',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '3px', // Reduced gap
+                    gap: '3px',
                     transition: 'all 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f8f9fa'
-                    e.currentTarget.style.borderColor = '#adb5bd'
+                    if (!action.isActive) {
+                      e.currentTarget.style.backgroundColor = '#f8f9fa'
+                      e.currentTarget.style.borderColor = '#adb5bd'
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'white'
-                    e.currentTarget.style.borderColor = '#ced4da'
+                    if (!action.isActive) {
+                      e.currentTarget.style.backgroundColor = 'white'
+                      e.currentTarget.style.borderColor = '#ced4da'
+                    }
                   }}
+                  title={action.label}
                 >
                   {action.icon && <span>{action.icon}</span>}
                   {action.label}

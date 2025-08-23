@@ -190,6 +190,7 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
         showQuickActions={true}
         quickActions={[
           {
+            id: 'currentFY',
             label: 'Current FY',
             action: () => {
               const currentYear = new Date().getFullYear()
@@ -198,6 +199,7 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
             icon: '📅'
           },
           {
+            id: 'cashPayment',
             label: 'Cash Payment',
             action: () => {
               setPaymentMethodFilter('Cash')

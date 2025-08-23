@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
@@ -9,6 +9,9 @@ import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { DateFilter, DateRange } from '../components/DateFilter'
 import { ErrorBoundary } from '../components/ErrorBoundary'
+import { useFilterNavigation } from '../utils/filterNavigation'
+import { useFilterReset } from '../hooks/useFilterReset'
+import { getDefaultFilterState } from '../config/defaultFilterStates'
 
 interface PaymentsProps {
   mode?: 'add' | 'edit' | 'list'
@@ -24,20 +27,123 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
   const [filteredPayments, setFilteredPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(false)
   const [invoices, setInvoices] = useState<any[]>([])
-  
-  // Filter states
-  const [invoiceNumberFilter, setInvoiceNumberFilter] = useState('all')
-  const [paymentAmountFilter, setPaymentAmountFilter] = useState('all')
-  const [paymentMethodFilter, setPaymentMethodFilter] = useState('all')
-  const [financialYearFilter, setFinancialYearFilter] = useState('all')
-  const [dateFilter, setDateFilter] = useState<DateRange>({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-    endDate: new Date().toISOString().slice(0, 10)
+
+  // Enhanced Filter System - Unified State Management
+  const defaultState = getDefaultFilterState('payments') as {
+    invoiceNumberFilter: string
+    paymentAmountFilter: string
+    paymentMethodFilter: string
+    financialYearFilter: string
+    dateFilter: DateRange
+  }
+  const { getFiltersFromURL, updateURLWithFilters, clearURLFilters } = useFilterNavigation(defaultState)
+  const { resetAllFilters, getActiveFilterCount } = useFilterReset({
+    pageName: 'payments',
+    onReset: (newState) => {
+      // Update all filter states
+      setInvoiceNumberFilter(newState.invoiceNumberFilter)
+      setPaymentAmountFilter(newState.paymentAmountFilter)
+      setPaymentMethodFilter(newState.paymentMethodFilter)
+      setFinancialYearFilter(newState.financialYearFilter)
+      setDateFilter(newState.dateFilter)
+    }
   })
+
+  // Filter states with URL integration
+  const [invoiceNumberFilter, setInvoiceNumberFilter] = useState<string>(defaultState.invoiceNumberFilter)
+  const [paymentAmountFilter, setPaymentAmountFilter] = useState<string>(defaultState.paymentAmountFilter)
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>(defaultState.paymentMethodFilter)
+  const [financialYearFilter, setFinancialYearFilter] = useState<string>(defaultState.financialYearFilter)
+  const [dateFilter, setDateFilter] = useState<DateRange>(defaultState.dateFilter)
   const [isDateFilterActive, setIsDateFilterActive] = useState(false)
 
   // Create error handler that will automatically log out on 401 errors
   const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
+
+  // URL Parameter Integration - Apply filters from URL on component mount
+  useEffect(() => {
+    if (mode === 'list') {
+      const urlFilters = getFiltersFromURL()
+      
+      // Apply URL filters to state
+      if (urlFilters.invoiceNumberFilter) setInvoiceNumberFilter(urlFilters.invoiceNumberFilter)
+      if (urlFilters.paymentAmountFilter) setPaymentAmountFilter(urlFilters.paymentAmountFilter)
+      if (urlFilters.paymentMethodFilter) setPaymentMethodFilter(urlFilters.paymentMethodFilter)
+      if (urlFilters.financialYearFilter) setFinancialYearFilter(urlFilters.financialYearFilter)
+      if (urlFilters.dateFilter) setDateFilter(urlFilters.dateFilter)
+    }
+  }, [mode, getFiltersFromURL])
+
+  // Update URL when filters change
+  const updateFiltersAndURL = useCallback((newFilters: Partial<typeof defaultState>) => {
+    const currentFilters = {
+      invoiceNumberFilter,
+      paymentAmountFilter,
+      paymentMethodFilter,
+      financialYearFilter,
+      dateFilter
+    }
+    
+    const updatedFilters = { ...currentFilters, ...newFilters }
+    updateURLWithFilters(updatedFilters)
+  }, [invoiceNumberFilter, paymentAmountFilter, paymentMethodFilter, 
+      financialYearFilter, dateFilter, updateURLWithFilters])
+
+  // Enhanced filter setters with URL integration
+  const setInvoiceNumberFilterWithURL = useCallback((value: string) => {
+    setInvoiceNumberFilter(value)
+    updateFiltersAndURL({ invoiceNumberFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setPaymentAmountFilterWithURL = useCallback((value: string) => {
+    setPaymentAmountFilter(value)
+    updateFiltersAndURL({ paymentAmountFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setPaymentMethodFilterWithURL = useCallback((value: string) => {
+    setPaymentMethodFilter(value)
+    updateFiltersAndURL({ paymentMethodFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setFinancialYearFilterWithURL = useCallback((value: string) => {
+    setFinancialYearFilter(value)
+    updateFiltersAndURL({ financialYearFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setDateFilterWithURL = useCallback((value: DateRange) => {
+    setDateFilter(value)
+    updateFiltersAndURL({ dateFilter: value })
+  }, [updateFiltersAndURL])
+
+  // Clear all filters handler
+  const handleClearAllFilters = useCallback(() => {
+    const currentState = {
+      invoiceNumberFilter,
+      paymentAmountFilter,
+      paymentMethodFilter,
+      financialYearFilter,
+      dateFilter
+    }
+    
+    const newState = resetAllFilters(currentState)
+    
+    // Update all filter states
+    setInvoiceNumberFilter(newState.invoiceNumberFilter)
+    setPaymentAmountFilter(newState.paymentAmountFilter)
+    setPaymentMethodFilter(newState.paymentMethodFilter)
+    setFinancialYearFilter(newState.financialYearFilter)
+    setDateFilter(newState.dateFilter)
+  }, [invoiceNumberFilter, paymentAmountFilter, paymentMethodFilter, 
+      financialYearFilter, dateFilter, resetAllFilters])
+
+  // Get active filter count
+  const activeFilterCount = getActiveFilterCount({
+    invoiceNumberFilter,
+    paymentAmountFilter,
+    paymentMethodFilter,
+    financialYearFilter,
+    dateFilter
+  })
 
   useEffect(() => {
     if (!token) {
@@ -188,48 +294,59 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
         {/* Enhanced Filter Options */}
         <EnhancedFilterBar 
           title="Invoice Payment Filters"
-          activeFiltersCount={
-            (invoiceNumberFilter !== 'all' ? 1 : 0) +
-            (paymentAmountFilter !== 'all' ? 1 : 0) +
-            (paymentMethodFilter !== 'all' ? 1 : 0) +
-            (financialYearFilter !== 'all' ? 1 : 0) +
-            (isDateFilterActive ? 1 : 0)
-          }
-          onClearAll={() => {
-            setInvoiceNumberFilter('all')
-            setPaymentAmountFilter('all')
-            setPaymentMethodFilter('all')
-            setFinancialYearFilter('all')
-            setIsDateFilterActive(false)
-            setDateFilter({
-              startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-              endDate: new Date().toISOString().slice(0, 10)
-            })
-          }}
+          activeFiltersCount={activeFilterCount}
+          onClearAll={handleClearAllFilters}
           showQuickActions={true}
+          showQuickFiltersWhenCollapsed={true}
           quickActions={[
             {
+              id: 'currentFY',
               label: 'Current FY',
               action: () => {
                 const currentYear = new Date().getFullYear()
-                setFinancialYearFilter(`${currentYear}-${currentYear + 1}`)
+                setFinancialYearFilterWithURL(`${currentYear}-${currentYear + 1}`)
               },
-              icon: '📅'
+              icon: '📅',
+              isActive: financialYearFilter === `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`
             },
             {
+              id: 'cashPayment',
               label: 'Cash Payment',
               action: () => {
-                setPaymentMethodFilter('Cash')
+                setPaymentMethodFilterWithURL('Cash')
               },
-              icon: '💰'
+              icon: '💰',
+              isActive: paymentMethodFilter === 'Cash'
+            },
+            {
+              id: 'recentPayments',
+              label: 'Recent Payments',
+              action: () => {
+                const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+                setDateFilterWithURL({
+                  startDate: thirtyDaysAgo,
+                  endDate: new Date().toISOString().slice(0, 10)
+                })
+              },
+              icon: '📋',
+              isActive: false
+            },
+            {
+              id: 'highValuePayments',
+              label: 'High Value (>10K)',
+              action: () => {
+                setPaymentAmountFilterWithURL('10000-')
+              },
+              icon: '💰',
+              isActive: paymentAmountFilter === '10000-'
             }
           ]}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Invoice Number</span>
             <FilterDropdown
               value={invoiceNumberFilter}
-              onChange={(value) => setInvoiceNumberFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+              onChange={(value) => setInvoiceNumberFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
               options={[
                 { value: 'all', label: 'All Invoices' },
                 ...invoices.map(invoice => ({ 
@@ -245,7 +362,7 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
             <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Payment Amount</span>
             <FilterDropdown
               value={paymentAmountFilter}
-              onChange={(value) => setPaymentAmountFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+              onChange={(value) => setPaymentAmountFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
               options={[
                 { value: 'all', label: 'All Amounts' },
                 { value: '0-1000', label: '₹0 - ₹1,000' },
@@ -262,7 +379,7 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
             <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Payment Method</span>
             <FilterDropdown
               value={paymentMethodFilter}
-              onChange={(value) => setPaymentMethodFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+              onChange={(value) => setPaymentMethodFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
               options={[
                 { value: 'all', label: 'All Methods' },
                 { value: 'Cash', label: 'Cash' },
@@ -279,7 +396,7 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
             <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Financial Year</span>
             <FilterDropdown
               value={financialYearFilter}
-              onChange={(value) => setFinancialYearFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+              onChange={(value) => setFinancialYearFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
               options={[
                 { value: 'all', label: 'All Years' },
                 { value: '2023-2024', label: '2023-2024' },
@@ -292,10 +409,10 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
-                                      <DateFilter
+            <DateFilter
               value={dateFilter}
               onChange={(newDateFilter) => {
-                setDateFilter(newDateFilter)
+                setDateFilterWithURL(newDateFilter)
                 setIsDateFilterActive(true)
               }}
             />

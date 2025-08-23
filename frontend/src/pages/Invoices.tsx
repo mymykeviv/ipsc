@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useEffect, useState, useCallback } from 'react'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { apiListParties, apiGetProducts, apiCreateInvoice, apiUpdateInvoice, apiGetInvoice, apiDeleteInvoice, apiEmailInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, apiGetInvoices, apiUpdateInvoiceStatus, apiGetInvoicePDF, Party, Product, Payment, PaginationInfo, Invoice } from '../lib/api'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler, createInvoiceErrorHandler, createInvoiceGridErrorHandler } from '../lib/apiUtils'
@@ -15,6 +15,9 @@ import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
 import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
+import { useFilterNavigation } from '../utils/filterNavigation'
+import { useFilterReset } from '../hooks/useFilterReset'
+import { getDefaultFilterState } from '../config/defaultFilterStates'
 
 interface InvoicesProps {
   mode?: 'manage' | 'add' | 'edit' | 'payments' | 'edit-payment'
@@ -45,20 +48,151 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [customerFilter, setCustomerFilter] = useState<string>('all')
-  const [amountRangeFilter, setAmountRangeFilter] = useState<string>('all')
-  const [gstTypeFilter, setGstTypeFilter] = useState<string>('all')
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('all')
-  const [dateFilter, setDateFilter] = useState<DateRange>({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-    endDate: new Date().toISOString().slice(0, 10)
+
+  // Enhanced Filter System - Unified State Management
+  const defaultState = getDefaultFilterState('invoices') as {
+    searchTerm: string
+    statusFilter: string
+    customerFilter: string
+    gstTypeFilter: string
+    amountRangeFilter: string
+    pendingAmountRangeFilter: string
+    paymentStatusFilter: string
+    dateFilter: DateRange
+    overdueDateFilter: DateRange
+  }
+  const { getFiltersFromURL, updateURLWithFilters, clearURLFilters } = useFilterNavigation(defaultState)
+  const { resetAllFilters, getActiveFilterCount } = useFilterReset({
+    pageName: 'invoices',
+    onReset: (newState) => {
+      // Update all filter states
+      setSearchTerm(newState.searchTerm)
+      setStatusFilter(newState.statusFilter)
+      setCustomerFilter(newState.customerFilter)
+      setGstTypeFilter(newState.gstTypeFilter)
+      setAmountRangeFilter(newState.amountRangeFilter)
+      setPaymentStatusFilter(newState.paymentStatusFilter)
+      setDateFilter(newState.dateFilter)
+    }
   })
+
+  // Filter state with URL integration
+  const [searchTerm, setSearchTerm] = useState<string>(defaultState.searchTerm)
+  const [statusFilter, setStatusFilter] = useState<string>(defaultState.statusFilter)
+  const [customerFilter, setCustomerFilter] = useState<string>(defaultState.customerFilter)
+  const [amountRangeFilter, setAmountRangeFilter] = useState<string>(defaultState.amountRangeFilter)
+  const [gstTypeFilter, setGstTypeFilter] = useState<string>(defaultState.gstTypeFilter)
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>(defaultState.paymentStatusFilter)
+  const [dateFilter, setDateFilter] = useState<DateRange>(defaultState.dateFilter)
   const [isDateFilterActive, setIsDateFilterActive] = useState(true)
   
   // Saved presets functionality
   const { savedPresets, savePreset, deletePreset } = useSavedPresets()
+
+  // URL Parameter Integration - Apply filters from URL on component mount
+  useEffect(() => {
+    if (mode === 'manage') {
+      const urlFilters = getFiltersFromURL()
+      
+      // Apply URL filters to state
+      if (urlFilters.searchTerm) setSearchTerm(urlFilters.searchTerm)
+      if (urlFilters.statusFilter) setStatusFilter(urlFilters.statusFilter)
+      if (urlFilters.customerFilter) setCustomerFilter(urlFilters.customerFilter)
+      if (urlFilters.gstTypeFilter) setGstTypeFilter(urlFilters.gstTypeFilter)
+      if (urlFilters.amountRangeFilter) setAmountRangeFilter(urlFilters.amountRangeFilter)
+      if (urlFilters.paymentStatusFilter) setPaymentStatusFilter(urlFilters.paymentStatusFilter)
+      if (urlFilters.dateFilter) setDateFilter(urlFilters.dateFilter)
+    }
+  }, [mode, getFiltersFromURL])
+
+  // Update URL when filters change
+  const updateFiltersAndURL = useCallback((newFilters: Partial<typeof defaultState>) => {
+    const currentFilters = {
+      searchTerm,
+      statusFilter,
+      customerFilter,
+      gstTypeFilter,
+      amountRangeFilter,
+      paymentStatusFilter,
+      dateFilter
+    }
+    
+    const updatedFilters = { ...currentFilters, ...newFilters }
+    updateURLWithFilters(updatedFilters)
+  }, [searchTerm, statusFilter, customerFilter, gstTypeFilter, 
+      amountRangeFilter, paymentStatusFilter, dateFilter, updateURLWithFilters])
+
+  // Enhanced filter setters with URL integration
+  const setSearchTermWithURL = useCallback((value: string) => {
+    setSearchTerm(value)
+    updateFiltersAndURL({ searchTerm: value })
+  }, [updateFiltersAndURL])
+
+  const setStatusFilterWithURL = useCallback((value: string) => {
+    setStatusFilter(value)
+    updateFiltersAndURL({ statusFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setCustomerFilterWithURL = useCallback((value: string) => {
+    setCustomerFilter(value)
+    updateFiltersAndURL({ customerFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setGstTypeFilterWithURL = useCallback((value: string) => {
+    setGstTypeFilter(value)
+    updateFiltersAndURL({ gstTypeFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setAmountRangeFilterWithURL = useCallback((value: string) => {
+    setAmountRangeFilter(value)
+    updateFiltersAndURL({ amountRangeFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setPaymentStatusFilterWithURL = useCallback((value: string) => {
+    setPaymentStatusFilter(value)
+    updateFiltersAndURL({ paymentStatusFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setDateFilterWithURL = useCallback((value: DateRange) => {
+    setDateFilter(value)
+    updateFiltersAndURL({ dateFilter: value })
+  }, [updateFiltersAndURL])
+
+  // Clear all filters handler
+  const handleClearAllFilters = useCallback(() => {
+    const currentState = {
+      searchTerm,
+      statusFilter,
+      customerFilter,
+      gstTypeFilter,
+      amountRangeFilter,
+      paymentStatusFilter,
+      dateFilter
+    }
+    
+    const newState = resetAllFilters(currentState)
+    
+    // Update all filter states
+    setSearchTerm(newState.searchTerm)
+    setStatusFilter(newState.statusFilter)
+    setCustomerFilter(newState.customerFilter)
+    setGstTypeFilter(newState.gstTypeFilter)
+    setAmountRangeFilter(newState.amountRangeFilter)
+    setPaymentStatusFilter(newState.paymentStatusFilter)
+    setDateFilter(newState.dateFilter)
+  }, [searchTerm, statusFilter, customerFilter, gstTypeFilter, 
+      amountRangeFilter, paymentStatusFilter, dateFilter, resetAllFilters])
+
+  // Get active filter count
+  const activeFilterCount = getActiveFilterCount({
+    searchTerm,
+    statusFilter,
+    customerFilter,
+    gstTypeFilter,
+    amountRangeFilter,
+    paymentStatusFilter,
+    dateFilter
+  })
 
   useEffect(() => {
     if (mode === 'manage') {
@@ -295,47 +429,50 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
       {/* Enhanced Filter Options */}
       <EnhancedFilterBar 
         title="Invoice Filters"
-        activeFiltersCount={
-          (searchTerm ? 1 : 0) +
-          (statusFilter !== 'all' ? 1 : 0) +
-          (customerFilter !== 'all' ? 1 : 0) +
-          (amountRangeFilter !== 'all' ? 1 : 0) +
-          (gstTypeFilter !== 'all' ? 1 : 0) +
-          (paymentStatusFilter !== 'all' ? 1 : 0) +
-          (isDateFilterActive ? 1 : 0)
-        }
-        onClearAll={() => {
-          setSearchTerm('')
-          setStatusFilter('all')
-          setCustomerFilter('all')
-          setAmountRangeFilter('all')
-          setGstTypeFilter('all')
-          setPaymentStatusFilter('all')
-          setIsDateFilterActive(false)
-          setDateFilter({
-            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-            endDate: new Date().toISOString().slice(0, 10)
-          })
-        }}
+        activeFiltersCount={activeFilterCount}
+        onClearAll={handleClearAllFilters}
         showQuickActions={true}
+        showQuickFiltersWhenCollapsed={true}
         quickActions={[
           {
+            id: 'pendingPayment',
             label: 'Pending Payment',
             action: () => {
-              setPaymentStatusFilter('unpaid')
+              setPaymentStatusFilterWithURL('unpaid')
             },
-            icon: '💰'
+            icon: '💰',
+            isActive: paymentStatusFilter === 'unpaid'
           },
           {
-            label: 'Last 10',
+            id: 'overdueInvoices',
+            label: 'Overdue Invoices',
             action: () => {
-              // This would need to be implemented in the backend
-              setDateFilter({
-                startDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+              setPaymentStatusFilterWithURL('overdue')
+            },
+            icon: '⚠️',
+            isActive: paymentStatusFilter === 'overdue'
+          },
+          {
+            id: 'recentInvoices',
+            label: 'Recent Invoices',
+            action: () => {
+              const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+              setDateFilterWithURL({
+                startDate: thirtyDaysAgo,
                 endDate: new Date().toISOString().slice(0, 10)
               })
             },
-            icon: '📋'
+            icon: '📅',
+            isActive: false
+          },
+          {
+            id: 'highValueInvoices',
+            label: 'High Value (>50K)',
+            action: () => {
+              setAmountRangeFilterWithURL('50000-')
+            },
+            icon: '💰',
+            isActive: amountRangeFilter === '50000-'
           }
         ]}
       >
@@ -344,7 +481,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTermWithURL(e.target.value)}
             placeholder="Search invoices..."
             style={{
               padding: '8px 12px',
@@ -360,7 +497,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Status</span>
           <FilterDropdown
             value={statusFilter}
-            onChange={(value) => setStatusFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setStatusFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Status' },
               { value: 'Draft', label: 'Draft' },
@@ -374,10 +511,26 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
         </div>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Customer</span>
+          <FilterDropdown
+            value={customerFilter}
+            onChange={(value) => setCustomerFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
+            options={[
+              { value: 'all', label: 'All Customers' },
+              // This would be populated from the API in a real implementation
+              { value: 'customer1', label: 'Customer 1' },
+              { value: 'customer2', label: 'Customer 2' },
+              { value: 'customer3', label: 'Customer 3' }
+            ]}
+            placeholder="Select customer"
+          />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Payment Status</span>
           <FilterDropdown
             value={paymentStatusFilter}
-            onChange={(value) => setPaymentStatusFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setPaymentStatusFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Payment Status' },
               { value: 'paid', label: 'Paid' },
@@ -393,7 +546,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Amount Range</span>
           <FilterDropdown
             value={amountRangeFilter}
-            onChange={(value) => setAmountRangeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setAmountRangeFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Amounts' },
               { value: '0-1000', label: '₹0 - ₹1,000' },
@@ -410,7 +563,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>GST Type</span>
           <FilterDropdown
             value={gstTypeFilter}
-            onChange={(value) => setGstTypeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setGstTypeFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All GST Types' },
               { value: 'cgst_sgst', label: 'CGST + SGST' },
@@ -422,14 +575,14 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
-                      <DateFilter
-              value={dateFilter}
-              onChange={(newDateFilter) => {
-                setDateFilter(newDateFilter)
-                setIsDateFilterActive(true)
-              }}
-              savedPresets={savedPresets}
-              onSavePreset={savePreset}
+          <DateFilter
+            value={dateFilter}
+            onChange={(newDateFilter) => {
+              setDateFilterWithURL(newDateFilter)
+              setIsDateFilterActive(true)
+            }}
+            savedPresets={savedPresets}
+            onSavePreset={savePreset}
               onDeletePreset={deletePreset}
             />
         </div>

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useState, useCallback } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../modules/AuthContext'
 import { 
   apiCreateExpense, 
@@ -19,6 +19,9 @@ import { FilterDropdown } from '../components/FilterDropdown'
 import { DateFilter, DateRange } from '../components/DateFilter'
 import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
 import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
+import { useFilterNavigation } from '../utils/filterNavigation'
+import { useFilterReset } from '../hooks/useFilterReset'
+import { getDefaultFilterState } from '../config/defaultFilterStates'
 
 interface ExpensesProps {
   mode?: 'manage' | 'add' | 'edit'
@@ -32,19 +35,43 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
   const [vendors, setVendors] = useState<Party[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('all')
-  const [expenseTypeFilter, setExpenseTypeFilter] = useState('all')
-  const [paymentMethodFilter, setPaymentMethodFilter] = useState('all')
-  const [amountRangeFilter, setAmountRangeFilter] = useState('all')
-  const [financialYearFilter, setFinancialYearFilter] = useState('all')
-  const [dateFilter, setDateFilter] = useState<DateRange>({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-    endDate: new Date().toISOString().slice(0, 10)
-  })
   const [currentExpense, setCurrentExpense] = useState<Expense | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
+
+  // Enhanced Filter System - Unified State Management
+  const defaultState = getDefaultFilterState('expenses') as {
+    searchTerm: string
+    categoryFilter: string
+    expenseTypeFilter: string
+    paymentMethodFilter: string
+    amountRangeFilter: string
+    financialYearFilter: string
+    dateFilter: DateRange
+  }
+  const { getFiltersFromURL, updateURLWithFilters, clearURLFilters } = useFilterNavigation(defaultState)
+  const { resetAllFilters, getActiveFilterCount } = useFilterReset({
+    pageName: 'expenses',
+    onReset: (newState) => {
+      // Update all filter states
+      setSearchTerm(newState.searchTerm)
+      setCategoryFilter(newState.categoryFilter)
+      setExpenseTypeFilter(newState.expenseTypeFilter)
+      setPaymentMethodFilter(newState.paymentMethodFilter)
+      setAmountRangeFilter(newState.amountRangeFilter)
+      setFinancialYearFilter(newState.financialYearFilter)
+      setDateFilter(newState.dateFilter)
+    }
+  })
+
+  // Filter states with URL integration
+  const [searchTerm, setSearchTerm] = useState<string>(defaultState.searchTerm)
+  const [categoryFilter, setCategoryFilter] = useState<string>(defaultState.categoryFilter)
+  const [expenseTypeFilter, setExpenseTypeFilter] = useState<string>(defaultState.expenseTypeFilter)
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>(defaultState.paymentMethodFilter)
+  const [amountRangeFilter, setAmountRangeFilter] = useState<string>(defaultState.amountRangeFilter)
+  const [financialYearFilter, setFinancialYearFilter] = useState<string>(defaultState.financialYearFilter)
+  const [dateFilter, setDateFilter] = useState<DateRange>(defaultState.dateFilter)
 
 
 
@@ -69,6 +96,111 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
 
   const paymentMethods = ['Cash', 'Bank', 'UPI', 'Cheque', 'NEFT', 'RTGS', 'IMPS']
   const accountHeads = ['Cash', 'Bank', 'Funds', 'Credit Card']
+
+  // URL Parameter Integration - Apply filters from URL on component mount
+  useEffect(() => {
+    if (mode === 'manage') {
+      const urlFilters = getFiltersFromURL()
+      
+      // Apply URL filters to state
+      if (urlFilters.searchTerm) setSearchTerm(urlFilters.searchTerm)
+      if (urlFilters.categoryFilter) setCategoryFilter(urlFilters.categoryFilter)
+      if (urlFilters.expenseTypeFilter) setExpenseTypeFilter(urlFilters.expenseTypeFilter)
+      if (urlFilters.paymentMethodFilter) setPaymentMethodFilter(urlFilters.paymentMethodFilter)
+      if (urlFilters.amountRangeFilter) setAmountRangeFilter(urlFilters.amountRangeFilter)
+      if (urlFilters.financialYearFilter) setFinancialYearFilter(urlFilters.financialYearFilter)
+      if (urlFilters.dateFilter) setDateFilter(urlFilters.dateFilter)
+    }
+  }, [mode, getFiltersFromURL])
+
+  // Update URL when filters change
+  const updateFiltersAndURL = useCallback((newFilters: Partial<typeof defaultState>) => {
+    const currentFilters = {
+      searchTerm,
+      categoryFilter,
+      expenseTypeFilter,
+      paymentMethodFilter,
+      amountRangeFilter,
+      financialYearFilter,
+      dateFilter
+    }
+    
+    const updatedFilters = { ...currentFilters, ...newFilters }
+    updateURLWithFilters(updatedFilters)
+  }, [searchTerm, categoryFilter, expenseTypeFilter, paymentMethodFilter, 
+      amountRangeFilter, financialYearFilter, dateFilter, updateURLWithFilters])
+
+  // Enhanced filter setters with URL integration
+  const setSearchTermWithURL = useCallback((value: string) => {
+    setSearchTerm(value)
+    updateFiltersAndURL({ searchTerm: value })
+  }, [updateFiltersAndURL])
+
+  const setCategoryFilterWithURL = useCallback((value: string) => {
+    setCategoryFilter(value)
+    updateFiltersAndURL({ categoryFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setExpenseTypeFilterWithURL = useCallback((value: string) => {
+    setExpenseTypeFilter(value)
+    updateFiltersAndURL({ expenseTypeFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setPaymentMethodFilterWithURL = useCallback((value: string) => {
+    setPaymentMethodFilter(value)
+    updateFiltersAndURL({ paymentMethodFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setAmountRangeFilterWithURL = useCallback((value: string) => {
+    setAmountRangeFilter(value)
+    updateFiltersAndURL({ amountRangeFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setFinancialYearFilterWithURL = useCallback((value: string) => {
+    setFinancialYearFilter(value)
+    updateFiltersAndURL({ financialYearFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setDateFilterWithURL = useCallback((value: DateRange) => {
+    setDateFilter(value)
+    updateFiltersAndURL({ dateFilter: value })
+  }, [updateFiltersAndURL])
+
+  // Clear all filters handler
+  const handleClearAllFilters = useCallback(() => {
+    const currentState = {
+      searchTerm,
+      categoryFilter,
+      expenseTypeFilter,
+      paymentMethodFilter,
+      amountRangeFilter,
+      financialYearFilter,
+      dateFilter
+    }
+    
+    const newState = resetAllFilters(currentState)
+    
+    // Update all filter states
+    setSearchTerm(newState.searchTerm)
+    setCategoryFilter(newState.categoryFilter)
+    setExpenseTypeFilter(newState.expenseTypeFilter)
+    setPaymentMethodFilter(newState.paymentMethodFilter)
+    setAmountRangeFilter(newState.amountRangeFilter)
+    setFinancialYearFilter(newState.financialYearFilter)
+    setDateFilter(newState.dateFilter)
+  }, [searchTerm, categoryFilter, expenseTypeFilter, paymentMethodFilter, 
+      amountRangeFilter, financialYearFilter, dateFilter, resetAllFilters])
+
+  // Get active filter count
+  const activeFilterCount = getActiveFilterCount({
+    searchTerm,
+    categoryFilter,
+    expenseTypeFilter,
+    paymentMethodFilter,
+    amountRangeFilter,
+    financialYearFilter,
+    dateFilter
+  })
 
   useEffect(() => {
     if (!token) return
@@ -247,53 +379,61 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
       {/* Enhanced Filter Options */}
       <EnhancedFilterBar 
         title="Expense Filters"
-        activeFiltersCount={
-          (searchTerm ? 1 : 0) +
-          (categoryFilter !== 'all' ? 1 : 0) +
-          (expenseTypeFilter !== 'all' ? 1 : 0) +
-          (paymentMethodFilter !== 'all' ? 1 : 0) +
-          (amountRangeFilter !== 'all' ? 1 : 0) +
-          (financialYearFilter !== 'all' ? 1 : 0) +
-          0 // DateFilter is always active now
-        }
-        onClearAll={() => {
-          setSearchTerm('')
-          setCategoryFilter('all')
-          setExpenseTypeFilter('all')
-          setPaymentMethodFilter('all')
-          setAmountRangeFilter('all')
-          setFinancialYearFilter('all')
-          setDateFilter({
-            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-            endDate: new Date().toISOString().slice(0, 10)
-          })
-        }}
+        activeFiltersCount={activeFilterCount}
+        onClearAll={handleClearAllFilters}
         showQuickActions={true}
+        showQuickFiltersWhenCollapsed={true}
         quickActions={[
           {
+            id: 'currentFY',
             label: 'Current FY',
             action: () => {
               const currentYear = new Date().getFullYear()
-              setFinancialYearFilter(`${currentYear}-${currentYear + 1}`)
+              setFinancialYearFilterWithURL(`${currentYear}-${currentYear + 1}`)
             },
-            icon: '📅'
+            icon: '📅',
+            isActive: financialYearFilter === `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`
           },
           {
+            id: 'cashPayment',
             label: 'Cash Payment',
             action: () => {
-              setPaymentMethodFilter('Cash')
+              setPaymentMethodFilterWithURL('Cash')
             },
-            icon: '💰'
+            icon: '💰',
+            isActive: paymentMethodFilter === 'Cash'
+          },
+          {
+            id: 'recentExpenses',
+            label: 'Recent Expenses',
+            action: () => {
+              const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+              setDateFilterWithURL({
+                startDate: thirtyDaysAgo,
+                endDate: new Date().toISOString().slice(0, 10)
+              })
+            },
+            icon: '📋',
+            isActive: false
+          },
+          {
+            id: 'highValueExpenses',
+            label: 'High Value (>10K)',
+            action: () => {
+              setAmountRangeFilterWithURL('10000-')
+            },
+            icon: '💰',
+            isActive: amountRangeFilter === '10000-'
           }
         ]}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Search</span>
           <input
             type="text"
             placeholder="Search expenses by description, type, or category..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTermWithURL(e.target.value)}
             style={{
               padding: '8px 12px',
               border: '1px solid #ced4da',
@@ -308,7 +448,7 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Category</span>
           <FilterDropdown
             value={categoryFilter}
-            onChange={(value) => setCategoryFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setCategoryFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Categories' },
               ...expenseCategories.map(cat => ({ 
@@ -324,7 +464,7 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Expense Type</span>
           <FilterDropdown
             value={expenseTypeFilter}
-            onChange={(value) => setExpenseTypeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setExpenseTypeFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Types' },
               ...expenseTypes.map(type => ({ 
@@ -340,7 +480,7 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Payment Method</span>
           <FilterDropdown
             value={paymentMethodFilter}
-            onChange={(value) => setPaymentMethodFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setPaymentMethodFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Methods' },
               ...paymentMethods.map(method => ({ 
@@ -356,7 +496,7 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Amount Range</span>
           <FilterDropdown
             value={amountRangeFilter}
-            onChange={(value) => setAmountRangeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setAmountRangeFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Amounts' },
               { value: '0-1000', label: '₹0 - ₹1,000' },
@@ -373,7 +513,7 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Financial Year</span>
           <FilterDropdown
             value={financialYearFilter}
-            onChange={(value) => setFinancialYearFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setFinancialYearFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Years' },
               { value: '2023-2024', label: '2023-2024' },
@@ -386,10 +526,10 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
-                      <DateFilter
-              value={dateFilter}
-              onChange={setDateFilter}
-            />
+          <DateFilter
+            value={dateFilter}
+            onChange={setDateFilterWithURL}
+          />
         </div>
       </EnhancedFilterBar>
 

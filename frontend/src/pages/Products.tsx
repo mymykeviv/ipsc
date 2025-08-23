@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
@@ -7,7 +7,6 @@ import { SearchBar } from '../components/SearchBar'
 import { ErrorMessage } from '../components/ErrorMessage'
 import { DateFilter, DateRange } from '../components/DateFilter'
 import { FilterDropdown } from '../components/FilterDropdown'
-import { FilterBar } from '../components/FilterBar'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { EnhancedFilterDropdown } from '../components/EnhancedFilterDropdown'
 import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
@@ -15,6 +14,9 @@ import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAdjustStock, apiListParties, Party, apiGetStockMovementHistory, StockMovement, ProductFilters } from '../lib/api'
 import { StockHistoryForm } from '../components/StockHistoryForm'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
+import { useFilterNavigation } from '../utils/filterNavigation'
+import { useFilterReset } from '../hooks/useFilterReset'
+import { getDefaultFilterState } from '../config/defaultFilterStates'
 
 interface Product {
   id: number
@@ -88,22 +90,175 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   const [showStockHistoryModal, setShowStockHistoryModal] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [categoryFilter, setCategoryFilter] = useState<string>('all')
-  const [itemTypeFilter, setItemTypeFilter] = useState<string>('all')
-  const [gstRateFilter, setGstRateFilter] = useState<string>('all')
-  const [stockLevelFilter, setStockLevelFilter] = useState<string>('all')
-  const [supplierFilter, setSupplierFilter] = useState<string>('all')
-  const [priceRangeFilter, setPriceRangeFilter] = useState<string>('all')
-  const [dateFilter, setDateFilter] = useState<DateRange>({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-    endDate: new Date().toISOString().slice(0, 10)
+
+  // Enhanced Filter System - Unified State Management
+  const defaultState = getDefaultFilterState('products') as {
+    searchTerm: string
+    statusFilter: string
+    categoryFilter: string
+    itemTypeFilter: string
+    gstRateFilter: string
+    stockLevelFilter: string
+    supplierFilter: string
+    priceRangeFilter: string
+    dateFilter: DateRange
+  }
+  const { getFiltersFromURL, updateURLWithFilters, clearURLFilters } = useFilterNavigation(defaultState)
+  const { resetAllFilters, getActiveFilterCount } = useFilterReset({
+    pageName: 'products',
+    onReset: (newState) => {
+      // Update all filter states
+      setSearchTerm(newState.searchTerm)
+      setStatusFilter(newState.statusFilter)
+      setCategoryFilter(newState.categoryFilter)
+      setItemTypeFilter(newState.itemTypeFilter)
+      setGstRateFilter(newState.gstRateFilter)
+      setStockLevelFilter(newState.stockLevelFilter)
+      setSupplierFilter(newState.supplierFilter)
+      setPriceRangeFilter(newState.priceRangeFilter)
+      setDateFilter(newState.dateFilter)
+    }
   })
+
+  // Filter state with URL integration
+  const [searchTerm, setSearchTerm] = useState<string>(defaultState.searchTerm)
+  const [statusFilter, setStatusFilter] = useState<string>(defaultState.statusFilter)
+  const [categoryFilter, setCategoryFilter] = useState<string>(defaultState.categoryFilter)
+  const [itemTypeFilter, setItemTypeFilter] = useState<string>(defaultState.itemTypeFilter)
+  const [gstRateFilter, setGstRateFilter] = useState<string>(defaultState.gstRateFilter)
+  const [stockLevelFilter, setStockLevelFilter] = useState<string>(defaultState.stockLevelFilter)
+  const [supplierFilter, setSupplierFilter] = useState<string>(defaultState.supplierFilter)
+  const [priceRangeFilter, setPriceRangeFilter] = useState<string>(defaultState.priceRangeFilter)
+  const [dateFilter, setDateFilter] = useState<DateRange>(defaultState.dateFilter)
   const [sortField, setSortField] = useState<keyof Product>('name')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(25)
+
+  // URL Parameter Integration - Apply filters from URL on component mount
+  useEffect(() => {
+    if (mode === 'manage') {
+      const urlFilters = getFiltersFromURL()
+      
+      // Apply URL filters to state
+      if (urlFilters.searchTerm) setSearchTerm(urlFilters.searchTerm)
+      if (urlFilters.statusFilter) setStatusFilter(urlFilters.statusFilter)
+      if (urlFilters.categoryFilter) setCategoryFilter(urlFilters.categoryFilter)
+      if (urlFilters.itemTypeFilter) setItemTypeFilter(urlFilters.itemTypeFilter)
+      if (urlFilters.gstRateFilter) setGstRateFilter(urlFilters.gstRateFilter)
+      if (urlFilters.stockLevelFilter) setStockLevelFilter(urlFilters.stockLevelFilter)
+      if (urlFilters.supplierFilter) setSupplierFilter(urlFilters.supplierFilter)
+      if (urlFilters.priceRangeFilter) setPriceRangeFilter(urlFilters.priceRangeFilter)
+      if (urlFilters.dateFilter) setDateFilter(urlFilters.dateFilter)
+    }
+  }, [mode, getFiltersFromURL])
+
+  // Update URL when filters change
+  const updateFiltersAndURL = useCallback((newFilters: Partial<typeof defaultState>) => {
+    const currentFilters = {
+      searchTerm,
+      statusFilter,
+      categoryFilter,
+      itemTypeFilter,
+      gstRateFilter,
+      stockLevelFilter,
+      supplierFilter,
+      priceRangeFilter,
+      dateFilter
+    }
+    
+    const updatedFilters = { ...currentFilters, ...newFilters }
+    updateURLWithFilters(updatedFilters)
+  }, [searchTerm, statusFilter, categoryFilter, itemTypeFilter, gstRateFilter, 
+      stockLevelFilter, supplierFilter, priceRangeFilter, dateFilter, updateURLWithFilters])
+
+  // Enhanced filter setters with URL integration
+  const setSearchTermWithURL = useCallback((value: string) => {
+    setSearchTerm(value)
+    updateFiltersAndURL({ searchTerm: value })
+  }, [updateFiltersAndURL])
+
+  const setStatusFilterWithURL = useCallback((value: string) => {
+    setStatusFilter(value)
+    updateFiltersAndURL({ statusFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setCategoryFilterWithURL = useCallback((value: string) => {
+    setCategoryFilter(value)
+    updateFiltersAndURL({ categoryFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setItemTypeFilterWithURL = useCallback((value: string) => {
+    setItemTypeFilter(value)
+    updateFiltersAndURL({ itemTypeFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setGstRateFilterWithURL = useCallback((value: string) => {
+    setGstRateFilter(value)
+    updateFiltersAndURL({ gstRateFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setStockLevelFilterWithURL = useCallback((value: string) => {
+    setStockLevelFilter(value)
+    updateFiltersAndURL({ stockLevelFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setSupplierFilterWithURL = useCallback((value: string) => {
+    setSupplierFilter(value)
+    updateFiltersAndURL({ supplierFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setPriceRangeFilterWithURL = useCallback((value: string) => {
+    setPriceRangeFilter(value)
+    updateFiltersAndURL({ priceRangeFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setDateFilterWithURL = useCallback((value: DateRange) => {
+    setDateFilter(value)
+    updateFiltersAndURL({ dateFilter: value })
+  }, [updateFiltersAndURL])
+
+  // Clear all filters handler
+  const handleClearAllFilters = useCallback(() => {
+    const currentState = {
+      searchTerm,
+      statusFilter,
+      categoryFilter,
+      itemTypeFilter,
+      gstRateFilter,
+      stockLevelFilter,
+      supplierFilter,
+      priceRangeFilter,
+      dateFilter
+    }
+    
+    const newState = resetAllFilters(currentState)
+    
+    // Update all filter states
+    setSearchTerm(newState.searchTerm)
+    setStatusFilter(newState.statusFilter)
+    setCategoryFilter(newState.categoryFilter)
+    setItemTypeFilter(newState.itemTypeFilter)
+    setGstRateFilter(newState.gstRateFilter)
+    setStockLevelFilter(newState.stockLevelFilter)
+    setSupplierFilter(newState.supplierFilter)
+    setPriceRangeFilter(newState.priceRangeFilter)
+    setDateFilter(newState.dateFilter)
+  }, [searchTerm, statusFilter, categoryFilter, itemTypeFilter, gstRateFilter, 
+      stockLevelFilter, supplierFilter, priceRangeFilter, dateFilter, resetAllFilters])
+
+  // Get active filter count
+  const activeFilterCount = getActiveFilterCount({
+    searchTerm,
+    statusFilter,
+    categoryFilter,
+    itemTypeFilter,
+    gstRateFilter,
+    stockLevelFilter,
+    supplierFilter,
+    priceRangeFilter,
+    dateFilter
+  })
   const [formData, setFormData] = useState<ProductFormData>({
     // Product Details
     name: '',
@@ -993,55 +1148,58 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       {/* Enhanced Filter Options */}
       <EnhancedFilterBar 
         title="Product Filters"
-        activeFiltersCount={
-          (searchTerm ? 1 : 0) +
-          (statusFilter !== 'all' ? 1 : 0) +
-          (categoryFilter !== 'all' ? 1 : 0) +
-          (itemTypeFilter !== 'all' ? 1 : 0) +
-          (gstRateFilter !== 'all' ? 1 : 0) +
-          (stockLevelFilter !== 'all' ? 1 : 0) +
-          (supplierFilter !== 'all' ? 1 : 0) +
-          (priceRangeFilter !== 'all' ? 1 : 0) +
-          0 // DateFilter is always active now
-        }
-        onClearAll={() => {
-          setSearchTerm('')
-          setStatusFilter('all')
-          setCategoryFilter('all')
-          setItemTypeFilter('all')
-          setGstRateFilter('all')
-          setStockLevelFilter('all')
-          setSupplierFilter('all')
-          setPriceRangeFilter('all')
-          setDateFilter({
-            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-            endDate: new Date().toISOString().slice(0, 10)
-          })
-        }}
+        activeFiltersCount={activeFilterCount}
+        onClearAll={handleClearAllFilters}
         showQuickActions={true}
+        showQuickFiltersWhenCollapsed={true}
         quickActions={[
           {
+            id: 'lowStock',
             label: 'Low Stock (<10)',
             action: () => {
-              setStockLevelFilter('low_stock')
+              setStockLevelFilterWithURL('low_stock')
             },
-            icon: '⚠️'
+            icon: '⚠️',
+            isActive: stockLevelFilter === 'low_stock'
           },
           {
+            id: 'activeOnly',
             label: 'Active Only',
             action: () => {
-              setStatusFilter('active')
+              setStatusFilterWithURL('active')
             },
-            icon: '✅'
+            icon: '✅',
+            isActive: statusFilter === 'active'
+          },
+          {
+            id: 'highValue',
+            label: 'High Value Items',
+            action: () => {
+              setPriceRangeFilterWithURL('50000+')
+            },
+            icon: '💰',
+            isActive: priceRangeFilter === '50000+'
+          },
+          {
+            id: 'recentAdditions',
+            label: 'Recent Additions',
+            action: () => {
+              const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+              setDateFilterWithURL({
+                startDate: thirtyDaysAgo,
+                endDate: new Date().toISOString().slice(0, 10)
+              })
+            },
+            icon: '🆕',
+            isActive: false
           }
-          // Removed Electronics and High GST quick filters as requested
         ]}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Search</span>
           <SearchBar
             value={searchTerm}
-            onChange={setSearchTerm}
+            onChange={setSearchTermWithURL}
             placeholder="Search products..."
           />
         </div>
@@ -1050,7 +1208,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Status</span>
           <FilterDropdown
             value={statusFilter}
-            onChange={(value) => setStatusFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setStatusFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Status' },
               { value: 'active', label: 'Active' },
@@ -1064,7 +1222,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Category</span>
           <FilterDropdown
             value={categoryFilter}
-            onChange={(value) => setCategoryFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setCategoryFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Categories' },
               { value: 'Electronics', label: 'Electronics' },
@@ -1081,7 +1239,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Item Type</span>
           <FilterDropdown
             value={itemTypeFilter}
-            onChange={(value) => setItemTypeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setItemTypeFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Types' },
               { value: 'tradable', label: 'Tradable' },
@@ -1096,7 +1254,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>GST Rate</span>
           <FilterDropdown
             value={gstRateFilter}
-            onChange={(value) => setGstRateFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setGstRateFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Rates' },
               { value: '0', label: '0%' },
@@ -1113,7 +1271,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Stock Level</span>
           <FilterDropdown
             value={stockLevelFilter}
-            onChange={(value) => setStockLevelFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setStockLevelFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Levels' },
               { value: 'low_stock', label: 'Low Stock (< 10)' },
@@ -1128,7 +1286,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Price Range</span>
           <FilterDropdown
             value={priceRangeFilter}
-            onChange={(value) => setPriceRangeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setPriceRangeFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Prices' },
               { value: '0-100', label: '₹0 - ₹100' },
@@ -1143,10 +1301,10 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
-                      <DateFilter
-              value={dateFilter}
-              onChange={setDateFilter}
-            />
+          <DateFilter
+            value={dateFilter}
+            onChange={setDateFilterWithURL}
+          />
         </div>
       </EnhancedFilterBar>
 

@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '../modules/AuthContext'
+import { useSearchParams } from 'react-router-dom'
 import { 
   apiGetCashflowTransactions,
   CashflowTransaction
@@ -9,25 +10,155 @@ import { DateFilter, DateRange } from '../components/DateFilter'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
+import { useFilterNavigation } from '../utils/filterNavigation'
+import { useFilterReset } from '../hooks/useFilterReset'
+import { getDefaultFilterState } from '../config/defaultFilterStates'
 
 export function CashflowTransactions() {
   const { token } = useAuth()
   const [transactions, setTransactions] = useState<CashflowTransaction[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [typeFilter, setTypeFilter] = useState<'all' | 'inflow' | 'outflow'>('all')
-  const [transactionTypeFilter, setTransactionTypeFilter] = useState<string>('all')
-  const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>('all')
-  const [accountHeadFilter, setAccountHeadFilter] = useState<string>('all')
-  const [amountRangeFilter, setAmountRangeFilter] = useState<string>('all')
-  const [dateFilter, setDateFilter] = useState<DateRange>({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-    endDate: new Date().toISOString().slice(0, 10)
-  })
-  const [isDateFilterActive, setIsDateFilterActive] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(25)
+
+  // Enhanced Filter System - Unified State Management
+  const defaultState = getDefaultFilterState('cashflow') as {
+    searchTerm: string
+    typeFilter: 'all' | 'inflow' | 'outflow'
+    transactionTypeFilter: string
+    paymentMethodFilter: string
+    accountHeadFilter: string
+    amountRangeFilter: string
+    dateFilter: DateRange
+  }
+  const { getFiltersFromURL, updateURLWithFilters, clearURLFilters } = useFilterNavigation(defaultState)
+  const { resetAllFilters, getActiveFilterCount } = useFilterReset({
+    pageName: 'cashflow',
+    onReset: (newState) => {
+      // Update all filter states
+      setSearchTerm(newState.searchTerm)
+      setTypeFilter(newState.typeFilter)
+      setTransactionTypeFilter(newState.transactionTypeFilter)
+      setPaymentMethodFilter(newState.paymentMethodFilter)
+      setAccountHeadFilter(newState.accountHeadFilter)
+      setAmountRangeFilter(newState.amountRangeFilter)
+      setDateFilter(newState.dateFilter)
+    }
+  })
+
+  // Filter states with URL integration
+  const [searchTerm, setSearchTerm] = useState<string>(defaultState.searchTerm)
+  const [typeFilter, setTypeFilter] = useState<'all' | 'inflow' | 'outflow'>(defaultState.typeFilter)
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState<string>(defaultState.transactionTypeFilter)
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>(defaultState.paymentMethodFilter)
+  const [accountHeadFilter, setAccountHeadFilter] = useState<string>(defaultState.accountHeadFilter)
+  const [amountRangeFilter, setAmountRangeFilter] = useState<string>(defaultState.amountRangeFilter)
+  const [dateFilter, setDateFilter] = useState<DateRange>(defaultState.dateFilter)
+  const [isDateFilterActive, setIsDateFilterActive] = useState(false)
+
+  // URL Parameter Integration - Apply filters from URL on component mount
+  useEffect(() => {
+    const urlFilters = getFiltersFromURL()
+    
+    // Apply URL filters to state
+    if (urlFilters.searchTerm) setSearchTerm(urlFilters.searchTerm)
+    if (urlFilters.typeFilter) setTypeFilter(urlFilters.typeFilter)
+    if (urlFilters.transactionTypeFilter) setTransactionTypeFilter(urlFilters.transactionTypeFilter)
+    if (urlFilters.paymentMethodFilter) setPaymentMethodFilter(urlFilters.paymentMethodFilter)
+    if (urlFilters.accountHeadFilter) setAccountHeadFilter(urlFilters.accountHeadFilter)
+    if (urlFilters.amountRangeFilter) setAmountRangeFilter(urlFilters.amountRangeFilter)
+    if (urlFilters.dateFilter) setDateFilter(urlFilters.dateFilter)
+  }, [getFiltersFromURL])
+
+  // Update URL when filters change
+  const updateFiltersAndURL = useCallback((newFilters: Partial<typeof defaultState>) => {
+    const currentFilters = {
+      searchTerm,
+      typeFilter,
+      transactionTypeFilter,
+      paymentMethodFilter,
+      accountHeadFilter,
+      amountRangeFilter,
+      dateFilter
+    }
+    
+    const updatedFilters = { ...currentFilters, ...newFilters }
+    updateURLWithFilters(updatedFilters)
+  }, [searchTerm, typeFilter, transactionTypeFilter, paymentMethodFilter, 
+      accountHeadFilter, amountRangeFilter, dateFilter, updateURLWithFilters])
+
+  // Enhanced filter setters with URL integration
+  const setSearchTermWithURL = useCallback((value: string) => {
+    setSearchTerm(value)
+    updateFiltersAndURL({ searchTerm: value })
+  }, [updateFiltersAndURL])
+
+  const setTypeFilterWithURL = useCallback((value: 'all' | 'inflow' | 'outflow') => {
+    setTypeFilter(value)
+    updateFiltersAndURL({ typeFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setTransactionTypeFilterWithURL = useCallback((value: string) => {
+    setTransactionTypeFilter(value)
+    updateFiltersAndURL({ transactionTypeFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setPaymentMethodFilterWithURL = useCallback((value: string) => {
+    setPaymentMethodFilter(value)
+    updateFiltersAndURL({ paymentMethodFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setAccountHeadFilterWithURL = useCallback((value: string) => {
+    setAccountHeadFilter(value)
+    updateFiltersAndURL({ accountHeadFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setAmountRangeFilterWithURL = useCallback((value: string) => {
+    setAmountRangeFilter(value)
+    updateFiltersAndURL({ amountRangeFilter: value })
+  }, [updateFiltersAndURL])
+
+  const setDateFilterWithURL = useCallback((value: DateRange) => {
+    setDateFilter(value)
+    updateFiltersAndURL({ dateFilter: value })
+  }, [updateFiltersAndURL])
+
+  // Clear all filters handler
+  const handleClearAllFilters = useCallback(() => {
+    const currentState = {
+      searchTerm,
+      typeFilter,
+      transactionTypeFilter,
+      paymentMethodFilter,
+      accountHeadFilter,
+      amountRangeFilter,
+      dateFilter
+    }
+    
+    const newState = resetAllFilters(currentState)
+    
+    // Update all filter states
+    setSearchTerm(newState.searchTerm)
+    setTypeFilter(newState.typeFilter)
+    setTransactionTypeFilter(newState.transactionTypeFilter)
+    setPaymentMethodFilter(newState.paymentMethodFilter)
+    setAccountHeadFilter(newState.accountHeadFilter)
+    setAmountRangeFilter(newState.amountRangeFilter)
+    setDateFilter(newState.dateFilter)
+  }, [searchTerm, typeFilter, transactionTypeFilter, paymentMethodFilter, 
+      accountHeadFilter, amountRangeFilter, dateFilter, resetAllFilters])
+
+  // Get active filter count
+  const activeFilterCount = getActiveFilterCount({
+    searchTerm,
+    typeFilter,
+    transactionTypeFilter,
+    paymentMethodFilter,
+    accountHeadFilter,
+    amountRangeFilter,
+    dateFilter
+  })
 
   useEffect(() => {
     if (!token) return
@@ -139,44 +270,74 @@ export function CashflowTransactions() {
       {/* Enhanced Filter Options */}
       <EnhancedFilterBar 
         title="Cashflow Transaction Filters"
-        activeFiltersCount={
-          (searchTerm ? 1 : 0) +
-          (typeFilter !== 'all' ? 1 : 0) +
-          (transactionTypeFilter !== 'all' ? 1 : 0) +
-          (paymentMethodFilter !== 'all' ? 1 : 0) +
-          (accountHeadFilter !== 'all' ? 1 : 0) +
-          (amountRangeFilter !== 'all' ? 1 : 0) +
-          (isDateFilterActive ? 1 : 0)
-        }
-        onClearAll={() => {
-          setSearchTerm('')
-          setTypeFilter('all')
-          setTransactionTypeFilter('all')
-          setPaymentMethodFilter('all')
-          setAccountHeadFilter('all')
-          setAmountRangeFilter('all')
-          setIsDateFilterActive(false)
-        }}
+        activeFiltersCount={activeFilterCount}
+        onClearAll={handleClearAllFilters}
         showQuickActions={true}
+        showQuickFiltersWhenCollapsed={true}
         quickActions={[
           {
+            id: 'currentFY',
             label: 'Current FY',
             action: () => {
               const currentYear = new Date().getFullYear()
-              setDateFilter({
+              setDateFilterWithURL({
                 startDate: `${currentYear}-04-01`,
                 endDate: `${currentYear + 1}-03-31`
               })
               setIsDateFilterActive(true)
             },
-            icon: '📅'
+            icon: '📅',
+            isActive: false
           },
           {
+            id: 'cashOnly',
             label: 'Cash Only',
             action: () => {
-              setPaymentMethodFilter('Cash')
+              setPaymentMethodFilterWithURL('Cash')
             },
-            icon: '💰'
+            icon: '💰',
+            isActive: paymentMethodFilter === 'Cash'
+          },
+          {
+            id: 'recentTransactions',
+            label: 'Recent Transactions',
+            action: () => {
+              const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+              setDateFilterWithURL({
+                startDate: thirtyDaysAgo,
+                endDate: new Date().toISOString().slice(0, 10)
+              })
+              setIsDateFilterActive(true)
+            },
+            icon: '📋',
+            isActive: false
+          },
+          {
+            id: 'highValueTransactions',
+            label: 'High Value (>50K)',
+            action: () => {
+              setAmountRangeFilterWithURL('50000-')
+            },
+            icon: '💰',
+            isActive: amountRangeFilter === '50000-'
+          },
+          {
+            id: 'inflowOnly',
+            label: 'Inflow Only',
+            action: () => {
+              setTypeFilterWithURL('inflow')
+            },
+            icon: '📈',
+            isActive: typeFilter === 'inflow'
+          },
+          {
+            id: 'outflowOnly',
+            label: 'Outflow Only',
+            action: () => {
+              setTypeFilterWithURL('outflow')
+            },
+            icon: '📉',
+            isActive: typeFilter === 'outflow'
           }
         ]}
       >
@@ -186,7 +347,7 @@ export function CashflowTransactions() {
             type="text"
             placeholder="Search transactions..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTermWithURL(e.target.value)}
             style={{
               padding: '8px 12px',
               border: '1px solid #ced4da',
@@ -203,7 +364,7 @@ export function CashflowTransactions() {
             value={typeFilter}
             onChange={(value) => {
               const newValue = Array.isArray(value) ? value[0] || 'all' : value
-              setTypeFilter(newValue as 'all' | 'inflow' | 'outflow')
+              setTypeFilterWithURL(newValue as 'all' | 'inflow' | 'outflow')
             }}
             options={[
               { value: 'all', label: 'All Transactions' },
@@ -218,7 +379,7 @@ export function CashflowTransactions() {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Transaction Type</span>
           <FilterDropdown
             value={transactionTypeFilter}
-            onChange={(value) => setTransactionTypeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setTransactionTypeFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Types' },
               { value: 'invoice_payment', label: 'Invoice Payment' },
@@ -234,7 +395,7 @@ export function CashflowTransactions() {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Payment Method</span>
           <FilterDropdown
             value={paymentMethodFilter}
-            onChange={(value) => setPaymentMethodFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setPaymentMethodFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Methods' },
               { value: 'Cash', label: 'Cash' },
@@ -251,7 +412,7 @@ export function CashflowTransactions() {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Account Head</span>
           <FilterDropdown
             value={accountHeadFilter}
-            onChange={(value) => setAccountHeadFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setAccountHeadFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Accounts' },
               { value: 'Cash', label: 'Cash' },
@@ -266,7 +427,7 @@ export function CashflowTransactions() {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Amount Range</span>
           <FilterDropdown
             value={amountRangeFilter}
-            onChange={(value) => setAmountRangeFilter(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value) => setAmountRangeFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Amounts' },
               { value: '0-1000', label: '₹0 - ₹1,000' },
@@ -284,7 +445,7 @@ export function CashflowTransactions() {
           <DateFilter
             value={dateFilter}
             onChange={(newDateFilter) => {
-              setDateFilter(newDateFilter)
+              setDateFilterWithURL(newDateFilter)
               setIsDateFilterActive(true)
             }}
           />

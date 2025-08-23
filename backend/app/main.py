@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from .db import Base, legacy_engine, init_db, init_tenant_db
-from .seed import run_seed
+# Seed data removed from main application - use separate scripts for development and testing
 from . import main_routers
 from .config import settings
 from .middleware.tenant_routing import (
@@ -249,9 +249,7 @@ def create_app(database_engine=None) -> FastAPI:
                 else:
                     Base.metadata.create_all(bind=legacy_engine)
                 
-                # Run seed data if in development
-                if settings.environment == "development":
-                    run_seed()
+                # Seed data removed - use separate development script if needed
                 
                 logger.info("Application initialization completed successfully")
                 
@@ -275,7 +273,5 @@ if os.getenv("ENVIRONMENT") != "testing":
     # Initialize database
     Base.metadata.create_all(bind=legacy_engine)
     
-    # Run seed data if in development
-    if settings.environment == "development":
-        run_seed()
+    # Seed data removed - use separate development script if needed
 
