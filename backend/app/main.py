@@ -67,10 +67,10 @@ def create_app(database_engine=None) -> FastAPI:
 
     # Add tenant middleware if multi-tenant is enabled
     if MULTI_TENANT_ENABLED:
-        # Temporarily disabled - middleware needs further fixes
-        # app.middleware("http")(tenant_routing_middleware)
-        # app.middleware("http")(tenant_feature_access_middleware)
-        logger.info("Multi-tenant middleware temporarily disabled - needs further fixes")
+        # Re-enabled with proper ASGI-compliant middleware
+        app.middleware("http")(tenant_routing_middleware)
+        app.middleware("http")(tenant_feature_access_middleware)
+        logger.info("Multi-tenant middleware enabled")
     else:
         logger.info("Multi-tenant middleware disabled - running in single-tenant mode")
 

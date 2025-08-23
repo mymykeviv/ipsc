@@ -10,5 +10,12 @@ async def test_health_endpoint():
         response = await ac.get("/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    data = response.json()
+    assert data["status"] == "ok"
+    assert "version" in data
+    assert "build_date" in data
+    assert "environment" in data
+    assert "multi_tenant_enabled" in data
+    assert "security_enabled" in data
+    assert "database_optimization_enabled" in data
 
