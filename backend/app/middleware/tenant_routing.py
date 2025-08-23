@@ -28,15 +28,16 @@ logger = logging.getLogger(__name__)
 async def tenant_routing_middleware(request: Request, call_next):
     """ASGI-compliant middleware function for tenant routing"""
     try:
+        # First check if this is a public endpoint - if so, skip tenant routing
+        if is_public_endpoint(request.url.path):
+            return await call_next(request)
+        
         # Extract tenant ID from various sources
         tenant_id = await extract_tenant_id(request)
         
         if not tenant_id:
-            # For non-tenant-specific endpoints (health check, etc.)
-            if is_public_endpoint(request.url.path):
-                return await call_next(request)
-            else:
-                return create_unauthorized_response("Tenant ID required")
+            # For non-tenant-specific endpoints that aren't public
+            return create_unauthorized_response("Tenant ID required")
         
         # Get database session
         db = next(get_db())
@@ -164,10 +165,13 @@ async def extract_tenant_id(request: Request) -> Optional[str]:
         return tenant_id
     
     # Method 5: Extract from path parameter (for API routes)
+    # Skip this method for public endpoints to avoid false positives
     path_parts = request.url.path.split('/')
     if len(path_parts) > 2 and path_parts[1] == 'api':
         potential_tenant = path_parts[2]
-        if re.match(r'^[a-z0-9-]+$', potential_tenant):
+        # Exclude common API path segments that are not tenant identifiers
+        excluded_segments = {"auth", "health", "docs", "openapi", "static", "metrics", "system"}
+        if potential_tenant not in excluded_segments and re.match(r'^[a-z0-9-]+$', potential_tenant):
             return potential_tenant
     
     return None
