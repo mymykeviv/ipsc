@@ -31,6 +31,23 @@ A comprehensive business management system designed for Indian businesses with G
 
 **That's it!** No dependencies, no commands, no configuration needed.
 
+### 🪟 **Windows Users - Easy Setup**
+
+**For Windows users, we provide special batch files for easy deployment:**
+
+1. **Download the latest release** from [GitHub Releases](https://github.com/your-username/ipsc/releases)
+2. **Extract the package** to any directory
+3. **Double-click `start.bat`** to launch the application
+4. **The application will automatically:**
+   - Check if Docker is installed and running
+   - Start all required services
+   - Open the application in your browser
+   - Display service status and health checks
+
+**Additional Windows Commands:**
+- **`stop.bat`** - Stop the application and all services
+- **`test-deployment.bat`** - Test deployment and health checks
+
 ### 🚀 **For Developers - Local Development**
 
 ## 📋 Quick Start
