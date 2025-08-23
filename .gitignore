@@ -260,3 +260,35 @@ poetry.lock
 local/
 dev/
 development/
+
+# Docker Build Artifacts and Deployment Packages
+deployment-package/
+deployment-packages/
+*.zip
+*.tar.gz
+*.tar
+ipsc-v*-windows.zip
+ipsc-v*-linux-mac.tar.gz
+ipsc-v*-universal.tar.gz
+profitpath-v*-windows.zip
+profitpath-v*-linux-mac.tar.gz
+profitpath-v*-universal.tar.gz
+
+# Docker Images and Build Cache
+.docker/
+docker-build/
+build-cache/
+*.dockerfile
+Dockerfile.prod
+Dockerfile.dev
+
+# Local Docker Build Output
+build-output/
+docker-output/
+image-builds/
+
+# Build Scripts Output
+scripts/output/
+scripts/builds/
+*.build.log
+*.push.log
