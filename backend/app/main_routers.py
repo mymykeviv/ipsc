@@ -2309,7 +2309,7 @@ def get_cashflow_report(
                 transaction_id=payment.id,
                 transaction_type='income',
                 transaction_date=payment.payment_date.isoformat(),
-                amount=float(payment.payment_amount),
+                amount=float(payment.amount or 0),
                 description=f"Payment for Invoice {invoice.invoice_no}" if invoice else "Payment",
                 category="Sales",
                 payment_method=payment.payment_method,
@@ -2507,17 +2507,18 @@ def get_income_report(
         transactions = []
         for inv in invoices:
             customer = db.query(Party).filter(Party.id == inv.customer_id).first()
+            customer_name = customer.name if customer else "Unknown"
             
             # Calculate payment amount
             payments = db.query(Payment).filter(Payment.invoice_id == inv.id).all()
-            payment_amount = sum(float(p.payment_amount) for p in payments)
+            payment_amount = sum(float(p.amount or 0) for p in payments)
             outstanding = float(inv.grand_total) - payment_amount
             
             transactions.append(IncomeReportItem(
                 invoice_id=inv.id,
                 invoice_no=inv.invoice_no,
-                invoice_date=inv.date.isoformat(),
-                customer_name=customer.name if customer else "Unknown",
+                invoice_date=inv.date.date().isoformat(),
+                customer_name=customer_name,
                 taxable_value=float(inv.taxable_value),
                 total_tax=float(inv.cgst + inv.sgst + inv.igst),
                 grand_total=float(inv.grand_total),
@@ -3056,7 +3057,7 @@ def get_payment_report(
                     payment_date=payment.payment_date.isoformat(),
                     payment_type='invoice_payment',
                     payment_method=payment.payment_method,
-                    amount=float(payment.payment_amount),
+                    amount=float(payment.amount or 0),
                     reference_type='invoice',
                     reference_id=payment.invoice_id,
                     reference_number=invoice.invoice_no if invoice else None,
@@ -3161,7 +3162,7 @@ def get_payment_report(
                 PurchasePayment.payment_date <= month_end.date()
             ).all()
             
-            month_total = sum(float(p.payment_amount) for p in month_invoice_payments) + sum(float(p.payment_amount) for p in month_purchase_payments)
+            month_total = sum(float(p.amount or 0) for p in month_invoice_payments) + sum(float(p.payment_amount) for p in month_purchase_payments)
             trends["monthly_payments"].append({
                 "month": month_start.strftime('%Y-%m'),
                 "payments": month_total

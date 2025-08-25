@@ -323,7 +323,7 @@ function Shell() {
                   GST Reports (GSTR-1 & GSTR-3B)
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/reports/cashflow') ? 'active' : ''}`} to="/reports/cashflow">
-                  ProfitPath Analytics
+                  Cashflow Analytics
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/reports/income') ? 'active' : ''}`} to="/reports/income">
                   Income Analytics
