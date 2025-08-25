@@ -1,3 +1,19 @@
+## [1.4.10] - 2025-08-25
+
+### Fixed
+- Purchase Payments: Date range filter now includes the entire end date
+  - Frontend (`frontend/src/pages/PurchasePayments.tsx`): End boundary set to `23:59:59.999` to avoid excluding payments made on the selected end day.
+  - Result: Payments returned by API for the selected period now render correctly; empty-state no longer appears erroneously.
+
+### Compatibility
+- UI-only behavior change; no API or schema changes. Fully backward compatible.
+
+### Verification
+- With default last-30-days filter, payments dated on the end day are visible.
+- Quick actions tested: Current FY, Cash Payment.
+- Edge case validated: start date == end date shows payments for that day.
+
+---
 ## [1.4.9] - 2025-08-25
 
 ### Fixed

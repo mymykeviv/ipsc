@@ -145,4 +145,21 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/profitpath_test \
 ### Takeaways
 - For foundational settings, prefer upsert semantics to prevent bootstrap issues.
 - Keep UI models aligned with backend contracts to avoid "saved but not persisted" confusion.
-- Handle 404 on GET as "not configured yet" for optional configuration screens.
+  - Handle 404 on GET as "not configured yet" for optional configuration screens.
+
+---
+
+## Date Filters: End-Date Inclusivity (UI)
+
+### Context
+- On `Purchase Payments` list (`frontend/src/pages/PurchasePayments.tsx`), the date range end boundary defaulted to midnight (00:00), unintentionally excluding payments that occurred later on the selected end day.
+
+### Resolution
+- Treat the end date as inclusive by setting the end-of-day boundary to `23:59:59.999` for comparisons.
+
+### Testing Notes
+- Validate with default last-30-days filter and with start == end date.
+- Verify quick actions (Current FY, Cash Payment) still return correct rows.
+
+### Rollback
+- If over-inclusion is reported, revert to previous strict-end boundary or gate via a feature flag on the filter component.

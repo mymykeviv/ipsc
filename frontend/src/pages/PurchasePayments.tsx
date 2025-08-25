@@ -119,8 +119,8 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
     
     // Date filtering is handled by the DateFilter component
     const paymentDate = new Date(payment.payment_date)
-    const startDate = new Date(dateFilter.startDate)
-    const endDate = new Date(dateFilter.endDate)
+    const startDate = new Date(`${dateFilter.startDate}T00:00:00.000`)
+    const endDate = new Date(`${dateFilter.endDate}T23:59:59.999`)
     const matchesDate = paymentDate >= startDate && paymentDate <= endDate
     
     return matchesSearch && matchesVendor && matchesPaymentMethod && matchesAmountRange && matchesFinancialYear && matchesDate
