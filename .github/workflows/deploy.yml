@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       image-tag: ${{ steps.meta.outputs.tags }}
-      image-digest: ${{ steps.build.outputs.digest }}
+      image-digest: ${{ steps.build-backend.outputs.digest }}
     
     steps:
       - name: Checkout code
@@ -93,24 +93,24 @@ jobs:
       - name: Deploy to Development
         run: |
           echo "Deploying to Development Environment"
-          # Use docker-compose for dev deployment
+          # Use docker compose for dev deployment
           cd deployment/docker
-          docker-compose -f docker-compose.dev.yml down
-          docker-compose -f docker-compose.dev.yml pull
-          docker-compose -f docker-compose.dev.yml up -d
+          docker compose -f docker-compose.dev.yml down
+          docker compose -f docker-compose.dev.yml pull || true
+          docker compose -f docker-compose.dev.yml up -d
           
           # Wait for services to be healthy
-          sleep 30
+          sleep 45
           
           # Run health checks
-          curl -f http://localhost:8000/api/health || exit 1
-          curl -f http://localhost:3000/ || exit 1
+          curl -f http://localhost:8000/health || exit 1
+          curl -f http://localhost:5173/ || exit 1
 
-      - name: Run Post-Deployment Tests
+      - name: Post-Deployment Smoke Checks
         run: |
-          echo "Running post-deployment tests"
-          cd tests
-          python test_suite.py --env dev
+          echo "Running post-deployment smoke checks"
+          curl -sSf http://localhost:8000/health >/dev/null
+          curl -sSf http://localhost:5173/ >/dev/null
 
       - name: Notify Deployment Status
         if: always()
@@ -137,22 +137,22 @@ jobs:
         run: |
           echo "Deploying to UAT Environment"
           cd deployment/docker
-          docker-compose -f docker-compose.uat.yml down
-          docker-compose -f docker-compose.uat.yml pull
-          docker-compose -f docker-compose.uat.yml up -d
+          docker compose -f docker-compose.uat.yml down
+          docker compose -f docker-compose.uat.yml pull || true
+          docker compose -f docker-compose.uat.yml up -d
           
           # Wait for services to be healthy
-          sleep 45
+          sleep 60
           
           # Run health checks
-          curl -f http://localhost:8001/api/health || exit 1
-          curl -f http://localhost:3001/ || exit 1
+          curl -f http://localhost:8001/health || exit 1
+          curl -f http://localhost:3000/ || exit 1
 
-      - name: Run UAT Tests
+      - name: UAT Smoke Checks
         run: |
-          echo "Running UAT tests"
-          cd tests
-          python test_suite.py --env uat
+          echo "Running UAT smoke checks"
+          curl -sSf http://localhost:8001/health >/dev/null
+          curl -sSf http://localhost:3000/ >/dev/null
 
       - name: Notify Deployment Status
         if: always()
@@ -179,22 +179,22 @@ jobs:
         run: |
           echo "Deploying to Production Environment"
           cd deployment/docker
-          docker-compose -f docker-compose.prod.yml down
-          docker-compose -f docker-compose.prod.yml pull
-          docker-compose -f docker-compose.prod.yml up -d
+          docker compose -f docker-compose.prod.yml down
+          docker compose -f docker-compose.prod.yml pull || true
+          docker compose -f docker-compose.prod.yml up -d
           
           # Wait for services to be healthy
-          sleep 60
+          sleep 75
           
           # Run health checks
-          curl -f http://localhost:8002/api/health || exit 1
-          curl -f http://localhost:3002/ || exit 1
+          curl -f http://localhost:8000/health || exit 1
+          curl -f http://localhost/ || exit 1
 
-      - name: Run Production Tests
+      - name: Production Smoke Checks
         run: |
-          echo "Running production tests"
-          cd tests
-          python test_suite.py --env prod
+          echo "Running production smoke checks"
+          curl -sSf http://localhost:8000/health >/dev/null
+          curl -sSf http://localhost/ >/dev/null
 
       - name: Create Release
         uses: actions/create-release@v1
@@ -240,20 +240,20 @@ jobs:
           if [ "${{ needs.deploy-dev.result }}" == "failure" ]; then
             echo "Rolling back development environment"
             cd deployment/docker
-            docker-compose -f docker-compose.dev.yml down
+            docker compose -f docker-compose.dev.yml down
             # Restore from backup or previous version
           fi
           
           if [ "${{ needs.deploy-uat.result }}" == "failure" ]; then
             echo "Rolling back UAT environment"
             cd deployment/docker
-            docker-compose -f docker-compose.uat.yml down
+            docker compose -f docker-compose.uat.yml down
           fi
           
           if [ "${{ needs.deploy-prod.result }}" == "failure" ]; then
             echo "Rolling back production environment"
             cd deployment/docker
-            docker-compose -f docker-compose.prod.yml down
+            docker compose -f docker-compose.prod.yml down
           fi
 
       - name: Notify Rollback

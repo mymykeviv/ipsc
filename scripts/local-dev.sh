@@ -183,6 +183,8 @@ start_backend() {
     export PERFORMANCE_MONITORING_ENABLED="false"
     export SECURITY_MONITORING_ENABLED="false"
     cd backend
+    # Run Alembic migrations to ensure DB schema is up to date
+    alembic -c alembic.ini upgrade head
     uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --log-level debug &
     BACKEND_PID=$!
     cd ..

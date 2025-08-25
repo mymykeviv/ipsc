@@ -75,6 +75,8 @@ fi
 # Step 6: Start backend
 print_status "Starting backend server..."
 cd backend
+# Run Alembic migrations to ensure DB is up to date
+alembic -c alembic.ini upgrade head
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
 BACKEND_PID=$!
 cd ..

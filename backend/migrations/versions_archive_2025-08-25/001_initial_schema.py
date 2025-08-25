@@ -188,10 +188,24 @@ def upgrade():
         sa.Column('created_at', sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint('id')
     )
+    
+    # Add missing audit_trail table - CRITICAL FIX for migration failure
+    op.create_table('audit_trail',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('user_id', sa.Integer(), nullable=False),
+        sa.Column('action', sa.String(length=50), nullable=False),
+        sa.Column('table_name', sa.String(length=50), nullable=False),
+        sa.Column('record_id', sa.Integer(), nullable=True),
+        sa.Column('old_values', sa.Text(), nullable=True),
+        sa.Column('new_values', sa.Text(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.PrimaryKeyConstraint('id')
+    )
 
 
 def downgrade():
     # Drop all tables in reverse order
+    op.drop_table('audit_trail')
     op.drop_table('stock_ledger_entries')
     op.drop_table('expenses')
     op.drop_table('purchase_payments')

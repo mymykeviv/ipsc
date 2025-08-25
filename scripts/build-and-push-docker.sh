@@ -162,7 +162,7 @@ services:
       - "8000"
     volumes:
       - backend_logs:/app/logs
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s

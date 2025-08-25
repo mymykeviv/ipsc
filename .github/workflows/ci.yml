@@ -51,6 +51,13 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-cov psycopg2-binary
 
+      - name: Run DB migrations
+        run: |
+          cd backend
+          alembic -c alembic.ini upgrade head
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/profitpath_test
+
       - name: Run backend tests
         run: |
           cd backend
@@ -141,6 +148,7 @@ jobs:
         run: |
           cd backend
           pip install -r requirements.txt
+          alembic -c alembic.ini upgrade head
           python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
           sleep 10
         env:

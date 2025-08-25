@@ -106,6 +106,18 @@ The deployment script automatically checks for the following prerequisites:
 5. **Health Checks**: Verify all services are running correctly
 6. **Build Info Update**: Update deployment metadata
 
+## Database Migrations & Seeding
+
+- **Alembic migrations auto-run**: The backend now runs `alembic upgrade head` before starting the API in all Compose profiles (`dev`, `uat/staging`, `prod`) and in CI jobs where the backend is started. This aligns deployments with the new single baseline migration.
+- **Startup locations updated**:
+  - Docker Compose: `deployment/docker/docker-compose.dev.yml`, `deployment/docker/docker-compose.uat.yml`, `deployment/docker/docker-compose.prod.yml`, `deployment/standalone/docker-compose.yml`, and root `docker-compose.yml` all prepend the Alembic upgrade to the backend command.
+  - CI: `.github/workflows/ci.yml` runs Alembic before backend tests and before e2e backend startup.
+  - Artifact generation: `.github/workflows/release-artifacts.yml` and `scripts/build-and-push-docker.sh` embed the migration step in generated Compose files.
+- **Seeding is dev-only**: Any data seeding or sample data steps should run only in development. Staging/UAT and Production environments must not seed data automatically.
+- **Local scripts**: `scripts/local-dev.sh` and `scripts/local-dev-clean.sh` run Alembic migrations before launching the dev server.
+
+If you encounter migration issues, ensure `DATABASE_URL` is correctly set for the target environment and that the database service is healthy before the backend starts.
+
 ## Health Checks
 
 The deployment script performs health checks on:

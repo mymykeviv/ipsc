@@ -25,6 +25,7 @@ This document outlines the comprehensive CI/CD implementation for the IPSC appli
 - **Purpose**: Continuous integration on every push/PR
 - **Components**:
   - Backend tests with PostgreSQL service
+  - Alembic migrations run to `head` before backend tests and before starting e2e backend server
   - Frontend tests with coverage
   - E2E tests with Playwright
   - Security scanning with Trivy
@@ -38,6 +39,20 @@ This document outlines the comprehensive CI/CD implementation for the IPSC appli
   - Environment-specific configurations
   - Automated rollback on failure
   - Release creation for production
+
+### 3. Database Migration Strategy
+
+#### Alembic Baseline and Auto-Migrations
+- **Single Baseline Migration**: We consolidated historical migrations into a single baseline representing the current schema.
+- **Auto-run on Startup**: Backend services run `alembic upgrade head` before the API starts in all Compose profiles and in generated artifacts.
+- **CI Alignment**: CI executes `alembic -c alembic.ini upgrade head` against the test DB before backend tests and e2e server startup.
+- **Seeding Policy**: Seeding/sample data is dev-only and must not run in UAT/Prod.
+
+#### Updated Files
+- Compose: `deployment/docker/docker-compose.dev.yml`, `deployment/docker/docker-compose.uat.yml`, `deployment/docker/docker-compose.prod.yml`, `deployment/standalone/docker-compose.yml`, root `docker-compose.yml`
+- CI: `.github/workflows/ci.yml`
+- Artifacts: `.github/workflows/release-artifacts.yml`, `scripts/build-and-push-docker.sh`
+- Local: `scripts/local-dev.sh`, `scripts/local-dev-clean.sh`
 
 #### Health Monitoring (`.github/workflows/monitor.yml`)
 - **Purpose**: Continuous health monitoring and alerting

@@ -1,3 +1,24 @@
+## [1.4.6] - 2025-08-25
+
+### Changed
+- Adopted a single baseline Alembic migration strategy and ensured all environments run `alembic upgrade head` before backend startup.
+- Updated Docker Compose files to prepend Alembic migrations to backend start commands:
+  - `deployment/docker/docker-compose.dev.yml`
+  - `deployment/docker/docker-compose.uat.yml`
+  - `deployment/docker/docker-compose.prod.yml`
+  - `deployment/standalone/docker-compose.yml`
+  - Root `docker-compose.yml`
+- Updated CI pipeline `.github/workflows/ci.yml` to run migrations against the test DB before backend tests and before spinning up the e2e backend server.
+- Updated artifact generation to embed migration step:
+  - `.github/workflows/release-artifacts.yml`
+  - `scripts/build-and-push-docker.sh`
+- Updated local development scripts to run migrations before uvicorn:
+  - `scripts/local-dev.sh`
+  - `scripts/local-dev-clean.sh`
+
+### Notes
+- Seeding is dev-only. UAT/Prod deployments must not seed data automatically.
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
