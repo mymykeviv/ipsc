@@ -2,6 +2,8 @@
 
 A comprehensive business management system designed for Indian businesses with GST compliance, inventory management, and financial tracking capabilities.
 
+https://github.com/user-attachments/assets/b677dcaf-356e-4bdd-babf-ddcaa20760f0
+
 ## 🚀 Current Version: 1.49.0
 
 **Latest Features:**
