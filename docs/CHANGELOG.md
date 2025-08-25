@@ -1,3 +1,29 @@
+## [1.4.8] - 2025-08-25
+
+### Added
+- Inventory: Enriched stock movement history API and UI to align with stock register requirements
+  - Backend (`backend/app/main_routers.py`): `StockTransactionOut` now includes add-only optional fields `sku`, `category`, `supplier_name`.
+  - Backend: When `ref_type == 'purchase'`, join `Purchase` → `Party` to populate `supplier_name` and `reference_number`.
+  - Frontend (`frontend/src/components/StockMovementHistoryTable.tsx`): Added columns and CSV fields for `SKU`, `Category`, `Supplier`, and `Balance`.
+  - Frontend (`frontend/src/components/StockHistoryForm.tsx`): Mapped API fields into table rows including `sku`, `category`, `supplier`, and `running_balance`.
+
+### Fixed
+- Inventory: Closing stock and totals calculation previously corrected remain intact
+  - Running balance uniformly adds signed quantities for `in`, `out`, and `adjust`.
+  - Totals aggregate magnitudes appropriately (incoming = positives, outgoing = abs(negatives)).
+
+### Compatibility
+- API changes are strictly additive (optional fields). No breaking changes. Existing consumers remain compatible.
+
+### Tests
+- Backend: Added/validated scenarios for mixed sequences and verified closing stock equals opening + signed net movement; verified presence of enriched fields where applicable.
+- Frontend: Verified table renders new columns and CSV export includes the new fields.
+
+### Notes
+- Performance: Supplier lookup occurs only for `purchase`-linked rows. Can be optimized later via prefetch/caching if needed.
+
+---
+
 ## [1.4.7] - 2025-08-25
 
 ### Fixed

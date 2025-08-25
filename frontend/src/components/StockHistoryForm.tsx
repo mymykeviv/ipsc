@@ -1,10 +1,11 @@
-import React, { useEffect, useCallback, useMemo, useReducer } from 'react'
+import React, { useEffect, useCallback, useMemo, useReducer, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { apiGetStockMovementHistory, apiDownloadStockMovementHistoryPDF, apiGetProducts, Product } from '../lib/api'
 import { Button } from './Button'
 import { ErrorMessage } from './ErrorMessage'
 import { UnifiedFilterSystem } from './UnifiedFilterSystem'
 import { createApiErrorHandler } from '../lib/apiUtils'
+import { StockMovementHistoryTable } from './StockMovementHistoryTable'
 
 // Proper TypeScript interfaces following quality rules - matching backend types
 interface StockMovement {
@@ -21,6 +22,10 @@ interface StockMovement {
   closing_value: number
   transactions: StockTransaction[]
 }
+
+// Normalize backend timestamps that may include microseconds (6 digits) to milliseconds (3 digits)
+// Example: 2025-08-25T08:33:19.980740 -> 2025-08-25T08:33:19.980
+const normalizeToMs = (s: string): string => s.replace(/\.(\d{3})\d+$/, '.$1')
 
 interface StockTransaction {
   id: number
@@ -64,7 +69,7 @@ interface StockHistoryState {
     dateRangeFilter: DateRange
   }
   forceReload: number
-  debounceTimer: NodeJS.Timeout | null
+  debounceTimer: ReturnType<typeof setTimeout> | null
 }
 
 // Define action types for useReducer with proper payload types
@@ -79,7 +84,7 @@ type StockHistoryAction =
   | { type: 'SET_ITEMS_PER_PAGE'; payload: number }
   | { type: 'SET_FILTER'; payload: { key: keyof StockHistoryState['filters']; value: string | DateRange } }
   | { type: 'SET_FORCE_RELOAD'; payload: number }
-  | { type: 'SET_DEBOUNCE_TIMER'; payload: NodeJS.Timeout | null }
+  | { type: 'SET_DEBOUNCE_TIMER'; payload: ReturnType<typeof setTimeout> | null }
   | { type: 'CLEAR_ERROR' }
   | { type: 'RESET_FILTERS' }
 
@@ -182,9 +187,11 @@ const getCurrentFinancialYear = (): string => {
 export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () => void }> = ({ onSuccess, onCancel }) => {
   const [state, dispatch] = useReducer(stockHistoryReducer, initialState)
   const [searchParams, setSearchParams] = useSearchParams()
+  const [showDetails, setShowDetails] = useState(false)
+  const [selectedMovement, setSelectedMovement] = useState<StockMovement | null>(null)
   
-  // Create API error handler following quality rules
-  const handleApiError = createApiErrorHandler({})
+  // Create API error handler (memoized)
+  const handleApiError = useMemo(() => createApiErrorHandler(() => {}), [])
   
   // Extract values from state for easier access
   const {
@@ -299,11 +306,13 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
                               (entryTypeFilter === 'outgoing' && hasOutgoing) ||
                               (entryTypeFilter === 'adjustment' && hasEntryAdjustments)
       
-      // Date range filter - filter transactions within the date range
+      // Date range filter - include the ENTIRE end day to avoid excluding same-day transactions
       const matchesDateRange = movement.transactions.some((transaction: StockTransaction) => {
-        const transactionDate = new Date(transaction.transaction_date)
+        const transactionDate = new Date(normalizeToMs(transaction.transaction_date))
         const startDate = new Date(dateRangeFilter.startDate)
         const endDate = new Date(dateRangeFilter.endDate)
+        // Normalize end date to end-of-day 23:59:59.999
+        endDate.setHours(23, 59, 59, 999)
         return transactionDate >= startDate && transactionDate <= endDate
       })
       
@@ -359,6 +368,58 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
       ]
     }
   }, [products])
+
+  // Memoize filters config to avoid re-creating array every render
+  const unifiedFilters = useMemo(() => ([
+    {
+      id: 'financialYear',
+      type: 'dropdown' as const,
+      label: 'Financial Year',
+      options: filterOptions.financialYears,
+      defaultValue: financialYearFilter
+    },
+    {
+      id: 'product',
+      type: 'dropdown' as const,
+      label: 'Product',
+      options: filterOptions.products,
+      defaultValue: productFilter
+    },
+    {
+      id: 'category',
+      type: 'dropdown' as const,
+      label: 'Category',
+      options: filterOptions.categories,
+      defaultValue: categoryFilter
+    },
+    {
+      id: 'supplier',
+      type: 'dropdown' as const,
+      label: 'Supplier',
+      options: filterOptions.suppliers,
+      defaultValue: supplierFilter
+    },
+    {
+      id: 'stockLevel',
+      type: 'stock-level' as const,
+      label: 'Stock Level',
+      options: filterOptions.stockLevels,
+      defaultValue: stockLevelFilter
+    },
+    {
+      id: 'entryType',
+      type: 'dropdown' as const,
+      label: 'Entry Type',
+      options: filterOptions.entryTypes,
+      defaultValue: entryTypeFilter
+    },
+    {
+      id: 'dateRange',
+      type: 'date-range' as const,
+      label: 'Date Range',
+      defaultValue: dateRangeFilter
+    }
+  ]), [filterOptions, financialYearFilter, productFilter, categoryFilter, supplierFilter, stockLevelFilter, entryTypeFilter, dateRangeFilter])
 
   // Set product filter when productId is present in URL
   useEffect(() => {
@@ -551,7 +612,7 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
+    return new Date(normalizeToMs(dateString)).toLocaleDateString('en-IN', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
@@ -712,56 +773,7 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
 
       {/* Unified Filter System with real-time updates */}
       <UnifiedFilterSystem
-        filters={[
-          {
-            id: 'financialYear',
-            type: 'dropdown',
-            label: 'Financial Year',
-            options: filterOptions.financialYears,
-            defaultValue: financialYearFilter
-          },
-          {
-            id: 'product',
-            type: 'dropdown',
-            label: 'Product',
-            options: filterOptions.products,
-            defaultValue: productFilter
-          },
-          {
-            id: 'category',
-            type: 'dropdown',
-            label: 'Category',
-            options: filterOptions.categories,
-            defaultValue: categoryFilter
-          },
-          {
-            id: 'supplier',
-            type: 'dropdown',
-            label: 'Supplier',
-            options: filterOptions.suppliers,
-            defaultValue: supplierFilter
-          },
-          {
-            id: 'stockLevel',
-            type: 'stock-level',
-            label: 'Stock Level',
-            options: filterOptions.stockLevels,
-            defaultValue: stockLevelFilter
-          },
-          {
-            id: 'entryType',
-            type: 'dropdown',
-            label: 'Entry Type',
-            options: filterOptions.entryTypes,
-            defaultValue: entryTypeFilter
-          },
-          {
-            id: 'dateRange',
-            type: 'date-range',
-            label: 'Date Range',
-            defaultValue: dateRangeFilter
-          }
-        ]}
+        filters={unifiedFilters}
         quickFilters={quickFilterActions}
         onFilterChange={handleFilterChange}
         onClearAll={handleClearAll}
@@ -933,8 +945,8 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
                         <Button 
                           variant="primary" 
                           onClick={() => {
-                            dispatch({ type: 'SET_FORCE_RELOAD', payload: forceReload + 1 })
-                            loadStockHistory()
+                            setSelectedMovement(movement)
+                            setShowDetails(true)
                           }}
                         >
                           📊 View Details
@@ -1002,6 +1014,43 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
         }}
       />
       */}
+
+      {/* Details Modal with drilldown table */}
+      {showDetails && selectedMovement && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }}>
+          <div style={{ width: '90%', maxWidth: '1400px', maxHeight: '85vh', overflow: 'hidden', backgroundColor: 'white', borderRadius: '8px', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h2 style={{ margin: 0 }}>
+                Stock Movements • {selectedMovement.product_name} • FY {selectedMovement.financial_year}
+              </h2>
+              <Button variant="secondary" onClick={() => setShowDetails(false)}>Close</Button>
+            </div>
+
+            <StockMovementHistoryTable
+              rows={selectedMovement.transactions.map(t => ({
+                id: t.id,
+                timestamp: t.transaction_date,
+                type: t.entry_type,
+                quantity_change: t.entry_type === 'out' ? -Math.abs(t.quantity) : Math.abs(t.quantity),
+                sku: (t as any).sku,
+                category: (t as any).category,
+                source: null,
+                destination: null,
+                reference: t.reference_number,
+                user: null,
+                unit_price: t.unit_price,
+                value: t.total_value,
+                supplier: (t as any).supplier_name,
+                balance: t.running_balance,
+                remarks: t.notes
+              }))}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

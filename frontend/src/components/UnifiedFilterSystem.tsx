@@ -58,8 +58,14 @@ export function UnifiedFilterSystem({
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed)
   const [filterValues, setFilterValues] = useState<Record<string, any>>({})
   const [isOpen, setIsOpen] = useState<Record<string, boolean>>({})
+  // Keep a stable ref to the callback so effect depends only on value changes
+  const onFilterChangeRef = useRef(onFilterChange)
 
-  // Initialize filter values
+  useEffect(() => {
+    onFilterChangeRef.current = onFilterChange
+  }, [onFilterChange])
+
+  // Initialize filter values (only once on mount)
   useEffect(() => {
     const initialValues: Record<string, any> = {}
     filters.forEach(filter => {
@@ -89,12 +95,13 @@ export function UnifiedFilterSystem({
       }
     })
     setFilterValues(initialValues)
-  }, [filters])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  // Notify parent of filter changes
+  // Notify parent of filter changes (only when values change)
   useEffect(() => {
-    onFilterChange(filterValues)
-  }, [filterValues, onFilterChange])
+    onFilterChangeRef.current(filterValues)
+  }, [filterValues])
 
   const handleFilterChange = (filterId: string, value: any) => {
     setFilterValues(prev => ({

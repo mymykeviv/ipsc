@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
@@ -9,6 +9,7 @@ import { DateFilter, DateRange } from '../components/DateFilter'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { EnhancedFilterDropdown } from '../components/EnhancedFilterDropdown'
+import { StockMovementHistoryTable } from '../components/StockMovementHistoryTable'
 import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
 import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAdjustStock, apiListParties, Party, apiGetStockMovementHistory, StockMovement, ProductFilters } from '../lib/api'
@@ -84,12 +85,14 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   const [loading, setLoading] = useState(true)
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null)
   
-  // Create error handler that will automatically log out on 401 errors
-  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
+  // Create error handler that will automatically log out on 401 errors (memoized)
+  const handleApiError = useMemo(() => createApiErrorHandler(() => forceLogout()), [forceLogout])
   const [showStockModal, setShowStockModal] = useState(false)
   const [showStockHistoryModal, setShowStockHistoryModal] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [movementLoading, setMovementLoading] = useState(false)
+  const [movements, setMovements] = useState<StockMovement[]>([])
 
   // Enhanced Filter System - Unified State Management
   const defaultState = getDefaultFilterState('products') as {
@@ -425,6 +428,24 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       loadProducts()
     }
   }, [searchTerm, categoryFilter, itemTypeFilter, gstRateFilter, stockLevelFilter, supplierFilter, priceRangeFilter, statusFilter])
+
+  // Load stock movements when Stock History modal opens
+  useEffect(() => {
+    const loadMovements = async () => {
+      if (!showStockHistoryModal || !selectedProduct) return
+      try {
+        setMovementLoading(true)
+        const data = await apiGetStockMovementHistory(String(selectedProduct.id))
+        setMovements(data)
+      } catch (err: any) {
+        const msg = handleApiError(err)
+        setError(msg)
+      } finally {
+        setMovementLoading(false)
+      }
+    }
+    loadMovements()
+  }, [showStockHistoryModal, selectedProduct, handleApiError])
 
   const loadProducts = async () => {
     try {
@@ -1484,37 +1505,37 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         </div>
       )}
 
-      {/* Stock History Modal - Keep this for now */}
+      {/* Stock History Modal */}
       {showStockHistoryModal && selectedProduct && (
         <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
         }}>
-          <div style={{ 
-            width: '80%', 
-            height: '80%', 
-            maxWidth: '1400px', 
-            maxHeight: '80vh', 
-            overflow: 'auto',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            padding: '24px'
-          }}>
-            <h2>Stock History for {selectedProduct.name}</h2>
-            {/* Stock history content */}
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
-              <Button variant="secondary" onClick={() => setShowStockHistoryModal(false)}>
-                ← Back to Products
-                </Button>
-              </div>
+          <div style={{ width: '90%', maxWidth: '1400px', maxHeight: '85vh', overflow: 'hidden', backgroundColor: 'white', borderRadius: '8px', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h2 style={{ margin: 0 }}>Stock History for {selectedProduct.name}</h2>
+              <Button variant="secondary" onClick={() => setShowStockHistoryModal(false)}>Close</Button>
+            </div>
+
+            {movementLoading ? (
+              <div style={{ padding: 16, color: '#6c757d' }}>Loading movements…</div>
+            ) : (
+              <StockMovementHistoryTable
+                rows={movements.map((m: any) => ({
+                  id: m.id,
+                  timestamp: m.timestamp || m.date || m.created_at,
+                  type: m.type || m.movement_type || '—',
+                  quantity_change: typeof m.quantity_change === 'number' ? m.quantity_change : (m.delta ?? m.quantity ?? 0),
+                  source: m.source || m.from_location || null,
+                  destination: m.destination || m.to_location || null,
+                  reference: m.reference || m.document_no || m.invoice_no || null,
+                  user: m.user || m.performed_by || m.authorized_by || null,
+                  unit_price: m.unit_price ?? m.price_per_unit ?? null,
+                  value: m.value ?? (typeof m.unit_price === 'number' && typeof m.quantity_change === 'number' ? m.unit_price * m.quantity_change : null),
+                  remarks: m.remarks || m.notes || null
+                }))}
+              />
+            )}
           </div>
         </div>
       )}
@@ -1534,7 +1555,7 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
   const preSelectedProductId = searchParams.get('product')
   
   const { forceLogout } = useAuth()
-  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
+  const handleApiError = useMemo(() => createApiErrorHandler(() => forceLogout()), [forceLogout])
   const [products, setProducts] = useState<Product[]>([])
   const [vendors, setVendors] = useState<Party[]>([])
   const [loading, setLoading] = useState(true)
@@ -1592,10 +1613,17 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
       setStockLoading(true)
       setError(null)
       
+              // Backend expects non-negative quantity and derives delta from type.
+              // We want 'reduce' and 'adjust' in UI to reduce stock.
+              // Until backend supports negative quantity for 'adjust', map 'adjust' -> 'reduce'.
+              const rawQty = parseFloat(stockFormData.quantity)
+              const qtyToSend = Math.abs(rawQty)
+              const typeToSend = stockFormData.adjustmentType === 'add' ? 'add' : 'reduce'
+
               const result = await apiAdjustStock(
           parseInt(selectedProductId),
-          parseInt(stockFormData.quantity),
-          stockFormData.adjustmentType,
+          qtyToSend,
+          typeToSend,
           stockFormData.date_of_receipt,
           stockFormData.reference_bill_number || undefined,
           stockFormData.supplier || undefined,
@@ -1770,10 +1798,24 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
                   value={stockFormData.quantity}
                   onChange={(e) => handleStockInputChange('quantity', e.target.value)}
                   style={formStyles.input}
-                  min="0"
                   step="0.01"
                   required
                 />
+                <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+                  {stockFormData.adjustmentType === 'add' ? (
+                    <>
+                      Enter a positive quantity to add to stock.
+                    </>
+                  ) : stockFormData.adjustmentType === 'reduce' ? (
+                    <>
+                      Enter quantity to reduce from stock. Negative values are allowed; if positive, it will be treated as a reduction.
+                    </>
+                  ) : (
+                    <>
+                      Adjustment for damage/corrections reduces stock. Negative values are allowed; if positive, it will be treated as a reduction.
+                    </>
+                  )}
+                </div>
               </div>
               <div style={formStyles.formGroup}>
                 <label style={formStyles.label}>

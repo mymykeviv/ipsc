@@ -5378,6 +5378,8 @@ class StockTransactionOut(BaseModel):
     id: int
     product_id: int
     product_name: str
+    sku: str | None = None
+    category: str | None = None
     transaction_date: datetime
     entry_type: str  # 'in', 'out', 'adjust'
     quantity: float
@@ -5386,6 +5388,7 @@ class StockTransactionOut(BaseModel):
     ref_type: str | None  # 'invoice', 'purchase', 'adjustment', etc.
     ref_id: int | None
     reference_number: str | None
+    supplier_name: str | None = None
     notes: str | None
     financial_year: str
     running_balance: float
@@ -5767,6 +5770,7 @@ def get_stock_movement_history(
             ref_type = None
             ref_id = None
             reference_number = None
+            supplier_name = None
             notes = None
             
             if transaction.ref_type and transaction.ref_id:
@@ -5778,23 +5782,25 @@ def get_stock_movement_history(
                     reference_number = invoice.invoice_no if invoice else None
                 elif ref_type == 'purchase':
                     purchase = db.query(Purchase).filter(Purchase.id == ref_id).first()
-                    reference_number = purchase.purchase_no if purchase else None
+                    if purchase:
+                        reference_number = purchase.purchase_no
+                        vendor = db.query(Party).filter(Party.id == purchase.vendor_id).first()
+                        supplier_name = vendor.name if vendor else None
                 elif ref_type == 'adjustment':
                     reference_number = f"ADJ-{ref_id}"
             
             # Update running balance
-            if transaction.entry_type == 'in':
-                running_balance += transaction.qty
-            elif transaction.entry_type == 'out':
-                running_balance -= transaction.qty
-            elif transaction.entry_type == 'adjust':
-                # For adjustments: positive quantity increases stock, negative decreases
+            # Qty convention: 'in' is positive, 'out' is negative, 'adjust' signed
+            # Running balance should add the signed quantity uniformly
+            if transaction.entry_type in ('in', 'out', 'adjust'):
                 running_balance += transaction.qty
             
             transactions.append(StockTransactionOut(
                 id=transaction.id,
                 product_id=product.id,
                 product_name=product.name,
+                sku=product.sku,
+                category=product.category,
                 transaction_date=transaction.created_at,
                 entry_type=transaction.entry_type,
                 quantity=transaction.qty,
@@ -5803,21 +5809,18 @@ def get_stock_movement_history(
                 ref_type=ref_type,
                 ref_id=ref_id,
                 reference_number=reference_number,
+                supplier_name=supplier_name,
                 notes=notes,
                 financial_year=financial_year,
                 running_balance=running_balance
             ))
         
-        # Calculate summary totals
-        # For adjustments: positive quantity = incoming, negative quantity = outgoing
-        total_incoming = sum(t.quantity for t in transactions if t.entry_type == 'in') + \
-                        sum(t.quantity for t in transactions if t.entry_type == 'adjust' and t.quantity > 0)
-        total_incoming_value = sum(t.total_value or 0 for t in transactions if t.entry_type == 'in') + \
-                              sum(t.total_value or 0 for t in transactions if t.entry_type == 'adjust' and t.quantity > 0)
-        total_outgoing = sum(t.quantity for t in transactions if t.entry_type == 'out') + \
-                        sum(abs(t.quantity) for t in transactions if t.entry_type == 'adjust' and t.quantity < 0)
-        total_outgoing_value = sum(t.total_value or 0 for t in transactions if t.entry_type == 'out') + \
-                              sum(t.total_value or 0 for t in transactions if t.entry_type == 'adjust' and t.quantity < 0)
+        # Calculate summary totals as magnitudes (positive numbers)
+        # Treat any negative quantity as outgoing, positive as incoming
+        total_incoming = sum(t.quantity for t in transactions if t.quantity > 0)
+        total_incoming_value = sum((t.total_value or 0) for t in transactions if t.quantity > 0)
+        total_outgoing = sum(abs(t.quantity) for t in transactions if t.quantity < 0)
+        total_outgoing_value = sum(abs(t.total_value or 0) for t in transactions if t.quantity < 0)
         closing_stock = running_balance
         closing_value = closing_stock * unit_price_float
         

@@ -81,3 +81,37 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/profitpath_test \
 - Normalize security-critical string comparisons (e.g., roles) to avoid environment-specific casing drift.
 - Prefer defensive checks in authorization to reduce coupling with seed data conventions.
 - Keep verification recipes in docs to quickly triage auth-related 401/403 issues.
+
+---
+
+## Stock Register and Movement History Enrichment
+
+### Context
+- Inventory stakeholders require a stock register view containing SKU, Category, Supplier, Unit Price, Value, Remarks, Entry Type, and Running Balance per transaction, plus opening/closing summaries for accurate audit and reporting.
+
+### Changes Implemented
+- Backend (`backend/app/main_routers.py`)
+  - `StockTransactionOut`: Added optional fields `sku`, `category`, `supplier_name` (add-only; backward compatible).
+  - When `ref_type == 'purchase'`, join `Purchase` → `Party` to populate `supplier_name` and `reference_number`.
+  - Preserved corrected signed running balance and magnitude-based totals:
+    - Running balance: add signed qty for `in`, `out`, `adjust`.
+    - Totals: incoming = sum(qty > 0), outgoing = sum(abs(qty < 0)).
+- Frontend
+  - `frontend/src/components/StockMovementHistoryTable.tsx`: Added columns and CSV export for `SKU`, `Category`, `Supplier`, and `Balance`.
+  - `frontend/src/components/StockHistoryForm.tsx`: Mapped API fields to table rows, preserving sign normalization for `quantity_change`.
+
+### Design Decisions
+- Keep API backward compatible by adding optional fields only.
+- Derive sign from entry type and store signed quantities to simplify running balance.
+- Enrich only when applicable (supplier for purchase transactions) to avoid unnecessary joins.
+
+### Testing and Verification
+- Backend: Verified running balance equals opening + signed net across mixed sequences; validated totals split; confirmed presence of `sku`, `category`, and `supplier_name` when applicable.
+- Frontend: Verified new columns render and CSV export includes them; modal drilldown shows enriched details.
+
+### Operational Notes
+- Supplier lookup introduces an additional query on purchase-linked rows; acceptable for current scale. Consider prefetch/caching if datasets grow.
+
+### Next Steps
+- Consider accepting signed quantities or an explicit direction for `/stock/adjust` to remove frontend remapping.
+- Optional: add product category and supplier filters to the movement table.
