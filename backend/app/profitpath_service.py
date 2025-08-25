@@ -5,7 +5,7 @@ from datetime import datetime, date
 from decimal import Decimal
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, func, case, text, String, DateTime
+from sqlalchemy import and_, or_, func, case, text, String, DateTime, cast
 from .models import Payment, PurchasePayment, Expense, Invoice, Purchase, Party
 
 
@@ -141,7 +141,7 @@ class ProfitPathService:
         # Invoice Payments (Income)
         if not type_filter or type_filter == 'inflow':
             payment_query = self.db.query(
-                Payment.payment_date.label('transaction_date'),
+                cast(Payment.payment_date, DateTime).label('transaction_date'),
                 Payment.amount.label('amount'),
                 Payment.payment_method,
                 func.cast('', String).label('account_head'),

@@ -1,3 +1,24 @@
+## [1.50.0-stable] - 2025-08-25
+
+### Fixed
+- Cashflow Transactions API type error during sorting
+  - Backend (`backend/app/profitpath_service.py`): Standardized `transaction_date` to `DateTime` by casting `Payment.payment_date` to `DateTime` in `get_cashflow_transactions()`. Prevents `datetime` vs `date` comparison errors during sort.
+- Reports: incorrect amount field for invoice payments
+  - Backend (`backend/app/main_routers.py`): Replaced uses of non-existent `payment_payment`/`payment_amount` on `Payment` with correct `Payment.amount` in:
+    - Cashflow report income transactions
+    - Payment report invoice transactions and monthly trend
+    - Income report payment aggregation per invoice
+  - Result: Correct totals and no attribute errors across Cashflow, Payments, and Income reports.
+
+### Changed
+- UI: Sidebar label corrected
+  - Frontend (`frontend/src/modules/App.tsx`): Renamed "ProfitPath Analytics" to "Cashflow Analytics" under Reporting & Analytics.
+
+### Notes
+- No DB schema changes. Behavior-only fixes and label update.
+- Compatibility: Changes are backward compatible; response shapes unchanged, only amount sourcing fixed.
+
+---
 ## [1.4.12] - 2025-08-25
 
 ### Fixed

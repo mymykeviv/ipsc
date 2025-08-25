@@ -163,3 +163,30 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/profitpath_test \
 
 ### Rollback
 - If over-inclusion is reported, revert to previous strict-end boundary or gate via a feature flag on the filter component.
+
+---
+
+## Cashflow Transactions Sorting and Reporting Consistency
+
+### Context
+- Cashflow transactions endpoint failed due to mixed `date` vs `datetime` types in `transaction_date` across sources (payments, purchase payments, expenses).
+- Several report endpoints referenced a non-existent `payment_amount` on `Payment` instead of the correct `amount` attribute.
+
+### Resolution
+- Standardized the sort key to a single type by casting `Payment.payment_date` to `DateTime` in `backend/app/profitpath_service.py`.
+- Replaced all `payment_amount` references in report handlers with `Payment.amount` in `backend/app/main_routers.py`.
+- Corrected the frontend sidebar label to "Cashflow Analytics" for clarity.
+
+### Verification Checklist
+- `/api/cashflow/transactions` returns results with pagination; no TypeError on sort.
+- Cashflow/Payments/Income report totals add up correctly; no attribute errors.
+- UI shows "Cashflow Analytics" and navigates to the same route.
+
+### Takeaways
+- Normalize datatypes at query boundaries to avoid brittle downstream sorting/aggregation.
+- Prefer model-defined attributes (`Payment.amount`) over inferred names; validate against ORM models (`backend/app/models.py`).
+- Keep UI labels consistent with domain terminology to reduce confusion.
+
+### Documentation & Release
+- Updated `docs/CHANGELOG.md` with `1.50.0-stable` entry summarizing fixes.
+- Bumped `VERSION` to `1.50.0-stable` for CI/CD pipelines and GitHub Actions tagging.
