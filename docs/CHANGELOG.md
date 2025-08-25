@@ -1,3 +1,27 @@
+## [1.4.9] - 2025-08-25
+
+### Fixed
+- Company Settings persistence and related invoice/purchase errors
+  - Backend: Implemented upsert for `PUT /api/company/settings` so the first save creates a record if missing.
+    - Updated `backend/app/routers.py` and `backend/app/main_routers.py` to create `CompanySettings` with sensible defaults and then apply updates.
+  - Frontend: Wired `frontend/src/pages/Settings.tsx` to call backend APIs
+    - On load: `GET /api/company/settings` populates form (ignores 404 if not yet configured)
+    - On save: `PUT /api/company/settings` sends mapped fields with Authorization header
+  - Result: Saving Company Details now persists correctly; invoice/purchase flows no longer fail due to missing company settings.
+
+### Changed
+- Company Settings UI now reflects only backend-supported fields
+  - Removed UI-only fields from the Company Details form (email, phone, website, address, PAN, logo URL) to avoid mismatch with backend schema.
+  - Added inputs for `state`, `state_code`, and GST flags; ensured `invoice_series` maps to invoice prefix.
+
+### Compatibility
+- API changes are backward compatible (same endpoints). Frontend form fields now align with backend schema.
+
+### Verification
+- First-time save creates a `CompanySettings` row and returns 200.
+- Subsequent GET returns populated fields: `name`, `gstin`, `state`, `state_code`, `invoice_series`, `gst_enabled_by_default`, `require_gstin_validation`.
+
+---
 ## [1.4.8] - 2025-08-25
 
 ### Added

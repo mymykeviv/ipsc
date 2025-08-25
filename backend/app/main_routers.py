@@ -5346,15 +5346,34 @@ def get_company_settings(_: User = Depends(get_current_user), db: Session = Depe
     return settings
 
 @api.put('/company/settings')
-def update_company_settings(settings_data: dict, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def update_company_settings(settings_data: dict, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Update company settings if they exist; otherwise create them (upsert behavior).
+    Only attributes present on CompanySettings will be set; unknown fields are ignored.
+    """
     settings = db.query(CompanySettings).first()
+
     if not settings:
-        raise HTTPException(status_code=404, detail='Company settings not found')
-    
+        # Create with sensible defaults for required fields when missing
+        settings = CompanySettings(
+            tenant_id=getattr(user, 'tenant_id', None),
+            name=settings_data.get('name') or settings_data.get('company_name') or 'Your Company Pvt Ltd',
+            gstin=settings_data.get('gstin') or settings_data.get('gst_number') or '',
+            state=settings_data.get('state') or 'Maharashtra',
+            state_code=settings_data.get('state_code') or '27',
+            invoice_series=settings_data.get('invoice_series') or 'INV',
+            gst_enabled_by_default=bool(settings_data.get('gst_enabled_by_default', True)),
+            require_gstin_validation=bool(settings_data.get('require_gstin_validation', True)),
+        )
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
+
+    # Apply updates for provided fields that exist on the model
     for key, value in settings_data.items():
         if hasattr(settings, key):
             setattr(settings, key, value)
-    
+
     db.commit()
     db.refresh(settings)
     return settings

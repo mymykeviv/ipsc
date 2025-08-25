@@ -12,14 +12,14 @@ interface SettingsProps {
 }
 
 interface CompanySettings {
+  // Backend-mapped fields only
   company_name: string
-  company_address: string
-  company_email: string
-  company_phone: string
-  company_website: string
   gst_number: string
-  pan_number: string
-  logo_url: string
+  state?: string
+  state_code?: string
+  invoice_series?: string
+  gst_enabled_by_default?: boolean
+  require_gstin_validation?: boolean
 }
 
 interface TaxSettings {
@@ -60,24 +60,23 @@ interface InvoiceSettings {
 
 export function Settings({ section = 'company' }: SettingsProps) {
   const navigate = useNavigate()
-  const { forceLogout } = useAuth()
-  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
+  const { token, forceLogout } = useAuth()
+  const handleApiError = createApiErrorHandler(() => forceLogout())
   
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [templateManagerOpen, setTemplateManagerOpen] = useState(false)
 
-  // Company Settings
+  // Company Settings (backend fields only)
   const [companySettings, setCompanySettings] = useState<CompanySettings>({
     company_name: '',
-    company_address: '',
-    company_email: '',
-    company_phone: '',
-    company_website: '',
     gst_number: '',
-    pan_number: '',
-    logo_url: ''
+    state: 'Maharashtra',
+    state_code: '27',
+    invoice_series: 'INV',
+    gst_enabled_by_default: true,
+    require_gstin_validation: true
   })
 
   // Tax Settings
@@ -128,8 +127,36 @@ export function Settings({ section = 'company' }: SettingsProps) {
     try {
       setLoading(true)
       setError(null)
-      // TODO: Implement API calls to load settings
-      // For now, use default values
+      // Load company settings (ignore 404 if not set yet)
+      const res = await fetch('/api/company/settings', {
+        headers: {
+          Authorization: `Bearer ${token ?? ''}`
+        }
+      })
+      if (res.status === 401) {
+        throw new Error('Unauthorized')
+      }
+      if (res.ok) {
+        const data = await res.json()
+        setCompanySettings(prev => ({
+          ...prev,
+          company_name: data?.name ?? '',
+          gst_number: data?.gstin ?? '',
+          state: data?.state ?? 'Maharashtra',
+          state_code: data?.state_code ?? '27',
+          invoice_series: data?.invoice_series ?? 'INV',
+          gst_enabled_by_default: data?.gst_enabled_by_default ?? true,
+          require_gstin_validation: data?.require_gstin_validation ?? true,
+        }))
+        // If invoice series exists, mirror it into invoice settings prefix
+        if (data?.invoice_series) {
+          setInvoiceSettings(prev => ({ ...prev, invoice_prefix: data.invoice_series }))
+        }
+      } else if (res.status !== 404) {
+        // 404 means not configured yet; other errors should surface
+        const text = await res.text()
+        throw new Error(text || `Failed to load settings (${res.status})`)
+      }
     } catch (err) {
       console.error('Failed to load settings:', err)
       const errorMessage = handleApiError(err)
@@ -144,7 +171,44 @@ export function Settings({ section = 'company' }: SettingsProps) {
     try {
       setLoading(true)
       setError(null)
-      // TODO: Implement API call to save company settings
+      // Persist company settings (backend supports upsert on PUT)
+      const payload = {
+        name: companySettings.company_name,
+        gstin: companySettings.gst_number,
+        // Use explicit invoice_series if present, else from invoice settings
+        invoice_series: companySettings.invoice_series || invoiceSettings.invoice_prefix || 'INV',
+        state: companySettings.state || 'Maharashtra',
+        state_code: companySettings.state_code || '27',
+        gst_enabled_by_default: companySettings.gst_enabled_by_default ?? true,
+        require_gstin_validation: companySettings.require_gstin_validation ?? true,
+      }
+      const res = await fetch('/api/company/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token ?? ''}`
+        },
+        body: JSON.stringify(payload)
+      })
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(text || `Failed to save company settings (${res.status})`)
+      }
+      const saved = await res.json()
+      // Reflect saved values back into UI
+      setCompanySettings(prev => ({
+        ...prev,
+        company_name: saved?.name ?? prev.company_name,
+        gst_number: saved?.gstin ?? prev.gst_number,
+        state: saved?.state ?? prev.state,
+        state_code: saved?.state_code ?? prev.state_code,
+        invoice_series: saved?.invoice_series ?? prev.invoice_series,
+        gst_enabled_by_default: saved?.gst_enabled_by_default ?? prev.gst_enabled_by_default,
+        require_gstin_validation: saved?.require_gstin_validation ?? prev.require_gstin_validation,
+      }))
+      if (saved?.invoice_series) {
+        setInvoiceSettings(prev => ({ ...prev, invoice_prefix: saved.invoice_series }))
+      }
       setSuccess('Company settings saved successfully!')
       setTimeout(() => setSuccess(null), 3000)
     } catch (err) {
@@ -224,7 +288,7 @@ export function Settings({ section = 'company' }: SettingsProps) {
     }
   }
 
-  const handleInputChange = (field: string, value: string, settingsType: string) => {
+  const handleInputChange = (field: string, value: any, settingsType: string) => {
     switch (settingsType) {
       case 'company':
         setCompanySettings(prev => ({ ...prev, [field]: value }))
@@ -261,55 +325,37 @@ export function Settings({ section = 'company' }: SettingsProps) {
         <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('company') }}>
           Company Information
         </h3>
+        <div style={formStyles.formGroup}>
+          <label style={formStyles.label}>Company Name *</label>
+          <input
+            type="text"
+            value={companySettings.company_name}
+            onChange={(e) => handleInputChange('company_name', e.target.value, 'company')}
+            style={formStyles.input}
+            required
+          />
+        </div>
         <div style={formStyles.grid2Col}>
           <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>Company Name *</label>
+            <label style={formStyles.label}>State *</label>
             <input
               type="text"
-              value={companySettings.company_name}
-              onChange={(e) => handleInputChange('company_name', e.target.value, 'company')}
+              value={companySettings.state || ''}
+              onChange={(e) => handleInputChange('state', e.target.value, 'company')}
               style={formStyles.input}
               required
             />
           </div>
           <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>Company Email</label>
+            <label style={formStyles.label}>State Code *</label>
             <input
-              type="email"
-              value={companySettings.company_email}
-              onChange={(e) => handleInputChange('company_email', e.target.value, 'company')}
+              type="text"
+              value={companySettings.state_code || ''}
+              onChange={(e) => handleInputChange('state_code', e.target.value, 'company')}
               style={formStyles.input}
+              required
             />
           </div>
-        </div>
-        <div style={formStyles.grid2Col}>
-          <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>Company Phone</label>
-            <input
-              type="tel"
-              value={companySettings.company_phone}
-              onChange={(e) => handleInputChange('company_phone', e.target.value, 'company')}
-              style={formStyles.input}
-            />
-          </div>
-          <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>Company Website</label>
-            <input
-              type="url"
-              value={companySettings.company_website}
-              onChange={(e) => handleInputChange('company_website', e.target.value, 'company')}
-              style={formStyles.input}
-            />
-          </div>
-        </div>
-        <div style={formStyles.formGroup}>
-          <label style={formStyles.label}>Company Address</label>
-          <textarea
-            value={companySettings.company_address}
-            onChange={(e) => handleInputChange('company_address', e.target.value, 'company')}
-            style={formStyles.textarea}
-            rows={3}
-          />
         </div>
       </div>
 
@@ -329,34 +375,38 @@ export function Settings({ section = 'company' }: SettingsProps) {
             />
           </div>
           <div style={formStyles.formGroup}>
-            <label style={formStyles.label}>PAN Number</label>
+            <label style={formStyles.label}>Invoice Series/Prefix</label>
             <input
               type="text"
-              value={companySettings.pan_number}
-              onChange={(e) => handleInputChange('pan_number', e.target.value, 'company')}
+              value={companySettings.invoice_series || ''}
+              onChange={(e) => handleInputChange('invoice_series', e.target.value, 'company')}
               style={formStyles.input}
-              placeholder="ABCDE1234F"
+              placeholder="INV"
+            />
+          </div>
+        </div>
+        <div style={formStyles.grid2Col}>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>GST Enabled by Default</label>
+            <input
+              type="checkbox"
+              checked={!!companySettings.gst_enabled_by_default}
+              onChange={(e) => handleInputChange('gst_enabled_by_default', e.target.checked, 'company')}
+              style={{ marginLeft: '8px' }}
+            />
+          </div>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Require GSTIN Validation</label>
+            <input
+              type="checkbox"
+              checked={!!companySettings.require_gstin_validation}
+              onChange={(e) => handleInputChange('require_gstin_validation', e.target.checked, 'company')}
+              style={{ marginLeft: '8px' }}
             />
           </div>
         </div>
       </div>
-
-      <div style={formStyles.section}>
-        <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('logo') }}>
-          Company Logo
-        </h3>
-        <div style={formStyles.formGroup}>
-          <label style={formStyles.label}>Logo URL</label>
-          <input
-            type="url"
-            value={companySettings.logo_url}
-            onChange={(e) => handleInputChange('logo_url', e.target.value, 'company')}
-            style={formStyles.input}
-            placeholder="https://example.com/logo.png"
-          />
-        </div>
-      </div>
-
+      
       <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', marginTop: '24px' }}>
         <Button type="submit" variant="primary" disabled={loading}>
           {loading ? 'Saving...' : 'Save Company Settings'}

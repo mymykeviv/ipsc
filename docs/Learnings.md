@@ -115,3 +115,34 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/profitpath_test \
 ### Next Steps
 - Consider accepting signed quantities or an explicit direction for `/stock/adjust` to remove frontend remapping.
 - Optional: add product category and supplier filters to the movement table.
+
+---
+
+## Company Settings Persistence: Upsert Backend + Frontend Wiring
+
+### Context
+- Users reported that saving Company Details showed success but did not persist. Invoices/Purchases failed with "Company settings not found".
+
+### Root Causes
+- Backend `PUT /api/company/settings` only updated an existing row and returned 404 if none existed.
+- Frontend `Settings.tsx` form did not call the backend at all and included fields not present in `CompanySettings`.
+
+### Changes Implemented
+- Backend
+  - Implemented upsert in both `backend/app/routers.py` and `backend/app/main_routers.py` for `PUT /api/company/settings`.
+  - On missing settings, create with sensible defaults for required fields: `state` (Maharashtra), `state_code` (27), `invoice_series` (INV), GST flags true; set `tenant_id` from user if available.
+  - Apply updates for provided fields present on the model.
+- Frontend
+  - `frontend/src/pages/Settings.tsx` now loads via `GET /api/company/settings` (ignores 404) and saves via `PUT /api/company/settings` with Authorization.
+  - Kept only backend-mapped fields in the Company form: `name`/`gstin`/`state`/`state_code`/`invoice_series`/GST flags.
+  - Removed UI-only fields to avoid mismatch.
+
+### Verification Steps
+- First save on a fresh tenant creates `CompanySettings` and returns 200; subsequent GET returns populated fields.
+- Invoices/Purchases no longer fail due to missing company settings after first successful save.
+- Network tab shows GET and PUT hitting `/api/company/settings` with expected payload and response.
+
+### Takeaways
+- For foundational settings, prefer upsert semantics to prevent bootstrap issues.
+- Keep UI models aligned with backend contracts to avoid "saved but not persisted" confusion.
+- Handle 404 on GET as "not configured yet" for optional configuration screens.
