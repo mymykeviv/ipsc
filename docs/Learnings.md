@@ -51,3 +51,33 @@ uvicorn app.main:app --reload
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/profitpath_test \
   alembic -c backend/alembic.ini upgrade head
 ```
+
+---
+
+## Authorization Case Sensitivity and Dev Docker Verification
+
+### Context
+- API endpoints use authorization dependencies `require_role(...)` and `require_any_role(["Admin","Store"])` in `backend/app/auth.py`.
+- In dev DB, roles were inserted in lowercase (e.g., `admin`), while code checks used title case (e.g., `Admin`).
+
+### Issue Observed
+- Valid JWTs obtained from `/api/auth/login` resulted in `403 Forbidden` on protected endpoints like `POST /api/products`.
+- Root cause: case-sensitive string comparison of role names.
+
+### Resolution
+- Updated `backend/app/auth.py` to compare role names case-insensitively in both `require_role` and `require_any_role`.
+- No schema or data migration required; pure logic fix.
+
+### Verification Steps
+- Logged in with dev seed user `admin/admin123` to obtain JWT.
+- Called `POST /api/products` with the token: response changed from 403 to 201 Created.
+- Validated via curl and UI after logout/login to refresh token storage.
+
+### Operational Notes
+- Dev stack confirmed healthy using `deployment/docker/docker-compose.dev.yml`.
+- Backend exposes `http://localhost:8000`; Frontend via Vite at `http://localhost:5173`.
+
+### Takeaways
+- Normalize security-critical string comparisons (e.g., roles) to avoid environment-specific casing drift.
+- Prefer defensive checks in authorization to reduce coupling with seed data conventions.
+- Keep verification recipes in docs to quickly triage auth-related 401/403 issues.

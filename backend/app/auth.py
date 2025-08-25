@@ -86,7 +86,24 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 def require_role(required: str):
     def dep(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> User:
         role = db.query(Role).filter(Role.id == user.role_id).first()
-        if not role or role.name != required:
+        # Compare role names case-insensitively to avoid mismatches like 'admin' vs 'Admin'
+        if not role or (role.name or "").lower() != (required or "").lower():
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+        return user
+    return dep
+
+
+def require_any_role(required_roles: list[str]):
+    """Allow access if the current user's role matches any of the required roles.
+
+    Example: Depends(require_any_role(["Admin", "Store"]))
+    """
+    def dep(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> User:
+        role = db.query(Role).filter(Role.id == user.role_id).first()
+        # Case-insensitive comparison for role membership
+        required_lower = {(r or "").lower() for r in required_roles}
+        current_role = (role.name or "").lower() if role else ""
+        if not role or current_role not in required_lower:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
         return user
     return dep

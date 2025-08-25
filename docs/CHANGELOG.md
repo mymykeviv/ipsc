@@ -1,3 +1,18 @@
+## [1.4.7] - 2025-08-25
+
+### Fixed
+- Authorization: Made role checks case-insensitive in `backend/app/auth.py` to prevent 403 errors when DB role casing differs (e.g., `admin` vs `Admin`).
+  - Affected endpoints: any protected by `require_role(...)` or `require_any_role(["Admin","Store"])` such as `POST /api/products`.
+  - Verified via curl and UI: Admin token can now create products and other protected resources.
+
+### Operations
+- Dev Docker stack validation: Confirmed services healthy via `deployment/docker/docker-compose.dev.yml` and performed successful product creation against backend at `http://localhost:8000`.
+
+### Notes
+- No database schema changes. Behavior-only change in authorization comparison logic.
+
+---
+
 ## [1.4.6] - 2025-08-25
 
 ### Changed
