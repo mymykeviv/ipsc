@@ -32,6 +32,7 @@ Before finalizing any response, you must apply the following mandatory rules:
     For complex features, include user journeys to illustrate real-world flows.
     Maintain updated system/architecture documentation reflecting the current design.
     DO NOT document intermediate findings, notes, status updates, and/or queries and their responses
+    Summarise and document learnings in docs/Learnings.md
 
 🔹 Enforcement Rule
 

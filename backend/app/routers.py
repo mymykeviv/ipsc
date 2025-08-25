@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, date
 # Configure logging
 logger = logging.getLogger(__name__)
 
-from .auth import authenticate_user, create_access_token, get_current_user, require_role
+from .auth import authenticate_user, create_access_token, get_current_user, require_role, require_any_role
 from .db import get_db
 from .models import Product, User, Party, CompanySettings, Invoice, InvoiceItem, StockLedgerEntry, Purchase, PurchaseItem, Payment, PurchasePayment, Expense, AuditTrail, RecurringInvoiceTemplate, RecurringInvoiceTemplateItem, RecurringInvoice, PurchaseOrder, PurchaseOrderItem, GSTInvoiceTemplate
 from .audit import AuditService
@@ -277,7 +277,7 @@ class ProductUpdate(BaseModel):
 
 
 @api.post("/products", response_model=ProductOut, status_code=status.HTTP_201_CREATED)
-def create_product(payload: ProductCreate, _: User = Depends(require_role("Admin")), db: Session = Depends(get_db)):
+def create_product(payload: ProductCreate, _: User = Depends(require_any_role(["Admin", "Store"])), db: Session = Depends(get_db)):
     try:
         # Validation
         if not payload.name or len(payload.name.strip()) == 0:
@@ -356,7 +356,7 @@ def create_product(payload: ProductCreate, _: User = Depends(require_role("Admin
 
 
 @api.put("/products/{product_id}", response_model=ProductOut)
-def update_product(product_id: int, payload: ProductUpdate, _: User = Depends(require_role("Admin")), db: Session = Depends(get_db)):
+def update_product(product_id: int, payload: ProductUpdate, _: User = Depends(require_any_role(["Admin", "Store"])), db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Not found")
@@ -368,7 +368,7 @@ def update_product(product_id: int, payload: ProductUpdate, _: User = Depends(re
 
 
 @api.patch("/products/{product_id}/toggle", response_model=ProductOut)
-def toggle_product(product_id: int, _: User = Depends(require_role("Admin")), db: Session = Depends(get_db)):
+def toggle_product(product_id: int, _: User = Depends(require_any_role(["Admin", "Store"])), db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Not found")
@@ -388,7 +388,7 @@ class StockAdjustmentIn(BaseModel):
 
 
 @api.post("/products/{product_id}/stock", response_model=ProductOut, status_code=status.HTTP_201_CREATED)
-def add_stock_to_product(product_id: int, payload: StockAdjustmentIn, _: User = Depends(require_role("Admin")), db: Session = Depends(get_db)):
+def add_stock_to_product(product_id: int, payload: StockAdjustmentIn, _: User = Depends(require_any_role(["Admin", "Store"])), db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
