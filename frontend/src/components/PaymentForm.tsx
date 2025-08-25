@@ -102,16 +102,23 @@ export function PaymentForm({ onSuccess, onCancel, type, purchaseId, invoiceId }
   }
 
   const updateFormDataFromInvoice = (invoice: Invoice) => {
+    // Some API mappings may not include balance_amount yet; compute fallback
+    const invAny = invoice as any
+    const paid = typeof invAny.paid_amount === 'number' ? invAny.paid_amount : 0
+    const balanceFromApi = typeof invAny.balance_amount === 'number' ? invAny.balance_amount : undefined
+    const computedPending = Math.max(0, (invoice.grand_total || 0) - (paid || 0))
+    const pending = (balanceFromApi !== undefined && balanceFromApi > 0) ? balanceFromApi : computedPending
+
     setFormData(prev => ({
       ...prev,
       invoice_id: invoice.id,
       invoice_no: invoice.invoice_no,
       customer_name: invoice.customer_name,
       total_amount: invoice.grand_total,
-      pending_amount: invoice.balance_amount, // Use actual balance amount
+      pending_amount: pending,
       terms: 'Due on Receipt', // Default terms since Invoice type doesn't have terms property
       due_date: invoice.due_date?.split('T')[0],
-      payment_amount: invoice.balance_amount // Set default payment amount to balance
+      payment_amount: pending // Set default payment amount to pending
     }))
   }
 

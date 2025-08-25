@@ -516,6 +516,8 @@ class InvoiceOut(BaseModel):
     cess: float
     round_off: float
     grand_total: float
+    paid_amount: float
+    balance_amount: float
     
     # Additional Fields
     notes: str | None
@@ -1622,6 +1624,8 @@ class InvoiceListOut(BaseModel):
     date: datetime
     due_date: datetime
     grand_total: float
+    paid_amount: float
+    balance_amount: float
     status: str
 
     class Config:
@@ -1744,6 +1748,8 @@ def list_invoices(
             date=inv.date,
             due_date=inv.due_date,
             grand_total=float(inv.grand_total),
+            paid_amount=float(inv.paid_amount),
+            balance_amount=float(inv.balance_amount),
             status=inv.status
         ))
     

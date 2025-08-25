@@ -1311,6 +1311,8 @@ class InvoiceListOut(BaseModel):
     date: datetime
     due_date: datetime
     grand_total: float
+    paid_amount: float
+    balance_amount: float
     status: str
 
     class Config:
@@ -1433,6 +1435,8 @@ def list_invoices(
             date=inv.date,
             due_date=inv.due_date,
             grand_total=float(inv.grand_total),
+            paid_amount=float(inv.paid_amount),
+            balance_amount=float(inv.balance_amount),
             status=inv.status
         ))
     
@@ -4310,14 +4314,6 @@ def delete_expense(expense_id: int, _: User = Depends(get_current_user), db: Ses
 # Cashflow Summary - Replaced by consolidated service
 
 
-class PaymentIn(BaseModel):
-    amount: float
-    method: str
-    account_head: str
-    reference_number: str | None = None
-    notes: str | None = None
-
-
 class PurchasePaymentIn(BaseModel):
     amount: float
     method: str
@@ -4336,14 +4332,14 @@ def list_payments(invoice_id: int, _: User = Depends(get_current_user), db: Sess
         raise HTTPException(status_code=404, detail='Invoice not found')
     
     pays = db.query(Payment).filter(Payment.invoice_id == invoice_id).all()
-    total_paid = float(sum([p.payment_amount for p in pays], 0))
+    total_paid = float(sum([p.amount or 0 for p in pays], 0))
     outstanding = float(inv.grand_total) - total_paid
     
     return {
         "payments": [{
             "id": p.id, 
-            "payment_date": p.payment_date.isoformat(),
-            "amount": float(p.payment_amount), 
+            "payment_date": p.payment_date.isoformat() if p.payment_date else None,
+            "amount": float(p.amount or 0), 
             "method": p.payment_method, 
             "account_head": p.account_head,
             "reference_number": p.reference_number,
@@ -4352,6 +4348,84 @@ def list_payments(invoice_id: int, _: User = Depends(get_current_user), db: Sess
         "total_paid": total_paid, 
         "outstanding": outstanding
     }
+
+
+@api.post('/invoices/{invoice_id}/payments', status_code=201)
+def add_payment(invoice_id: int, payload: PaymentIn, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    if not inv:
+        raise HTTPException(status_code=404, detail='Invoice not found')
+    
+    # Validate payment amount
+    if payload.payment_amount <= 0:
+        raise HTTPException(status_code=400, detail="Payment amount must be greater than 0")
+    
+    outstanding_amount = float(inv.grand_total - inv.paid_amount)
+    if payload.payment_amount > outstanding_amount:
+        raise HTTPException(status_code=400, detail=f"Payment amount cannot exceed outstanding amount of ₹{outstanding_amount:.2f}")
+    
+    try:
+        from datetime import date as _date
+        pay = Payment(
+            invoice_id=invoice_id,
+            amount=money(payload.payment_amount),
+            payment_method=payload.payment_method,
+            reference_number=payload.reference_number,
+            notes=payload.notes,
+            payment_date=_date.fromisoformat(payload.payment_date) if payload.payment_date else None,
+        )
+        db.add(pay)
+        
+        # Update invoice paid/balance amounts
+        inv.paid_amount += money(payload.payment_amount)
+        inv.balance_amount = inv.grand_total - inv.paid_amount
+        
+        # Update invoice status
+        if inv.balance_amount == 0:
+            inv.status = "Paid"
+        elif inv.paid_amount > 0:
+            inv.status = "Partially Paid"
+        
+        # Commit
+        db.commit()
+        return {"id": pay.id}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to process payment: {str(e)}")
+
+
+@api.get('/invoices/payments')
+@api.get('/invoice-payments')
+def list_all_invoice_payments(
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Return all invoice payments with fields expected by the frontend.
+
+    Shape per item:
+    {
+      "id": int,
+      "invoice_id": int,
+      "payment_date": str | None (YYYY-MM-DD),
+      "payment_amount": float,
+      "payment_method": str,
+      "reference_number": str | None,
+      "notes": str | None
+    }
+    """
+    pays = db.query(Payment).all()
+    return [
+        {
+            "id": p.id,
+            "invoice_id": p.invoice_id,
+            "payment_date": p.payment_date.isoformat() if p.payment_date else None,
+            "payment_amount": float(p.amount or 0),
+            "payment_method": p.payment_method,
+            "reference_number": p.reference_number,
+            "notes": p.notes,
+        }
+        for p in pays
+    ]
 
 
 @api.post('/purchases/{purchase_id}/payments', status_code=201)

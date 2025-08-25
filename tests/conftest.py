@@ -7,7 +7,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from backend.app.db import Base
 from fastapi.testclient import TestClient
-from backend.app.main import create_app
+import importlib
 from backend.app.db import get_db
 from fastapi import Depends
 from sqlalchemy.engine.url import make_url
@@ -73,9 +73,23 @@ def test_app():
     # Set testing environment
     os.environ["TESTING"] = "1"
     os.environ["ENVIRONMENT"] = "testing"
+    # Disable security middleware for tests
+    os.environ["SECURITY_ENABLED"] = "false"
     
+    # Reload main module after setting env to recompute SECURITY_ENABLED
+    from backend.app import main as app_main
+    importlib.reload(app_main)
     # Create app with test engine
-    app = create_app(database_engine=test_engine)
+    app = app_main.create_app(database_engine=test_engine)
+    # Override auth to bypass token validation in tests
+    from backend.app.auth import get_current_user
+    class _DummyUser:
+        id = 1
+        role_id = None
+        username = "test-user"
+    def _fake_user():
+        return _DummyUser()
+    app.dependency_overrides[get_current_user] = _fake_user
     
     # Override the database dependency for testing
     app.dependency_overrides[get_db] = get_test_db

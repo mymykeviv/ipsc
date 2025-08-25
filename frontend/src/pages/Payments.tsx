@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
 import { PaymentForm } from '../components/PaymentForm'
-import { apiGetInvoicePayments, Payment, apiGetAllInvoicePayments } from '../lib/api'
+import { Modal } from '../components/Modal'
+import { Payment, apiGetAllInvoicePayments } from '../lib/api'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { DateFilter, DateRange } from '../components/DateFilter'
@@ -27,6 +28,8 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
   const [filteredPayments, setFilteredPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(false)
   const [invoices, setInvoices] = useState<any[]>([])
+  const [isViewOpen, setIsViewOpen] = useState(false)
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
 
   // Enhanced Filter System - Unified State Management
   const defaultState = getDefaultFilterState('payments') as {
@@ -57,8 +60,8 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
   const [dateFilter, setDateFilter] = useState<DateRange>(defaultState.dateFilter)
   const [isDateFilterActive, setIsDateFilterActive] = useState(false)
 
-  // Create error handler that will automatically log out on 401 errors
-  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
+  // Create error handler that will automatically log out on 401 errors (memoized)
+  const handleApiError = useMemo(() => createApiErrorHandler(() => forceLogout()), [forceLogout])
 
   // URL Parameter Integration - Apply filters from URL on component mount
   useEffect(() => {
@@ -440,6 +443,7 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
               </div>
           </div>
         ) : (
+          <>
           <div style={{ 
             border: '1px solid #e9ecef', 
             borderRadius: '8px', 
@@ -483,8 +487,8 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
                         <Button 
                           variant="secondary"
                           onClick={() => {
-                            // Show payment details in a modal or alert
-                            alert(`Payment Details:\n\nInvoice: ${getInvoiceNumber(payment.invoice_id)}\nDate: ${new Date(payment.payment_date).toLocaleDateString()}\nAmount: ₹${payment.payment_amount.toFixed(2)}\nMethod: ${payment.payment_method}\nReference: ${payment.reference_number || 'N/A'}\nNotes: ${payment.notes || 'N/A'}`)
+                            setSelectedPayment(payment)
+                            setIsViewOpen(true)
                           }}
                           style={{ fontSize: '14px', padding: '6px 12px' }}
                         >
@@ -497,6 +501,41 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
               </tbody>
             </table>
           </div>
+
+          {/* Styled View Modal */}
+          <Modal 
+            isOpen={isViewOpen} 
+            onClose={() => setIsViewOpen(false)} 
+            title="Payment Details"
+            size="small"
+          >
+            {selectedPayment && (
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', rowGap: '10px', columnGap: '12px', fontSize: '14px' }}>
+                <div style={{ color: '#6b7280' }}>Invoice</div>
+                <div style={{ fontWeight: 500 }}>{getInvoiceNumber(selectedPayment.invoice_id)}</div>
+
+                <div style={{ color: '#6b7280' }}>Date</div>
+                <div>{new Date(selectedPayment.payment_date).toLocaleDateString()}</div>
+
+                <div style={{ color: '#6b7280' }}>Amount</div>
+                <div>₹{selectedPayment.payment_amount.toFixed(2)}</div>
+
+                <div style={{ color: '#6b7280' }}>Method</div>
+                <div>{selectedPayment.payment_method}</div>
+
+                <div style={{ color: '#6b7280' }}>Reference</div>
+                <div>{selectedPayment.reference_number || 'N/A'}</div>
+
+                <div style={{ color: '#6b7280' }}>Notes</div>
+                <div>{selectedPayment.notes || 'N/A'}</div>
+
+                <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                  <Button variant="primary" onClick={() => setIsViewOpen(false)}>Close</Button>
+                </div>
+              </div>
+            )}
+          </Modal>
+          </>
         )}
       </div>
     )

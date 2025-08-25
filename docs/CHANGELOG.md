@@ -1,3 +1,42 @@
+## [1.4.12] - 2025-08-25
+
+### Fixed
+- Invoice Payments 404 on list screen and unstyled view dialog
+  - Backend (`backend/app/main_routers.py`):
+    - Added `GET /api/invoices/payments` endpoint to return all invoice payments with fields expected by the UI (`payment_amount`, `payment_method`, etc.).
+    - Added backward-compatible alias `GET /api/invoice-payments`.
+  - Frontend (`frontend/src/pages/Payments.tsx`):
+    - Replaced unstyled `alert()` with a proper `<Modal>` for viewing payment details.
+    - Fixed JSX structure by wrapping table + modal in a fragment to resolve a Babel parse error.
+    - Standardized `createApiErrorHandler` usage via `useMemo`.
+
+### Verification
+- Navigating to `/payments/invoice/list` now loads without 404; payments fetch from `/api/invoices/payments` (or alias) succeeds.
+- Clicking "View" opens a styled modal with payment details.
+
+### Compatibility
+- Additive endpoints; existing flows remain intact.
+
+---
+## [1.4.11] - 2025-08-25
+
+### Fixed
+- Invoice Payments: Pending amount always 0 and inability to add payments
+  - Backend (`backend/app/main_routers.py`):
+    - Added missing `POST /api/invoices/{invoice_id}/payments` endpoint, updating `paid_amount`, `balance_amount`, and `status`.
+    - In invoices list API (`GET /api/invoices`), response model now includes `paid_amount` and `balance_amount`.
+    - Removed duplicate `PaymentIn` class that conflicted with expected payload fields and caused HTTP 422.
+  - Frontend (`frontend/src/components/PaymentForm.tsx`):
+    - Added fallback computation for pending amount as `grand_total - paid_amount` if `balance_amount` is missing.
+  - Result: Payment form shows correct pending amount and can submit payments successfully.
+
+### Tests
+- Backend: Added `tests/backend/invoice_payments_spec.py` covering list fields and payment posting updates.
+
+### Compatibility
+- API changes are additive to the invoices list response; existing consumers remain compatible. Payment endpoint now available under `/api` router.
+
+---
 ## [1.4.10] - 2025-08-25
 
 ### Fixed
