@@ -24,7 +24,10 @@ services:
 
   # Backend API Service
   backend:
-    image: ghcr.io/your-username/ipsc/backend:latest
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+      target: production
     container_name: profitpath-backend
     environment:
       ENVIRONMENT: production
@@ -57,17 +60,20 @@ services:
 
   # Frontend Web Application
   frontend:
-    image: ghcr.io/your-username/ipsc/frontend:latest
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+      target: development
     container_name: profitpath-frontend
     expose:
-      - "80"
+      - "5173"
     environment:
       VITE_API_URL: http://backend:8000
-      VITE_APP_ENV: production
+      VITE_APP_ENV: development
     depends_on:
       - backend
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
       interval: 30s
       timeout: 10s
       retries: 3

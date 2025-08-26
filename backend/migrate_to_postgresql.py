@@ -85,6 +85,67 @@ def convert_sqlite_type_to_postgres(sqlite_type):
     
     return 'TEXT'  # Default fallback
 
+
+def _sanitize_default_value(default_val: str, postgres_type: str) -> str:
+    """Return a safe DEFAULT clause snippet for PostgreSQL.
+
+    - Preserves known SQL functions like CURRENT_TIMESTAMP.
+    - Normalizes booleans (0/1/true/false) to TRUE/FALSE.
+    - Quotes string-like defaults (including JSON-looking []/{}) for TEXT/VARCHAR.
+    - Strips quotes around numerics for numeric types.
+    """
+    if default_val is None:
+        return ""
+
+    raw = str(default_val).strip()
+    if not raw or raw.upper() == "NULL":
+        return ""
+
+    # Remove surrounding parentheses SQLite may add, e.g. (0)
+    if raw.startswith("(") and raw.endswith(")"):
+        raw = raw[1:-1].strip()
+
+    # Allow common SQL functions
+    sql_funcs = {"CURRENT_TIMESTAMP", "NOW()", "CURRENT_DATE", "CURRENT_TIME"}
+    if raw.upper() in sql_funcs:
+        return f" DEFAULT {raw}"
+
+    pt = postgres_type.upper()
+
+    # Normalize booleans
+    if pt == "BOOLEAN":
+        if raw.strip("'\"").lower() in {"1", "true", "t", "yes"}:
+            return " DEFAULT TRUE"
+        if raw.strip("'\"").lower() in {"0", "false", "f", "no"}:
+            return " DEFAULT FALSE"
+        # Fallthrough: try quoting
+
+    # Numeric types: remove quotes if it's a quoted number
+    if any(t in pt for t in ["INT", "NUMERIC", "DECIMAL", "DOUBLE", "REAL"]):
+        unquoted = raw.strip("'\"")
+        # If still looks like a number, use unquoted
+        try:
+            float(unquoted)
+            return f" DEFAULT {unquoted}"
+        except ValueError:
+            # Not a clean number; quote it
+            pass
+
+    # Textual types: ensure quoted defaults
+    if any(t in pt for t in ["CHAR", "TEXT", "UUID", "JSON", "JSONB", "VARCHAR"]):
+        # If already quoted, keep as is
+        if (raw.startswith("'") and raw.endswith("'")) or (raw.startswith('"') and raw.endswith('"')):
+            return f" DEFAULT {raw}"
+        # Quote JSON-ish literals like [] or {}
+        if raw in {"[]", "{}"}:
+            return f" DEFAULT '{raw}'"
+        # Otherwise, single-quote and escape single quotes
+        escaped = raw.replace("'", "''")
+        return f" DEFAULT '{escaped}'"
+
+    # Fallback: return as-is
+    return f" DEFAULT {raw}"
+
 def create_postgres_table(table_name, columns):
     """Create table in PostgreSQL"""
     try:
@@ -102,8 +163,9 @@ def create_postgres_table(table_name, columns):
                 definition += " NOT NULL"
             if pk:
                 definition += " PRIMARY KEY"
-            if default_val and default_val != "NULL":
-                definition += f" DEFAULT {default_val}"
+            # Sanitize default values to avoid malformed SQL
+            if default_val and str(default_val).upper() != "NULL":
+                definition += _sanitize_default_value(default_val, postgres_type)
             
             column_definitions.append(definition)
         

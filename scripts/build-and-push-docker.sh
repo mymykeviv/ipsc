@@ -105,9 +105,9 @@ else
     exit 1
 fi
 
-# Build and push frontend
-print_status "INFO" "Starting frontend build..."
-if build_and_push "profitpath-frontend" "frontend/Dockerfile" "frontend"; then
+# Build and push frontend (optimized, serves on port 80)
+print_status "INFO" "Starting frontend build (optimized, port 80)..."
+if build_and_push "profitpath-frontend" "frontend/Dockerfile.optimized" "frontend"; then
     print_status "SUCCESS" "Frontend build and push completed"
 else
     print_status "FAILED" "Frontend build and push failed"

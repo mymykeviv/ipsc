@@ -2,10 +2,11 @@
 
 ## Overview
 
-This document describes the consolidated deployment system for Cashflow, which supports three environments:
+This document describes the consolidated deployment system for ProfitPath (IPSC), which supports four modes/environments:
 - **Development (dev)**: Docker Compose with hot reloading
 - **UAT**: Docker Compose with production-like settings
 - **Production (prod)**: Kubernetes with high availability
+- **Standalone (local)**: Simple local run via Docker Compose
 
 ## Quick Start
 
@@ -30,6 +31,12 @@ python deployment/deploy.py prod --clean
 ```
 
 ## Environment Configurations
+
+## Environment Behavior and Ports
+
+- **Frontend in Dev/Local (standalone)**: runs Vite on port 5173.
+- **Frontend in UAT/Prod**: served by Nginx on port 80 using `frontend/Dockerfile.optimized`.
+- **Backend**: FastAPI on port 8000 across all modes.
 
 ### Development Environment
 
@@ -59,6 +66,8 @@ python deployment/deploy.py prod --clean
 - Health checks enabled
 - Optimized for testing
 
+Frontend is built using the optimized Dockerfile (Nginx, port 80 in container).
+
 **Access Points**:
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8001
@@ -77,7 +86,79 @@ python deployment/deploy.py prod --clean
 - Health checks and auto-scaling
 - Secrets management
 
+Frontend is built using the optimized Dockerfile (Nginx, port 80 in container).
+
 **Configuration**: `deployment/kubernetes/prod/`
+
+## Build and Push Images to Docker Hub
+
+Use the provided script which builds multi-arch images and generates a deployment package. The frontend uses the optimized Dockerfile (Nginx on port 80).
+
+```bash
+# Set version and your Docker Hub username
+./scripts/build-and-push-docker.sh 1.5.0 <your-dockerhub-username>
+
+# Images produced and pushed:
+# <your-dockerhub-username>/profitpath-backend:1.5.0, latest
+# <your-dockerhub-username>/profitpath-frontend:1.5.0, latest (Dockerfile.optimized)
+```
+
+## Create a Release using GitHub Actions
+
+The workflow `.github/workflows/deploy.yml` builds multi-arch images and can deploy to dev/uat/prod. It now builds the frontend with `frontend/Dockerfile.optimized` so UAT/Prod serve on port 80.
+
+Steps:
+
+1. Navigate to GitHub → Actions → "Automated Deployment Pipeline".
+2. Click "Run workflow" and choose `environment`:
+   - `dev` (tests with dev compose; frontend 5173)
+   - `uat` (compose uat; frontend 80 via Nginx)
+   - `prod` (compose prod; frontend 80 via Nginx, creates a Release)
+3. Monitor logs. For prod, the job also creates a GitHub Release with tag `v<run_number>`.
+
+## Build and Deploy Locally on Docker (Standalone)
+
+Standalone is intended for quick local runs. Frontend runs on Vite (5173) and is proxied by Nginx on port 80.
+
+```bash
+# Start
+docker compose -f deployment/standalone/docker-compose.yml up -d --build
+
+# Verify
+curl -f http://localhost/health      # 200 from Nginx
+curl -f http://localhost             # SPA proxied to frontend:5173
+curl -f http://localhost/api/health || curl -f http://localhost:8000/health
+
+# Logs
+docker compose -f deployment/standalone/docker-compose.yml logs -f
+
+# Stop
+docker compose -f deployment/standalone/docker-compose.yml down
+```
+
+## Local Development without Docker
+
+Run backend and frontend directly.
+
+Backend (FastAPI on 8000):
+
+```bash
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+export ENVIRONMENT=development
+export DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/profitpath
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Frontend (Vite on 5173):
+
+```bash
+cd frontend
+npm install
+export VITE_API_URL=http://localhost:8000
+npm run dev -- --host --port 5173
+```
 
 ## Deployment Options
 
@@ -186,8 +267,11 @@ export API_URL=https://api.yourdomain.com
 
 ### Health Check Endpoints
 
-- **Backend**: `http://localhost:8000/health`
-- **Frontend**: `http://localhost:5173` (dev) or `http://localhost:3000` (uat)
+- Backend: `http://localhost:8000/health` (all)
+- Frontend:
+  - Dev/Standalone: `http://localhost:5173`
+  - UAT: `http://localhost:3000` (maps to container 80)
+  - Prod: `http://localhost` (Nginx 80)
 
 ### Logs
 

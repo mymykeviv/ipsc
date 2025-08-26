@@ -72,7 +72,7 @@ https://github.com/user-attachments/assets/b677dcaf-356e-4bdd-babf-ddcaa20760f0
    ```
 
 3. **Access Application**
-   - Frontend: http://localhost:5173
+   - Frontend (Dev/Local): http://localhost:5173 (Vite)
    - Backend API: http://localhost:8000
    - Database: localhost:5432
    - MailHog: http://localhost:8025
@@ -199,6 +199,10 @@ docker compose ps
 # View logs
 docker compose logs -f
 ```
+
+Notes:
+- UAT/Prod frontend images are built from `frontend/Dockerfile.optimized` and served by Nginx on port 80.
+- Dev/Standalone use Vite on port 5173.
 
 ### Version Management
 - Backend version: Check `/api/version` endpoint
