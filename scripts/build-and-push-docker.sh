@@ -36,6 +36,7 @@ print_status() {
 # Flags and args
 PREFLIGHT_ONLY=0
 QUICK_BUILD=0
+PLATFORM="linux/amd64,linux/arm64"
 POSITIONALS=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -43,8 +44,10 @@ while [[ $# -gt 0 ]]; do
       PREFLIGHT_ONLY=1; shift ;;
     --quick)
       QUICK_BUILD=1; shift ;;
+    --platform)
+      PLATFORM="$2"; shift 2 ;;
     -h|--help)
-      echo "Usage: ./scripts/build-and-push-docker.sh [--preflight] [--quick] [version] [dockerhub-username]"; exit 0 ;;
+      echo "Usage: ./scripts/build-and-push-docker.sh [--preflight] [--quick] [--platform <linux/amd64|linux/arm64|multi>] [version] [dockerhub-username]"; exit 0 ;;
     *) POSITIONALS+=("$1"); shift ;;
   esac
 done
@@ -109,16 +112,18 @@ build_and_push() {
     # Build the image
     if {
         if [[ "$QUICK_BUILD" == "1" ]]; then
-            docker build \
-                --target production \
-                -t "$DOCKERHUB_USERNAME/$service:$VERSION" \
-                -t "$DOCKERHUB_USERNAME/$service:latest" \
-                -f "$dockerfile_path" \
-                "$build_context"
+            # Quick path: single-arch recommended. Add --platform only if single value.
+            BUILD_ARGS=(docker build --pull --target production -t "$DOCKERHUB_USERNAME/$service:$VERSION" -t "$DOCKERHUB_USERNAME/$service:latest" -f "$dockerfile_path" "$build_context")
+            if [[ "$PLATFORM" != *","* ]]; then
+              BUILD_ARGS=(docker build --pull --platform "$PLATFORM" --target production -t "$DOCKERHUB_USERNAME/$service:$VERSION" -t "$DOCKERHUB_USERNAME/$service:latest" -f "$dockerfile_path" "$build_context")
+            fi
+            "${BUILD_ARGS[@]}"
         else
             # Use buildx for multi-arch and push directly to avoid client-side push EOFs
-            docker buildx build \
-                --platform linux/amd64,linux/arm64 \
+            retry 3 docker buildx build \
+                --progress=plain \
+                --pull \
+                --platform "$PLATFORM" \
                 --target production \
                 -t "$DOCKERHUB_USERNAME/$service:$VERSION" \
                 -t "$DOCKERHUB_USERNAME/$service:latest" \
@@ -179,8 +184,6 @@ mkdir -p deployment-package
 
 # Create docker-compose.yml for Docker Hub images
 cat > deployment-package/docker-compose.yml << EOF
-version: '3.8'
-
 services:
   # Database Service
   database:
@@ -388,8 +391,40 @@ http {
 EOF
 
 # Create startup scripts
-cat > deployment-package/start.sh << 'EOF'
+cat > deployment-package/start.sh << EOF
 #!/bin/bash
+
+set -e
+
+# Resolve script directory and move there so compose file is found
+SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+cd "\$SCRIPT_DIR"
+
+# Compose runner
+compose() {
+  if docker compose version >/dev/null 2>&1; then
+    docker compose "\$@"
+  elif command -v docker-compose >/dev/null 2>&1; then
+    docker-compose "\$@"
+  else
+    echo "❌ ERROR: docker compose not found. Install Docker Desktop or docker-compose."
+    return 1
+  fi
+}
+
+# Retry helper with exponential backoff
+retry() {
+  local attempts=\${1:-5}; shift
+  local n=0
+  local delay=2
+  until "\$@"; do
+    n=\$((n+1))
+    if [[ \$n -ge \$attempts ]]; then
+      return 1
+    fi
+    sleep \$(( delay ** n ))
+  done
+}
 
 echo ""
 echo "========================================"
@@ -406,11 +441,9 @@ if ! docker info > /dev/null 2>&1; then
   exit 1
 fi
 
-# Check if docker-compose is available
-if ! command -v docker-compose &> /dev/null; then
-  echo "❌ ERROR: docker-compose is not installed!"
-  echo "   Please install docker-compose and try again."
-  echo ""
+# Ensure compose file exists
+if [[ ! -f docker-compose.yml ]]; then
+  echo "❌ ERROR: docker-compose.yml not found in \"$SCRIPT_DIR\""
   exit 1
 fi
 
@@ -419,11 +452,14 @@ echo ""
 
 # Pull latest images
 echo "📥 Downloading latest application files..."
-docker-compose pull
+# Pre-pull base images that are known to use Docker Hub mirrors sometimes
+retry 5 docker pull postgres:16-alpine || true
+retry 5 docker pull nginx:alpine || true
+retry 5 compose -f docker-compose.yml pull
 
 # Start services
 echo "🚀 Starting IPSC services..."
-docker-compose up -d
+retry 5 compose -f docker-compose.yml up -d
 
 # Wait for services
 echo ""
@@ -473,10 +509,9 @@ echo ""
 echo "========================================"
 echo ""
 echo "Useful commands:"
-echo "  View logs: docker-compose logs -f"
-echo "  Stop: docker-compose down"
-echo "  Restart: docker-compose restart"
-echo ""
+echo "  View logs: docker compose -f docker-compose.yml logs -f (or docker-compose ...)"
+echo "  Stop: docker compose -f docker-compose.yml down"
+echo "  Restart: docker compose -f docker-compose.yml restart"
 EOF
 
 # Create Windows startup script
@@ -572,8 +607,24 @@ EOF
 cat > deployment-package/stop.sh << 'EOF'
 #!/bin/bash
 
+set -e
+
+# Resolve script directory and move there so compose file is found
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+# Select docker compose command
+if command -v docker compose >/dev/null 2>&1; then
+  DC=(docker compose)
+elif command -v docker-compose >/dev/null 2>&1; then
+  DC=(docker-compose)
+else
+  echo "❌ ERROR: docker compose not found. Install Docker Desktop or docker-compose."
+  exit 1
+fi
+
 echo "🛑 Stopping ProfitPath..."
-docker-compose down
+"${DC[@]}" -f docker-compose.yml down
 echo "✅ ProfitPath stopped"
 echo ""
 echo "To start again, run: ./start.sh"
@@ -593,7 +644,7 @@ pause
 EOF
 
 # Create README
-cat > deployment-package/README.md << EOF
+cat > deployment-package/README.md << 'EOF'
 # ProfitPath v$VERSION - Easy Deployment Package
 
 ## Welcome to ProfitPath!
@@ -702,8 +753,8 @@ fi
 print_status "SUCCESS" " Docker build and push completed successfully!"
 print_status "INFO" " Deployment packages created in current directory"
 print_status "INFO" " Images pushed to Docker Hub:"
-echo "  - profitpath-backend:$VERSION"
-echo "  - profitpath-frontend:$VERSION"
+echo "  - $DOCKERHUB_USERNAME/profitpath-backend:$VERSION"
+echo "  - $DOCKERHUB_USERNAME/profitpath-frontend:$VERSION"
 print_status "INFO" " Next steps:"
 echo "  1. Share the deployment packages with users"
 echo "  2. Users can run with just Docker installed"
