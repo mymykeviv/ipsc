@@ -47,7 +47,7 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
   const [itemsPerPage] = useState(10)
 
   // Create error handler that will automatically log out on 401 errors
-  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
+  const handleApiError = createApiErrorHandler(forceLogout)
 
   useEffect(() => {
     if (mode === 'list') {

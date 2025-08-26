@@ -22,7 +22,7 @@ export function StockLedgerReportComponent({ onClose }: StockLedgerReportProps) 
   const [entryType, setEntryType] = useState<string>('all')
   
   const { forceLogout } = useAuth()
-  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
+  const handleApiError = createApiErrorHandler(forceLogout)
 
   const loadReport = async () => {
     try {

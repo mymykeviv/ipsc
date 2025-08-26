@@ -79,7 +79,7 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
   const { forceLogout } = useAuth()
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
-  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
+  const handleApiError = createApiErrorHandler(forceLogout)
   
   const [activeTab, setActiveTab] = useState<'customers' | 'vendors'>(type === 'vendor' ? 'vendors' : 'customers')
   const [customers, setCustomers] = useState<Party[]>([])
@@ -1183,7 +1183,10 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Status</span>
           <FilterDropdown
             value={filters.status}
-            onChange={(value) => setStatusWithURL(Array.isArray(value) ? value[0] || 'all' : value) as 'all' | 'active' | 'inactive'}
+            onChange={(value) => {
+              const newValue = Array.isArray(value) ? value[0] || 'all' : value;
+              setStatusWithURL(newValue as 'all' | 'active' | 'inactive');
+            }}
             options={[
               { value: 'all', label: 'All Status' },
               { value: 'active', label: 'Active' },
@@ -1212,7 +1215,10 @@ export function Parties({ type = 'customer', mode = 'manage' }: PartiesProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Party Type</span>
           <FilterDropdown
             value={filters.partyType}
-            onChange={(value) => setPartyTypeWithURL(Array.isArray(value) ? value[0] || 'both' : value) as 'customer' | 'vendor' | 'both'}
+            onChange={(value) => {
+              const newValue = Array.isArray(value) ? value[0] || 'both' : value;
+              setPartyTypeWithURL(newValue as 'customer' | 'vendor' | 'both');
+            }}
             options={[
               { value: 'both', label: 'All Parties' },
               { value: 'customer', label: 'Customers' },

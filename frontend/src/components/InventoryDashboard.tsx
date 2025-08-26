@@ -16,7 +16,7 @@ export function InventoryDashboardComponent({ onClose }: InventoryDashboardProps
   const [error, setError] = useState<string | null>(null)
   
   const { forceLogout } = useAuth()
-  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
+  const handleApiError = createApiErrorHandler(forceLogout)
 
   const loadMetrics = async () => {
     try {

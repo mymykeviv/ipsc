@@ -138,7 +138,6 @@ export function GSTTemplateManager({ isOpen, onClose }: GSTTemplateManagerProps)
                       onClick={() => handleSetDefault(template.id)}
                       disabled={updatingDefault === template.id}
                       variant="primary"
-                      size="small"
                     >
                       {updatingDefault === template.id ? 'Setting...' : 'Set as Default'}
                     </Button>

@@ -5,8 +5,13 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
 
-# Install dependencies
-RUN npm ci || npm install
+# Install dependencies with retry logic and registry fallback
+RUN npm config set registry https://registry.npmjs.org/ && \
+    npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    rm -rf node_modules package-lock.json && \
+    npm install --no-audit --no-fund --force
 
 # Development stage
 FROM base AS development
@@ -36,7 +41,9 @@ FROM base AS production
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN rm -rf node_modules package-lock.json && \
+    npm install --no-audit --no-fund --force && \
+    npm run build
 
 # Expose port
 EXPOSE 5173

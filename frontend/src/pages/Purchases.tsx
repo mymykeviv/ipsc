@@ -77,7 +77,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
   const [dateFilter, setDateFilter] = useState<DateRange>(defaultState.dateFilter)
 
   // Create error handler that will automatically log out on 401 errors
-  const handleApiError = createApiErrorHandler({ onUnauthorized: forceLogout })
+  const handleApiError = createApiErrorHandler(forceLogout)
 
   // URL Parameter Integration - Apply filters from URL on component mount
   useEffect(() => {

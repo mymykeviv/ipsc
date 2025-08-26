@@ -205,7 +205,9 @@ test-results/
 coverage_reports/
 test_env/
 .pytest_cache/
-*.test_results_*.json
+*.test_results_**/*.js
+!frontend/src/lib/**/*.tsx
+!frontend/src/lib/**/*.ts
 test_*.pdf
 test_*.py
 run_*_tests.py
