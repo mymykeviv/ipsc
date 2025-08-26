@@ -1,3 +1,23 @@
+## [1.50.4] - 2025-08-26
+
+### Fixed
+- PDF preview template selection resetting on refresh
+  - Frontend (`frontend/src/components/PDFViewer.tsx`): Decoupled template loading from template selection changes. Load templates only when modal opens; reload PDF via a dedicated effect on `selectedTemplateId`. Prevents the dropdown from reverting to default when the iframe refreshes.
+- Corrupted PDF downloads when backend returned HTML error pages
+  - Frontend (`frontend/src/lib/api.ts`): `apiGetInvoicePDF()` now sets `Accept: application/pdf` and validates `Content-Type`. Throws descriptive errors for non-PDF responses to avoid saving corrupted files.
+
+### Added
+- Distinct invoice PDF layouts and visible footer markers for template verification
+  - Backend (`backend/app/pdf_generator.py`):
+    - Added visible footer marker showing `template_id` and `paper_size` in generated PDFs.
+    - Implemented list-style layouts for `GST_SIMPLE` and `NONGST_SIMPLE` templates; `NONGST_TABULAR` now uses columns without GST fields.
+
+### Operations
+- PDF engine enablement in backend image
+  - Backend (`backend/Dockerfile`): Installed WeasyPrint system dependencies (cairo, pango, gdk-pixbuf, fonts, etc.) and ensured Python packages via `requirements_pdf.txt`.
+  - Rebuild and recreate backend container required for changes to take effect.
+
+---
 ## [1.50.3] - 2025-08-26
 
 ### Fixed

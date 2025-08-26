@@ -44,14 +44,19 @@ export function PDFViewer({
   // Memoize filters to prevent unnecessary re-renders
   const memoizedFilters = useMemo(() => filters, [JSON.stringify(filters)])
 
+  // Load templates once when modal opens (invoice only)
   useEffect(() => {
-    if (isOpen) {
-      if (type === 'invoice' && invoiceId) {
-        loadTemplates()
-        loadInvoicePDF()
-      } else if (type === 'stock-history') {
-        loadStockHistoryPDF()
-      }
+    if (isOpen && type === 'invoice' && invoiceId) {
+      loadTemplates()
+    }
+  }, [isOpen, type, invoiceId])
+
+  // Reload PDF when invoice params or selected template change
+  useEffect(() => {
+    if (isOpen && type === 'invoice' && invoiceId) {
+      loadInvoicePDF()
+    } else if (isOpen && type === 'stock-history') {
+      loadStockHistoryPDF()
     }
   }, [isOpen, type, invoiceId, selectedTemplateId, financialYear, productId])
 
@@ -66,10 +71,12 @@ export function PDFViewer({
     try {
       const data = await apiGetGSTInvoiceTemplates()
       setTemplates(data)
-      // Set default template if available
-      const defaultTemplate = data.find(t => t.is_default)
-      if (defaultTemplate) {
-        setSelectedTemplateId(defaultTemplate.id)
+      // If no selection yet, set default template (do not overwrite user's selection)
+      if (selectedTemplateId === undefined) {
+        const defaultTemplate = data.find(t => t.is_default)
+        if (defaultTemplate) {
+          setSelectedTemplateId(defaultTemplate.id)
+        }
       }
     } catch (err) {
       console.error('Failed to load GST templates:', err)
@@ -81,9 +88,16 @@ export function PDFViewer({
       setLoading(true)
       setError(null)
       
+      // Revoke existing URL before fetching new one to avoid stale rendering
+      if (pdfUrl) {
+        URL.revokeObjectURL(pdfUrl)
+        setPdfUrl(null)
+      }
       const pdfBlob = await apiGetInvoicePDF(invoiceId!, selectedTemplateId)
       const url = URL.createObjectURL(pdfBlob)
       setPdfUrl(url)
+      // Force iframe to remount so it reloads the new src reliably
+      setIframeKey((prev: number) => prev + 1)
     } catch (err: any) {
       setError(err.message || 'Failed to load PDF')
     } finally {
@@ -98,7 +112,7 @@ export function PDFViewer({
       
       const url = await apiGetStockMovementHistoryPDFPreview(financialYear, productId, memoizedFilters)
       setPdfUrl(url)
-      setIframeKey(prev => prev + 1) // Force iframe refresh only when URL changes
+      setIframeKey((prev: number) => prev + 1) // Force iframe refresh only when URL changes
     } catch (err: any) {
       setError(err.message || 'Failed to load PDF')
     } finally {
@@ -208,16 +222,15 @@ export function PDFViewer({
                       Template:
                     </label>
                     <select
-                      value={selectedTemplateId || ''}
+                      value={selectedTemplateId ?? ''}
                       onChange={(e) => {
                         const templateId = e.target.value ? parseInt(e.target.value) : undefined
-                        setSelectedTemplateId(templateId)
-                        // Reload PDF with new template
+                        // Revoke old URL and update selection; effect will load the new PDF
                         if (pdfUrl) {
                           URL.revokeObjectURL(pdfUrl)
                           setPdfUrl(null)
                         }
-                        setTimeout(() => loadInvoicePDF(), 100)
+                        setSelectedTemplateId(templateId)
                       }}
                       style={{
                         padding: '4px 8px',
@@ -228,7 +241,7 @@ export function PDFViewer({
                       }}
                     >
                       <option value="">Default</option>
-                      {templates.map(template => (
+                      {templates.map((template: GSTInvoiceTemplate) => (
                         <option key={template.id} value={template.id}>
                           {template.name} {template.is_default ? '(Default)' : ''} - {template.requires_gst ? 'GST' : 'Non-GST'}
                         </option>
