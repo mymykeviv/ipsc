@@ -199,7 +199,7 @@ services:
       database:
         condition: service_healthy
     expose: ["8000"]
-    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
+    command: sh -c "alembic upgrade head && python -c 'from app.seed import run_seed; run_seed()' && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s

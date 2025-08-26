@@ -1,6 +1,6 @@
 # DEPRECATED: Standalone stack is deprecated in favor of dev/uat/prod compose files.
 # This file will be removed in a future release.
-version: '3.8'
+# version key removed (deprecated by Compose); kept commented to avoid warnings
 
 services:
   # Database Service
@@ -51,7 +51,7 @@ services:
       - "8000"
     volumes:
       - backend_logs:/app/logs
-    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
+    command: sh -c "alembic upgrade head && python -c 'from app.seed import run_seed; run_seed()' && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
