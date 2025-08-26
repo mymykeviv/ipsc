@@ -219,23 +219,27 @@ export async function apiListPurchasePayments(purchaseId?: number): Promise<Paym
 
 ## �� **DEPLOYMENT PROTOCOL**
 
-### **Use Automated Deployment:**
+### **Local Stack Management:**
 ```bash
-# NEVER manually start services
-# ALWAYS use the automated pipeline
-./scripts/automated_deploy.sh full-pipeline dev
+# Prefer docker compose v2 with explicit files
+docker compose -f deployment/docker/docker-compose.dev.yml up -d
+
+# Run tests locally before committing/deploying
+./scripts/test-runner.sh all
 ```
 
 ### **Verification Steps:**
 ```bash
 # 1. Check all services are running
-docker-compose -f deployment/docker/docker-compose.dev.yml ps
+docker compose -f deployment/docker/docker-compose.dev.yml ps
 
 # 2. Verify health endpoints
 curl http://localhost:8000/health
 
-# 3. Test critical functionality
-python test_suite.py --env dev
+# 3. Run targeted tests
+./scripts/test-runner.sh backend
+./scripts/test-runner.sh frontend
+./scripts/test-runner.sh e2e
 ```
 
 ---

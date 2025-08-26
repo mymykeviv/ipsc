@@ -105,9 +105,10 @@ check_services_health() {
     
     # Check if Docker containers are running
     if ! docker compose -f deployment/docker/docker-compose.dev.yml ps | grep -q "Up"; then
-        print_status "WARNING" "Docker services not running. Starting services..."
-        ./scripts/automated_deploy.sh full-pipeline dev
-        sleep 30
+        print_status "WARNING" "Docker services not running. Starting services via docker compose..."
+        docker compose -f deployment/docker/docker-compose.dev.yml up -d
+        # Give services a moment to initialize
+        sleep 10
     fi
     
     # Check backend health

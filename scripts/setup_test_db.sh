@@ -51,8 +51,8 @@ check_postgres() {
         print_status "SUCCESS" "PostgreSQL Docker container is running and healthy"
     else
         print_status "FAILED" "PostgreSQL Docker container is not running"
-        print_status "INFO" "Please start the database service first:"
-        echo "  ./scripts/automated_deploy.sh full-pipeline dev"
+        print_status "INFO" "Please start the dev stack first:"
+        echo "  docker compose -f deployment/docker/docker-compose.dev.yml up -d"
         exit 1
     fi
     
@@ -166,7 +166,6 @@ main() {
     echo ""
     echo -e "${YELLOW}💡 You can now run tests with:${NC}"
     echo "  ./scripts/test-runner.sh backend"
-    echo "  ./scripts/automated_deploy.sh test backend"
 }
 
 # Run main function

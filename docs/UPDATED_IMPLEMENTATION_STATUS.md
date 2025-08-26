@@ -145,7 +145,9 @@ Based on the GitHub Issues mapping, **ALL 12 stories have been successfully impl
 - **Components:**
   - `.github/workflows/release-artifacts.yml` - Automated deployment workflow
   - `deployment/standalone/` - Standalone deployment packages
-  - `scripts/automated_deploy.sh` - Automated deployment script
+  - `deployment/docker/` - Docker Compose stacks for dev/uat/prod
+  - `scripts/build-and-push-docker.sh` - Image build and push helper
+  - `scripts/test-runner.sh` - Unified testing used by CI
 - **Features:**
   - ✅ GitHub Actions automated deployment
   - ✅ Standalone deployment packages

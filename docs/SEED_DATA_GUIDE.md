@@ -4,6 +4,18 @@
 
 This document outlines the new seed data architecture for the ProfitPath application, which separates development and testing data to prevent contamination and ensure proper environment isolation.
 
+### Quick Start (Docker dev stack)
+
+```bash
+# Start dev stack
+docker compose -f deployment/docker/docker-compose.dev.yml up -d
+
+# Seed comprehensive local test data
+./scripts/seed-test-data.sh
+```
+
+This runs seeding inside the `backend` container against the dev database configured in `deployment/docker/docker-compose.dev.yml`.
+
 ## Architecture Changes
 
 ### Before (Problematic)

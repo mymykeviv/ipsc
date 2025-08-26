@@ -26,11 +26,8 @@ The IPSC application uses a **unified testing framework** that consolidates all 
 ./scripts/test-runner.sh health
 ```
 
-### Backward Compatibility
-```bash
-# Legacy command (redirects to unified runner)
-./scripts/run-tests.sh
-```
+### Notes
+- All legacy test scripts have been removed. Use `./scripts/test-runner.sh` exclusively.
 
 ## Test Architecture
 
@@ -49,8 +46,9 @@ The IPSC application uses a **unified testing framework** that consolidates all 
 ipsc/
 ├── scripts/
 │   ├── test-runner.sh          # Unified test runner
-│   ├── run-tests.sh            # Backward compatibility wrapper
-│   └── automated_deploy.sh     # CI/CD integration
+│   ├── build-and-push-docker.sh
+│   ├── clean.sh
+│   └── stop-stack.sh
 ├── test_reports/               # Test results and reports
 │   ├── backend/
 │   ├── frontend/
@@ -116,32 +114,24 @@ Before deploying to any environment, ensure all tests pass:
 # Coverage reports are in backend/coverage/
 ```
 
-### Automated Deployment
+### Automated Pipeline
 
-The application uses automated deployment with integrated testing:
+CI runs the unified test runner in workflows and deploys images built via `scripts/build-and-push-docker.sh`. For local pre-deploy checks:
 
 ```bash
-# Full CI/CD pipeline (tests + deploy)
-./scripts/automated_deploy.sh full-pipeline dev
-
-# Test only (no deployment)
-./scripts/automated_deploy.sh test
-
-# Deploy only (assumes tests passed)
-./scripts/automated_deploy.sh deploy dev
+./scripts/test-runner.sh all
 ```
 
 ### Environment-Specific Testing
 
+Use compose stacks to bring environments up, then run tests as needed:
+
 ```bash
-# Development environment
-./scripts/automated_deploy.sh full-pipeline dev
-
-# UAT environment
-./scripts/automated_deploy.sh full-pipeline uat
-
-# Production environment
-./scripts/automated_deploy.sh full-pipeline prod
+# Start dev services then run tests
+docker compose -f deployment/docker/docker-compose.dev.yml up -d
+./scripts/test-runner.sh backend
+./scripts/test-runner.sh frontend
+./scripts/test-runner.sh e2e
 ```
 
 ### Test Database Management
@@ -285,8 +275,9 @@ test_reports/test_summary_YYYYMMDD_HHMMSS.md
 The test runner integrates with the automated deployment pipeline:
 
 ```bash
-# Full pipeline with testing
-./scripts/automated_deploy.sh full-pipeline dev
+# Start dev stack and run full tests locally
+docker compose -f deployment/docker/docker-compose.dev.yml up -d
+./scripts/test-runner.sh all
 ```
 
 ### Pre-deployment Tests
@@ -304,10 +295,23 @@ The test runner integrates with the automated deployment pipeline:
 
 ### Common Issues
 
+### Local Test Data Seeding (optional)
+If you want realistic sample data in your local dev stack:
+
+```bash
+# Start dev stack (if not already running)
+docker compose -f deployment/docker/docker-compose.dev.yml up -d
+
+# Seed comprehensive test data into the dev DB
+./scripts/seed-test-data.sh
+```
+
+This seeds sample users, parties, products, invoices, purchases, payments, and expenses.
+
 #### Database Connection Errors
 ```bash
 # Ensure services are running
-./scripts/automated_deploy.sh full-pipeline dev
+docker compose -f deployment/docker/docker-compose.dev.yml up -d
 
 # Check database health
 curl http://localhost:8000/health
