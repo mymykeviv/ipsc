@@ -22,7 +22,8 @@ from .profitpath_service import ProfitPathService
 from .payment_scheduler import PaymentScheduler, PaymentStatus, PaymentReminderType
 from .inventory_manager import InventoryManager, StockValuationMethod
 from .financial_reports import FinancialReports, ReportType
-from .branding import router as branding_router
+from .routers.branding import router as branding_router
+from .config import settings
 # from .dental import router as dental_router
 # from .manufacturing import router as manufacturing_router
 from decimal import Decimal
@@ -834,7 +835,8 @@ def invoice_pdf(invoice_id: int, template_id: int | None = None, _: User = Depen
                 "city": supplier.billing_city or "",
                 "state": supplier.billing_state or "",
                 "pin": supplier.billing_pincode or "",
-                "state_code": supplier.billing_state or ""
+                # Ensure state_code is a code, not a state name
+                "state_code": getattr(supplier, "billing_state_code", None) or ""
             },
             "gstin": supplier.gstin if supplier else "",
             "email": supplier.email if supplier else "",
@@ -883,6 +885,30 @@ def invoice_pdf(invoice_id: int, template_id: int | None = None, _: User = Depen
         "items": []
     }
     
+    # Override supplier details from CompanySettings per GST law where available
+    if company:
+        invoice_data["supplier"]["legal_name"] = company.name or invoice_data["supplier"]["legal_name"]
+        invoice_data["supplier"]["gstin"] = company.gstin or invoice_data["supplier"].get("gstin", "")
+        # Address: enforce address fields from CompanySettings if present (single-tenant authoritative)
+        sup_addr = invoice_data["supplier"].setdefault("address", {})
+        if getattr(company, "address_line1", None):
+            sup_addr["line1"] = company.address_line1
+        if getattr(company, "address_line2", None):
+            sup_addr["line2"] = company.address_line2
+        if getattr(company, "city", None):
+            sup_addr["city"] = company.city
+        if getattr(company, "pincode", None):
+            sup_addr["pin"] = company.pincode
+        if getattr(company, "state", None):
+            sup_addr["state"] = company.state
+        if getattr(company, "state_code", None):
+            sup_addr["state_code"] = company.state_code
+        # Contact
+        if getattr(company, "phone", None):
+            invoice_data["supplier"]["phone"] = company.phone
+        if getattr(company, "email", None):
+            invoice_data["supplier"]["email"] = company.email
+    
     # Add items
     for item in items:
         product = db.query(Product).filter(Product.id == item.product_id).first()
@@ -914,6 +940,19 @@ def invoice_pdf(invoice_id: int, template_id: int | None = None, _: User = Depen
         "name": "Authorized Signatory",
         "image": ""
     }
+    
+    # In single-tenant mode, attempt to use the uploaded branding logo if available
+    try:
+        if not settings.multi_tenant_enabled:
+            logo_path = os.path.join(settings.upload_dir, "branding", "logo.png")
+            if os.path.exists(logo_path):
+                with open(logo_path, 'rb') as _lf:
+                    _b64 = base64.b64encode(_lf.read()).decode('utf-8')
+                # Embed as data URI to ensure HTML-to-PDF backends can load it
+                invoice_data.setdefault("supplier", {})["logo_url"] = f"data:image/png;base64,{_b64}"
+    except Exception as _e:
+        # Non-fatal: proceed without logo if anything goes wrong
+        logger.warning(f"Failed to load single-tenant logo: {_e}")
     
     # Generate PDF using new HTML-based generator
     from .pdf_generator import PDFGenerator
@@ -1403,6 +1442,39 @@ def list_invoices(
     # Get total count for pagination
     total_count = query.count()
     
+    # Compute INR-only totals (exclude non-standard invoice types) before pagination
+    totals_meta = None
+    try:
+        totals_row = (
+            query
+            .filter(Invoice.currency == 'INR', Invoice.invoice_type == 'Invoice')
+            .with_entities(
+                func.count(Invoice.id),
+                func.coalesce(func.sum(Invoice.taxable_value), 0),
+                func.coalesce(func.sum(Invoice.total_discount), 0),
+                func.coalesce(func.sum(Invoice.cgst + Invoice.sgst + Invoice.igst + Invoice.utgst + Invoice.cess), 0),
+                func.coalesce(func.sum(Invoice.grand_total), 0),
+                func.coalesce(func.sum(Invoice.paid_amount), 0),
+                func.coalesce(func.sum(Invoice.balance_amount), 0),
+            )
+            .first()
+        )
+        if totals_row is not None and totals_row[0] and int(totals_row[0]) > 0:
+            count, subtotal, discount, tax, total, amount_paid, outstanding = totals_row
+            totals_meta = {
+                "count": int(count),
+                "subtotal": float(subtotal or 0),
+                "discount": float(discount or 0),
+                "tax": float(tax or 0),
+                "total": float(total or 0),
+                "amount_paid": float(amount_paid or 0),
+                "outstanding": float(outstanding or 0),
+                "currency": "INR",
+            }
+    except Exception:
+        # Fail-safe: do not break listing if aggregation fails
+        totals_meta = None
+    
     # Apply sorting
     sort_column_map = {
         'invoice_no': Invoice.invoice_no,
@@ -1445,7 +1517,7 @@ def list_invoices(
     has_next = page < total_pages
     has_prev = page > 1
     
-    return {
+    response_payload = {
         "invoices": result,
         "pagination": {
             "page": page,
@@ -1456,6 +1528,9 @@ def list_invoices(
             "has_prev": has_prev
         }
     }
+    if totals_meta is not None:
+        response_payload["meta"] = {"totals": totals_meta}
+    return response_payload
 
 
 @api.get('/reports/gst-summary')
@@ -5439,6 +5514,13 @@ def update_company_settings(settings_data: dict, user: User = Depends(get_curren
             invoice_series=settings_data.get('invoice_series') or 'INV',
             gst_enabled_by_default=bool(settings_data.get('gst_enabled_by_default', True)),
             require_gstin_validation=bool(settings_data.get('require_gstin_validation', True)),
+            # Address & Contact (optional)
+            address_line1=settings_data.get('address_line1'),
+            address_line2=settings_data.get('address_line2'),
+            city=settings_data.get('city'),
+            pincode=settings_data.get('pincode'),
+            phone=settings_data.get('phone'),
+            email=settings_data.get('email'),
         )
         db.add(settings)
         db.commit()

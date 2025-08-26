@@ -54,7 +54,11 @@ PDF_CSS = """
   font-size: 12pt; margin: 0; font-weight: 700; color: #1B1F24;
 }
 .pdf-supplier .trade { font-size: 10pt; color: #5B6675; }
-.pdf-supplier .addr, .pdf-supplier .gstin { font-size: 9pt; color: #1B1F24; }
+.pdf-supplier .addr { font-size: 9pt; color: #1B1F24; line-height: 1.25; margin-top: 1mm; }
+.pdf-supplier .addr div { margin: 0; }
+.pdf-supplier .gstin { font-size: 9pt; color: #1B1F24; }
+.pdf-supplier .contact { font-size: 9pt; color: #1B1F24; margin-top: 2mm; }
+.pdf-supplier .contact .line { margin: 0.5mm 0; }
 
 .pdf-invmeta { text-align: right; }
 .pdf-invmeta .title { font-size: 12pt; font-weight: 700; color: #1E40AF; margin: 0 0 3mm 0; }

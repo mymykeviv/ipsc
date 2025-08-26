@@ -74,6 +74,27 @@ class PDFGenerator:
         # Determine if intra-state or inter-state
         is_intra_state = supplier.get("address", {}).get("state_code") == invoice.get("place_of_supply", {}).get("state_code")
         
+        # Prepare supplier fields for display
+        sup_addr = supplier.get("address", {})
+        addr_line1 = sup_addr.get("line1", "")
+        addr_line2 = sup_addr.get("line2", "")
+        addr_city = sup_addr.get("city", "")
+        addr_state = sup_addr.get("state", "")
+        addr_pin = sup_addr.get("pin", "")
+        sup_gstin = supplier.get("gstin", "")
+        sup_phone = supplier.get("phone", supplier.get("contact", {}).get("phone", ""))
+        sup_email = supplier.get("email", supplier.get("contact", {}).get("email", ""))
+
+        # Compose city/state/pin single line
+        csp_parts = []
+        if addr_city:
+            csp_parts.append(addr_city)
+        if addr_state:
+            csp_parts.append(addr_state)
+        if addr_pin:
+            csp_parts.append(addr_pin)
+        csp_line = ", ".join(csp_parts)
+
         html = f"""
 <div class="pdf-page {paper_size}">
     <div class="pdf-header">
@@ -82,8 +103,16 @@ class PDFGenerator:
             <div class="pdf-supplier">
                 <h1>{supplier.get("legal_name", "")}</h1>
                 {f'<div class="trade">{supplier.get("trade_name", "")}</div>' if supplier.get("trade_name") else ''}
-                <div class="addr">{self._format_address(supplier.get("address", {}))}</div>
-                <div class="gstin">GSTIN: {supplier.get("gstin", "")}</div>
+                <div class="addr">
+                    {f'<div>{addr_line1}</div>' if addr_line1 else ''}
+                    {f'<div>{addr_line2}</div>' if addr_line2 else ''}
+                    {f'<div>{csp_line}</div>' if csp_line else ''}
+                </div>
+                <div class="contact">
+                    {f'<div class="line u-muted">GSTIN: {sup_gstin}</div>' if sup_gstin else ''}
+                    {f'<div class="line u-muted">Phone: {sup_phone}</div>' if sup_phone else ''}
+                    {f'<div class="line u-muted">Email: {sup_email}</div>' if sup_email else ''}
+                </div>
             </div>
         </div>
         <div class="pdf-invmeta">

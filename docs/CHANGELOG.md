@@ -1,3 +1,20 @@
+## [1.50.3] - 2025-08-26
+
+### Fixed
+- PDF supplier header formatting
+  - Backend (`backend/app/pdf_css.py`): Unified contact color with address text for consistent header styling.
+  - Backend (`backend/app/pdf_generator.py`): Render supplier City, State, and Pincode on a single line (e.g., `Lucknow, Uttar Pradesh, 226001`).
+- Company Settings upsert persistence
+  - Backend (`backend/app/main_routers.py`): `PUT /api/company/settings` now includes `address_line1/2`, `city`, `pincode`, `phone`, `email` during initial create as well as on update.
+
+### Added
+- Invoices list totals meta (INR-only)
+  - Backend (`backend/app/main_routers.py`): `GET /api/invoices` now attaches `meta.totals` with INR-only aggregates (count, subtotal, discount, tax, total, amount_paid, outstanding) when available.
+
+### Notes
+- No DB schema changes. Additive and styling-only updates; API response shape gains optional `meta` field.
+
+---
 ## [1.50.2] - 2025-08-26
 
 ### Fixed
