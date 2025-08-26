@@ -2,6 +2,10 @@ FROM node:20-bookworm AS base
 
 WORKDIR /app
 
+# Avoid npm optional native deps and skip Rollup native bindings (use JS/wasm fallback)
+ENV npm_config_optional=false \
+    ROLLUP_SKIP_NODEJS_NATIVE=true
+
 # Copy package files
 COPY package.json package-lock.json* ./
 
@@ -30,9 +34,8 @@ FROM base AS production
 # Copy source code
 COPY . .
 
-# Build the application deterministically
-RUN npm ci --no-audit --no-fund || npm install --no-audit --no-fund && \
-    npm run build
+# Build the application using JS/wasm Rollup fallback
+RUN ROLLUP_SKIP_NODEJS_NATIVE=true npm run build
 
 # Expose port
 EXPOSE 5173
