@@ -190,3 +190,28 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/profitpath_test \
 ### Documentation & Release
 - Updated `docs/CHANGELOG.md` with `1.50.0-stable` entry summarizing fixes.
 - Bumped `VERSION` to `1.50.0-stable` for CI/CD pipelines and GitHub Actions tagging.
+
+---
+
+## Backend Startup: psycopg v3 Driver and Compose Overrides (2025-08-26)
+
+### Context
+- Backend container failed during Alembic migration; Nginx returned 502 for `POST /api/auth/login`.
+- Traceback indicated missing `psycopg2` while the project uses psycopg v3 (`psycopg[binary]`).
+
+### Root Cause
+- `deployment-package/docker-compose.yml` set `DATABASE_URL` to `postgresql://...`, which implies the psycopg2 driver.
+- Our app configuration and requirements expect `postgresql+psycopg://...` (v3). The compose env var overrides `Settings.database_url` and causes Alembic to import the wrong driver.
+
+### Resolutions
+- Updated `scripts/release-packager.sh` to emit `postgresql+psycopg://...` in the generated docker-compose for the backend service.
+- Ensured the generated `start.sh` safely handles missing `VERSION` by setting a default to avoid `set -u` unbound variable errors.
+
+### Verification
+- Regenerating the deployment package (or manually editing existing compose) resolves Alembic startup and backend health checks pass.
+- Login endpoint no longer returns 502 via Nginx.
+
+### Takeaways
+- Be explicit with SQLAlchemy driver in DB URLs; prefer `postgresql+psycopg://` when using psycopg v3.
+- Compose/env overrides take precedence over app defaults—audit deployment-time envs when runtime behavior diverges from code.
+- Harden startup scripts against missing envs when using `set -u`.

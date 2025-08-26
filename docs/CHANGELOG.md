@@ -1,3 +1,15 @@
+## [1.50.2] - 2025-08-26
+
+### Fixed
+- Deployment package start script: avoid "unbound variable" for `VERSION` by emitting a safe default when the env var is absent. Implemented in `scripts/release-packager.sh` so generated `start.sh` is robust.
+
+### Changed
+- Release packager now generates backend `DATABASE_URL` in docker-compose with psycopg v3 driver: `postgresql+psycopg://...` (instead of `postgresql://...`). Aligns with `backend/requirements.txt` (`psycopg[binary]`) and `Settings.database_url`, preventing Alembic from attempting to import `psycopg2`.
+
+### Ops Notes
+- For existing deployment packages, manually update the backend service `DATABASE_URL` to `postgresql+psycopg://...` and restart the backend. This resolves startup migration failures and eliminates 502s at `/api/auth/login`.
+
+---
 ## [1.50.1] - 2025-08-26
 
 ### Added
