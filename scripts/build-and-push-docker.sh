@@ -2,7 +2,7 @@
 
 # Local Docker Build and Push Script
 # This script builds and pushes Docker images to Docker Hub locally
-# Usage: ./scripts/build-and-push-docker.sh [version] [dockerhub-username]
+# Usage: ./scripts/build-and-push-docker.sh [--preflight] [--quick] [version] [dockerhub-username]
 
 set -e  # Exit on any error
 
@@ -33,6 +33,23 @@ print_status() {
     esac
 }
 
+# Flags and args
+PREFLIGHT_ONLY=0
+QUICK_BUILD=0
+POSITIONALS=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --preflight)
+      PREFLIGHT_ONLY=1; shift ;;
+    --quick)
+      QUICK_BUILD=1; shift ;;
+    -h|--help)
+      echo "Usage: ./scripts/build-and-push-docker.sh [--preflight] [--quick] [version] [dockerhub-username]"; exit 0 ;;
+    *) POSITIONALS+=("$1"); shift ;;
+  esac
+done
+set -- "${POSITIONALS[@]:-}"
+
 # Get version and Docker Hub username
 VERSION=${1:-$(cat VERSION 2>/dev/null || echo "1.4.5")}
 DOCKERHUB_USERNAME=${2:-"your-dockerhub-username"}
@@ -61,6 +78,12 @@ if ! docker info | grep -q "Username"; then
     fi
 fi
 
+# If preflight only, exit now after checks
+if [[ "$PREFLIGHT_ONLY" == "1" ]]; then
+    print_status "SUCCESS" "Preflight checks passed."
+    exit 0
+fi
+
 # Function to build and push image
 build_and_push() {
     local service=$1
@@ -70,20 +93,31 @@ build_and_push() {
     print_status "INFO" "Building $service image..."
     
     # Build the image
-    if docker build \
-        --platform linux/amd64,linux/arm64 \
-        --target production \
-        -t "$DOCKERHUB_USERNAME/$service:$VERSION" \
-        -t "$DOCKERHUB_USERNAME/$service:latest" \
-        -f "$dockerfile_path" \
-        "$build_context"; then
+    if {
+        if [[ "$QUICK_BUILD" == "1" ]]; then
+            docker build \
+                --target production \
+                -t "$service:$VERSION" \
+                -t "$service:latest" \
+                -f "$dockerfile_path" \
+                "$build_context"
+        else
+            docker build \
+                --platform linux/amd64,linux/arm64 \
+                --target production \
+                -t "$service:$VERSION" \
+                -t "$service:latest" \
+                -f "$dockerfile_path" \
+                "$build_context"
+        fi
+      }; then
         
         print_status "SUCCESS" "$service image built successfully"
         
         # Push the image
         print_status "INFO" "Pushing $service image to Docker Hub..."
-        if docker push "$DOCKERHUB_USERNAME/$service:$VERSION" && \
-           docker push "$DOCKERHUB_USERNAME/$service:latest"; then
+        if docker push "$service:$VERSION" && \
+           docker push "$service:latest"; then
             print_status "SUCCESS" "$service image pushed successfully"
             return 0
         else
@@ -114,8 +148,12 @@ else
     exit 1
 fi
 
-# Create deployment package
-print_status "INFO" "Creating deployment package..."
+# Create deployment package (skip if quick build)
+if [[ "$QUICK_BUILD" == "1" ]]; then
+  print_status "INFO" "Quick build mode: skipping deployment package creation."
+else
+  print_status "INFO" "Creating deployment package..."
+fi
 mkdir -p deployment-package
 
 # Create docker-compose.yml for Docker Hub images
@@ -146,7 +184,7 @@ services:
 
   # Backend API Service
   backend:
-    image: $DOCKERHUB_USERNAME/profitpath-backend:$VERSION
+    image: profitpath-backend:$VERSION
     container_name: profitpath-backend
     environment:
       ENVIRONMENT: production
@@ -174,7 +212,7 @@ services:
 
   # Frontend Web Application
   frontend:
-    image: $DOCKERHUB_USERNAME/profitpath-frontend:$VERSION
+    image: profitpath-frontend:$VERSION
     container_name: profitpath-frontend
     expose:
       - "80"
@@ -221,7 +259,7 @@ networks:
     driver: bridge
 EOF
 
-# Create nginx configuration
+# Create nginx configuration (still created even in quick mode for consistency)
 cat > deployment-package/nginx.conf << 'EOF'
 events {
     worker_connections 1024;
@@ -465,7 +503,7 @@ curl -f http://localhost:8000/health >nul 2>&1
 if errorlevel 1 (
   echo WARNING: Backend is still starting up...
 ) else (
-  echo ✓ Backend is ready
+  echo Backend is ready
 )
 
 REM Try to check frontend via nginx
@@ -473,7 +511,7 @@ curl -f http://localhost >nul 2>&1
 if errorlevel 1 (
   echo WARNING: Frontend is still starting up...
 ) else (
-  echo ✓ Frontend is ready
+  echo Frontend is ready
 )
 
 REM Try to check nginx
@@ -481,21 +519,21 @@ curl -f http://localhost/health >nul 2>&1
 if errorlevel 1 (
   echo WARNING: Nginx is still starting up...
 ) else (
-  echo ✓ Nginx is ready
+  echo Nginx is ready
 )
 
 echo.
 echo ========================================
-echo    🎉 ProfitPath is starting up!
+echo    ProfitPath is starting up!
 echo ========================================
 echo.
-echo 📱 Open your web browser and go to:
+echo Open your web browser and go to:
 echo    http://localhost
 echo.
-echo 🔧 Backend API: http://localhost:8000
-echo 🗄️  Database: localhost:5432
+echo Backend API: http://localhost:8000
+echo Database: localhost:5432
 echo.
-echo ⏳ If the page doesn't load immediately,
+echo If the page doesn't load immediately,
 echo    wait a few more minutes for all services
 echo    to fully start up.
 echo.
@@ -537,55 +575,55 @@ EOF
 cat > deployment-package/README.md << EOF
 # ProfitPath v$VERSION - Easy Deployment Package
 
-## 🎉 Welcome to ProfitPath!
+## Welcome to ProfitPath!
 
 This package contains everything you need to run IPSC on your computer. 
 **No technical knowledge required!**
 
-## 🚀 Quick Start (3 Simple Steps)
+## Quick Start (3 Simple Steps)
 
 ### Step 1: Install Docker
 - **Windows/Mac**: Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - **Linux**: Install Docker using your package manager
 
 ### Step 2: Start ProfitPath
-- **Windows**: Double-click \`start.bat\`
-- **Mac/Linux**: Double-click \`start.sh\` or run \`./start.sh\` in terminal
+- **Windows**: Double-click `start.bat`
+- **Mac/Linux**: Double-click `start.sh` or run `./start.sh` in terminal
 
 ### Step 3: Open Your Browser
 - Go to: **http://localhost**
 - Login with: **admin** / **admin123**
 
-**That's it!** 🎉
+**That's it!** 
 
-## 📱 What You Get
+## What You Get
 
 - **Web Application**: http://localhost
 - **Backend API**: http://localhost:8000
 - **Database**: localhost:5432
 
-## 🔧 Management Commands
+## Management Commands
 
 ### Windows Users:
-\`\`\`cmd
+```cmd
 start.bat    - Start ProfitPath
 stop.bat     - Stop ProfitPath
-\`\`\`
+```
 
 ### Mac/Linux Users:
-\`\`\`bash
+```bash
 ./start.sh   - Start ProfitPath
 ./stop.sh    - Stop ProfitPath
-\`\`\`
+```
 
-## 📊 System Requirements
+## System Requirements
 
 - **Operating System**: Windows 10+, macOS 10.14+, or Linux
 - **RAM**: 4GB minimum, 8GB recommended
 - **Storage**: 10GB free space
 - **Docker**: Latest version
 
-## 🆘 Troubleshooting
+## Troubleshooting
 
 ### "Docker is not running" Error
 - Start Docker Desktop (Windows/Mac)
@@ -599,15 +637,15 @@ stop.bat     - Stop ProfitPath
 - Stop other applications using ports 80, 8000, or 5432
 - Or change ports in docker-compose.yml
 
-## 🔒 Security Notes
+## Security Notes
 
 - Change default passwords in production
 - This setup is for local use only
 - For production, configure proper security settings
 
-## 📞 Need Help?
+## Need Help?
 
-- Check the logs: \`docker-compose logs -f\`
+- Check the logs: `docker-compose logs -f`
 - Visit our GitHub repository for support
 - Create an issue if you need help
 
@@ -619,29 +657,33 @@ EOF
 chmod +x deployment-package/start.sh
 chmod +x deployment-package/stop.sh
 
-# Create compressed packages
-print_status "INFO" "Creating compressed packages..."
+# Create compressed packages (skip in quick mode)
+if [[ "$QUICK_BUILD" == "1" ]]; then
+  print_status "INFO" "Quick build mode: skipping archive creation."
+else
+  print_status "INFO" "Creating compressed packages..."
 
-# Create ZIP package
-zip -r "profitpath-v$VERSION-windows.zip" deployment-package/
+  # Create ZIP package
+  zip -r "profitpath-v$VERSION-windows.zip" deployment-package/
 
-# Create TAR.GZ package
-tar -czf "profitpath-v$VERSION-linux-mac.tar.gz" -C deployment-package .
+  # Create TAR.GZ package
+  tar -czf "profitpath-v$VERSION-linux-mac.tar.gz" -C deployment-package .
 
-# Create universal package
-tar -czf "profitpath-v$VERSION-universal.tar.gz" deployment-package/
+  # Create universal package
+  tar -czf "profitpath-v$VERSION-universal.tar.gz" deployment-package/
 
-print_status "SUCCESS" "Compressed packages created:"
-echo "  - profitpath-v$VERSION-windows.zip"
-echo "  - profitpath-v$VERSION-linux-mac.tar.gz"
-echo "  - profitpath-v$VERSION-universal.tar.gz"
+  print_status "SUCCESS" "Compressed packages created:"
+  echo "  - profitpath-v$VERSION-windows.zip"
+  echo "  - profitpath-v$VERSION-linux-mac.tar.gz"
+  echo "  - profitpath-v$VERSION-universal.tar.gz"
+fi
 
-print_status "SUCCESS" "🎉 Docker build and push completed successfully!"
-print_status "INFO" "📦 Deployment packages created in current directory"
-print_status "INFO" "🐳 Images pushed to Docker Hub:"
-echo "  - $DOCKERHUB_USERNAME/profitpath-backend:$VERSION"
-echo "  - $DOCKERHUB_USERNAME/profitpath-frontend:$VERSION"
-print_status "INFO" "📋 Next steps:"
+print_status "SUCCESS" " Docker build and push completed successfully!"
+print_status "INFO" " Deployment packages created in current directory"
+print_status "INFO" " Images pushed to Docker Hub:"
+echo "  - profitpath-backend:$VERSION"
+echo "  - profitpath-frontend:$VERSION"
+print_status "INFO" " Next steps:"
 echo "  1. Share the deployment packages with users"
 echo "  2. Users can run with just Docker installed"
 echo "  3. No technical knowledge required!"

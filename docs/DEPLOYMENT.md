@@ -20,14 +20,14 @@ This document describes the consolidated deployment system for ProfitPath (IPSC)
 ### Basic Deployment Commands
 
 ```bash
-# Development environment
-python deployment/deploy.py dev
+# Development (Docker Compose with hot reload)
+./scripts/dev-up.sh              # or: docker compose -f deployment/docker/docker-compose.dev.yml up -d
 
-# UAT environment
-python deployment/deploy.py uat --test
+# UAT (Compose, prod-like settings)
+docker compose -f deployment/docker/docker-compose.uat.yml up -d
 
-# Production environment
-python deployment/deploy.py prod --clean
+# Production (Compose, optimized images)
+docker compose -f deployment/docker/docker-compose.prod.yml up -d
 ```
 
 ## Environment Configurations
@@ -92,10 +92,16 @@ Frontend is built using the optimized Dockerfile (Nginx, port 80 in container).
 
 ## Build and Push Images to Docker Hub
 
-Use the provided script which builds multi-arch images and generates a deployment package. The frontend uses the optimized Dockerfile (Nginx on port 80).
+Use the provided script which builds multi-arch images and generates a deployment package by default. The frontend uses the optimized Dockerfile (Nginx on port 80).
 
 ```bash
-# Set version and your Docker Hub username
+# Preflight only (checks Docker, login)
+./scripts/build-and-push-docker.sh --preflight
+
+# Quick single-arch build and push (no packaging)
+./scripts/build-and-push-docker.sh --quick 1.5.0 <your-dockerhub-username>
+
+# Full multi-arch build, push, and package
 ./scripts/build-and-push-docker.sh 1.5.0 <your-dockerhub-username>
 
 # Images produced and pushed:
@@ -164,46 +170,71 @@ npm run dev -- --host --port 5173
 
 ### Cache Cleaning
 
-All deployments automatically clean caches to ensure clean builds:
+Use the unified clean script. You can target a specific stack and optionally deep-clean artifacts.
 
 ```bash
-# Manual cache cleaning
-bash deployment/scripts/clean-cache.sh [environment]
+# General cleanup
+./scripts/clean.sh
 
-# Cache cleaning is automatic during deployment
-python deployment/deploy.py dev
+# Target a specific stack
+./scripts/clean.sh --stack dev
+./scripts/clean.sh --stack uat
+./scripts/clean.sh --stack prod
+
+# Deep clean (also removes build artifacts and caches)
+./scripts/clean.sh --stack uat --deep
 ```
 
 ### Testing
 
-Run tests before deployment:
+Run tests with the unified test runner:
 
 ```bash
-# Run tests before deployment
-python deployment/deploy.py uat --test
+# Backend unit tests
+./scripts/test-runner.sh backend
 
-# Skip tests
-python deployment/deploy.py prod --skip-tests
+# Frontend unit/integration tests
+./scripts/test-runner.sh frontend
+
+# E2E tests (Playwright)
+./scripts/test-runner.sh e2e
+
+# Health checks
+./scripts/test-runner.sh health
+
+# All tests
+./scripts/test-runner.sh all
 ```
 
 ### Clean Builds
 
-Perform clean builds (removes all containers and images):
+For a clean slate before (re)deploying:
 
 ```bash
-# Clean build for any environment
-python deployment/deploy.py dev --clean
-python deployment/deploy.py uat --clean
-python deployment/deploy.py prod --clean
+# Remove containers/images/volumes, targeting a stack
+./scripts/clean.sh --stack dev
+./scripts/clean.sh --stack uat
+./scripts/clean.sh --stack prod
+
+# Include build artifacts and caches
+./scripts/clean.sh --stack prod --deep
 ```
 
 ### Rollback
 
-Rollback to previous deployment:
+Rollback strategy depends on how images are tagged. Typical steps:
 
 ```bash
-# Rollback production deployment
-python deployment/deploy.py prod --rollback
+# Stop current prod stack (includes backup step)
+./scripts/stop-stack.sh prod
+
+# Pull and start previous tags (example: v1.5.0)
+IMAGE_TAG=v1.5.0 \
+docker compose -f deployment/docker/docker-compose.prod.yml up -d --build
+
+# Alternatively, edit compose to pin specific image tags, then:
+docker compose -f deployment/docker/docker-compose.prod.yml pull
+docker compose -f deployment/docker/docker-compose.prod.yml up -d
 ```
 
 ## Advanced Configuration
@@ -310,13 +341,14 @@ kubectl top nodes
 # Check service status
 docker compose -f deployment/docker/docker-compose.dev.yml ps
 
-# Check Kubernetes resources
+# View detailed logs for a specific service
+docker compose -f deployment/docker/docker-compose.dev.yml logs -f backend
+docker compose -f deployment/docker/docker-compose.dev.yml logs -f frontend
+
+# Kubernetes resources (prod)
 kubectl get all -n cashflow-prod
 
-# View detailed logs
-docker compose -f deployment/docker/docker-compose.dev.yml logs [service-name]
-
-# Check health endpoints
+# Health endpoints
 curl http://localhost:8000/health
 curl http://localhost:5173
 ```
@@ -325,15 +357,13 @@ curl http://localhost:5173
 
 1. **Docker Compose rollback**:
    ```bash
-   docker compose -f deployment/docker/docker-compose.dev.yml down
-   git checkout HEAD~1
-   python deployment/deploy.py dev
+   ./scripts/stop-stack.sh uat   # or prod
+   # Pin previous image tags in compose, then
+   docker compose -f deployment/docker/docker-compose.uat.yml up -d
    ```
 
 2. **Kubernetes rollback**:
-   ```bash
-   python deployment/deploy.py prod --rollback
-   ```
+   Use your cluster's release strategy (e.g., kubectl rollout undo) against manifests in `deployment/kubernetes/prod/`.
 
 ## Security Considerations
 

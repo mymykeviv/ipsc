@@ -96,6 +96,74 @@ npm test
 docker compose logs -f [service-name]
 ```
 
+### Scripts (streamlined)
+
+The project includes a streamlined set of scripts under `scripts/` for common dev and ops tasks.
+
+- **`scripts/dev-up.sh`**
+  - Start the Docker dev stack and run quick sanity tests.
+  - Usage:
+    ```bash
+    ./scripts/dev-up.sh                 # start + tests
+    SKIP_TESTS=1 ./scripts/dev-up.sh   # start only
+    ./scripts/dev-up.sh --setup        # run preflight and pull images before start
+    ```
+
+- **`scripts/uat-up.sh`**
+  - Start the UAT stack and optionally run regression/e2e tests.
+
+- **`scripts/stop-stack.sh`**
+  - Stop a Docker stack by environment. Runs backup automatically for `prod`.
+  - Usage:
+    ```bash
+    ./scripts/stop-stack.sh dev|uat|prod
+    ```
+
+- **`scripts/seed.sh`**
+  - Unified seeding for dev/test DBs. Requires active Python virtualenv.
+  - Usage:
+    ```bash
+    ./scripts/seed.sh dev
+    ./scripts/seed.sh test
+    ```
+
+- **`scripts/build-and-push-docker.sh`**
+  - Build and push backend/frontend images. Creates deployment packages by default.
+  - Flags:
+    - `--preflight`: run checks (Docker running, login) and exit.
+    - `--quick`: single-arch build; push images; skip packaging archives.
+  - Usage:
+    ```bash
+    ./scripts/build-and-push-docker.sh --preflight
+    ./scripts/build-and-push-docker.sh --quick 1.4.5 my-dockerhub
+    ./scripts/build-and-push-docker.sh 1.4.5 my-dockerhub
+    ```
+
+- **`scripts/clean.sh`**
+  - Clean containers/images/volumes. Optionally target a specific stack; deep-clean artifacts.
+  - Usage:
+    ```bash
+    ./scripts/clean.sh
+    ./scripts/clean.sh --stack dev
+    ./scripts/clean.sh --stack uat --deep
+    ```
+
+- **`scripts/test-runner.sh`**
+  - Unified test orchestration (backend, frontend, e2e, health, all).
+
+- **`scripts/start-local.sh`**
+  - Run backend (FastAPI) and frontend (Vite) locally without Docker.
+
+#### Deprecated scripts (replaced by the above)
+
+The following are superseded and will be removed in a future release. Use the replacements noted:
+
+- `scripts/dev-setup.sh` → use `./scripts/dev-up.sh --setup`
+- `scripts/quick-docker-build.sh` → use `./scripts/build-and-push-docker.sh --quick`
+- `scripts/stop-docker-dev.sh` / `scripts/stop-docker-prod.sh` → use `./scripts/stop-stack.sh dev|prod`
+- `scripts/run-ui-ux-tests.sh` → use `./scripts/test-runner.sh`
+- `scripts/local-dev.sh`, `scripts/local-dev-clean.sh`, `scripts/restart-local-dev.sh`, `scripts/stop-local-dev.sh` → use `./scripts/start-local.sh` and `./scripts/clean.sh`
+
 ## 🏗️ Architecture
 
 ### Backend (FastAPI)
@@ -188,21 +256,23 @@ profitpath/
 
 ## 🚀 Deployment
 
-### Production Deployment
+### Docker Compose (UAT/Prod)
 ```bash
-# Build and deploy
-docker compose -f docker-compose.prod.yml up -d
+# UAT
+docker compose -f deployment/docker/docker-compose.uat.yml up -d
+docker compose -f deployment/docker/docker-compose.uat.yml ps
+docker compose -f deployment/docker/docker-compose.uat.yml logs -f
 
-# Check status
-docker compose ps
-
-# View logs
-docker compose logs -f
+# Prod
+docker compose -f deployment/docker/docker-compose.prod.yml up -d
+docker compose -f deployment/docker/docker-compose.prod.yml ps
+docker compose -f deployment/docker/docker-compose.prod.yml logs -f
 ```
 
 Notes:
-- UAT/Prod frontend images are built from `frontend/Dockerfile.optimized` and served by Nginx on port 80.
-- Dev/Standalone use Vite on port 5173.
+- UAT/Prod frontend images use `frontend/Dockerfile.optimized` and are served by Nginx on container port 80 (UAT host: 3000; Prod host: 80/443).
+- Dev uses Vite on port 5173; backend on 8000. See: `deployment/docker/docker-compose.dev.yml`.
+- To stop stacks safely, prefer: `./scripts/stop-stack.sh uat|prod` (prod performs a backup).
 
 ### Version Management
 - Backend version: Check `/api/version` endpoint

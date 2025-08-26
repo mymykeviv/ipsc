@@ -1,17 +1,16 @@
-FROM node:22-bookworm AS base
+FROM node:20-bookworm AS base
 
 WORKDIR /app
 
 # Copy package files
-COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
+COPY package.json package-lock.json* ./
 
-# Install dependencies with retry logic and registry fallback
+# Install dependencies deterministically (keep lockfile, avoid --force)
 RUN npm config set registry https://registry.npmjs.org/ && \
     npm config set fetch-retries 5 && \
     npm config set fetch-retry-mintimeout 20000 && \
     npm config set fetch-retry-maxtimeout 120000 && \
-    rm -rf node_modules package-lock.json && \
-    npm install --no-audit --no-fund --force
+    if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
 
 # Development stage
 FROM base AS development
@@ -19,20 +18,11 @@ FROM base AS development
 # Copy source code
 COPY . .
 
-# Create .dockerignore to prevent old compiled files
-RUN echo "*.js" > .dockerignore && \
-    echo "dist/" >> .dockerignore && \
-    echo "build/" >> .dockerignore && \
-    echo "node_modules/" >> .dockerignore
-
-# Clean any existing compiled files (only files, not directories)
-RUN find . -name "*.js" -not -path "./node_modules/*" -type f -delete
-
 # Expose port
 EXPOSE 5173
 
-# Start development server with clean slate
-CMD ["npm", "run", "dev", "--", "--config", "vite.config.docker.ts", "--host", "--force"]
+# Start development server
+CMD ["npm", "run", "dev", "--", "--config", "vite.config.docker.ts", "--host"]
 
 # Production stage (for future use)
 FROM base AS production
@@ -40,9 +30,8 @@ FROM base AS production
 # Copy source code
 COPY . .
 
-# Build the application
-RUN rm -rf node_modules package-lock.json && \
-    npm install --no-audit --no-fund --force && \
+# Build the application deterministically
+RUN npm ci --no-audit --no-fund || npm install --no-audit --no-fund && \
     npm run build
 
 # Expose port

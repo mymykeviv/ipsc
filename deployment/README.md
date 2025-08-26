@@ -8,33 +8,23 @@ This directory contains the consolidated deployment system for Cashflow (Invoice
 
 ### Development Environment
 ```bash
-# Deploy to development environment
-python deployment/deploy.py dev
+# Start dev stack (hot reload)
+./scripts/dev-up.sh
 
-# Deploy with clean build
-python deployment/deploy.py dev --clean
-
-# Deploy without running tests
-python deployment/deploy.py dev --skip-tests
+# Or directly via Compose
+docker compose -f deployment/docker/docker-compose.dev.yml up -d
 ```
 
-### Production Environment
+### UAT / Production
 ```bash
-# Deploy to production with tests
-python deployment/deploy.py prod --test
+# UAT (prod-like)
+docker compose -f deployment/docker/docker-compose.uat.yml up -d
 
-# Deploy to production with clean build
-python deployment/deploy.py prod --clean
+# Production
+docker compose -f deployment/docker/docker-compose.prod.yml up -d
 ```
 
-### Staging Environment
-```bash
-# Deploy to staging
-python deployment/deploy.py staging
-
-# Deploy to staging with clean build
-python deployment/deploy.py staging --clean
-```
+Note: We use "UAT" in place of "staging".
 
 ## Environment Configurations
 
@@ -75,16 +65,14 @@ python deployment/deploy.py staging --clean
   - Frontend: 80
   - Backend: 8000
 
-## Command Line Options
+## Common Commands
 
-| Option | Description | Example |
-|--------|-------------|---------|
-| `environment` | Target environment (dev/staging/prod) | `python deployment/deploy.py dev` |
-| `--clean` | Clean build (remove containers and images) | `python deployment/deploy.py dev --clean` |
-| `--test` | Run tests before deployment | `python deployment/deploy.py prod --test` |
-| `--skip-tests` | Skip test execution | `python deployment/deploy.py dev --skip-tests` |
-| `--rollback` | Rollback to previous deployment | `python deployment/deploy.py prod --rollback` |
-| `--help` | Show help message | `python deployment/deploy.py --help` |
+- Dev up: `./scripts/dev-up.sh` (or Compose dev file)
+- UAT up: `docker compose -f deployment/docker/docker-compose.uat.yml up -d`
+- Prod up: `docker compose -f deployment/docker/docker-compose.prod.yml up -d`
+- Stop stacks: `./scripts/stop-stack.sh uat|prod`
+- Clean: `./scripts/clean.sh [--stack dev|uat|prod] [--deep]`
+- Tests: `./scripts/test-runner.sh backend|frontend|e2e|health|all`
 
 ## Prerequisites
 
@@ -108,13 +96,11 @@ The deployment script automatically checks for the following prerequisites:
 
 ## Database Migrations & Seeding
 
-- **Alembic migrations auto-run**: The backend now runs `alembic upgrade head` before starting the API in all Compose profiles (`dev`, `uat/staging`, `prod`) and in CI jobs where the backend is started. This aligns deployments with the new single baseline migration.
-- **Startup locations updated**:
-  - Docker Compose: `deployment/docker/docker-compose.dev.yml`, `deployment/docker/docker-compose.uat.yml`, `deployment/docker/docker-compose.prod.yml`, `deployment/standalone/docker-compose.yml`, and root `docker-compose.yml` all prepend the Alembic upgrade to the backend command.
-  - CI: `.github/workflows/ci.yml` runs Alembic before backend tests and before e2e backend startup.
-  - Artifact generation: `.github/workflows/release-artifacts.yml` and `scripts/build-and-push-docker.sh` embed the migration step in generated Compose files.
-- **Seeding is dev-only**: Any data seeding or sample data steps should run only in development. Staging/UAT and Production environments must not seed data automatically.
-- **Local scripts**: `scripts/local-dev.sh` and `scripts/local-dev-clean.sh` run Alembic migrations before launching the dev server.
+- **Alembic auto-run**: Backend commands in Compose prepend `alembic upgrade head` (see `deployment/docker/docker-compose.dev.yml`, `.uat.yml`, `.prod.yml`, and `deployment/standalone/docker-compose.yml`).
+- **CI**: `.github/workflows/ci.yml` runs Alembic before backend tests and E2E startup.
+- **Artifacts**: `.github/workflows/release-artifacts.yml` and `scripts/build-and-push-docker.sh` embed the migration step in generated Compose files.
+- **Seeding is dev-only**: Use `./scripts/seed.sh` locally. Do not seed in UAT/Prod.
+- **Local start**: Use `./scripts/dev-up.sh` or `./scripts/start-local.sh`.
 
 If you encounter migration issues, ensure `DATABASE_URL` is correctly set for the target environment and that the database service is healthy before the backend starts.
 
@@ -146,14 +132,16 @@ The deployment script provides detailed logging with:
 
 ## Rollback
 
-Rollback functionality is available for production deployments:
+Typical approach depends on image tags:
 
 ```bash
-# Rollback production deployment
-python deployment/deploy.py prod --rollback
-```
+# Stop current stack (prod includes backup)
+./scripts/stop-stack.sh prod
 
-**Note**: Rollback functionality is currently under development.
+# Bring up previous tags (example)
+IMAGE_TAG=v1.5.0 \
+docker compose -f deployment/docker/docker-compose.prod.yml up -d --build
+```
 
 ## Performance Optimizations
 
@@ -196,28 +184,17 @@ python deployment/deploy.py prod --rollback
    Solution: Increase Docker memory limit or optimize application
    ```
 
-### Debug Mode
-
-Enable debug mode for detailed logging:
+### Debugging
 
 ```bash
-# Set debug environment variable
-export DEPLOY_DEBUG=1
-python deployment/deploy.py dev
+docker compose -f deployment/docker/docker-compose.dev.yml ps
+docker compose -f deployment/docker/docker-compose.dev.yml logs -f backend
+docker compose -f deployment/docker/docker-compose.dev.yml logs -f frontend
 ```
 
 ## Migration from Old Scripts
 
-### Old Scripts (Deprecated)
-- `deploy.py` - Python-based deployment
-- `deploy.sh` - Shell-based deployment  
-- `scripts/deploy-dev.sh` - Development-specific deployment
-
-### Migration Steps
-1. **Backup**: Create backup of current deployment
-2. **Test**: Test new deployment script in development
-3. **Deploy**: Use new script for all environments
-4. **Cleanup**: Remove old scripts after validation
+Deprecated items (removed): `deploy.py`, root `docker-compose.yml`, legacy local-dev scripts. Use the commands in this document and in `docs/DEPLOYMENT.md`.
 
 ## Security Considerations
 

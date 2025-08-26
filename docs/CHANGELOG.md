@@ -1,3 +1,27 @@
+## [1.50.1] - 2025-08-26
+
+### Added
+- Scripts: Introduced unified `scripts/seed.sh` for dev/test seeding with venv and DB readiness checks.
+- Scripts: Added `scripts/stop-stack.sh` to stop `dev|uat|prod` stacks; runs backup automatically for `prod`.
+
+### Changed
+- Scripts: `scripts/dev-up.sh` now supports `--setup` to run preflight via `scripts/setup-docker-env.sh` (if present) and pull images before bringing up the dev stack. Preserves `SKIP_TESTS`.
+- Scripts: `scripts/build-and-push-docker.sh` supports `--preflight` (checks only) and `--quick` (single-arch, skip packaging) flags. Default remains multi-arch build with deployment packages.
+- Scripts: `scripts/clean.sh` now accepts `--stack dev|uat|prod` and uses Docker Compose v2 (`docker compose`). `--deep` preserved.
+- Standardized all scripts to Docker Compose v2 (`docker compose`).
+
+### Deprecated
+- `scripts/dev-setup.sh` → use `./scripts/dev-up.sh --setup`.
+- `scripts/quick-docker-build.sh` → use `./scripts/build-and-push-docker.sh --quick`.
+- `scripts/stop-docker-dev.sh`, `scripts/stop-docker-prod.sh` → use `./scripts/stop-stack.sh dev|prod`.
+- `scripts/run-ui-ux-tests.sh` → use `./scripts/test-runner.sh`.
+- `scripts/local-dev.sh`, `scripts/local-dev-clean.sh`, `scripts/restart-local-dev.sh` → use `./scripts/start-local.sh` and `./scripts/clean.sh`.
+
+### Notes
+- No backend/frontend code changes in this patch; operations and documentation only.
+- README updated with a new "Scripts (streamlined)" section and usage examples.
+
+---
 ## [1.50.0-stable] - 2025-08-25
 
 ### Fixed

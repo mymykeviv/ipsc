@@ -1,3 +1,5 @@
+# DEPRECATED: Standalone stack is deprecated in favor of dev/uat/prod compose files.
+# This file will be removed in a future release.
 version: '3.8'
 
 services:
@@ -24,6 +26,7 @@ services:
 
   # Backend API Service
   backend:
+    image: profitpath-backend:local
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -60,6 +63,7 @@ services:
 
   # Frontend Web Application
   frontend:
+    image: profitpath-frontend:local-dev
     build:
       context: ../../frontend
       dockerfile: Dockerfile
