@@ -294,3 +294,5 @@ scripts/output/
 scripts/builds/
 *.build.log
 *.push.log
+frontend/node_modules/.package-lock.json
+frontend/node_modules/esbuild/
