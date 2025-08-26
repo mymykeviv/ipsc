@@ -84,6 +84,20 @@ if [[ "$PREFLIGHT_ONLY" == "1" ]]; then
     exit 0
 fi
 
+# Retry helper
+retry() {
+    local attempts=${1:-5}; shift
+    local delay=2
+    local n=0
+    until "$@"; do
+        n=$((n+1))
+        if [[ $n -ge $attempts ]]; then
+            return 1
+        fi
+        sleep $(( delay ** n ))
+    done
+}
+
 # Function to build and push image
 build_and_push() {
     local service=$1
@@ -97,32 +111,39 @@ build_and_push() {
         if [[ "$QUICK_BUILD" == "1" ]]; then
             docker build \
                 --target production \
-                -t "$service:$VERSION" \
-                -t "$service:latest" \
+                -t "$DOCKERHUB_USERNAME/$service:$VERSION" \
+                -t "$DOCKERHUB_USERNAME/$service:latest" \
                 -f "$dockerfile_path" \
                 "$build_context"
         else
-            docker build \
+            # Use buildx for multi-arch and push directly to avoid client-side push EOFs
+            docker buildx build \
                 --platform linux/amd64,linux/arm64 \
                 --target production \
-                -t "$service:$VERSION" \
-                -t "$service:latest" \
+                -t "$DOCKERHUB_USERNAME/$service:$VERSION" \
+                -t "$DOCKERHUB_USERNAME/$service:latest" \
                 -f "$dockerfile_path" \
+                --push \
                 "$build_context"
         fi
       }; then
         
         print_status "SUCCESS" "$service image built successfully"
         
-        # Push the image
-        print_status "INFO" "Pushing $service image to Docker Hub..."
-        if docker push "$service:$VERSION" && \
-           docker push "$service:latest"; then
-            print_status "SUCCESS" "$service image pushed successfully"
-            return 0
+        # Push for quick builds (non-buildx). buildx path already pushed via --push
+        if [[ "$QUICK_BUILD" == "1" ]]; then
+          print_status "INFO" "Pushing $service image to Docker Hub..."
+          if retry 5 docker push "$DOCKERHUB_USERNAME/$service:$VERSION" && \
+             retry 5 docker push "$DOCKERHUB_USERNAME/$service:latest"; then
+              print_status "SUCCESS" "$service image pushed successfully"
+              return 0
+          else
+              print_status "FAILED" "Failed to push $service image"
+              return 1
+          fi
         else
-            print_status "FAILED" "Failed to push $service image"
-            return 1
+          print_status "INFO" "$service images were pushed via buildx --push"
+          return 0
         fi
     else
         print_status "FAILED" "Failed to build $service image"
@@ -184,7 +205,7 @@ services:
 
   # Backend API Service
   backend:
-    image: profitpath-backend:$VERSION
+    image: $DOCKERHUB_USERNAME/profitpath-backend:$VERSION
     container_name: profitpath-backend
     environment:
       ENVIRONMENT: production
@@ -212,7 +233,7 @@ services:
 
   # Frontend Web Application
   frontend:
-    image: profitpath-frontend:$VERSION
+    image: $DOCKERHUB_USERNAME/profitpath-frontend:$VERSION
     container_name: profitpath-frontend
     expose:
       - "80"
