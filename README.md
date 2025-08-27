@@ -154,6 +154,36 @@ The project includes a streamlined set of scripts under `scripts/` for common de
 - **`scripts/start-local.sh`**
   - Run backend (FastAPI) and frontend (Vite) locally without Docker.
 
+### Release Process (with local preflight)
+
+- **`scripts/create-release.sh`**
+  - Creates a versioned release by updating `VERSION`, committing, tagging, and pushing.
+  - Runs local preflight checks before tagging:
+    - Frontend: `npm ci --no-optional`, `npm run typecheck`, `npm run lint`, `npm run build`
+    - Backend: applies Alembic migrations on a fresh temporary Postgres via Docker
+  - Flags:
+    - `--skip-preflight`: skip the local checks (faster, not recommended)
+  - Usage:
+    ```bash
+    ./scripts/create-release.sh 1.50.7
+    ./scripts/create-release.sh --skip-preflight 1.50.7
+    ```
+
+- **`scripts/release-packager.sh`**
+  - Builds backend/frontend Docker images and generates cross-platform deployment packages.
+  - Preflight checks run by default (skip with `--quick`):
+    - Frontend: typecheck, lint, build
+    - Backend: migration sanity on fresh DB via Docker
+  - Flags:
+    - `--quick`: skip preflight; single/multi-arch behavior depends on buildx availability
+    - `--platform linux/amd64,linux/arm64`: specify target platforms
+  - Usage:
+    ```bash
+    ./scripts/release-packager.sh 1.50.7 my-dockerhub
+    ./scripts/release-packager.sh --quick 1.50.7 my-dockerhub
+    ./scripts/release-packager.sh --platform linux/amd64,linux/arm64 1.50.7 my-dockerhub
+    ```
+
 #### Deprecated scripts (replaced by the above)
 
 The following are superseded and will be removed in a future release. Use the replacements noted:

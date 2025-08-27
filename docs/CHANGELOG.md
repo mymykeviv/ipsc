@@ -11,6 +11,7 @@
 - Frontend (`frontend/package.json`): Added `typecheck` script (`tsc --noEmit`).
 - Frontend Husky (`frontend/.husky/pre-commit`): Now blocks commits on TypeScript errors and lint failures.
 - CI (`.github/workflows/ci.yml`): Frontend job now runs `typecheck`, `lint`, and `build` before tests to fail fast.
+- Release script (`scripts/create-release.sh`): Added local preflight (frontend typecheck/lint/build and backend migration sanity via Docker). Supports `--skip-preflight`.
 
 ### Notes
 - These guardrails prevent recurring issues (missing imports, type drift, broken builds, and migration surprises) from reaching packaging and CI.
