@@ -53,6 +53,9 @@ export function Modal({ isOpen, onClose, title, children, size = 'medium' }: Mod
           backgroundColor: 'white',
           borderRadius: '0.5rem',
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
           ...sizeStyles[size]
         }}>
         {/* Header */}
@@ -61,7 +64,8 @@ export function Modal({ isOpen, onClose, title, children, size = 'medium' }: Mod
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '1.5rem',
-          borderBottom: '1px solid #e5e7eb'
+          borderBottom: '1px solid #e5e7eb',
+          flexShrink: 0
         }}>
           <h3 style={{
             fontSize: '1.125rem',
@@ -89,7 +93,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'medium' }: Mod
         </div>
         
         {/* Content */}
-        <div style={{ padding: '1.5rem' }}>
+        <div style={{ padding: '1.5rem', flex: 1, overflowY: 'auto' }}>
           {children}
         </div>
       </div>

@@ -18,6 +18,8 @@ export function GSTTemplateManager({ isOpen, onClose }: GSTTemplateManagerProps)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [updatingDefault, setUpdatingDefault] = useState<number | null>(null)
+  const [onlyGST, setOnlyGST] = useState(false)
+  const [onlyA4, setOnlyA4] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -51,6 +53,7 @@ export function GSTTemplateManager({ isOpen, onClose }: GSTTemplateManagerProps)
   }
 
   const getTemplateIcon = (templateId: string) => {
+    if (templateId.includes('GST_LOGISTICS')) return '🚚'
     if (templateId.includes('GST_TABULAR')) return '📊'
     if (templateId.includes('GST_SIMPLE')) return '📝'
     if (templateId.includes('GST_DETAILED')) return '📋'
@@ -102,13 +105,43 @@ export function GSTTemplateManager({ isOpen, onClose }: GSTTemplateManagerProps)
       <div style={{ padding: '20px' }}>
         {error && <ErrorMessage message={error} />}
         
+        {/* Simple Filters */}
+        <div style={{
+          display: 'flex',
+          gap: '16px',
+          alignItems: 'center',
+          marginBottom: '12px',
+          borderBottom: '1px solid #e5e7eb',
+          paddingBottom: '12px'
+        }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              type="checkbox"
+              checked={onlyGST}
+              onChange={(e) => setOnlyGST(e.target.checked)}
+            />
+            <span>Show only GST</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              type="checkbox"
+              checked={onlyA4}
+              onChange={(e) => setOnlyA4(e.target.checked)}
+            />
+            <span>Show only A4</span>
+          </label>
+        </div>
+
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px' }}>
             <div>Loading GST templates...</div>
           </div>
         ) : (
           <div style={{ display: 'grid', gap: '16px' }}>
-            {templates.map(template => (
+            {templates
+              .filter(t => (onlyGST ? t.requires_gst : true))
+              .filter(t => (onlyA4 ? (t.paper_sizes || '').toUpperCase().includes('A4') : true))
+              .map(template => (
               <div
                 key={template.id}
                 style={{
@@ -129,6 +162,18 @@ export function GSTTemplateManager({ isOpen, onClose }: GSTTemplateManagerProps)
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         {getGSTBadge(template)}
                         {getTemplateBadge(template)}
+                        {(template.paper_sizes || '').toUpperCase().includes('A4') && (
+                          <span style={{
+                            backgroundColor: '#f59e0b',
+                            color: 'white',
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: '500'
+                          }}>
+                            A4
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

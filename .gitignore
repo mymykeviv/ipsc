@@ -199,6 +199,10 @@ temp_files/
 temp/
 tmp/
 
+# Allow checked-in frontend TypeScript client utilities under src/lib
+!frontend/src/lib/
+!frontend/src/lib/**
+
 # Test Output Files
 test_reports/
 test-results/

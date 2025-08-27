@@ -301,6 +301,50 @@ export type Invoice = {
   }>
 }
 
+// GST Invoice Templates
+export type GstTemplateId =
+  | 'GST_TABULAR_A4A5_V1'
+  | 'GST_SIMPLE_A5A4_V1'
+  | 'GST_DETAILED_SECTION_A4_V1'
+  | 'NONGST_SIMPLE_A5_V1'
+  | 'NONGST_TABULAR_A4A5_V1'
+  | 'GST_LOGISTICS_A4_V1'
+
+export interface GstInvoiceTemplate {
+  id: number
+  template_id: GstTemplateId
+  name: string
+  description?: string
+  requires_gst: boolean
+  requires_hsn: boolean
+  title: string
+  template_config: string
+  paper_sizes: string
+  is_active: boolean
+  is_default: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+// Backward-compatible alias (do not remove): prefer GstInvoiceTemplate
+export type GSTInvoiceTemplate = GstInvoiceTemplate
+
+// Minimal config typing needed for UI wiring and preview
+export interface GstTemplateConfig {
+  layout?: Record<string, unknown>
+  invoice?: {
+    transport?: {
+      mode?: string
+      vehicle_no?: string
+      lr_no?: string
+    }
+    eway_bill_no?: string
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+
 export interface CashflowTransactionFilters {
   search?: string
   type_filter?: string
@@ -1044,7 +1088,75 @@ export async function apiEmailInvoice(id: number, email: string): Promise<void> 
   }
 }
 
+// GST Invoice Templates APIs
+export async function apiListGstInvoiceTemplates(): Promise<GstInvoiceTemplate[]> {
+  const r = await fetch('/api/gst-invoice-templates', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
 
+export async function apiGetDefaultGstInvoiceTemplate(): Promise<GstInvoiceTemplate> {
+  const r = await fetch('/api/gst-invoice-templates/default', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiGetGstTemplateConfig(templateId: GstTemplateId): Promise<GstTemplateConfig> {
+  const r = await fetch(`/api/gst-invoice-templates/config/${templateId}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiSetDefaultGstInvoiceTemplate(id: number): Promise<{ message: string }> {
+  const r = await fetch(`/api/gst-invoice-templates/${id}/set-default`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
 
 export async function apiGetPurchasePDF(id: number): Promise<Blob> {
   const r = await fetch(`/api/purchases/${id}/pdf`, {
@@ -1799,36 +1911,12 @@ export async function apiUpdateCompanySettings(settings: Partial<CompanySettings
 
 // GST Invoice Template Types and API Functions
 
-export type GSTInvoiceTemplate = {
-  id: number
-  template_id: string
-  name: string
-  description: string | null
-  requires_gst: boolean
-  requires_hsn: boolean
-  title: string
-  template_config: string
-  paper_sizes: string
-  is_active: boolean
-  is_default: boolean
-  sort_order: number
-  created_at: string
-  updated_at: string
-}
+// Deprecated duplicate kept previously for compatibility, replaced by alias below
+// export type GSTInvoiceTemplate = { ... } // removed
 
-export async function apiGetGSTInvoiceTemplates(): Promise<GSTInvoiceTemplate[]> {
-  const r = await fetch('/api/gst-invoice-templates', {
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  return r.json()
+// Back-compat wrapper: prefer apiListGstInvoiceTemplates
+export async function apiGetGSTInvoiceTemplates(): Promise<GstInvoiceTemplate[]> {
+  return apiListGstInvoiceTemplates()
 }
 
 export async function apiGetGSTInvoiceTemplate(templateId: number): Promise<GSTInvoiceTemplate> {
@@ -1846,49 +1934,19 @@ export async function apiGetGSTInvoiceTemplate(templateId: number): Promise<GSTI
   return r.json()
 }
 
-export async function apiGetDefaultGSTInvoiceTemplate(): Promise<GSTInvoiceTemplate> {
-  const r = await fetch('/api/gst-invoice-templates/default', {
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  return r.json()
+// Back-compat wrapper: prefer apiGetDefaultGstInvoiceTemplate
+export async function apiGetDefaultGSTInvoiceTemplate(): Promise<GstInvoiceTemplate> {
+  return apiGetDefaultGstInvoiceTemplate()
 }
 
-export async function apiSetDefaultGSTInvoiceTemplate(templateId: number): Promise<void> {
-  const r = await fetch(`/api/gst-invoice-templates/${templateId}/set-default`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
+// Back-compat wrapper: prefer apiSetDefaultGstInvoiceTemplate
+export async function apiSetDefaultGSTInvoiceTemplate(templateId: number): Promise<{ message: string }> {
+  return apiSetDefaultGstInvoiceTemplate(templateId)
 }
 
-export async function apiGetGSTTemplateConfig(templateId: string): Promise<any> {
-  const r = await fetch(`/api/gst-invoice-templates/config/${templateId}`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-  })
-  if (!r.ok) {
-    try {
-      const errorData = await r.json()
-      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
-    } catch (parseError) {
-      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
-    }
-  }
-  return r.json()
+// Back-compat wrapper: prefer apiGetGstTemplateConfig
+export async function apiGetGSTTemplateConfig(templateId: string): Promise<GstTemplateConfig> {
+  return apiGetGstTemplateConfig(templateId as GstTemplateId)
 }
 
 export async function apiUploadLogo(file: File): Promise<{success: boolean, logo_url: string, filename: string, size: number}> {

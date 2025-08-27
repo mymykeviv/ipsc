@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useReducer, useEffect, useMemo, useState } from 'react'
 import { SummaryCardGrid, type SummaryCardItem } from './common/SummaryCardGrid'
 import { useSearchParams } from 'react-router-dom'
 import { apiGetStockMovementHistory, apiDownloadStockMovementHistoryPDF, apiGetProducts, Product } from '../lib/api'
