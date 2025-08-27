@@ -1,3 +1,21 @@
+## [1.50.6] - 2025-08-27
+
+### Added
+- Preflight checks in release packaging script
+  - Scripts (`scripts/release-packager.sh`): Before building images, run:
+    - Frontend: `npm ci --no-optional`, `npm run typecheck`, `npm run lint`, `npm run build` (skipped if Node/npm not present).
+    - Backend: Migration sanity using Docker-only flow (temporary Postgres + Python container running `alembic upgrade head`).
+  - `--quick` flag skips preflight checks for faster packaging.
+
+### Changed
+- Frontend (`frontend/package.json`): Added `typecheck` script (`tsc --noEmit`).
+- Frontend Husky (`frontend/.husky/pre-commit`): Now blocks commits on TypeScript errors and lint failures.
+- CI (`.github/workflows/ci.yml`): Frontend job now runs `typecheck`, `lint`, and `build` before tests to fail fast.
+
+### Notes
+- These guardrails prevent recurring issues (missing imports, type drift, broken builds, and migration surprises) from reaching packaging and CI.
+
+---
 ## [1.50.5] - 2025-08-27
 
 ### Changed

@@ -93,6 +93,64 @@ fi
 # Cache-busting arg to avoid stale frontend assets
 CACHE_BUST="BUILD_TS=$(date +%s)"
 
+# ------------------------- Extended Checks (skip with --quick) ---------------
+preflight_checks() {
+  if [[ $QUICK -eq 1 ]]; then
+    status warn "Quick mode: skipping preflight checks (typecheck/lint/migrations)"
+    return 0
+  fi
+
+  # Frontend checks
+  if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
+    status info "Running frontend typecheck/lint/build..."
+    pushd frontend >/dev/null
+    if [[ -f package.json ]]; then
+      npm ci --no-optional
+      npm run typecheck
+      npm run lint
+      npm run build
+      status ok "Frontend checks passed"
+    else
+      status warn "frontend/package.json not found; skipping frontend checks"
+    fi
+    popd >/dev/null
+  else
+    status warn "Node/npm not found; skipping frontend checks"
+  fi
+
+  # Backend migration sanity via Docker (no host deps)
+  status info "Validating backend migrations against fresh Postgres..."
+  local NET="pp_check_net_$$"
+  local DB="pp_db_$$"
+  docker network create "$NET" >/dev/null
+  cleanup_preflight() {
+    docker rm -f "$DB" >/dev/null 2>&1 || true
+    docker network rm "$NET" >/dev/null 2>&1 || true
+  }
+  trap cleanup_preflight EXIT
+
+  docker run -d --rm --name "$DB" --network "$NET" \
+    -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=profitpath_check \
+    -p 0:5432 postgres:13 >/dev/null
+
+  status info "Waiting for Postgres to be ready..."
+  retry 10 docker run --rm --network "$NET" --entrypoint bash postgres:13 -lc \
+    "pg_isready -h $DB -U postgres"
+
+  # Run alembic inside python container with mounted backend directory
+  docker run --rm --network "$NET" -e DATABASE_URL="postgresql://postgres:postgres@$DB:5432/profitpath_check" \
+    -v "$(pwd)/backend":/app -w /app python:3.12-slim bash -lc \
+    "pip install --no-cache-dir -r requirements.txt && alembic -c alembic.ini upgrade head"
+
+  status ok "Backend migrations applied successfully on a fresh DB"
+
+  # Clean up
+  cleanup_preflight
+  trap - EXIT
+}
+
+preflight_checks
+
 # ------------------------- Build Functions ----------------------------------
 build_backend() {
   status info "Building backend image..."
@@ -367,26 +425,93 @@ This package lets you run ProfitPath locally with Docker in minutes.
 Enjoy!
 EOF
 
-# Windows scripts (simple)
-cat > deployment-package/start.bat <<EOF
+# Windows scripts (parity with start.sh)
+cat > deployment-package/start.bat <<'EOF'
 @echo off
+setlocal ENABLEDELAYEDEXPANSION
 cd /d %~dp0
-if exist docker-compose.yml (
-  echo Pulling images...
-  docker-compose pull
-  echo Starting...
-  docker-compose up -d
-  echo Open http://localhost
+
+echo ========================================
+echo   ProfitPath - Starting Application...
+echo ========================================
+echo.
+
+REM Detect docker compose command
+docker compose version >nul 2>&1
+if %errorlevel% EQU 0 (
+  set "DC=docker compose"
 ) else (
-  echo docker-compose.yml not found
+  docker-compose --version >nul 2>&1
+  if %errorlevel% EQU 0 (
+    set "DC=docker-compose"
+  ) else (
+    echo ERROR: docker compose not found
+    echo Install Docker Desktop and ensure docker compose works.
+    pause
+    exit /b 1
+  )
 )
+
+if not exist docker-compose.yml (
+  echo ERROR: docker-compose.yml not found in this folder.
+  pause
+  exit /b 1
+)
+
+echo Pulling base images...
+docker pull postgres:16-alpine >nul 2>&1
+docker pull nginx:alpine >nul 2>&1
+echo Pulling application images...
+%DC% -f docker-compose.yml pull
+
+echo Starting services...
+%DC% -f docker-compose.yml up -d
+
+echo Waiting for services to come up...
+timeout /t 15 /nobreak >nul
+
+REM Health checks
+echo Checking health endpoints...
+curl -fsS http://localhost/health >nul 2>&1
+if %errorlevel% EQU 0 (
+  echo ✅ Nginx healthy
+) else (
+  echo ⚠️  Nginx not ready
+)
+
+curl -fsS http://localhost/api/health >nul 2>&1
+if %errorlevel% EQU 0 (
+  echo ✅ Backend healthy (via nginx)
+) else (
+  echo ⚠️  Backend not ready yet
+)
+
+echo.
+echo Open: http://localhost
+echo API:  http://localhost/api/
+echo.
+echo Logs: %DC% -f docker-compose.yml logs -f
+echo Stop: stop.bat
+echo.
+pause
 EOF
 
 cat > deployment-package/stop.bat <<'EOF'
 @echo off
+setlocal ENABLEDELAYEDEXPANSION
 cd /d %~dp0
-docker-compose down
-echo Stopped
+
+docker compose version >nul 2>&1
+if %errorlevel% EQU 0 (
+  set "DC=docker compose"
+) else (
+  set "DC=docker-compose"
+)
+
+echo Stopping ProfitPath...
+%DC% -f docker-compose.yml down
+echo ✅ Stopped
+pause
 EOF
 
 # Make archives

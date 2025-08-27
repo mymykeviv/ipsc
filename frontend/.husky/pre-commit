@@ -28,3 +28,19 @@ if [ -n "$COMPILED_JS_FILES" ]; then
 fi
 
 echo "✅ No compiled JavaScript files found."
+
+# Run TypeScript typecheck
+echo "🔎 Running TypeScript typecheck..."
+if ! npm run --silent typecheck; then
+  echo "❌ TypeScript typecheck failed. Fix type errors before committing."
+  exit 1
+fi
+
+# Run ESLint
+echo "🧹 Running ESLint..."
+if ! npm run --silent lint; then
+  echo "❌ ESLint failed. Fix lint errors before committing."
+  exit 1
+fi
+
+echo "✅ Pre-commit checks passed."
