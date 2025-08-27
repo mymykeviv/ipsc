@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { SummaryCardGrid, type SummaryCardItem } from '../../components/common/SummaryCardGrid'
 import { useAuth } from '../../modules/AuthContext'
 import { Button } from '../../components/Button'
 import { DownloadButtons } from '../../components/DownloadButtons'
@@ -443,76 +444,28 @@ export function CashflowReports() {
 
       {report && (
         <>
-          {/* Summary Cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '20px',
-            marginBottom: '24px'
-          }}>
-            <div style={{
-              padding: '24px',
-              backgroundColor: '#e8f5e8',
-              borderRadius: '8px',
-              border: '1px solid #c8e6c9'
-            }}>
-              <div style={{ fontSize: '14px', color: '#2e7d32', fontWeight: '500', marginBottom: '8px' }}>
-                💰 Total Income
-              </div>
-              <div style={{ fontSize: '32px', fontWeight: '700', color: '#2e7d32' }}>
-                {formatCurrency(report.summary.total_income)}
-              </div>
-              <div style={{ fontSize: '12px', color: '#2e7d32', marginTop: '4px' }}>
-                {report.summary.total_income_count} transactions
-              </div>
-            </div>
-
-            <div style={{
-              padding: '24px',
-              backgroundColor: '#ffebee',
-              borderRadius: '8px',
-              border: '1px solid #ffcdd2'
-            }}>
-              <div style={{ fontSize: '14px', color: '#c62828', fontWeight: '500', marginBottom: '8px' }}>
-                💸 Total Outflow
-              </div>
-              <div style={{ fontSize: '32px', fontWeight: '700', color: '#c62828' }}>
-                {formatCurrency(report.summary.total_outflow)}
-              </div>
-              <div style={{ fontSize: '12px', color: '#c62828', marginTop: '4px' }}>
-                {report.summary.total_outflow_count} transactions
-              </div>
-            </div>
-
-            <div style={{
-              padding: '24px',
-              backgroundColor: report.summary.net_cashflow >= 0 ? '#e8f5e8' : '#ffebee',
-              borderRadius: '8px',
-              border: `1px solid ${report.summary.net_cashflow >= 0 ? '#c8e6c9' : '#ffcdd2'}`
-            }}>
-              <div style={{ 
-                fontSize: '14px', 
-                color: report.summary.net_cashflow >= 0 ? '#2e7d32' : '#c62828', 
-                fontWeight: '500', 
-                marginBottom: '8px' 
-              }}>
-                📊 Net Cashflow
-              </div>
-              <div style={{ 
-                fontSize: '32px', 
-                fontWeight: '700', 
-                color: report.summary.net_cashflow >= 0 ? '#2e7d32' : '#c62828' 
-              }}>
-                {formatCurrency(report.summary.net_cashflow)}
-              </div>
-              <div style={{ 
-                fontSize: '12px', 
-                color: report.summary.net_cashflow >= 0 ? '#2e7d32' : '#c62828', 
-                marginTop: '4px' 
-              }}>
-                {report.trends.cashflow_trend === 'positive' ? 'Positive trend' : 'Negative trend'}
-              </div>
-            </div>
+          {/* Summary Cards via SummaryCardGrid */}
+          <div style={{ marginBottom: '24px' }}>
+            {(() => {
+              const items: SummaryCardItem[] = [
+                {
+                  label: 'Total Income',
+                  primary: formatCurrency(report.summary.total_income),
+                  secondary: `${report.summary.total_income_count} transactions`,
+                },
+                {
+                  label: 'Total Outflow',
+                  primary: formatCurrency(report.summary.total_outflow),
+                  secondary: `${report.summary.total_outflow_count} transactions`,
+                },
+                {
+                  label: 'Net Cashflow',
+                  primary: formatCurrency(report.summary.net_cashflow),
+                  secondary: report.trends.cashflow_trend === 'positive' ? 'Positive trend' : 'Negative trend',
+                },
+              ]
+              return <SummaryCardGrid items={items} columnsMin={250} gapPx={16} />
+            })()}
           </div>
 
           {/* Monthly Trend Chart */}
@@ -531,7 +484,7 @@ export function CashflowReports() {
               gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
               gap: '16px'
             }}>
-              {report.trends.monthly_breakdown.map((month, index) => (
+              {report.trends.monthly_breakdown.map((month: CashflowReport['trends']['monthly_breakdown'][number], index: number) => (
                 <div key={index} style={{
                   padding: '16px',
                   backgroundColor: '#f8f9fa',
@@ -602,7 +555,7 @@ export function CashflowReports() {
                   </tr>
                 </thead>
                 <tbody>
-                  {report.transactions.slice(0, 20).map((transaction) => (
+                  {report.transactions.slice(0, 20).map((transaction: CashflowReportItem) => (
                     <tr key={transaction.transaction_id} style={{ borderBottom: '1px solid #dee2e6' }}>
                       <td style={{ padding: '12px', color: '#495057' }}>
                         {formatDate(transaction.transaction_date)}

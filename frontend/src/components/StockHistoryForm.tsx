@@ -1,4 +1,5 @@
-import React, { useEffect, useCallback, useMemo, useReducer, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { SummaryCardGrid, type SummaryCardItem } from './common/SummaryCardGrid'
 import { useSearchParams } from 'react-router-dom'
 import { apiGetStockMovementHistory, apiDownloadStockMovementHistoryPDF, apiGetProducts, Product } from '../lib/api'
 import { Button } from './Button'
@@ -846,42 +847,15 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
       {/* Data Display */}
       {!historyLoading && !error && paginatedStockHistory.length > 0 && (
         <>
-          {/* Grand Totals Summary */}
-          <div style={{ 
-            backgroundColor: '#f8f9fa', 
-            padding: '16px', 
-            borderRadius: '8px', 
-            marginBottom: '20px',
-            border: '1px solid #dee2e6'
-          }}>
-            <h3 style={{ margin: '0 0 12px 0', color: '#495057' }}>Summary Totals</h3>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-              gap: '16px' 
-            }}>
-              <div>
-                <strong>Opening Stock:</strong> {grandTotals.opening_stock.toFixed(2)} units
-                <br />
-                <small>Value: {formatCurrency(grandTotals.opening_value)}</small>
-              </div>
-              <div>
-                <strong>Total Incoming:</strong> {grandTotals.total_incoming.toFixed(2)} units
-                <br />
-                <small>Value: {formatCurrency(grandTotals.total_incoming_value)}</small>
-              </div>
-              <div>
-                <strong>Total Outgoing:</strong> {grandTotals.total_outgoing.toFixed(2)} units
-                <br />
-                <small>Value: {formatCurrency(grandTotals.total_outgoing_value)}</small>
-              </div>
-              <div>
-                <strong>Closing Stock:</strong> {grandTotals.closing_stock.toFixed(2)} units
-                <br />
-                <small>Value: {formatCurrency(grandTotals.closing_value)}</small>
-              </div>
-            </div>
-          </div>
+          {/* Grand Totals Summary - using shared SummaryCardGrid */}
+          <SummaryCardGrid
+            items={([
+              { label: 'Opening Stock', primary: `${grandTotals.opening_stock.toFixed(2)} units`, secondary: `Value: ${formatCurrency(grandTotals.opening_value)}` },
+              { label: 'Total Incoming', primary: `${grandTotals.total_incoming.toFixed(2)} units`, secondary: `Value: ${formatCurrency(grandTotals.total_incoming_value)}` },
+              { label: 'Total Outgoing', primary: `${grandTotals.total_outgoing.toFixed(2)} units`, secondary: `Value: ${formatCurrency(grandTotals.total_outgoing_value)}` },
+              { label: 'Closing Stock', primary: `${grandTotals.closing_stock.toFixed(2)} units`, secondary: `Value: ${formatCurrency(grandTotals.closing_value)}` },
+            ] as SummaryCardItem[])}
+          />
 
           {/* Stock Movement Table */}
           <div style={{ 

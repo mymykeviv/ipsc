@@ -12,6 +12,7 @@ import { EnhancedFilterDropdown } from '../components/EnhancedFilterDropdown'
 import { StockMovementHistoryTable } from '../components/StockMovementHistoryTable'
 import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
 import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
+import { SummaryCardGrid, SummaryCardItem } from '../components/common/SummaryCardGrid'
 import { apiGetProducts, apiCreateProduct, apiUpdateProduct, apiToggleProduct, apiAdjustStock, apiListParties, Party, apiGetStockMovementHistory, StockMovement, ProductFilters } from '../lib/api'
 import { StockHistoryForm } from '../components/StockHistoryForm'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
@@ -84,6 +85,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   const [vendors, setVendors] = useState<Party[]>([])
   const [loading, setLoading] = useState(true)
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null)
+  const [lowStockCount, setLowStockCount] = useState<number>(0)
   
   // Create error handler that will automatically log out on 401 errors (memoized)
   const handleApiError = useMemo(() => createApiErrorHandler(() => forceLogout()), [forceLogout])
@@ -109,17 +111,18 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   const { getFiltersFromURL, updateURLWithFilters, clearURLFilters } = useFilterNavigation(defaultState)
   const { resetAllFilters, getActiveFilterCount } = useFilterReset({
     pageName: 'products',
-    onReset: (newState) => {
+    onReset: (newState: Record<string, any>) => {
+      const ds = newState as typeof defaultState
       // Update all filter states
-      setSearchTerm(newState.searchTerm)
-      setStatusFilter(newState.statusFilter)
-      setCategoryFilter(newState.categoryFilter)
-      setItemTypeFilter(newState.itemTypeFilter)
-      setGstRateFilter(newState.gstRateFilter)
-      setStockLevelFilter(newState.stockLevelFilter)
-      setSupplierFilter(newState.supplierFilter)
-      setPriceRangeFilter(newState.priceRangeFilter)
-      setDateFilter(newState.dateFilter)
+      setSearchTerm(ds.searchTerm)
+      setStatusFilter(ds.statusFilter)
+      setCategoryFilter(ds.categoryFilter)
+      setItemTypeFilter(ds.itemTypeFilter)
+      setGstRateFilter(ds.gstRateFilter)
+      setStockLevelFilter(ds.stockLevelFilter)
+      setSupplierFilter(ds.supplierFilter)
+      setPriceRangeFilter(ds.priceRangeFilter)
+      setDateFilter(ds.dateFilter)
     }
   })
 
@@ -167,91 +170,52 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       stockLevelFilter,
       supplierFilter,
       priceRangeFilter,
-      dateFilter
+      dateFilter,
     }
-    
     const updatedFilters = { ...currentFilters, ...newFilters }
     updateURLWithFilters(updatedFilters)
-  }, [searchTerm, statusFilter, categoryFilter, itemTypeFilter, gstRateFilter, 
-      stockLevelFilter, supplierFilter, priceRangeFilter, dateFilter, updateURLWithFilters])
+  }, [searchTerm, statusFilter, categoryFilter, itemTypeFilter, gstRateFilter, stockLevelFilter, supplierFilter, priceRangeFilter, dateFilter, updateURLWithFilters])
 
   // Enhanced filter setters with URL integration
   const setSearchTermWithURL = useCallback((value: string) => {
     setSearchTerm(value)
     updateFiltersAndURL({ searchTerm: value })
   }, [updateFiltersAndURL])
-
   const setStatusFilterWithURL = useCallback((value: string) => {
     setStatusFilter(value)
     updateFiltersAndURL({ statusFilter: value })
   }, [updateFiltersAndURL])
-
   const setCategoryFilterWithURL = useCallback((value: string) => {
     setCategoryFilter(value)
     updateFiltersAndURL({ categoryFilter: value })
   }, [updateFiltersAndURL])
-
   const setItemTypeFilterWithURL = useCallback((value: string) => {
     setItemTypeFilter(value)
     updateFiltersAndURL({ itemTypeFilter: value })
   }, [updateFiltersAndURL])
-
   const setGstRateFilterWithURL = useCallback((value: string) => {
     setGstRateFilter(value)
     updateFiltersAndURL({ gstRateFilter: value })
   }, [updateFiltersAndURL])
-
   const setStockLevelFilterWithURL = useCallback((value: string) => {
     setStockLevelFilter(value)
     updateFiltersAndURL({ stockLevelFilter: value })
   }, [updateFiltersAndURL])
-
   const setSupplierFilterWithURL = useCallback((value: string) => {
     setSupplierFilter(value)
     updateFiltersAndURL({ supplierFilter: value })
   }, [updateFiltersAndURL])
-
   const setPriceRangeFilterWithURL = useCallback((value: string) => {
     setPriceRangeFilter(value)
     updateFiltersAndURL({ priceRangeFilter: value })
   }, [updateFiltersAndURL])
-
   const setDateFilterWithURL = useCallback((value: DateRange) => {
     setDateFilter(value)
     updateFiltersAndURL({ dateFilter: value })
   }, [updateFiltersAndURL])
 
-  // Clear all filters handler
-  const handleClearAllFilters = useCallback(() => {
-    const currentState = {
-      searchTerm,
-      statusFilter,
-      categoryFilter,
-      itemTypeFilter,
-      gstRateFilter,
-      stockLevelFilter,
-      supplierFilter,
-      priceRangeFilter,
-      dateFilter
-    }
-    
-    const newState = resetAllFilters(currentState)
-    
-    // Update all filter states
-    setSearchTerm(newState.searchTerm)
-    setStatusFilter(newState.statusFilter)
-    setCategoryFilter(newState.categoryFilter)
-    setItemTypeFilter(newState.itemTypeFilter)
-    setGstRateFilter(newState.gstRateFilter)
-    setStockLevelFilter(newState.stockLevelFilter)
-    setSupplierFilter(newState.supplierFilter)
-    setPriceRangeFilter(newState.priceRangeFilter)
-    setDateFilter(newState.dateFilter)
-  }, [searchTerm, statusFilter, categoryFilter, itemTypeFilter, gstRateFilter, 
-      stockLevelFilter, supplierFilter, priceRangeFilter, dateFilter, resetAllFilters])
-
-  // Get active filter count
-  const activeFilterCount = getActiveFilterCount({
+  // Helpers
+  const activeFilterCount = useMemo(() => getActiveFilterCount({
     searchTerm,
     statusFilter,
     categoryFilter,
@@ -260,741 +224,89 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     stockLevelFilter,
     supplierFilter,
     priceRangeFilter,
-    dateFilter
-  })
-  const [formData, setFormData] = useState<ProductFormData>({
-    // Product Details
-    name: '',
-    product_code: '',
-    sku: '',
-    unit: 'Pcs',
-    supplier: '',
-    description: '',
-    product_type: 'tradable',
-    category: '',
-    
-    // Price Details
-    purchase_price: '',
-    sales_price: '',
-    gst_rate: '18',
-    hsn_code: '',
-    
-    // Stock Details
-    opening_stock: '',
-    closing_stock: '',
-    
-    // Other Details
-    notes: ''
-  })
+    dateFilter,
+  }), [getActiveFilterCount, searchTerm, statusFilter, categoryFilter, itemTypeFilter, gstRateFilter, stockLevelFilter, supplierFilter, priceRangeFilter, dateFilter])
 
-  const [stockFormData, setStockFormData] = useState<StockFormData>({
-    quantity: '',
-    adjustmentType: 'add',
-    date_of_receipt: new Date().toISOString().split('T')[0],
-    reference_bill_number: '',
-    supplier: '',
-    category: '',
-    notes: ''
-  })
-
-  // Enhanced Product Mapping Features
-  const [productCategories, setProductCategories] = useState<string[]>([])
-  const [productTags, setProductTags] = useState<string[]>([])
-  const [intelligentSuggestions, setIntelligentSuggestions] = useState<{
-    category: string
-    hsnCode: string
-    gstRate: number
-    unit: string
-  } | null>(null)
-
-  // Intelligent product mapping based on name analysis
-  const analyzeProductName = (productName: string) => {
-    const name = productName.toLowerCase()
-    
-    // Category mapping based on keywords
-    let suggestedCategory = ''
-    let suggestedHsnCode = ''
-    let suggestedGstRate = 18
-    let suggestedUnit = 'Pcs'
-
-    if (name.includes('motor') || name.includes('engine') || name.includes('pump')) {
-      suggestedCategory = 'Machinery & Equipment'
-      suggestedHsnCode = '8501'
-      suggestedGstRate = 18
-      suggestedUnit = 'Nos'
-    } else if (name.includes('bearing') || name.includes('valve') || name.includes('pipe')) {
-      suggestedCategory = 'Mechanical Parts'
-      suggestedHsnCode = '8482'
-      suggestedGstRate = 18
-      suggestedUnit = 'Pcs'
-    } else if (name.includes('steel') || name.includes('iron') || name.includes('metal')) {
-      suggestedCategory = 'Raw Materials'
-      suggestedHsnCode = '7208'
-      suggestedGstRate = 18
-      suggestedUnit = 'Kg'
-    } else if (name.includes('oil') || name.includes('lubricant') || name.includes('grease')) {
-      suggestedCategory = 'Consumables'
-      suggestedHsnCode = '2710'
-      suggestedGstRate = 18
-      suggestedUnit = 'Ltr'
-    } else if (name.includes('tool') || name.includes('cutter') || name.includes('drill')) {
-      suggestedCategory = 'Tools & Equipment'
-      suggestedHsnCode = '8207'
-      suggestedGstRate = 18
-      suggestedUnit = 'Pcs'
-    } else if (name.includes('wire') || name.includes('cable') || name.includes('connector')) {
-      suggestedCategory = 'Electrical Components'
-      suggestedHsnCode = '8544'
-      suggestedGstRate = 18
-      suggestedUnit = 'Mtr'
-    }
-
-    return {
-      category: suggestedCategory,
-      hsnCode: suggestedHsnCode,
-      gstRate: suggestedGstRate,
-      unit: suggestedUnit
-    }
-  }
-
-  // Apply intelligent suggestions
-  const applyIntelligentSuggestions = () => {
-    if (intelligentSuggestions) {
-      setFormData(prev => ({
-        ...prev,
-        category: intelligentSuggestions.category,
-        hsn_code: intelligentSuggestions.hsnCode,
-        gst_rate: intelligentSuggestions.gstRate.toString(),
-        unit: intelligentSuggestions.unit
-      }))
-      setIntelligentSuggestions(null)
-    }
-  }
-
-  // Enhanced form data change handler with intelligent suggestions
-  const handleFormDataChange = (field: keyof ProductFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-    
-    // Trigger intelligent analysis when product name changes
-    if (field === 'name' && value.length > 3) {
-      const suggestions = analyzeProductName(value)
-      if (suggestions.category) {
-        setIntelligentSuggestions(suggestions)
-      }
-    }
-  }
-
-  useEffect(() => {
-    if (!token) {
-      // If no token, redirect to login
-      navigate('/login')
-      return
-    }
-    
-    console.log('Products useEffect triggered:', { mode, id, loading, token })
-    if (mode === 'manage') {
-      console.log('Loading products for manage mode')
-      loadProducts()
-      loadVendors()
-    } else if (mode === 'edit' && id) {
-      console.log('Loading product for edit mode:', id)
-      loadProduct(parseInt(id))
-      loadVendors()
-    } else if (mode === 'add') {
-      console.log('Setting up add mode')
-      setLoading(true)
-      loadVendors().finally(() => {
-        setLoading(false)
-      })
-    } else if (mode === 'stock-adjustment') {
-      console.log('Setting up stock adjustment mode')
-      setLoading(true)
-      loadProducts()
-      loadVendors()
-      setLoading(false)
-    } else if (mode === 'stock-history') {
-      console.log('Setting up stock history mode')
-      setLoading(true)
-      loadProducts()
-      loadVendors()
-      setLoading(false)
-    }
-  }, [mode, id, token, navigate])
-
-  // Reload products when filters change
-  useEffect(() => {
-    console.log('Filter change useEffect triggered:', { mode, searchTerm, categoryFilter })
-    if (mode === 'manage') {
-      loadProducts()
-    }
-  }, [searchTerm, categoryFilter, itemTypeFilter, gstRateFilter, stockLevelFilter, supplierFilter, priceRangeFilter, statusFilter])
-
-  // Load stock movements when Stock History modal opens
-  useEffect(() => {
-    const loadMovements = async () => {
-      if (!showStockHistoryModal || !selectedProduct) return
-      try {
-        setMovementLoading(true)
-        const data = await apiGetStockMovementHistory(String(selectedProduct.id))
-        setMovements(data)
-      } catch (err: any) {
-        const msg = handleApiError(err)
-        setError(msg)
-      } finally {
-        setMovementLoading(false)
-      }
-    }
-    loadMovements()
-  }, [showStockHistoryModal, selectedProduct, handleApiError])
-
-  const loadProducts = async () => {
-    try {
-      console.log('loadProducts called')
-      setLoading(true)
-      setError(null)
-      
-      // Build filters object
-      const filters: ProductFilters = {}
-      
-      if (searchTerm) filters.search = searchTerm
-      if (categoryFilter !== 'all') filters.category = categoryFilter
-      if (itemTypeFilter !== 'all') filters.item_type = itemTypeFilter
-      if (gstRateFilter !== 'all') filters.gst_rate = parseFloat(gstRateFilter)
-      if (supplierFilter !== 'all') filters.supplier = supplierFilter
-      if (stockLevelFilter !== 'all') filters.stock_level = stockLevelFilter
-      if (statusFilter !== 'all') filters.status = statusFilter
-      
-      // Handle price range filter
-      if (priceRangeFilter !== 'all') {
-        const [min, max] = priceRangeFilter.split('-')
-        if (min) filters.price_min = parseFloat(min)
-        if (max) filters.price_max = parseFloat(max)
-      }
-      
-      console.log('Calling apiGetProducts with filters:', filters)
-      const data = await apiGetProducts(filters)
-      console.log('Products loaded:', data)
-      setProducts(data)
-    } catch (error: any) {
-      console.error('Error loading products:', error)
-      const errorMessage = handleApiError(error)
-      setError(errorMessage)
-    } finally {
-      console.log('Setting loading to false')
-      setLoading(false)
-    }
-  }
-
-  const loadProduct = async (productId: number) => {
-    try {
-      setLoading(true)
-      const data = await apiGetProducts()
-      const product = data.find(p => p.id === productId)
-      if (product) {
-        setCurrentProduct(product)
-        // Populate form data
-        setFormData({
-          name: product.name,
-          product_code: product.sku || '',
-          sku: product.sku || '',
-          unit: product.unit,
-          supplier: product.supplier || '',
-          description: product.description || '',
-          product_type: product.item_type,
-          category: product.category || '',
-          purchase_price: product.purchase_price?.toString() || '',
-          sales_price: product.sales_price.toString(),
-          gst_rate: product.gst_rate?.toString() || '18',
-          hsn_code: product.hsn || '',
-          opening_stock: product.stock.toString(),
-          closing_stock: product.stock.toString(),
-          notes: product.notes || ''
-        })
-    } else {
-        setError('Product not found')
-      }
-    } catch (error: any) {
-      handleApiError(error)
-      setError('Failed to load product')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadVendors = async () => {
-    try {
-      console.log('loadVendors called')
-      const data = await apiListParties()
-      const vendorData = data.filter(party => party.type === 'vendor')
-      setVendors(vendorData)
-      console.log('Vendors loaded:', vendorData)
-    } catch (error: any) {
-      console.error('Error loading vendors:', error)
-      handleApiError(error)
-    }
-  }
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      product_code: '',
-      sku: '',
-      unit: 'Pcs',
-      supplier: '',
-      description: '',
-      product_type: 'tradable',
-      category: '',
-      purchase_price: '',
-      sales_price: '',
-      gst_rate: '18',
-      hsn_code: '',
-      opening_stock: '',
-      closing_stock: '',
-      notes: ''
-    })
-    setError(null)
-  }
-
-  const handleAddProduct = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-    
-    try {
-      // Validate required fields
-      if (!formData.name.trim()) {
-        throw new Error('Product name is required')
-      }
-      if (formData.name.length > 100) {
-        throw new Error('Product name must be 100 characters or less')
-      }
-      if (!/^[a-zA-Z0-9\s]+$/.test(formData.name)) {
-        throw new Error('Product name must be alphanumeric with spaces only')
-      }
-      if (!formData.product_type) {
-        throw new Error('Product type is required')
-      }
-      if (!formData.sales_price || parseFloat(formData.sales_price) <= 0) {
-        throw new Error('Sales price must be greater than 0')
-      }
-      if (parseFloat(formData.sales_price) > 999999.99) {
-        throw new Error('Sales price must be less than 999,999.99')
-      }
-      if (!formData.opening_stock || parseFloat(formData.opening_stock) < 0) {
-        throw new Error('Opening stock must be 0 or greater')
-      }
-      if (parseFloat(formData.opening_stock) > 999999) {
-        throw new Error('Opening stock must be less than 999,999')
-      }
-      if (!formData.unit.trim()) {
-        throw new Error('Unit is required')
-      }
-      if (formData.sku && formData.sku.length > 50) {
-        throw new Error('SKU must be 50 characters or less')
-      }
-      if (formData.sku && !/^[a-zA-Z0-9\s]+$/.test(formData.sku)) {
-        throw new Error('SKU must be alphanumeric with spaces only')
-      }
-      if (formData.description && formData.description.length > 200) {
-        throw new Error('Description must be 200 characters or less')
-      }
-      if (formData.supplier && formData.supplier.length > 100) {
-        throw new Error('Supplier must be 100 characters or less')
-      }
-      if (formData.category && formData.category.length > 100) {
-        throw new Error('Category must be 100 characters or less')
-      }
-      if (formData.purchase_price && parseFloat(formData.purchase_price) > 999999.99) {
-        throw new Error('Purchase price must be less than 999,999.99')
-      }
-
-      // Map product_type to item_type for backend compatibility
-      const itemTypeMap: { [key: string]: string } = {
-        'Goods': 'tradable',
-        'Services': 'consumable'
-      }
-      
-      const itemType = itemTypeMap[formData.product_type] || 'tradable'
-
-      const payload = {
-        name: formData.name.trim(),
-        description: formData.description.trim() || null,
-        item_type: itemType,
-        sales_price: parseFloat(formData.sales_price),
-        purchase_price: formData.purchase_price && formData.purchase_price.trim() ? parseFloat(formData.purchase_price) : null,
-        stock: parseFloat(formData.opening_stock),
-        sku: formData.sku.trim() || null,
-        unit: formData.unit.trim(),
-        supplier: formData.supplier.trim() || null,
-        category: formData.category.trim() || null,
-        notes: formData.notes.trim() || null,
-        hsn: formData.hsn_code.trim() || null,
-        gst_rate: formData.gst_rate && formData.gst_rate.trim() !== '' ? parseFloat(formData.gst_rate) : null
-      }
-      
-      await apiCreateProduct(payload)
-      navigate('/products')
-    } catch (error: any) {
-      handleApiError(error)
-      let errorMessage = 'Failed to create product. Please try again.'
-      if (error.message) {
-        errorMessage = error.message
-      }
-      setError(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleEditProduct = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!currentProduct) return
-    try {
-      // Map product_type to item_type for backend compatibility
-      const itemTypeMap: { [key: string]: string } = {
-        'Goods': 'tradable',
-        'Services': 'consumable'
-      }
-      
-      const itemType = itemTypeMap[formData.product_type] || 'tradable'
-
-      const payload = {
-        name: formData.name,
-        description: formData.description,
-        item_type: itemType,
-        sales_price: parseFloat(formData.sales_price),
-        purchase_price: formData.purchase_price ? parseFloat(formData.purchase_price) : null,
-        stock: parseFloat(formData.opening_stock),
-        sku: formData.sku,
-        unit: formData.unit,
-        supplier: formData.supplier,
-        category: formData.category,
-        notes: formData.notes,
-        hsn: formData.hsn_code,
-        gst_rate: formData.gst_rate && formData.gst_rate !== '' ? parseFloat(formData.gst_rate) : null
-      }
-      await apiUpdateProduct(currentProduct.id, payload)
-      navigate('/products')
-    } catch (error: any) {
-      handleApiError(error)
-      setError('Failed to update product')
-    }
-  }
-
-  const handleToggleProduct = async (productId: number) => {
-    try {
-      await apiToggleProduct(productId)
-      loadProducts()
-    } catch (error: any) {
-      handleApiError(error)
-    }
-  }
+  const handleClearAllFilters = useCallback(() => {
+    resetAllFilters()
+    clearURLFilters()
+  }, [resetAllFilters, clearURLFilters])
 
   // Render different content based on mode
   if (mode === 'add' || mode === 'edit') {
-    return (
-      <div style={{ padding: '20px' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: '24px',
-          paddingBottom: '12px',
-          borderBottom: '2px solid #e9ecef'
-        }}>
-          <h1 style={{ margin: '0', fontSize: '28px', fontWeight: '600', color: '#2c3e50' }}>
-            {mode === 'add' ? 'Add New Product' : 'Edit Product'}
-          </h1>
-          <Button variant="secondary" onClick={() => navigate('/products')}>
-            ← Back to Products
-          </Button>
-        </div>
-
-        {error && <ErrorMessage message={error} />}
-
-        {loading && (
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            minHeight: '100px',
-            fontSize: '16px',
-            color: '#6c757d'
-          }}>
-            {mode === 'add' ? 'Loading form...' : 'Loading product data...'}
-          </div>
-        )}
-
-        {!loading && (
-          <form onSubmit={mode === 'add' ? handleAddProduct : handleEditProduct} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          
-          {/* Row 1: Product Details | Price Details */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-            
-            {/* Product Details Section */}
-            <div>
-              <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '2px' }}>
-                Product Details
-              </h3>
-              
-              {/* Intelligent Suggestions */}
-              {intelligentSuggestions && (
-                <div style={{
-                  padding: '12px 16px',
-                  backgroundColor: '#e7f3ff',
-                  border: '1px solid #17a2b8',
-                  borderRadius: '6px',
-                  marginBottom: '16px'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <h4 style={{ margin: '0', fontSize: '14px', color: '#0056b3', fontWeight: '600' }}>
-                      🤖 Intelligent Suggestions
-                    </h4>
-                    <Button
-                      onClick={applyIntelligentSuggestions}
-                      variant="primary"
-                      style={{ fontSize: '11px', padding: '4px 8px' }}
-                    >
-                      Apply All
-                    </Button>
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#0056b3' }}>
-                    <div>Category: {intelligentSuggestions.category}</div>
-                    <div>HSN Code: {intelligentSuggestions.hsnCode}</div>
-                    <div>GST Rate: {intelligentSuggestions.gstRate}%</div>
-                    <div>Unit: {intelligentSuggestions.unit}</div>
-                  </div>
-                </div>
-              )}
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-                {/* First Row */}
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Product Name *</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => handleFormDataChange('name', e.target.value)}
-                    style={formStyles.input}
-                    required
-                  />
-                </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Product Code *</label>
-                  <input
-                    type="text"
-                    value={formData.product_code}
-                    onChange={(e) => setFormData(prev => ({ ...prev, product_code: e.target.value }))}
-                    style={formStyles.input}
-                    required
-                  />
-                </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>SKU</label>
-                  <input
-                    type="text"
-                    value={formData.sku}
-                    onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
-                    style={formStyles.input}
-                  />
-                </div>
-                
-                {/* Second Row */}
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Unit of Measure *</label>
-                  <select
-                    value={formData.unit}
-                    onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
-                    style={formStyles.select}
-                    required
-                  >
-                    <option value="Pcs">Pieces</option>
-                    <option value="Kg">Kilograms</option>
-                    <option value="Ltr">Liters</option>
-                    <option value="Mtr">Meters</option>
-                    <option value="Box">Box</option>
-                    <option value="Set">Set</option>
-                  </select>
-                </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Product Supplier</label>
-                  <select
-                    value={formData.supplier}
-                    onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))}
-                    style={formStyles.select}
-                  >
-                    <option value="">Select Supplier</option>
-                    {vendors.map(vendor => (
-                      <option key={vendor.id} value={vendor.name}>{vendor.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Product Type *</label>
-                  <select
-                    value={formData.product_type}
-                    onChange={(e) => setFormData(prev => ({ ...prev, product_type: e.target.value }))}
-                    style={formStyles.select}
-                    required
-                  >
-                    <option value="Goods">Goods</option>
-                    <option value="Services">Services</option>
-                  </select>
-                </div>
-                
-                {/* Third Row */}
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Product Category</label>
-                  <input
-                    type="text"
-                    value={formData.category}
-                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                    style={formStyles.input}
-                  />
-                </div>
-                <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
-                  <label style={formStyles.label}>Product Description</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    style={formStyles.textarea}
-                    placeholder="Enter detailed product description..."
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Price Details Section */}
-            <div>
-              <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '2px' }}>
-                Price Details
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                {/* First Row: Purchase Price (optional) | Selling Price * */}
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Purchase Price (optional)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.purchase_price}
-                    onChange={(e) => setFormData(prev => ({ ...prev, purchase_price: e.target.value }))}
-                    style={formStyles.input}
-                    placeholder="Enter purchase price"
-                  />
-                </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Selling Price *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.sales_price}
-                    onChange={(e) => setFormData(prev => ({ ...prev, sales_price: e.target.value }))}
-                    style={formStyles.input}
-                    required
-                    placeholder="Enter selling price"
-                  />
-                </div>
-                
-                {/* Second Row: HSN Code (optional) | GST Rate (optional) */}
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>HSN Code (optional)</label>
-                  <input
-                    type="text"
-                    value={formData.hsn_code}
-                    onChange={(e) => setFormData(prev => ({ ...prev, hsn_code: e.target.value }))}
-                    style={formStyles.input}
-                    placeholder="Enter HSN code"
-                  />
-                </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>GST Rate (optional)</label>
-                  <select
-                    value={formData.gst_rate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, gst_rate: e.target.value }))}
-                    style={formStyles.select}
-                  >
-                    <option value="">Select GST Rate</option>
-                    <option value="0">0%</option>
-                    <option value="5">5%</option>
-                    <option value="12">12%</option>
-                    <option value="18">18%</option>
-                    <option value="28">28%</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Row 2: Stock Details | Others */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-            
-            {/* Stock Details Section */}
-            <div>
-              <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '2px' }}>
-                Stock Details
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Opening Stock</label>
-                  <input
-                    type="number"
-                    step="1"
-                    value={formData.opening_stock}
-                    onChange={(e) => setFormData(prev => ({ ...prev, opening_stock: e.target.value }))}
-                    style={formStyles.input}
-                    placeholder="Enter opening stock quantity"
-                  />
-                </div>
-                <div style={formStyles.formGroup}>
-                  <label style={formStyles.label}>Closing Stock</label>
-                  <input
-                    type="number"
-                    step="1"
-                    value={formData.closing_stock || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, closing_stock: e.target.value }))}
-                    style={formStyles.input}
-                    placeholder="Enter closing stock quantity"
-                    readOnly
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Others Section */}
-            <div>
-              <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '2px' }}>
-                Others
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
-                  <label style={formStyles.label}>Notes</label>
-                  <textarea
-                    value={formData.notes}
-                    onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                    style={formStyles.textarea}
-                    placeholder="Enter any additional notes..."
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-
-
-          {/* Form Actions */}
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
-            <Button type="button" variant="secondary" onClick={() => navigate('/products')}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" disabled={loading}>
-              {loading ? 'Saving...' : (mode === 'add' ? 'Add Product' : 'Update Product')}
-            </Button>
-          </div>
-        </form>
-      )}
-      </div>
-    )
   }
+
+  const [summaryItems, setSummaryItems] = useState<SummaryCardItem[]>([])
+
+  // Load products and compute KPIs
+  const loadProducts = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Map UI filters to API filters
+      const apiFilters: ProductFilters = {}
+      if (searchTerm) apiFilters.search = searchTerm
+      if (categoryFilter && categoryFilter !== 'all') apiFilters.category = categoryFilter
+      if (itemTypeFilter && itemTypeFilter !== 'all') apiFilters.item_type = itemTypeFilter
+      if (gstRateFilter && gstRateFilter !== 'all') apiFilters.gst_rate = parseInt(gstRateFilter)
+      if (supplierFilter && supplierFilter !== 'all') apiFilters.supplier = supplierFilter
+      if (stockLevelFilter && stockLevelFilter !== 'all') apiFilters.stock_level = stockLevelFilter
+      if (priceRangeFilter && priceRangeFilter !== 'all') {
+        const [minStr, maxStr] = priceRangeFilter.split('-')
+        const min = minStr ? parseInt(minStr) : undefined
+        const max = maxStr === '' ? undefined : (maxStr ? parseInt(maxStr) : undefined)
+        if (min !== undefined) apiFilters.price_min = min
+        if (max !== undefined) apiFilters.price_max = max
+      }
+
+      const data = await apiGetProducts(apiFilters)
+      setProducts(data)
+
+      // KPIs computed client-side to keep in sync with current view filters
+      const total = data.length
+      const inStock = data.filter(p => p.stock > 0).length
+      const outOfStock = data.filter(p => p.stock === 0).length
+      const lowStock = data.filter(p => p.stock > 0 && p.stock < 10).length
+      const totalStockValueNumber = data.reduce((acc, p) => acc + (p.purchase_price ?? p.sales_price) * p.stock, 0)
+      const totalStockValue = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(totalStockValueNumber)
+
+      setSummaryItems([
+        { label: 'Total Products', value: total, icon: 'fa-boxes', color: 'primary' },
+        { label: 'In Stock', value: inStock, icon: 'fa-check-circle', color: 'success' },
+        { label: 'Out of Stock', value: outOfStock, icon: 'fa-times-circle', color: 'danger' },
+        { label: 'Low Stock', value: lowStock, icon: 'fa-exclamation-triangle', color: 'warning' },
+        { label: 'Total Stock Value', value: totalStockValue, icon: 'fa-rupee-sign', color: 'info' },
+      ])
+    } catch (err: any) {
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }, [searchTerm, categoryFilter, itemTypeFilter, gstRateFilter, supplierFilter, stockLevelFilter, priceRangeFilter, handleApiError])
+
+  useEffect(() => {
+    if (mode === 'manage') {
+      loadProducts()
+    }
+  }, [mode, loadProducts])
+
+  // Toggle active/inactive for a product and refresh list + KPIs
+  const handleToggleProduct = useCallback(async (id: number) => {
+    try {
+      setLoading(true)
+      await apiToggleProduct(id)
+      await loadProducts()
+    } catch (err: any) {
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }, [loadProducts, handleApiError])
+
+  // Note: Do not early-return here. Mode-specific renders are handled below.
 
   // Stock Adjustment Mode
   if (mode === 'stock-adjustment') {
@@ -1059,7 +371,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   }
 
   // Filter and sort products
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = products.filter((product: Product) => {
     const searchLower = searchTerm.toLowerCase()
     const matchesSearch = (
       product.name.toLowerCase().includes(searchLower) ||
@@ -1076,9 +388,10 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     return matchesSearch && matchesStatus
   })
 
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    const aValue = a[sortField]
-    const bValue = b[sortField]
+  const sortedProducts = [...filteredProducts].sort((a: Product, b: Product) => {
+    const field = sortField as keyof Product
+    const aValue = a[field]
+    const bValue = b[field]
     
     // Handle null values
     if (aValue === null && bValue === null) return 0
@@ -1099,7 +412,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     const headers = ['Name', 'SKU', 'Category', 'Unit', 'Stock', 'Sales Price', 'GST Rate', 'Status']
     const csvContent = [
       headers.join(','),
-      ...paginatedProducts.map(product => [
+      ...paginatedProducts.map((product: Product) => [
         product.name,
         product.sku || '',
         product.category || '',
@@ -1166,6 +479,11 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           </div>
         </div>
 
+      {/* KPIs */}
+      <div style={{ marginBottom: '16px' }}>
+        <SummaryCardGrid items={summaryItems} />
+      </div>
+
       {/* Enhanced Filter Options */}
       <EnhancedFilterBar 
         title="Product Filters"
@@ -1229,7 +547,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Status</span>
           <FilterDropdown
             value={statusFilter}
-            onChange={(value) => setStatusFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value: string | string[]) => setStatusFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Status' },
               { value: 'active', label: 'Active' },
@@ -1243,7 +561,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Category</span>
           <FilterDropdown
             value={categoryFilter}
-            onChange={(value) => setCategoryFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value: string | string[]) => setCategoryFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Categories' },
               { value: 'Electronics', label: 'Electronics' },
@@ -1260,7 +578,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Item Type</span>
           <FilterDropdown
             value={itemTypeFilter}
-            onChange={(value) => setItemTypeFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value: string | string[]) => setItemTypeFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Types' },
               { value: 'tradable', label: 'Tradable' },
@@ -1275,7 +593,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>GST Rate</span>
           <FilterDropdown
             value={gstRateFilter}
-            onChange={(value) => setGstRateFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value: string | string[]) => setGstRateFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Rates' },
               { value: '0', label: '0%' },
@@ -1292,7 +610,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Stock Level</span>
           <FilterDropdown
             value={stockLevelFilter}
-            onChange={(value) => setStockLevelFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value: string | string[]) => setStockLevelFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Levels' },
               { value: 'low_stock', label: 'Low Stock (< 10)' },
@@ -1307,7 +625,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Price Range</span>
           <FilterDropdown
             value={priceRangeFilter}
-            onChange={(value) => setPriceRangeFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
+            onChange={(value: string | string[]) => setPriceRangeFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Prices' },
               { value: '0-100', label: '₹0 - ₹100' },
@@ -1351,7 +669,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
             </tr>
           </thead>
                       <tbody>
-              {paginatedProducts.map(product => (
+              {paginatedProducts.map((product: Product) => (
               <tr key={product.id} style={{ 
                 opacity: product.is_active ? 1 : 0.6,
                 borderBottom: '1px solid #e9ecef',
@@ -1656,7 +974,7 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
   }
 
   const handleStockInputChange = (field: keyof StockFormData, value: string) => {
-    setStockFormData(prev => ({ ...prev, [field]: value }))
+    setStockFormData((prev: StockFormData) => ({ ...prev, [field]: value }))
   }
 
   if (loading) {

@@ -10,6 +10,10 @@ import logging
 from ..branding_manager import branding_manager
 from ..tenant_config import tenant_config_manager
 from ..security_manager import security_manager
+from ..config import settings
+from pathlib import Path
+from io import BytesIO
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
@@ -76,39 +80,94 @@ async def update_tenant_branding(tenant_id: str, branding_updates: Dict[str, Any
 
 @router.post("/{tenant_id}/logo")
 async def upload_logo(tenant_id: str, file: UploadFile = File(...)):
-    """Upload logo for tenant branding"""
+    """Upload logo for tenant branding.
+
+    Single-tenant behavior:
+    - Ignores provided tenant_id and always uses default tenant slug.
+    - Saves a single logo file at `uploads/branding/logo.png`, overwriting existing.
+    - Enforces PNG/JPEG only and max 2MB size for logos.
+    """
     try:
-        # Validate tenant exists
-        config = await tenant_config_manager.get_tenant_config(tenant_id)
+        # Resolve tenant according to multi-tenant setting
+        target_tenant = tenant_id
+        if not settings.multi_tenant_enabled:
+            target_tenant = settings.default_tenant_slug
+
+        # Ensure tenant exists (in single-tenant mode, auto-create minimal config if missing)
+        config = await tenant_config_manager.get_tenant_config(target_tenant)
         if not config:
-            raise HTTPException(status_code=404, detail="Tenant not found")
-        
-        # Validate file type
-        if not file.content_type.startswith('image/'):
-            raise HTTPException(status_code=400, detail="File must be an image")
-        
-        # Read file content
+            if settings.multi_tenant_enabled:
+                raise HTTPException(status_code=404, detail="Tenant not found")
+            # Auto-create default tenant config for single-tenant mode
+            await tenant_config_manager.add_tenant(target_tenant, {
+                'database_url': settings.database_url,
+                'domain': 'default',
+                'branding': {},
+                'features': [],
+                'gst_number': '',
+                'contact_info': {},
+                'is_active': True
+            })
+
+        # Validate file type by content_type first
+        allowed_content_types = {"image/png", "image/jpeg"}
+        if file.content_type not in allowed_content_types:
+            raise HTTPException(status_code=400, detail="Only PNG and JPEG images are allowed")
+
+        # Read file content and enforce size
         content = await file.read()
-        
-        # Save logo (in production, this would save to a file system or cloud storage)
-        # For now, we'll update the branding with the file name
+        max_logo_size = min(2 * 1024 * 1024, settings.max_file_size)  # 2MB cap for logos
+        if len(content) > max_logo_size:
+            raise HTTPException(status_code=400, detail="Logo file too large (max 2MB)")
+
+        # Validate and normalize image via Pillow; convert to PNG for consistency
+        try:
+            img = Image.open(BytesIO(content))
+            if img.format not in {"PNG", "JPEG", "JPG"}:
+                raise HTTPException(status_code=400, detail="Only PNG and JPEG images are allowed")
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid image file")
+
+        # Prepare filesystem path: uploads/branding/logo.png
+        upload_root = Path(settings.upload_dir)
+        logo_dir = upload_root / "branding"
+        logo_dir.mkdir(parents=True, exist_ok=True)
+        logo_path = logo_dir / "logo.png"
+
+        # Save as PNG, overwrite existing
+        try:
+            with BytesIO() as out_buf:
+                # Preserve transparency if present
+                save_img = img.convert("RGBA") if img.mode in ("RGBA", "P") else img.convert("RGB")
+                save_img.save(out_buf, format="PNG")
+                data = out_buf.getvalue()
+            logo_path.write_bytes(data)
+        except Exception as e:
+            logger.error(f"Failed to save logo file: {e}")
+            raise HTTPException(status_code=500, detail="Failed to save logo file")
+
+        # Update branding to point to local file path; clear cache for immediate effect
         branding_updates = {
-            'logo_url': f"/assets/logos/{tenant_id}/{file.filename}",
-            'logo_data': None  # Would be base64 encoded in production
+            'logo_url': str(logo_path),
+            'logo_data': None
         }
-        
-        success = await branding_manager.update_tenant_branding(tenant_id, branding_updates)
-        
+
+        success = await branding_manager.update_tenant_branding(target_tenant, branding_updates)
+        await branding_manager.clear_branding_cache(target_tenant)
+
         if success:
             return {
-                "tenant_id": tenant_id,
+                "tenant_id": target_tenant,
                 "message": "Logo uploaded successfully",
-                "filename": file.filename,
+                "filename": "logo.png",
+                "path": str(logo_path),
                 "status": "success"
             }
         else:
             raise HTTPException(status_code=500, detail="Failed to upload logo")
-            
+
     except HTTPException:
         raise
     except Exception as e:

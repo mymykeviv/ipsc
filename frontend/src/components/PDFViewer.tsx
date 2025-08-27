@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { apiGetInvoicePDF, apiGetGSTInvoiceTemplates, GSTInvoiceTemplate, apiGetStockMovementHistoryPDFPreview } from '../lib/api'
+import { apiGetInvoicePDF, apiGetGSTInvoiceTemplates, GSTInvoiceTemplate, apiGetStockMovementHistoryPDFPreview, PaperSize } from '../lib/api'
 import { Modal } from './Modal'
 import { Button } from './Button'
 
@@ -39,6 +39,7 @@ export function PDFViewer({
   const [error, setError] = useState<string | null>(null)
   const [templates, setTemplates] = useState<GSTInvoiceTemplate[]>([])
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | undefined>(undefined)
+  const [selectedPaperSize, setSelectedPaperSize] = useState<PaperSize>('A4')
   const [iframeKey, setIframeKey] = useState(0)
 
   // Memoize filters to prevent unnecessary re-renders
@@ -51,14 +52,33 @@ export function PDFViewer({
     }
   }, [isOpen, type, invoiceId])
 
-  // Reload PDF when invoice params or selected template change
+  // Derive available paper sizes from selected template (fallback to both if none)
+  const availablePaperSizes: PaperSize[] = useMemo(() => {
+    const t = templates.find((tpl: GSTInvoiceTemplate) => tpl.id === (selectedTemplateId ?? -1))
+    const allowed: PaperSize[] = ['A4', 'A5']
+    if (!t || !t.paper_sizes) return allowed
+    const parsed = t.paper_sizes
+      .split(',')
+      .map((s: string) => s.trim().toUpperCase())
+      .filter((s: string) => (s === 'A4' || s === 'A5')) as PaperSize[]
+    return parsed.length ? parsed : allowed
+  }, [templates, selectedTemplateId])
+
+  // Ensure selectedPaperSize is supported by current template
+  useEffect(() => {
+    if (!availablePaperSizes.includes(selectedPaperSize)) {
+      setSelectedPaperSize(availablePaperSizes[0])
+    }
+  }, [availablePaperSizes])
+
+  // Reload PDF when invoice params, selected template, or paper size change
   useEffect(() => {
     if (isOpen && type === 'invoice' && invoiceId) {
       loadInvoicePDF()
     } else if (isOpen && type === 'stock-history') {
       loadStockHistoryPDF()
     }
-  }, [isOpen, type, invoiceId, selectedTemplateId, financialYear, productId])
+  }, [isOpen, type, invoiceId, selectedTemplateId, selectedPaperSize, financialYear, productId])
 
   // Separate effect for filters to prevent unnecessary re-renders
   useEffect(() => {
@@ -93,7 +113,7 @@ export function PDFViewer({
         URL.revokeObjectURL(pdfUrl)
         setPdfUrl(null)
       }
-      const pdfBlob = await apiGetInvoicePDF(invoiceId!, selectedTemplateId)
+      const pdfBlob = await apiGetInvoicePDF(invoiceId!, selectedTemplateId, selectedPaperSize)
       const url = URL.createObjectURL(pdfBlob)
       setPdfUrl(url)
       // Force iframe to remount so it reloads the new src reliably
@@ -223,7 +243,7 @@ export function PDFViewer({
                     </label>
                     <select
                       value={selectedTemplateId ?? ''}
-                      onChange={(e) => {
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                         const templateId = e.target.value ? parseInt(e.target.value) : undefined
                         // Revoke old URL and update selection; effect will load the new PDF
                         if (pdfUrl) {
@@ -245,6 +265,35 @@ export function PDFViewer({
                         <option key={template.id} value={template.id}>
                           {template.name} {template.is_default ? '(Default)' : ''} - {template.requires_gst ? 'GST' : 'Non-GST'}
                         </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {type === 'invoice' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <label style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>
+                      Paper size:
+                    </label>
+                    <select
+                      value={selectedPaperSize}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                        const ps = (e.target.value as PaperSize)
+                        if (pdfUrl) {
+                          URL.revokeObjectURL(pdfUrl)
+                          setPdfUrl(null)
+                        }
+                        setSelectedPaperSize(ps)
+                      }}
+                      style={{
+                        padding: '4px 8px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '4px',
+                        fontSize: '14px',
+                        backgroundColor: 'white'
+                      }}
+                    >
+                      {availablePaperSizes.map(ps => (
+                        <option key={ps} value={ps}>{ps}</option>
                       ))}
                     </select>
                   </div>

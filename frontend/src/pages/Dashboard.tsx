@@ -251,7 +251,7 @@ export function Dashboard() {
   }
 
   return (
-    <div style={{ 
+    <div className="dashboard-scale" style={{ 
       padding: '24px', 
       maxWidth: '1400px', 
       margin: '0 auto',
@@ -345,27 +345,117 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Date Filter */}
+      {/* Critical Actions (moved up, replacing Date Filter section) */}
       <div style={{ 
-        marginBottom: '24px',
-        padding: '20px',
+        padding: '24px',
         backgroundColor: 'white',
         borderRadius: '12px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        marginBottom: '24px'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div>
-            <label style={{ fontSize: '14px', color: '#495057', marginBottom: '8px', display: 'block', fontWeight: '500' }}>
-              Date Range
-            </label>
-            <DateFilter
-              value={dateFilter}
-              onChange={setDateFilter}
-              savedPresets={savedPresets}
-              onSavePreset={savePreset}
-              onDeletePreset={deletePreset}
-            />
-          </div>
+        <h3 style={{ 
+          margin: '0 0 20px 0', 
+          fontSize: '20px', 
+          fontWeight: '600', 
+          color: '#2c3e50',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          ⚡ Critical Actions
+        </h3>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(128px, 1fr))', 
+          gap: '8px'
+        }}>
+          <Button 
+            onClick={() => navigate('/invoices/add')}
+            variant="primary"
+            style={{ 
+              padding: '16px 20px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              fontWeight: '600',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+          >
+            📄 Create Invoice
+          </Button>
+          
+          <Button 
+            onClick={() => navigate('/payments/invoice/add')}
+            variant="primary"
+            style={{ 
+              padding: '16px 20px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              fontWeight: '600',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+          >
+            💰 Record Payment
+          </Button>
+          
+          <Button 
+            onClick={() => navigate('/purchases/add')}
+            variant="primary"
+            style={{ 
+              padding: '16px 20px',
+              backgroundColor: '#ffc107',
+              color: '#212529',
+              fontWeight: '600',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+          >
+            📦 Add Purchase
+          </Button>
+          
+          <Button 
+            onClick={() => navigate('/products')}
+            variant="primary"
+            style={{ 
+              padding: '16px 20px',
+              backgroundColor: '#6f42c1',
+              color: 'white',
+              fontWeight: '600',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+          >
+            📊 Adjust Stock
+          </Button>
         </div>
       </div>
 
@@ -386,9 +476,9 @@ export function Dashboard() {
       {cashflowData && (
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-          gap: '20px',
-          marginBottom: '24px'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+          gap: '12px',
+          marginBottom: '18px'
         }}>
           {/* Cashflow Summary */}
           <div style={{ 
@@ -565,119 +655,7 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Critical Actions */}
-      <div style={{ 
-        padding: '24px',
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        marginBottom: '24px'
-      }}>
-        <h3 style={{ 
-          margin: '0 0 20px 0', 
-          fontSize: '20px', 
-          fontWeight: '600', 
-          color: '#2c3e50',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
-          ⚡ Critical Actions
-        </h3>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-          gap: '16px'
-        }}>
-          <Button 
-            onClick={() => navigate('/invoices/add')}
-            variant="primary"
-            style={{ 
-              padding: '16px 20px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              fontWeight: '600',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
-            }}
-          >
-            📄 Create Invoice
-          </Button>
-          
-          <Button 
-            onClick={() => navigate('/payments/invoice/add')}
-            variant="primary"
-            style={{ 
-              padding: '16px 20px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              fontWeight: '600',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
-            }}
-          >
-            💰 Record Payment
-          </Button>
-          
-          <Button 
-            onClick={() => navigate('/purchases/add')}
-            variant="primary"
-            style={{ 
-              padding: '16px 20px',
-              backgroundColor: '#ffc107',
-              color: '#212529',
-              fontWeight: '600',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
-            }}
-          >
-            📦 Add Purchase
-          </Button>
-          
-          <Button 
-            onClick={() => navigate('/products')}
-            variant="primary"
-            style={{ 
-              padding: '16px 20px',
-              backgroundColor: '#6f42c1',
-              color: 'white',
-              fontWeight: '600',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
-            }}
-          >
-            📊 Adjust Stock
-          </Button>
-        </div>
-      </div>
+
 
       {/* GST Summary Widget */}
       {gstData && (
@@ -818,8 +796,8 @@ export function Dashboard() {
               </h4>
               <div style={{ 
                 display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
-                gap: '12px'
+                gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', 
+                gap: '6px'
               }}>
                 {gstData.rate_breakup.map((rate, index) => (
                   <div key={index} style={{ 
@@ -846,9 +824,9 @@ export function Dashboard() {
       {/* Status Dashboard */}
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
-        gap: '20px',
-        marginBottom: '24px'
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
+        gap: '12px',
+        marginBottom: '18px'
       }}>
         {/* Pending Items */}
         <div style={{ 

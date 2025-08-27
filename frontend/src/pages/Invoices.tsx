@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
-import { apiListParties, apiGetProducts, apiCreateInvoice, apiUpdateInvoice, apiGetInvoice, apiDeleteInvoice, apiEmailInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, apiGetInvoices, apiUpdateInvoiceStatus, apiGetInvoicePDF, Party, Product, Payment, PaginationInfo, Invoice } from '../lib/api'
+import { apiListParties, apiGetProducts, apiCreateInvoice, apiUpdateInvoice, apiGetInvoice, apiDeleteInvoice, apiEmailInvoice, apiAddPayment, apiGetInvoicePayments, apiDeletePayment, apiGetInvoices, apiUpdateInvoiceStatus, apiGetInvoicePDF, Party, Product, Payment, PaginationInfo, Invoice, InvoiceSummaryTotals } from '../lib/api'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler, createInvoiceErrorHandler, createInvoiceGridErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
@@ -19,6 +19,8 @@ import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
 import { useFilterNavigation } from '../utils/filterNavigation'
 import { useFilterReset } from '../hooks/useFilterReset'
 import { getDefaultFilterState } from '../config/defaultFilterStates'
+import { featureFlags } from '../config/featureFlags'
+import { SummaryTotals } from '../components/SummaryTotals'
 
 interface InvoicesProps {
   mode?: 'manage' | 'add' | 'edit' | 'payments' | 'edit-payment'
@@ -30,6 +32,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
   const { token, forceLogout } = useAuth()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [currentInvoice, setCurrentInvoice] = useState<Invoice | null>(null)
+  const [summaryTotals, setSummaryTotals] = useState<InvoiceSummaryTotals | null>(null)
   
   // Modal states
   const [pdfModalOpen, setPdfModalOpen] = useState(false)
@@ -86,7 +89,7 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
   const [gstTypeFilter, setGstTypeFilter] = useState<string>(defaultState.gstTypeFilter)
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>(defaultState.paymentStatusFilter)
   const [dateFilter, setDateFilter] = useState<DateRange>(defaultState.dateFilter)
-  const [isDateFilterActive, setIsDateFilterActive] = useState(true)
+  const [isDateFilterActive, setIsDateFilterActive] = useState(false)
   
   // Saved presets functionality
   const { savedPresets, savePreset, deletePreset } = useSavedPresets()
@@ -248,8 +251,16 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
       if (!response.ok) throw new Error('Failed to load invoices')
       
       const data = await response.json()
+      // Debug logs to diagnose totals rendering issues
+      console.debug('[Invoices] Fetched invoices payload', {
+        hasMeta: !!data?.meta,
+        hasTotals: !!data?.meta?.totals,
+        totals: data?.meta?.totals,
+      })
       setInvoices(data.invoices)
       setPagination(data.pagination)
+      // Optional meta.totals from backend; maintain backward compatibility
+      setSummaryTotals(data?.meta?.totals ?? null)
     } catch (err: any) {
       const errorMessage = handleGridError(err)
       setError(errorMessage)
@@ -433,6 +444,11 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
         }}>
           {error}
         </div>
+      )}
+
+      {/* Feature-flagged INR Summary Totals */}
+      {featureFlags.invoicesSummaryTotals && summaryTotals && (
+        <SummaryTotals totals={summaryTotals} />
       )}
 
       {/* Enhanced Filter Options */}

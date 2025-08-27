@@ -1,0 +1,332 @@
+---
+trigger: always_on
+description: Development Prompt for IPSC Project
+globs:
+---
+## 🎯 **Mission Statement**
+You are an Full Stack development agent working on the IPSC (Invoice & Purchase System for Cashflow) project. Your primary goal is to implement features and fixes while maintaining high code quality, preventing recurring issues, and ensuring system reliability.
+
+---
+
+## 📋 **MANDATORY PRE-IMPLEMENTATION CHECKLIST**
+
+### **Before Writing Any Code:**
+```
+□ Search for existing functions/endpoints to prevent duplicates
+□ Verify API contracts between frontend/backend
+□ Check TypeScript types are properly defined
+□ Validate API endpoints exist and work
+□ Review existing patterns in the codebase
+□ Understand the data flow and dependencies
+```
+
+---
+
+## �� **CRITICAL RULES - NEVER VIOLATE**
+
+### **1. Duplicate Prevention Protocol**
+```bash
+# ALWAYS run these searches before adding new functions:
+grep_search("functionName") in frontend/src/lib/api.ts
+grep_search("endpointName") in backend/app/routers.py
+grep_search("className") in backend/app/models.py
+```
+
+**NEVER** add a function without first checking if it already exists.
+
+### **2. API Contract Validation**
+```typescript
+// ALWAYS verify the actual API response structure:
+// 1. Check backend endpoint definition
+// 2. Match frontend interface with backend response
+// 3. Handle both success and error cases
+// 4. Use proper TypeScript types
+```
+
+### **3. Type Safety Enforcement**
+```typescript
+// NEVER use 'any' type
+// ALWAYS define proper interfaces
+interface ApiResponse {
+  data: SpecificType[]
+  total: number
+  status: string
+}
+```
+
+---
+
+## �� **DEVELOPMENT WORKFLOW**
+
+### **Step 1: Analysis & Planning**
+```bash
+# 1. Understand the requirement
+# 2. Search existing codebase for related functionality
+# 3. Identify affected components (frontend/backend/database)
+# 4. Plan the implementation approach
+# 5. Consider edge cases and error scenarios
+```
+
+### **Step 2: Backend Implementation (if needed)**
+```python
+# 1. Check existing models and endpoints
+# 2. Add new endpoints with proper validation
+# 3. Update Pydantic models if needed
+# 4. Add proper error handling
+# 5. Test endpoints manually
+```
+
+### **Step 3: Frontend Implementation**
+```typescript
+# 1. Add TypeScript interfaces for API responses
+# 2. Implement API functions with proper error handling
+# 3. Update components to use new APIs
+# 4. Handle loading states and error states
+# 5. Maintain consistent UI patterns
+```
+
+### **Step 4: Testing & Validation**
+```bash
+# 1. Run automated tests
+# 2. Test manually in browser
+# 3. Verify API endpoints work
+# 4. Check for console errors
+# 5. Validate data flow
+```
+
+---
+
+## 📝 **CODE QUALITY STANDARDS**
+
+### **API Function Template**
+```typescript
+export async function apiFunctionName(params: ParamType): Promise<ReturnType> {
+  const r = await fetch('/api/endpoint', {
+    method: 'POST', // or GET, PUT, DELETE
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('auth_token')}` 
+    },
+    body: JSON.stringify(params) // for POST/PUT
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+```
+
+### **Error Handling Pattern**
+```typescript
+try {
+  const result = await apiCall()
+  // Handle success
+} catch (err: any) {
+  if (err.message.includes('422')) {
+    // Handle validation errors
+  } else if (err.message.includes('404')) {
+    // Handle not found
+  } else if (err.message.includes('401')) {
+    // Handle authentication errors
+  }
+  handleApiError(err)
+}
+```
+
+### **Component State Management**
+```typescript
+const [data, setData] = useState<DataType[]>([])
+const [loading, setLoading] = useState(false)
+const [error, setError] = useState<string | null>(null)
+
+const loadData = async () => {
+  try {
+    setLoading(true)
+    setError(null)
+    const result = await apiCall()
+    setData(result)
+  } catch (err: any) {
+    setError(err.message)
+  } finally {
+    setLoading(false)
+  }
+}
+```
+
+---
+
+## 🧪 **TESTING REQUIREMENTS**
+
+### **Before Committing:**
+```bash
+# 1. Run the test suite
+python test_suite.py --env dev
+
+# 2. Run E2E tests for affected functionality
+cd frontend && npm run test:e2e -- --grep "related-feature"
+
+# 3. Manual testing in browser
+# 4. API endpoint validation
+```
+
+### **Test Coverage:**
+- ✅ Backend API endpoints
+- ✅ Frontend API functions
+- ✅ Component functionality
+- ✅ Error handling scenarios
+- ✅ Data validation
+
+---
+
+## 📚 **DOCUMENTATION REQUIREMENTS**
+
+### **Changelog Updates:**
+```markdown
+## [Version] - Date
+
+### Fixed
+- Specific issue description
+- What was changed and why
+
+### Added
+- New functionality description
+- API endpoints added
+
+### Changed
+- Breaking changes or improvements
+```
+
+### **Code Comments:**
+```typescript
+/**
+ * Fetches purchase payments with optional filtering
+ * @param purchaseId - Optional purchase ID to filter by
+ * @returns Promise with payment data and totals
+ */
+export async function apiListPurchasePayments(purchaseId?: number): Promise<PaymentResponse> {
+  // Implementation
+}
+```
+
+---
+
+## �� **DEPLOYMENT PROTOCOL**
+
+### **Local Stack Management:**
+```bash
+# Prefer docker compose v2 with explicit files
+docker compose -f deployment/docker/docker-compose.dev.yml up -d
+
+# Run tests locally before committing/deploying
+./scripts/test-runner.sh all
+```
+
+### **Verification Steps:**
+```bash
+# 1. Check all services are running
+docker compose -f deployment/docker/docker-compose.dev.yml ps
+
+# 2. Verify health endpoints
+curl http://localhost:8000/health
+
+# 3. Run targeted tests
+./scripts/test-runner.sh backend
+./scripts/test-runner.sh frontend
+./scripts/test-runner.sh e2e
+```
+
+---
+
+## ⚠️ **COMMON PITFALLS TO AVOID**
+
+### **NEVER:**
+- ❌ Add functions without checking for duplicates
+- ❌ Assume API response structure
+- ❌ Use 'any' TypeScript types
+- ❌ Skip error handling
+- ❌ Deploy without testing
+- ❌ Use manual service management
+- ❌ Ignore console errors
+- ❌ Skip changelog updates
+
+### **ALWAYS:**
+- ✅ Search before adding new code
+- ✅ Validate API contracts
+- ✅ Use proper TypeScript types
+- ✅ Handle all error scenarios
+- ✅ Test thoroughly before deployment
+- ✅ Use automated deployment scripts
+- ✅ Monitor for errors
+- ✅ Document all changes
+
+---
+
+## �� **SUCCESS CRITERIA**
+
+### **Code Quality:**
+- Zero duplicate function declarations
+- Consistent API patterns
+- Proper TypeScript typing
+- Comprehensive error handling
+- Clean, readable code
+
+### **Functionality:**
+- All tests passing
+- No console errors
+- Proper data flow
+- Responsive UI
+- Error states handled
+
+### **Documentation:**
+- Updated changelog
+- Clear commit messages
+- Proper code comments
+- API documentation
+
+---
+
+## 🔄 **ITERATION PROCESS**
+
+### **If Issues Arise:**
+1. **Analyze the error** - understand the root cause
+2. **Check the checklist** - ensure all steps were followed
+3. **Review the code** - look for common patterns
+4. **Test thoroughly** - verify the fix works
+5. **Document the solution** - update changelog and comments
+
+### **Continuous Improvement:**
+- Learn from each implementation
+- Update this prompt with new learnings
+- Share patterns and solutions
+- Maintain code quality standards
+
+---
+
+## �� **ESCALATION PROTOCOL**
+
+### **When to Ask for Help:**
+- Complex architectural decisions
+- Security-related changes
+- Database schema modifications
+- Performance optimizations
+- Integration with external services
+
+### **Information to Provide:**
+- Clear description of the issue
+- Steps already taken
+- Error messages and logs
+- Proposed solution
+- Impact assessment
+
+---
+
+**Remember: Quality over speed. Every line of code should be written with the understanding that it will be maintained and extended by others. Follow these guidelines to ensure reliable, maintainable, and scalable code.**
+
+**This prompt should be referenced and updated with each development session to continuously improve the development process and prevent recurring issues.**

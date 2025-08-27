@@ -9,6 +9,7 @@ import { FilterDropdown } from '../components/FilterDropdown'
 import { DateFilter, DateRange } from '../components/DateFilter'
 import { ActionButtons, ActionButtonSets } from '../components/ActionButtons'
 import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
+import { SummaryCardGrid, type SummaryCardItem } from '../components/common/SummaryCardGrid'
 
 interface PurchasePayment {
   id: number
@@ -139,6 +140,29 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
 
   // Get unique vendors for filter
   const vendors = [...new Set(purchasePayments.map(p => p.vendor_name))]
+
+  // Summary totals from filtered purchase payments
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2 }).format(amount)
+
+  const totalPaid = filteredPayments.reduce((sum: number, p: PurchasePayment) => sum + (p.amount || 0), 0)
+  const totalCash = filteredPayments
+    .filter(p => (p.method || '').toLowerCase() === 'cash')
+    .reduce((sum: number, p: PurchasePayment) => sum + (p.amount || 0), 0)
+  const totalBank = filteredPayments
+    .filter(p => (p.method || '').toLowerCase() === 'bank transfer')
+    .reduce((sum: number, p: PurchasePayment) => sum + (p.amount || 0), 0)
+  const totalUpi = filteredPayments
+    .filter(p => (p.method || '').toLowerCase() === 'upi')
+    .reduce((sum: number, p: PurchasePayment) => sum + (p.amount || 0), 0)
+
+  const summaryItems: SummaryCardItem[] = [
+    { label: 'Total Paid', primary: formatCurrency(totalPaid) },
+    { label: 'Payments', primary: filteredPayments.length.toLocaleString('en-IN') },
+    { label: 'Cash Paid', primary: formatCurrency(totalCash) },
+    { label: 'Bank Transfer Paid', primary: formatCurrency(totalBank) },
+    { label: 'UPI Paid', primary: formatCurrency(totalUpi) },
+  ]
 
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
@@ -292,10 +316,10 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#495057' }}>Date</span>
-                      <DateFilter
-              value={dateFilter}
-              onChange={setDateFilter}
-            />
+          <DateFilter
+            value={dateFilter}
+            onChange={setDateFilter}
+          />
         </div>
       </EnhancedFilterBar>
 
@@ -305,6 +329,11 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
         overflow: 'visible',
         backgroundColor: 'white'
       }}>
+        {/* Summary Totals */}
+        <div style={{ margin: '16px 0 20px 0' }}>
+          <SummaryCardGrid items={summaryItems} columnsMin={220} gapPx={12} />
+        </div>
+
         {loading ? (
           <div style={{
             textAlign: 'center', 

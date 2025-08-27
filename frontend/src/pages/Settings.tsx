@@ -20,6 +20,13 @@ interface CompanySettings {
   invoice_series?: string
   gst_enabled_by_default?: boolean
   require_gstin_validation?: boolean
+  // Address & Contact (single-tenant authoritative)
+  address_line1?: string | null
+  address_line2?: string | null
+  city?: string | null
+  pincode?: string | null
+  phone?: string | null
+  email?: string | null
 }
 
 interface TaxSettings {
@@ -68,6 +75,11 @@ export function Settings({ section = 'company' }: SettingsProps) {
   const [success, setSuccess] = useState<string | null>(null)
   const [templateManagerOpen, setTemplateManagerOpen] = useState(false)
 
+  // Logo upload state (company settings)
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [logoUploading, setLogoUploading] = useState(false)
+
   // Company Settings (backend fields only)
   const [companySettings, setCompanySettings] = useState<CompanySettings>({
     company_name: '',
@@ -76,7 +88,13 @@ export function Settings({ section = 'company' }: SettingsProps) {
     state_code: '27',
     invoice_series: 'INV',
     gst_enabled_by_default: true,
-    require_gstin_validation: true
+    require_gstin_validation: true,
+    address_line1: '',
+    address_line2: '',
+    city: '',
+    pincode: '',
+    phone: '',
+    email: ''
   })
 
   // Tax Settings
@@ -147,6 +165,12 @@ export function Settings({ section = 'company' }: SettingsProps) {
           invoice_series: data?.invoice_series ?? 'INV',
           gst_enabled_by_default: data?.gst_enabled_by_default ?? true,
           require_gstin_validation: data?.require_gstin_validation ?? true,
+          address_line1: data?.address_line1 ?? '',
+          address_line2: data?.address_line2 ?? '',
+          city: data?.city ?? '',
+          pincode: data?.pincode ?? '',
+          phone: data?.phone ?? '',
+          email: data?.email ?? '',
         }))
         // If invoice series exists, mirror it into invoice settings prefix
         if (data?.invoice_series) {
@@ -166,6 +190,61 @@ export function Settings({ section = 'company' }: SettingsProps) {
     }
   }
 
+  const handleLogoChange = (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) {
+      setLogoFile(null)
+      setLogoPreview(null)
+      return
+    }
+    const file = fileList[0]
+    // Client-side validations (mirror backend): PNG/JPEG only, <= 2MB
+    const allowed = ['image/png', 'image/jpeg']
+    if (!allowed.includes(file.type)) {
+      setError('Only PNG and JPEG images are allowed')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Logo file too large (max 2MB)')
+      return
+    }
+    setError(null)
+    setLogoFile(file)
+    const reader = new FileReader()
+    reader.onload = () => setLogoPreview(reader.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  const handleLogoUpload = async () => {
+    if (!logoFile) return
+    try {
+      setLogoUploading(true)
+      setError(null)
+      setSuccess(null)
+      const form = new FormData()
+      form.append('file', logoFile)
+      // In single-tenant mode backend ignores tenant_id and uses default tenant
+      const res = await fetch('/api/branding/default/logo', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token ?? ''}`
+        },
+        body: form
+      })
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(text || `Failed to upload logo (${res.status})`)
+      }
+      setSuccess('Logo uploaded successfully!')
+      setTimeout(() => setSuccess(null), 3000)
+    } catch (err) {
+      const msg = handleApiError(err)
+      setError(msg)
+    } finally {
+      setLogoUploading(false)
+    }
+  }
+
+
   const handleCompanySubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -181,6 +260,12 @@ export function Settings({ section = 'company' }: SettingsProps) {
         state_code: companySettings.state_code || '27',
         gst_enabled_by_default: companySettings.gst_enabled_by_default ?? true,
         require_gstin_validation: companySettings.require_gstin_validation ?? true,
+        address_line1: companySettings.address_line1 || null,
+        address_line2: companySettings.address_line2 || null,
+        city: companySettings.city || null,
+        pincode: companySettings.pincode || null,
+        phone: companySettings.phone || null,
+        email: companySettings.email || null,
       }
       const res = await fetch('/api/company/settings', {
         method: 'PUT',
@@ -205,6 +290,12 @@ export function Settings({ section = 'company' }: SettingsProps) {
         invoice_series: saved?.invoice_series ?? prev.invoice_series,
         gst_enabled_by_default: saved?.gst_enabled_by_default ?? prev.gst_enabled_by_default,
         require_gstin_validation: saved?.require_gstin_validation ?? prev.require_gstin_validation,
+        address_line1: saved?.address_line1 ?? prev.address_line1 ?? '',
+        address_line2: saved?.address_line2 ?? prev.address_line2 ?? '',
+        city: saved?.city ?? prev.city ?? '',
+        pincode: saved?.pincode ?? prev.pincode ?? '',
+        phone: saved?.phone ?? prev.phone ?? '',
+        email: saved?.email ?? prev.email ?? '',
       }))
       if (saved?.invoice_series) {
         setInvoiceSettings(prev => ({ ...prev, invoice_prefix: saved.invoice_series }))
@@ -335,6 +426,39 @@ export function Settings({ section = 'company' }: SettingsProps) {
             required
           />
         </div>
+
+      <div style={formStyles.section}>
+        <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('company') }}>
+          Company Logo
+        </h3>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div>
+            <input
+              type="file"
+              accept="image/png,image/jpeg"
+              onChange={(e) => handleLogoChange(e.target.files)}
+            />
+            <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '6px' }}>
+              PNG or JPEG, max 2 MB. In single-tenant mode this becomes the invoice logo.
+            </div>
+          </div>
+          {logoPreview && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <img
+                src={logoPreview}
+                alt="Logo preview"
+                style={{ width: '120px', height: '120px', objectFit: 'contain', border: '1px solid #e9ecef', borderRadius: '6px', background: '#fff' }}
+              />
+              <span style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>Preview</span>
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+          <Button type="button" variant="secondary" onClick={handleLogoUpload} disabled={!logoFile || logoUploading}>
+            {logoUploading ? 'Uploading...' : 'Upload Logo'}
+          </Button>
+        </div>
+      </div>
         <div style={formStyles.grid2Col}>
           <div style={formStyles.formGroup}>
             <label style={formStyles.label}>State *</label>
@@ -356,6 +480,70 @@ export function Settings({ section = 'company' }: SettingsProps) {
               required
             />
           </div>
+        </div>
+      </div>
+
+      <div style={formStyles.section}>
+        <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('company') }}>
+          Address & Contact
+        </h3>
+        <div style={formStyles.formGroup}>
+          <label style={formStyles.label}>Address Line 1</label>
+          <input
+            type="text"
+            value={companySettings.address_line1 || ''}
+            onChange={(e) => handleInputChange('address_line1', e.target.value, 'company')}
+            style={formStyles.input}
+            placeholder="123, Business Street"
+          />
+        </div>
+        <div style={formStyles.formGroup}>
+          <label style={formStyles.label}>Address Line 2</label>
+          <input
+            type="text"
+            value={companySettings.address_line2 || ''}
+            onChange={(e) => handleInputChange('address_line2', e.target.value, 'company')}
+            style={formStyles.input}
+            placeholder="Area, Landmark"
+          />
+        </div>
+        <div style={formStyles.grid3Col}>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>City</label>
+            <input
+              type="text"
+              value={companySettings.city || ''}
+              onChange={(e) => handleInputChange('city', e.target.value, 'company')}
+              style={formStyles.input}
+            />
+          </div>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Pincode</label>
+            <input
+              type="text"
+              value={companySettings.pincode || ''}
+              onChange={(e) => handleInputChange('pincode', e.target.value, 'company')}
+              style={formStyles.input}
+            />
+          </div>
+          <div style={formStyles.formGroup}>
+            <label style={formStyles.label}>Phone</label>
+            <input
+              type="text"
+              value={companySettings.phone || ''}
+              onChange={(e) => handleInputChange('phone', e.target.value, 'company')}
+              style={formStyles.input}
+            />
+          </div>
+        </div>
+        <div style={formStyles.formGroup}>
+          <label style={formStyles.label}>Email</label>
+          <input
+            type="email"
+            value={companySettings.email || ''}
+            onChange={(e) => handleInputChange('email', e.target.value, 'company')}
+            style={formStyles.input}
+          />
         </div>
       </div>
 

@@ -19,7 +19,8 @@ class PDFGenerator:
         """Generate HTML for invoice PDF based on template"""
         
         # Get template-specific configurations
-        table_columns = get_table_columns(template_id)
+        columns_key = self._resolve_columns_key(template_id, paper_size)
+        table_columns = get_table_columns(columns_key)
         css = get_css_for_template(template_id, paper_size)
         
         # Generate HTML based on template
@@ -29,6 +30,8 @@ class PDFGenerator:
             html = self._generate_gst_simple_html(invoice_data, table_columns, paper_size)
         elif template_id.startswith("GST_DETAILED"):
             html = self._generate_gst_detailed_html(invoice_data, table_columns, paper_size)
+        elif template_id.startswith("GST_LOGISTICS"):
+            html = self._generate_gst_logistics_html(invoice_data, table_columns, paper_size)
         elif template_id.startswith("NONGST_SIMPLE"):
             html = self._generate_nongst_simple_html(invoice_data, table_columns, paper_size)
         elif template_id.startswith("NONGST_TABULAR"):
@@ -37,10 +40,33 @@ class PDFGenerator:
             # Default to GST Tabular
             html = self._generate_gst_tabular_html(invoice_data, table_columns, paper_size)
         
+        # Append a small footer marker to help verify template switching
+        html += f"\n<div class=\"pdf-footer\">Template: {template_id} · Paper: {paper_size}</div>\n"
+        
         # Wrap with complete HTML document
         full_html = self._wrap_html_document(html, css, invoice_data.get("invoice", {}).get("title", "Invoice"))
         
         return full_html
+
+    def _resolve_columns_key(self, template_id: str, paper_size: str) -> str:
+        """Resolve the table column configuration key for a given template and paper size"""
+        if template_id.startswith("GST_TABULAR"):
+            return "GST_TABULAR_STANDARD_A5" if paper_size == "A5" else "GST_TABULAR_STANDARD_A4"
+        if template_id.startswith("GST_SIMPLE"):
+            # Simplified GST layout uses compact A5-style columns even on A4
+            return "GST_SIMPLE_A5"
+        if template_id.startswith("GST_DETAILED"):
+            # Detailed GST is A4 oriented; use standard A4 columns
+            return "GST_TABULAR_STANDARD_A4"
+        if template_id.startswith("GST_LOGISTICS"):
+            return "GST_LOGISTICS_A4"
+        if template_id.startswith("NONGST_TABULAR"):
+            return "NONGST_TABULAR_A4A5"
+        if template_id.startswith("NONGST_SIMPLE"):
+            # Use non-GST tabular compact columns for simple view as well
+            return "NONGST_TABULAR_A4A5"
+        # Fallback
+        return "GST_TABULAR_STANDARD_A4"
     
     def _wrap_html_document(self, content: str, css: str, title: str) -> str:
         """Wrap content in complete HTML document"""
@@ -285,11 +311,120 @@ class PDFGenerator:
 """
         
         return html
+
+    def _generate_gst_logistics_html(self, data: Dict[str, Any], columns: List[Dict], paper_size: str) -> str:
+        """Generate GST Logistics Transporter template HTML (GST Tabular + transport details)"""
+        base_html = self._generate_gst_tabular_html(data, columns, paper_size)
+        inv = data.get("invoice", {})
+        transport = inv.get("transport", {}) or {}
+        mode = transport.get("mode", "")
+        vehicle = transport.get("vehicle_no", "")
+        lr_no = transport.get("lr_no", "")
+        eway = inv.get("eway_bill_no", "")
+
+        # Build transport block (only if any field is present)
+        if any([mode, vehicle, lr_no, eway]):
+            transport_html = (
+                "\n    <div class=\"pdf-meta-inline logistics\">\n"
+                f"      <div><span class=\"u-muted\">Mode<\/span><div class=\"u-bold\">{mode}<\/div><\/div>\n"
+                f"      <div><span class=\"u-muted\">Vehicle<\/span><div class=\"u-bold\">{vehicle}<\/div><\/div>\n"
+                f"      <div><span class=\"u-muted\">LR No<\/span><div class=\"u-bold\">{lr_no}<\/div><\/div>\n"
+                f"      <div><span class=\"u-muted\">E-Way Bill<\/span><div class=\"u-bold\">{eway}<\/div><\/div>\n"
+                "    <\/div>\n"
+            )
+            # Insert before parties section
+            base_html = base_html.replace("<div class=\"pdf-parties\">", transport_html + "\n    <div class=\"pdf-parties\">")
+
+        return base_html
     
     def _generate_gst_simple_html(self, data: Dict[str, Any], columns: List[Dict], paper_size: str) -> str:
-        """Generate GST Simple template HTML (A5 optimized)"""
-        # Similar to tabular but with simplified table structure
-        return self._generate_gst_tabular_html(data, columns, paper_size)
+        """Generate GST Simple template HTML (list-style, inline meta)"""
+        supplier = data.get("supplier", {})
+        invoice = data.get("invoice", {})
+        customer = data.get("customer", {})
+        ship_to = data.get("ship_to", {})
+        items = data.get("items", [])
+        charges = data.get("charges", [])
+
+        # Header + inline meta
+        html = f"""
+<div class="pdf-page {paper_size}">
+  <div class="pdf-header">
+    <div class="pdf-brand">
+      {f'<img class="pdf-logo" src="{supplier.get("logo_url", "")}" />' if supplier.get("logo_url") else ''}
+      <div class="pdf-supplier">
+        <h1>{supplier.get("legal_name", "")}</h1>
+        {f'<div class="trade">{supplier.get("trade_name", "")}</div>' if supplier.get("trade_name") else ''}
+        <div class="addr">{self._format_address(supplier.get("address", {}))}</div>
+        <div class="contact">
+          {f'<div class="line u-muted">GSTIN: {supplier.get("gstin", "")}</div>' if supplier.get("gstin") else ''}
+        </div>
+      </div>
+    </div>
+    <div class="pdf-meta-inline">
+      <div><span class="u-muted">Invoice #</span><div class="u-bold">{invoice.get("number", "")}</div></div>
+      <div><span class="u-muted">Date</span><div class="u-bold">{invoice.get("date", "")}</div></div>
+      <div><span class="u-muted">PoS</span><div class="u-bold">{self._format_place_of_supply(invoice.get("place_of_supply", {}))}</div></div>
+    </div>
+  </div>
+
+  <div class="pdf-parties">
+    <div class="party-card">
+      <div class="title">Bill To</div>
+      <div class="line">{customer.get("name", "")}</div>
+      <div class="line u-muted">GSTIN: {customer.get("gstin", "")}</div>
+      <div class="line">{self._format_address(customer.get("address", {}))}</div>
+    </div>
+    <div class="party-card">
+      <div class="title">Ship To</div>
+      <div class="line">{"Same as Bill To" if ship_to.get("use_bill_to", True) else ship_to.get("name", "")}</div>
+      {'' if ship_to.get("use_bill_to", True) else f'<div class="line">{self._format_address(ship_to.get("address", {}))}</div>'}
+    </div>
+  </div>
+
+  <div class="u-mt-md">
+    <div class="u-bold">Items</div>
+    <div>
+"""
+        # Items as list
+        for i, item in enumerate(items, 1):
+            qty = item.get("quantity", 0)
+            rate = item.get("unit_price", 0)
+            discount = self._calculate_discount(item.get("discount", {}), qty * rate)
+            taxable_value = max(0, (qty * rate) - discount)
+            tax_rate = item.get("tax", {}).get("rate", 0)
+            tax_note = f"{tax_rate}% GST" if tax_rate else "No GST"
+            html += f"""
+      <div class="u-mt-sm">
+        <div class="u-bold">{i}. {item.get("description", "")}{' ('+item.get('hsn_sac','')+')' if item.get('hsn_sac') else ''}</div>
+        <div class="u-muted">Qty x Rate: {qty} {item.get('uqc','')} x {rate:.2f}</div>
+        <div>Taxable: ₹{taxable_value:.2f} · Tax: {tax_note}</div>
+      </div>
+"""
+
+        # Totals
+        totals = self._calculate_totals(items, charges, True)
+        html += f"""
+    </div>
+  </div>
+
+  <div class="pdf-totals">
+    <div class="row"><div class="label">Taxable Subtotal</div><div class="value">₹{totals["taxable_subtotal"]:.2f}</div></div>
+    <div class="row"><div class="label">Total GST</div><div class="value">₹{totals["gst_total"]:.2f}</div></div>
+    <div class="row grand"><div class="label">Grand Total</div><div class="value">₹{totals["grand_total"]:.2f}</div></div>
+  </div>
+
+  <div class="pdf-amount-words">Amount in words: {self._number_to_words(totals["grand_total"])}</div>
+
+  <div class="pdf-sign">
+    <div class="sig-box">
+      <div class="sig-label">Authorized Signatory</div>
+    </div>
+    <div class="seal"></div>
+  </div>
+</div>
+"""
+        return html
     
     def _generate_gst_detailed_html(self, data: Dict[str, Any], columns: List[Dict], paper_size: str) -> str:
         """Generate GST Detailed template HTML with GST summary box"""
@@ -299,15 +434,14 @@ class PDFGenerator:
         totals = self._calculate_totals(data.get("items", []), data.get("charges", []), True)
         
         gst_summary = f"""
-    <div class="pdf-box gst">
-        <div class="box-title">GST Summary</div>
-        <div class="row"><div class="key">Taxable Value (Goods)</div><div class="val">₹{totals["goods_taxable"]:.2f}</div></div>
-        <div class="row"><div class="key">Taxable Value (Services)</div><div class="val">₹{totals["services_taxable"]:.2f}</div></div>
-        <div class="row"><div class="key">CGST by Rates</div><div class="val">₹{totals["cgst_total"]:.2f}</div></div>
-        <div class="row"><div class="key">SGST by Rates</div><div class="val">₹{totals["sgst_total"]:.2f}</div></div>
-        <div class="row"><div class="key">IGST by Rates</div><div class="val">₹{totals["igst_total"]:.2f}</div></div>
-        <div class="row"><div class="key">Cess Total</div><div class="val">₹{totals["cess_total"]:.2f}</div></div>
-        <div class="row"><div class="key">Total GST</div><div class="val">₹{totals["gst_total"]:.2f}</div></div>
+    <div class="gst-summary-box">
+        <div class="gst-row"><div>Taxable Value (Goods)</div><div class="u-bold">₹{totals["goods_taxable"]:.2f}</div></div>
+        <div class="gst-row"><div>Taxable Value (Services)</div><div class="u-bold">₹{totals["services_taxable"]:.2f}</div></div>
+        <div class="gst-row"><div>CGST</div><div class="u-bold">₹{totals["cgst_total"]:.2f}</div></div>
+        <div class="gst-row"><div>SGST</div><div class="u-bold">₹{totals["sgst_total"]:.2f}</div></div>
+        <div class="gst-row"><div>IGST</div><div class="u-bold">₹{totals["igst_total"]:.2f}</div></div>
+        <div class="gst-row"><div>Cess</div><div class="u-bold">₹{totals["cess_total"]:.2f}</div></div>
+        <div class="gst-row"><div>Total GST</div><div class="u-bold">₹{totals["gst_total"]:.2f}</div></div>
     </div>
 """
         
@@ -317,14 +451,193 @@ class PDFGenerator:
         return html
     
     def _generate_nongst_simple_html(self, data: Dict[str, Any], columns: List[Dict], paper_size: str) -> str:
-        """Generate Non-GST Simple template HTML"""
-        # Simplified version without GST fields
-        return self._generate_gst_tabular_html(data, columns, paper_size)
+        """Generate Non-GST Simple template HTML (list-style, minimal)"""
+        supplier = data.get("supplier", {})
+        invoice = data.get("invoice", {})
+        customer = data.get("customer", {})
+        items = data.get("items", [])
+        charges = data.get("charges", [])
+
+        html = f"""
+<div class="pdf-page {paper_size}">
+  <div class="pdf-header">
+    <div class="pdf-brand">
+      {f'<img class="pdf-logo" src="{supplier.get("logo_url", "")}" />' if supplier.get("logo_url") else ''}
+      <div class="pdf-supplier">
+        <h1>{supplier.get("legal_name", "")}</h1>
+        <div class="addr">{self._format_address(supplier.get("address", {}))}</div>
+        <div class="contact">
+          {f'<div class="line u-muted">PAN: {supplier.get("pan", "")}</div>' if supplier.get("pan") else ''}
+        </div>
+      </div>
+    </div>
+    <div class="pdf-meta-inline">
+      <div><span class="u-muted">Invoice #</span><div class="u-bold">{invoice.get("number", "")}</div></div>
+      <div><span class="u-muted">Date</span><div class="u-bold">{invoice.get("date", "")}</div></div>
+      <div><span class="u-muted">Due</span><div class="u-bold">{invoice.get("due_date", "")}</div></div>
+    </div>
+  </div>
+
+  <div class="party-card u-mt-md">
+    <div class="title">Bill To</div>
+    <div class="line">{customer.get("name", "")}</div>
+    <div class="line">{self._format_address(customer.get("address", {}))}</div>
+  </div>
+
+  <div class="u-mt-md">
+    <div class="u-bold">Items</div>
+"""
+        for i, item in enumerate(items, 1):
+            qty = item.get("quantity", 0)
+            rate = item.get("unit_price", 0)
+            discount = self._calculate_discount(item.get("discount", {}), qty * rate)
+            line_amount = max(0, (qty * rate) - discount)
+            html += f"""
+    <div class="u-mt-sm">
+      <div class="u-bold">{i}. {item.get("description", "")}</div>
+      <div class="u-muted">Qty x Rate: {qty} {item.get('uqc','')} x {rate:.2f}</div>
+      <div>Amount: ₹{line_amount:.2f}</div>
+    </div>
+"""
+
+        # Compute simple totals
+        totals = self._calculate_totals(items, charges, True)
+        html += f"""
+  </div>
+
+  <div class="pdf-totals">
+    <div class="row"><div class="label">Subtotal</div><div class="value">₹{totals["taxable_subtotal"]:.2f}</div></div>
+    <div class="row grand"><div class="label">Total Payable</div><div class="value">₹{totals["grand_total"]:.2f}</div></div>
+  </div>
+
+  <div class="pdf-amount-words">Amount in words: {self._number_to_words(totals["grand_total"])}</div>
+
+  <div class="pdf-sign">
+    <div class="sig-box">
+      <div class="sig-label">Authorized Signatory</div>
+    </div>
+    <div class="seal"></div>
+  </div>
+</div>
+"""
+        return html
     
     def _generate_nongst_tabular_html(self, data: Dict[str, Any], columns: List[Dict], paper_size: str) -> str:
-        """Generate Non-GST Tabular template HTML"""
-        # Similar to GST tabular but without GST fields
-        return self._generate_gst_tabular_html(data, columns, paper_size)
+        """Generate Non-GST Tabular template HTML (no GST fields)"""
+        supplier = data.get("supplier", {})
+        invoice = data.get("invoice", {})
+        customer = data.get("customer", {})
+        ship_to = data.get("ship_to", {})
+        items = data.get("items", [])
+        charges = data.get("charges", [])
+
+        # Header
+        html = f"""
+<div class=\"pdf-page {paper_size}\">\n
+  <div class=\"pdf-header\">\n
+    <div class=\"pdf-brand\">\n
+      {f'<img class=\"pdf-logo\" src=\"{supplier.get("logo_url", "")}\" />' if supplier.get("logo_url") else ''}\n
+      <div class=\"pdf-supplier\">\n
+        <h1>{supplier.get("legal_name", "")}</h1>\n
+        {f'<div class=\"trade\">{supplier.get("trade_name", "")}<\/div>' if supplier.get("trade_name") else ''}\n
+        <div class=\"addr\">{self._format_address(supplier.get("address", {}))}</div>\n
+        <div class=\"contact\">\n
+          {f'<div class=\"line u-muted\">PAN: {supplier.get("pan", "")}<\/div>' if supplier.get("pan") else ''}\n
+        </div>\n
+      </div>\n
+    </div>\n
+    <div class=\"pdf-invmeta\">\n
+      <div class=\"title\">{invoice.get("title", "Invoice")}</div>\n
+      <div class=\"row\"><span class=\"key\">Invoice #:<\/span><span class=\"val\">{invoice.get("number", "")}<\/span></div>\n
+      <div class=\"row\"><span class=\"key\">Date:<\/span><span class=\"val\">{invoice.get("date", "")}<\/span></div>\n
+      <div class=\"row\"><span class=\"key\">Due:<\/span><span class=\"val\">{invoice.get("due_date", "")}<\/span></div>\n
+    </div>\n
+  </div>\n
+"""
+
+        # Parties
+        html += f"""
+  <div class=\"pdf-parties\">\n
+    <div class=\"party-card\">\n
+      <div class=\"title\">Bill To</div>\n
+      <div class=\"line\">{customer.get("name", "")}</div>\n
+      <div class=\"line\">{self._format_address(customer.get("address", {}))}</div>\n
+    </div>\n
+    <div class=\"party-card\">\n
+      <div class=\"title\">Ship To</div>\n
+      <div class=\"line\">{"Same as Bill To" if ship_to.get("use_bill_to", True) else ship_to.get("name", "")}</div>\n
+      {'' if ship_to.get("use_bill_to", True) else f'<div class=\\"line\\">{self._format_address(ship_to.get("address", {}))}<\/div>'}\n
+    </div>\n
+  </div>\n
+"""
+
+        # Table header
+        html += """
+  <table class=\"pdf-table items striped\">\n
+    <thead>\n
+      <tr>\n
+"""
+        for col in columns:
+            html += f'        <th class="{col["class"]}">{col["label"]}</th>\n'
+
+        html += """
+      </tr>\n
+    </thead>\n
+    <tbody>\n
+"""
+
+        # Rows and totals (no GST)
+        subtotal = 0.0
+        for i, item in enumerate(items, 1):
+            qty = item.get("quantity", 0)
+            rate = item.get("unit_price", 0)
+            discount = self._calculate_discount(item.get("discount", {}), qty * rate)
+            line_amount = max(0, (qty * rate) - discount)
+            subtotal += line_amount
+
+            html += (
+                "      <tr>\n"
+                f"        <td>{i}</td>\n"
+                f"        <td>{item.get('description', '')}</td>\n"
+                f"        <td class=\"num\">{qty}</td>\n"
+                f"        <td>{item.get('uqc', '')}</td>\n"
+                f"        <td class=\"num\">{rate:.2f}</td>\n"
+                f"        <td class=\"num\">{discount:.2f}</td>\n"
+                f"        <td class=\"num\">{line_amount:.2f}</td>\n"
+                "      </tr>\n"
+            )
+
+        html += """
+    </tbody>\n
+  </table>\n
+"""
+
+        # Totals (Subtotal + charges => Total Payable)
+        charges_total = 0.0
+        for ch in charges:
+            charges_total += ch.get("amount", 0) or 0
+        grand_total = subtotal + charges_total
+
+        html += f"""
+  <div class=\"pdf-totals\">\n
+    <div class=\"row\"><div class=\"label\">Subtotal</div><div class=\"value\">₹{subtotal:.2f}</div></div>\n
+    <div class=\"row grand\"><div class=\"label\">Total Payable</div><div class=\"value\">₹{grand_total:.2f}</div></div>\n
+  </div>\n
+"""
+
+        # Amount in words and signature
+        html += f"""
+  <div class=\"pdf-amount-words\">Amount in words: {self._number_to_words(grand_total)}</div>\n
+  <div class=\"pdf-sign\">\n
+    <div class=\"sig-box\">\n
+      <div class=\"sig-label\">Authorized Signatory</div>\n
+    </div>\n
+    <div class=\"seal\"></div>\n
+  </div>\n
+</div>\n
+"""
+
+        return html
     
     def _format_address(self, address: Dict[str, Any]) -> str:
         """Format address dictionary to string"""

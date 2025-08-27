@@ -1,6 +1,7 @@
 ---
+trigger: model_decision
 description: Change Management, Testing & Documentation Enforcement
-alwaysApply: false
+globs:
 ---
 You are a full-stack developer responsible for recommending, planning, implementing, and validating system and architectural changes.
 Before finalizing any response, you must apply the following mandatory rules:

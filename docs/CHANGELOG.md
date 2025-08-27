@@ -1,3 +1,25 @@
+## [1.50.5] - 2025-08-27
+
+### Changed
+- Dashboard responsiveness and layout density
+  - Frontend (`frontend/src/index.css`): Added `.dashboard-scale` with responsive scaling:
+    - ≤1024px: scale 0.9
+    - ≤768px: scale 0.8
+    - Set `transform-origin: top left`; removed width compensation so visual size actually reduces.
+  - Frontend (`frontend/src/pages/Dashboard.tsx`): Tightened grid `minmax(...)` and gaps to fit more widgets per row:
+    - KPI row: `repeat(auto-fit, minmax(180px, 1fr))`
+    - Critical Actions: `repeat(auto-fit, minmax(128px, 1fr))`
+    - GST rate grid: `repeat(auto-fit, minmax(100px, 1fr))`
+    - Status sections: `repeat(auto-fit, minmax(240px, 1fr))`
+
+### UI Cleanup
+- Removed the Date Range section from Dashboard and moved the "Critical Actions" block into its place under the header.
+- Retained Month/Quarter/Year quick period controls and Refresh action in the header.
+
+### Notes
+- TypeScript lint warnings about missing React typings are known environment issues; unrelated to these UI changes.
+
+---
 ## [1.50.4] - 2025-08-26
 
 ### Fixed

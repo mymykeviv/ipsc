@@ -798,7 +798,13 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
 
 
 @api.get('/invoices/{invoice_id}/pdf')
-def invoice_pdf(invoice_id: int, template_id: int | None = None, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def invoice_pdf(
+    invoice_id: int,
+    template_id: int | None = None,
+    paper_size: str | None = None,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not inv:
         raise HTTPException(status_code=404, detail='Invoice not found')
@@ -960,20 +966,44 @@ def invoice_pdf(invoice_id: int, template_id: int | None = None, _: User = Depen
     
     pdf_generator = PDFGenerator()
     
-    # Determine paper size from template
-    paper_sizes = template.paper_sizes.split(',')
-    paper_size = paper_sizes[0].strip() if paper_sizes else "A4"
+    # Determine paper size: prefer explicit query param, else template default
+    allowed_paper_sizes = {"A4", "A5"}
+    if paper_size:
+        if paper_size.upper() not in allowed_paper_sizes:
+            raise HTTPException(status_code=400, detail="Invalid paper_size. Allowed values: A4, A5")
+        resolved_paper_size = paper_size.upper()
+    else:
+        paper_sizes = (template.paper_sizes or "A4").split(',')
+        resolved_paper_size = paper_sizes[0].strip().upper() if paper_sizes else "A4"
+        if resolved_paper_size not in allowed_paper_sizes:
+            resolved_paper_size = "A4"
     
     # Generate HTML
-    html_content = pdf_generator.generate_invoice_pdf(invoice_data, template.template_id, paper_size)
+    html_content = pdf_generator.generate_invoice_pdf(invoice_data, template.template_id, resolved_paper_size)
     
     try:
         # Convert HTML to PDF
-        pdf_bytes = convert_html_to_pdf(html_content, paper_size)
-        return Response(content=pdf_bytes, media_type='application/pdf')
+        pdf_bytes = convert_html_to_pdf(html_content, resolved_paper_size)
+        return Response(
+            content=pdf_bytes,
+            media_type='application/pdf',
+            headers={
+                'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        )
     except Exception as e:
         # Fallback to HTML if PDF conversion fails
-        return Response(content=html_content, media_type='text/html')
+        return Response(
+            content=html_content,
+            media_type='text/html',
+            headers={
+                'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        )
 
 
 class EmailRequest(BaseModel):
@@ -7447,6 +7477,26 @@ def get_gst_invoice_templates(_: User = Depends(get_current_user), db: Session =
                 is_default=(template_data["sort_order"] == 1)  # First template is default
             )
             db.add(template)
+        db.commit()
+    else:
+        # Sync: ensure any newly added templates in config are inserted into DB (idempotent)
+        templates_data = get_all_templates()
+        existing_ids = {t.template_id for t in db.query(GSTInvoiceTemplate.template_id).all()}
+        for template_id, template_data in templates_data.items():
+            if template_id not in existing_ids:
+                template = GSTInvoiceTemplate(
+                    template_id=template_id,
+                    name=template_data["name"],
+                    description=template_data.get("description"),
+                    requires_gst=template_data["requires_gst"],
+                    requires_hsn=template_data["requires_hsn"],
+                    title=template_data["title"],
+                    template_config=template_data["template_config"],
+                    paper_sizes=template_data["paper_sizes"],
+                    sort_order=template_data["sort_order"],
+                    is_default=False
+                )
+                db.add(template)
         db.commit()
     
     templates = db.query(GSTInvoiceTemplate).filter(

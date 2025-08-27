@@ -22,7 +22,7 @@ from .profitpath_service import ProfitPathService
 from .payment_scheduler import PaymentScheduler, PaymentStatus, PaymentReminderType
 from .inventory_manager import InventoryManager, StockValuationMethod
 from .financial_reports import FinancialReports, ReportType
-from .branding import router as branding_router
+from .routers.branding import router as branding_router
 from .dental import router as dental_router
 from .manufacturing import router as manufacturing_router
 from decimal import Decimal
@@ -43,6 +43,10 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.colors import black, white, grey, darkblue
 import os
 import base64
+import asyncio
+from .config import settings
+from .tenant_config import tenant_config_manager
+from .branding_manager import branding_manager
 
 
 # Indian States for GST Compliance
@@ -815,38 +819,70 @@ def invoice_pdf(invoice_id: int, template_id: int | None = None, _: User = Depen
             if not template:
                 raise HTTPException(status_code=404, detail='No GST invoice templates found')
     
-    # Get related data
+    # Get related data (single-tenant safe)
     company = db.query(CompanySettings).first()
     customer = db.query(Party).filter(Party.id == inv.customer_id).first()
     supplier = db.query(Party).filter(Party.id == inv.supplier_id).first()
     items = db.query(InvoiceItem).filter(InvoiceItem.invoice_id == inv.id).all()
     
+    # Load tenant branding/company info (single-tenant safe)
+    tenant_id = settings.default_tenant_slug
+    branding = {}
+    company_info = {}
+    
+    def _run_async(coro):
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        if loop and loop.is_running():
+            # Create a dedicated loop for this blocking call
+            new_loop = asyncio.new_event_loop()
+            try:
+                return new_loop.run_until_complete(coro)
+            finally:
+                new_loop.close()
+        else:
+            return asyncio.run(coro)
+    
+    try:
+        branding = _run_async(branding_manager.get_tenant_branding(tenant_id))
+        company_info = _run_async(tenant_config_manager.get_company_info(tenant_id))
+    except Exception as e:
+        logger.debug(f"Branding/company info fetch skipped: {e}")
+    
     # Prepare invoice data for PDF generator
     invoice_data = {
         "supplier": {
-            "legal_name": supplier.name if supplier else "Supplier",
-            "trade_name": supplier.trade_name if supplier else "",
+            # Company issuing the invoice. Prefer supplier Party (selected on invoice).
+            "legal_name": (supplier.name if supplier else (company.name if company else "Supplier")),
+            # trade_name not available in Party/CompanySettings model; leave blank for now
+            "trade_name": "",
             "address": {
-                "line1": supplier.billing_address_line1 if supplier else "",
-                "line2": supplier.billing_address_line2 if supplier else "",
-                "city": supplier.billing_city if supplier else "",
-                "state": supplier.billing_state if supplier else "",
-                "state_code": supplier.billing_state_code if supplier else "",
-                "pin": supplier.billing_pincode if supplier else ""
+                "line1": (supplier.billing_address_line1 if supplier else ""),
+                "line2": (supplier.billing_address_line2 if supplier else ""),
+                "city": (supplier.billing_city if supplier else ""),
+                "state": (supplier.billing_state if supplier else (company.state if company else "")),
+                # state_code not present on Party; fallback to CompanySettings.state_code
+                "state_code": (company.state_code if company else ""),
+                "pin": (supplier.billing_pincode if supplier else "")
             },
-            "gstin": supplier.gstin if supplier else "",
-            "pan": supplier.pan if supplier else "",
+            "gstin": (supplier.gstin if supplier and supplier.gstin else (company.gstin if company else "")),
+            # PAN not modeled; keep empty
+            "pan": "",
             "contact": {
-                "phone": supplier.contact_number if supplier else "",
-                "email": supplier.email if supplier else ""
+                "phone": (supplier.contact_number if supplier else ""),
+                "email": (supplier.email if supplier else "")
             },
-            "logo_url": company.logo_url if company else "",
+            # logo is handled via branding/tenant in multi-tenant; for single-tenant, keep blank
+            "logo_url": "",
+            # Bank details not modeled in CompanySettings; provide empty structure
             "bank": {
-                "bank_name": company.bank_name if company else "",
-                "account_name": company.account_name if company else "",
-                "account_number": company.account_number if company else "",
-                "ifsc": company.ifsc_code if company else "",
-                "upi_id": company.upi_id if company else ""
+                "bank_name": "",
+                "account_name": "",
+                "account_number": "",
+                "ifsc": "",
+                "upi_id": ""
             }
         },
         "invoice": {
@@ -901,6 +937,28 @@ def invoice_pdf(invoice_id: int, template_id: int | None = None, _: User = Depen
         "items": []
     }
     
+    # Single-tenant: CompanySettings ALWAYS wins for supplier details; use branding only for logo
+    try:
+        if company:
+            invoice_data["supplier"]["legal_name"] = company.name or ""
+            invoice_data["supplier"]["gstin"] = company.gstin or ""
+            # Address & Contact from CompanySettings (authoritative in single-tenant)
+            invoice_data["supplier"]["address"]["line1"] = company.address_line1 or ""
+            invoice_data["supplier"]["address"]["line2"] = company.address_line2 or ""
+            invoice_data["supplier"]["address"]["city"] = company.city or ""
+            invoice_data["supplier"]["address"]["pin"] = company.pincode or ""
+            invoice_data["supplier"]["address"]["state"] = company.state or ""
+            invoice_data["supplier"]["address"]["state_code"] = company.state_code or ""
+            invoice_data["supplier"]["contact"]["phone"] = company.phone or ""
+            invoice_data["supplier"]["contact"]["email"] = company.email or ""
+            # Logo: if branding has a logo, set it for PDF
+        if branding and branding.get("logo_url"):
+            invoice_data["supplier"]["logo_url"] = branding["logo_url"]
+    except Exception as e:
+        logger.debug(f"Supplier settings merge skipped: {e}")
+
+    logger.debug(f"Supplier for invoice {inv.id}: {invoice_data['supplier']}")
+
     # Add items
     for item in items:
         product = db.query(Product).filter(Product.id == item.product_id).first()
@@ -928,10 +986,11 @@ def invoice_pdf(invoice_id: int, template_id: int | None = None, _: User = Depen
     # Add notes and declaration
     invoice_data["notes"] = [inv.notes] if inv.notes else []
     invoice_data["declaration"] = "We declare that this invoice shows the actual price and particulars are true."
+    # Signatory fields are not present in CompanySettings model; keep minimal safe defaults
     invoice_data["signatory"] = {
-        "name": company.authorized_signatory if company else "",
+        "name": (supplier.name if supplier else (company.name if company else "")),
         "designation": "Authorized Signatory",
-        "place": company.city if company else ""
+        "place": (supplier.billing_city if supplier else (company.state if company else ""))
     }
     
     # Generate PDF using new HTML-based generator
@@ -1715,6 +1774,36 @@ def list_invoices(
     
     # Get total count for pagination
     total_count = query.count()
+
+    # Compute INR-only aggregated totals for filtered invoices (before sorting/pagination)
+    # Exclude non-standard invoice types like credit notes by restricting to invoice_type == 'Invoice'
+    totals_row = (
+        query
+        .filter(Invoice.currency == 'INR', Invoice.invoice_type == 'Invoice')
+        .with_entities(
+            func.count(Invoice.id),
+            func.coalesce(func.sum(Invoice.taxable_value), 0),
+            func.coalesce(func.sum(Invoice.total_discount), 0),
+            func.coalesce(func.sum(Invoice.cgst + Invoice.sgst + Invoice.igst + Invoice.utgst + Invoice.cess), 0),
+            func.coalesce(func.sum(Invoice.grand_total), 0),
+            func.coalesce(func.sum(Invoice.paid_amount), 0),
+            func.coalesce(func.sum(Invoice.balance_amount), 0),
+        )
+        .first()
+    )
+    totals_meta = None
+    if totals_row is not None and totals_row[0] and int(totals_row[0]) > 0:
+        count, subtotal, discount, tax, total, amount_paid, outstanding = totals_row
+        totals_meta = {
+            "count": int(count),
+            "subtotal": float(subtotal or 0),
+            "discount": float(discount or 0),
+            "tax": float(tax or 0),
+            "total": float(total or 0),
+            "amount_paid": float(amount_paid or 0),
+            "outstanding": float(outstanding or 0),
+            "currency": "INR",
+        }
     
     # Apply sorting
     sort_column_map = {
@@ -1758,7 +1847,7 @@ def list_invoices(
     has_next = page < total_pages
     has_prev = page > 1
     
-    return {
+    response_payload = {
         "invoices": result,
         "pagination": {
             "page": page,
@@ -1769,6 +1858,10 @@ def list_invoices(
             "has_prev": has_prev
         }
     }
+    # Backward compatible: only add meta.totals when available
+    if totals_meta is not None:
+        response_payload["meta"] = {"totals": totals_meta}
+    return response_payload
 
 
 @api.get('/reports/gst-summary')
@@ -5694,6 +5787,13 @@ def update_company_settings(settings_data: dict, user: User = Depends(get_curren
             invoice_series=settings_data.get('invoice_series') or 'INV',
             gst_enabled_by_default=bool(settings_data.get('gst_enabled_by_default', True)),
             require_gstin_validation=bool(settings_data.get('require_gstin_validation', True)),
+            # Address & Contact (optional)
+            address_line1=settings_data.get('address_line1'),
+            address_line2=settings_data.get('address_line2'),
+            city=settings_data.get('city'),
+            pincode=settings_data.get('pincode'),
+            phone=settings_data.get('phone'),
+            email=settings_data.get('email'),
         )
         db.add(settings)
         db.commit()

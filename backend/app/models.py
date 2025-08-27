@@ -31,6 +31,13 @@ class CompanySettings(Base):
     state: Mapped[str] = mapped_column(String(100), nullable=False)
     state_code: Mapped[str] = mapped_column(String(2), nullable=False)
     invoice_series: Mapped[str] = mapped_column(String(50), nullable=False)
+    # Address & Contact (single-tenant authoritative fields)
+    address_line1: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    address_line2: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    city: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    pincode: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    email: Mapped[str | None] = mapped_column(String(100), nullable=True)
     # GST System Settings
     gst_enabled_by_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     require_gstin_validation: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)

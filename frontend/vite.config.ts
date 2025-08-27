@@ -9,9 +9,9 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: process.env.NODE_ENV === 'test' 
-          ? 'http://localhost:8000' 
-          : 'http://backend:8000',
+        // Prefer explicit env override; default to localhost for local dev.
+        // Use vite.config.docker.ts when running inside Docker to target http://backend:8000
+        target: process.env.VITE_BACKEND_URL || process.env.VITE_API_URL || 'http://localhost:8000',
         changeOrigin: true,
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
@@ -32,4 +32,3 @@ export default defineConfig({
     sourcemap: true,
   },
 })
-

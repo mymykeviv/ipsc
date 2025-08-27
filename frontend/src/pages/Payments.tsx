@@ -6,6 +6,7 @@ import { Button } from '../components/Button'
 import { PaymentForm } from '../components/PaymentForm'
 import { Modal } from '../components/Modal'
 import { Payment, apiGetAllInvoicePayments } from '../lib/api'
+import { SummaryCardGrid, type SummaryCardItem } from '../components/common/SummaryCardGrid'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { DateFilter, DateRange } from '../components/DateFilter'
@@ -233,6 +234,29 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
     setFilteredPayments(filtered)
   }, [payments, invoices, invoiceNumberFilter, paymentAmountFilter, paymentMethodFilter, financialYearFilter, dateFilter, isDateFilterActive])
 
+  // Summary totals for Invoice Payments (computed from filteredPayments)
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2 }).format(amount)
+
+  const totalPaid = filteredPayments.reduce((sum: number, p: Payment) => sum + (p.payment_amount || 0), 0)
+  const totalCash = filteredPayments
+    .filter(p => (p.payment_method || '').toLowerCase() === 'cash')
+    .reduce((sum: number, p: Payment) => sum + (p.payment_amount || 0), 0)
+  const totalBank = filteredPayments
+    .filter(p => (p.payment_method || '').toLowerCase() === 'bank transfer')
+    .reduce((sum: number, p: Payment) => sum + (p.payment_amount || 0), 0)
+  const totalUpi = filteredPayments
+    .filter(p => (p.payment_method || '').toLowerCase() === 'upi')
+    .reduce((sum: number, p: Payment) => sum + (p.payment_amount || 0), 0)
+
+  const summaryItems: SummaryCardItem[] = [
+    { label: 'Total Paid', primary: formatCurrency(totalPaid) },
+    { label: 'Payments', primary: filteredPayments.length.toLocaleString('en-IN') },
+    { label: 'Cash Paid', primary: formatCurrency(totalCash) },
+    { label: 'Bank Transfer Paid', primary: formatCurrency(totalBank) },
+    { label: 'UPI Paid', primary: formatCurrency(totalUpi) },
+  ]
+
   const getInvoiceNumber = (invoiceId: number) => {
     const invoice = invoices.find(inv => inv.id === invoiceId)
     return invoice ? invoice.invoice_no : `Invoice #${invoiceId}`
@@ -421,6 +445,11 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
             />
           </div>
         </EnhancedFilterBar>
+
+        {/* Summary Totals */}
+        <div style={{ margin: '16px 0 20px 0' }}>
+          <SummaryCardGrid items={summaryItems} columnsMin={220} gapPx={12} />
+        </div>
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px' }}>

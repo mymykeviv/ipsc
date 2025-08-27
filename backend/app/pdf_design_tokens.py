@@ -61,6 +61,24 @@ TABLE_COLUMNS = {
         {"key": "igst_amt", "label": "IGST Amt", "class": "num"},
         {"key": "line_total", "label": "Total", "class": "num"}
     ],
+    # Logistics Transporter Invoice (Template 2) — uses GST tabular structure tuned for A4
+    "GST_LOGISTICS_A4": [
+        {"key": "sl", "label": "Sl", "class": ""},
+        {"key": "desc", "label": "Description", "class": ""},
+        {"key": "hsn", "label": "HSN/SAC", "class": ""},
+        {"key": "qty", "label": "Qty", "class": "num"},
+        {"key": "uqc", "label": "UQC", "class": ""},
+        {"key": "rate", "label": "Rate", "class": "num"},
+        {"key": "disc", "label": "Disc", "class": "num"},
+        {"key": "taxable", "label": "Taxable", "class": "num"},
+        {"key": "cgst_rate", "label": "CGST %", "class": "num"},
+        {"key": "cgst_amt", "label": "CGST Amt", "class": "num"},
+        {"key": "sgst_rate", "label": "SGST %", "class": "num"},
+        {"key": "sgst_amt", "label": "SGST Amt", "class": "num"},
+        {"key": "igst_rate", "label": "IGST %", "class": "num"},
+        {"key": "igst_amt", "label": "IGST Amt", "class": "num"},
+        {"key": "line_total", "label": "Total", "class": "num"}
+    ],
     "GST_TABULAR_STANDARD_A5": [
         {"key": "sl", "label": "Sl", "class": ""},
         {"key": "desc", "label": "Item (HSN)", "class": ""},

@@ -1,3 +1,32 @@
+# Dashboard Responsiveness: Scaling vs Grid Min-Width (2025-08-27)
+
+## Context
+- Requirement: Reduce Dashboard widget size by ~20% on smaller screens and fit more widgets per row. Remove the Date Range block and surface Critical Actions higher.
+
+## Decisions
+- Use container-level CSS scaling (`.dashboard-scale`) with media queries instead of per-widget refactors.
+- Set `transform-origin: top left` and avoid width compensation so the visual size actually reduces.
+- Tighten `gridTemplateColumns: repeat(auto-fit, minmax(...))` and gaps per section to control packing density.
+- Move "Critical Actions" up to replace the Date Range section; keep period quick buttons in header.
+
+## Breakpoints and Values
+- ≤1024px: scale 0.9
+- ≤768px: scale 0.8
+- KPI row min width: 180px
+- Critical Actions min width: 128px
+- GST rate grid min width: 100px
+- Status sections min width: 240px
+
+## Pitfalls Avoided
+- Compensation math that negated the visual shrink (removed).
+- Overly tight min widths that cause card content overflow; tuned iteratively per section.
+
+## Verification Checklist
+- Hard-refresh browser to invalidate cached CSS.
+- Resize to 1024px and 768px: widgets scale down uniformly; more cards per row without overflow.
+- Confirm Critical Actions appear immediately below header; Date Range block removed.
+
+---
 # Learnings: Alembic Baseline Migration and CI/CD Integration
 
 ## Key Decisions

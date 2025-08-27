@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, type ChangeEvent } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../modules/AuthContext'
 import { createApiErrorHandler } from '../lib/apiUtils'
@@ -19,6 +19,7 @@ import { Button } from '../components/Button'
 import { StatusBadge } from '../components/StatusBadge'
 import { PurchaseForm } from '../components/PurchaseForm'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
+import { SummaryCardGrid, type SummaryCardItem } from '../components/common/SummaryCardGrid'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { DateFilter, DateRange } from '../components/DateFilter'
@@ -27,6 +28,7 @@ import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 import { useFilterNavigation } from '../utils/filterNavigation'
 import { useFilterReset } from '../hooks/useFilterReset'
 import { getDefaultFilterState } from '../config/defaultFilterStates'
+import { PurchasePayments as PurchasePaymentsPage } from './PurchasePayments'
 
 interface PurchasesProps {
   mode?: 'manage' | 'add' | 'edit' | 'payments'
@@ -311,17 +313,9 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
             ← Back to Purchases
           </Button>
         </div>
-        
-        <div style={{ 
-          padding: '20px', 
-          border: '1px solid #e9ecef',
-          borderRadius: '8px',
-          backgroundColor: '#f8f9fa'
-        }}>
-          <p style={{ margin: '0', color: '#6c757d' }}>
-            Purchase payment management functionality will be implemented here.
-          </p>
-        </div>
+
+        {/* Reuse the PurchasePayments page to list payments with its own filters and summary cards */}
+        <PurchasePaymentsPage mode="list" />
       </div>
     )
   }
@@ -338,7 +332,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
   }
 
   // Filter purchases
-  const filteredPurchases = purchases.filter(purchase => {
+  const filteredPurchases = purchases.filter((purchase: Purchase) => {
     const matchesSearch = !searchTerm || 
       purchase.purchase_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
       purchase.vendor_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -384,6 +378,21 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
   const endIndex = startIndex + itemsPerPage
   const paginatedPurchases = filteredPurchases.slice(startIndex, endIndex)
 
+  // Summary totals (computed from filteredPurchases for exact match with visible list)
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2 }).format(amount)
+
+  const totalPurchasesAmount = filteredPurchases.reduce((sum: number, p: Purchase) => sum + (p.grand_total || 0), 0)
+  const totalOutstanding = filteredPurchases.reduce((sum: number, p: Purchase) => sum + (p.balance_amount || 0), 0)
+  const totalPaid = totalPurchasesAmount - totalOutstanding
+
+  const summaryItems: SummaryCardItem[] = [
+    { label: 'Total Purchases', primary: formatCurrency(totalPurchasesAmount), accentColor: '#0d6efd' },
+    { label: 'Paid', primary: formatCurrency(totalPaid), accentColor: '#198754' },
+    { label: 'Outstanding', primary: formatCurrency(totalOutstanding), accentColor: '#dc3545' },
+    { label: 'Purchases', primary: filteredPurchases.length.toLocaleString('en-IN'), accentColor: '#0d6efd' }
+  ]
+
   return (
     <div style={{ padding: '20px', maxWidth: '100%' }}>
       <EnhancedHeader
@@ -394,6 +403,8 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
           icon: '📦'
         }}
       />
+
+      
 
       {error && (
         <div style={{ 
@@ -469,7 +480,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
             type="text"
             placeholder="Search purchases by number or vendor..."
             value={searchTerm}
-            onChange={(e) => setSearchTermWithURL(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTermWithURL(e.target.value)}
             style={{
               padding: '8px 12px',
               border: '1px solid #ced4da',
@@ -503,7 +514,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
             onChange={(value) => setVendorFilterWithURL(Array.isArray(value) ? value[0] || 'all' : value)}
             options={[
               { value: 'all', label: 'All Vendors' },
-              ...vendors.map(vendor => ({ 
+              ...vendors.map((vendor: Party) => ({ 
                 value: vendor.name, 
                 label: vendor.name 
               }))
@@ -553,6 +564,11 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
         </div>
       </EnhancedFilterBar>
 
+      {/* Summary Totals - moved below filters */}
+      <div style={{ margin: '16px 0 20px 0' }}>
+        <SummaryCardGrid items={summaryItems} columnsMin={240} gapPx={12} />
+      </div>
+
       <div style={{ 
         border: '1px solid #e9ecef', 
         borderRadius: '8px', 
@@ -573,7 +589,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
             </tr>
           </thead>
           <tbody>
-            {paginatedPurchases.map(purchase => (
+            {paginatedPurchases.map((purchase: Purchase) => (
               <tr key={purchase.id} style={{ 
                 borderBottom: '1px solid #e9ecef',
                 backgroundColor: 'white'

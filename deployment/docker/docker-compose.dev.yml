@@ -67,7 +67,8 @@ services:
       - ../../frontend:/app
       - frontend_cache:/app/node_modules
     environment:
-      VITE_API_URL: http://localhost:8000
+      # Point Vite proxy to the backend service hostname inside the Docker network
+      VITE_BACKEND_URL: http://backend:8000
       VITE_APP_ENV: development
     command: npm run dev -- --host 0.0.0.0 --port 5173
     depends_on:

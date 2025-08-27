@@ -756,3 +756,25 @@ header {
     page-break-inside: avoid;
   }
 }
+
+/* Responsive scale for Dashboard widgets */
+.dashboard-scale {
+  --dashboard-scale: 1;
+  transform: scale(var(--dashboard-scale));
+  transform-origin: top left;
+  /* Let the visual scale reduce overall size; avoid counteracting with width compensation */
+  width: 100%;
+  overflow: visible;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-scale {
+    --dashboard-scale: 0.9; /* ~10% reduction for tablets */
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-scale {
+    --dashboard-scale: 0.8; /* 20% reduction for smaller screens */
+  }
+}

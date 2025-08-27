@@ -121,7 +121,14 @@ export async function apiLogin(username: string, password: string): Promise<Logi
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   })
-  if (!r.ok) throw new Error('Invalid credentials')
+  if (!r.ok) {
+    try {
+      const data = await r.json()
+      throw new Error(data.detail ? `HTTP ${r.status}: ${data.detail}` : `HTTP ${r.status}: ${r.statusText}`)
+    } catch {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
   return r.json()
 }
 
@@ -868,9 +875,33 @@ export type PaginationInfo = {
   has_prev: boolean
 }
 
+// Summary totals for invoice list (INR-only)
+export type InvoiceSummaryTotals = {
+  // number of invoices in the filtered set (ignores pagination)
+  count: number
+  // sum of taxable values before tax and discounts
+  subtotal: number
+  // total discount across invoices
+  discount: number
+  // total tax across invoices (cgst+sgst+igst+utgst+cess)
+  tax: number
+  // grand total amount (invoice totals)
+  total: number
+  // total of payments received
+  amount_paid: number
+  // outstanding balance (total - amount_paid)
+  outstanding: number
+  // currency code for totals
+  currency: 'INR'
+}
+
 export type InvoiceListResponse = {
   invoices: Invoice[]
   pagination: PaginationInfo
+  // Optional metadata for backward compatibility
+  meta?: {
+    totals?: InvoiceSummaryTotals
+  }
 }
 
 export async function apiGetInvoices(
@@ -1945,15 +1976,26 @@ export async function apiUpdateInvoiceStatus(invoiceId: number, status: string):
   return r.json()
 }
 
-export async function apiGetInvoicePDF(invoiceId: number, templateId?: number): Promise<Blob> {
+export type PaperSize = 'A4' | 'A5'
+
+export async function apiGetInvoicePDF(invoiceId: number, templateId?: number, paperSize?: PaperSize): Promise<Blob> {
   const params = new URLSearchParams()
   if (templateId) {
     params.append('template_id', templateId.toString())
   }
+  if (paperSize) {
+    params.append('paper_size', paperSize)
+  }
+  // Cache busting timestamp to avoid any caching layers
+  params.append('_', Date.now().toString())
   
   const url = `/api/invoices/${invoiceId}/pdf${params.toString() ? `?${params.toString()}` : ''}`
   const r = await fetch(url, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+    headers: { 
+      Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+      Accept: 'application/pdf'
+    },
+    cache: 'no-store'
   })
   if (!r.ok) {
     try {
@@ -1962,6 +2004,12 @@ export async function apiGetInvoicePDF(invoiceId: number, templateId?: number): 
     } catch (parseError) {
       throw new Error(`HTTP ${r.status}: ${r.statusText}`)
     }
+  }
+  const ct = r.headers.get('content-type') || ''
+  if (!ct.includes('application/pdf')) {
+    // Backend likely returned an HTML error page or JSON error due to missing PDF backend
+    const text = await r.text()
+    throw new Error('Expected a PDF but received non-PDF content. PDF engine may be missing on server. Details: ' + text.slice(0, 300))
   }
   return r.blob()
 }

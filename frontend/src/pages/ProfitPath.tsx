@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useAuth } from '../modules/AuthContext'
 import { useSearchParams } from 'react-router-dom'
 import { 
@@ -10,6 +10,7 @@ import { DateFilter, DateRange } from '../components/DateFilter'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
+import { SummaryCardGrid, SummaryCardItem } from '../components/common/SummaryCardGrid'
 import { useFilterNavigation } from '../utils/filterNavigation'
 import { useFilterReset } from '../hooks/useFilterReset'
 import { getDefaultFilterState } from '../config/defaultFilterStates'
@@ -219,7 +220,7 @@ export function CashflowTransactions() {
     loadTransactions()
   }
 
-  const filteredTransactions = transactions.filter(transaction => {
+  const filteredTransactions = transactions.filter((transaction: CashflowTransaction) => {
     const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.reference_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.payment_method.toLowerCase().includes(searchTerm.toLowerCase())
@@ -249,6 +250,43 @@ export function CashflowTransactions() {
       minimumFractionDigits: 2
     }).format(amount)
   }
+
+  // Summary totals derived from currently filtered dataset (not paginated)
+  const summaryItems: SummaryCardItem[] = useMemo(() => {
+    const inflow = filteredTransactions
+      .filter((t: CashflowTransaction) => t.type === 'inflow')
+      .reduce((acc: number, t: CashflowTransaction) => acc + t.amount, 0)
+    const outflow = filteredTransactions
+      .filter((t: CashflowTransaction) => t.type === 'outflow')
+      .reduce((acc: number, t: CashflowTransaction) => acc + t.amount, 0)
+    const net = inflow - outflow
+
+    const inflowCount = filteredTransactions.filter((t: CashflowTransaction) => t.type === 'inflow').length
+    const outflowCount = filteredTransactions.filter((t: CashflowTransaction) => t.type === 'outflow').length
+
+    // Payment method breakdown (core methods commonly used in app)
+    const byMethod = filteredTransactions.reduce<Record<string, number>>((acc: Record<string, number>, t: CashflowTransaction) => {
+      acc[t.payment_method] = (acc[t.payment_method] || 0) + t.amount * (t.type === 'inflow' ? 1 : -1)
+      return acc
+    }, {})
+
+    const items: SummaryCardItem[] = [
+      { label: 'Total Inflow', primary: formatCurrency(inflow), secondary: `${inflowCount} inflow txns`, accentColor: '#198754' },
+      { label: 'Total Outflow', primary: formatCurrency(outflow), secondary: `${outflowCount} outflow txns`, accentColor: '#dc3545' },
+      { label: 'Net Cashflow', primary: formatCurrency(net), secondary: net >= 0 ? 'Surplus' : 'Deficit', accentColor: net >= 0 ? '#0d6efd' : '#dc3545' },
+      { label: 'Transactions', primary: filteredTransactions.length.toString(), secondary: `${startIndex + 1}-${Math.min(endIndex, filteredTransactions.length)} shown` },
+    ]
+
+    // Add a couple of common method breakdown cards if present
+    const commonMethods = ['Cash', 'Bank Transfer', 'UPI']
+    for (const m of commonMethods) {
+      if (byMethod[m] !== undefined) {
+        items.push({ label: `${m} Net`, primary: formatCurrency(byMethod[m]), accentColor: byMethod[m] >= 0 ? '#198754' : '#dc3545' })
+      }
+    }
+
+    return items
+  }, [filteredTransactions, startIndex, endIndex])
 
   if (loading && transactions.length === 0) {
     return (
@@ -451,6 +489,9 @@ export function CashflowTransactions() {
           />
         </div>
       </EnhancedFilterBar>
+
+      {/* Summary totals based on filtered transactions */}
+      <SummaryCardGrid items={summaryItems} />
 
       {error && (
         <div style={{ 

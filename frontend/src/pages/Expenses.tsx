@@ -22,6 +22,7 @@ import { EnhancedHeader, HeaderPatterns } from '../components/EnhancedHeader'
 import { useFilterNavigation } from '../utils/filterNavigation'
 import { useFilterReset } from '../hooks/useFilterReset'
 import { getDefaultFilterState } from '../config/defaultFilterStates'
+import SummaryCardGrid, { SummaryCardItem } from '../components/common/SummaryCardGrid'
 
 interface ExpensesProps {
   mode?: 'manage' | 'add' | 'edit'
@@ -274,7 +275,7 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
     }
   }
 
-  const filteredExpenses = expenses.filter(expense => {
+  const filteredExpenses = expenses.filter((expense: Expense) => {
     const matchesSearch = !searchTerm || 
       expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       expense.expense_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -309,6 +310,41 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
   const paginatedExpenses = filteredExpenses.slice(startIndex, endIndex)
+
+  // Currency formatter (INR)
+  const formatCurrency = (n: number) =>
+    new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 2,
+    }).format(n)
+
+  // Summary totals derived from currently filtered (not paginated) expenses
+  const totalAmount = filteredExpenses.reduce((acc: number, e: Expense) => acc + (e?.amount ?? 0), 0)
+  const expenseCount = filteredExpenses.length
+  const directCOGS = filteredExpenses.reduce((acc: number, e: Expense) => {
+    const cat = (e?.category ?? '').toLowerCase()
+    return acc + (cat === 'direct/cogs' ? (e.amount ?? 0) : 0)
+  }, 0)
+  const indirectOperating = filteredExpenses.reduce((acc: number, e: Expense) => {
+    const cat = (e?.category ?? '').toLowerCase()
+    return acc + (cat === 'indirect/operating' ? (e.amount ?? 0) : 0)
+  }, 0)
+
+  const summaryItems: SummaryCardItem[] = [
+    { label: 'Total Expenses', primary: formatCurrency(totalAmount), accentColor: '#2c3e50' },
+    { label: 'Expenses', primary: expenseCount },
+    {
+      label: 'Direct/COGS',
+      primary: formatCurrency(directCOGS),
+      secondary: totalAmount > 0 ? `${((directCOGS / totalAmount) * 100).toFixed(1)}% of total` : undefined,
+    },
+    {
+      label: 'Indirect/Operating',
+      primary: formatCurrency(indirectOperating),
+      secondary: totalAmount > 0 ? `${((indirectOperating / totalAmount) * 100).toFixed(1)}% of total` : undefined,
+    },
+  ]
 
   if (loading && expenses.length === 0) {
     return (
@@ -375,6 +411,9 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
           icon: '💰'
         }}
       />
+
+      {/* Summary Totals */}
+      <SummaryCardGrid items={summaryItems} />
 
       {/* Enhanced Filter Options */}
       <EnhancedFilterBar 

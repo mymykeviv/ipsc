@@ -510,6 +510,37 @@ NONGST_TABULAR_TEMPLATE = {
     }
 }
 
+# Template 2: Logistics Transporter Invoice (GST, A4)
+GST_LOGISTICS_TEMPLATE = {
+    "template_id": "GST_LOGISTICS_A4_V1",
+    "requires": {"gst": True, "title": "Tax Invoice", "hsn_required": True},
+    "validation": {"inherit": "GST_TABULAR_A4A5_V1.validation"},
+    "tax_logic": {"inherit": "GST_TABULAR_A4A5_V1.tax_logic"},
+    "layout": {
+        "paper": {"A4": {"font_pt": 10, "margins_mm": 15}},
+        "sections": [
+            {"id": "header", "type": "inherit", "from_template": "GST_TABULAR_A4A5_V1.header"},
+            {"id": "meta", "type": "inherit", "from_template": "GST_TABULAR_A4A5_V1.meta"},
+            {
+                "id": "transport",
+                "type": "inline",
+                "fields": [
+                    "invoice.transport.mode",
+                    "invoice.transport.vehicle_no",
+                    "invoice.transport.lr_no",
+                    "invoice.eway_bill_no"
+                ]
+            },
+            {"id": "parties", "type": "inherit", "from_template": "GST_TABULAR_A4A5_V1.parties"},
+            {"id": "items_table", "type": "inherit", "from_template": "GST_TABULAR_A4A5_V1.items_table"},
+            {"id": "summary", "type": "inherit", "from_template": "GST_TABULAR_A4A5_V1.summary"},
+            {"id": "payment", "type": "inherit", "from_template": "GST_TABULAR_A4A5_V1.payment"},
+            {"id": "notes", "type": "inherit", "from_template": "GST_TABULAR_A4A5_V1.notes"},
+            {"id": "sign", "type": "inherit", "from_template": "GST_TABULAR_A4A5_V1.sign"}
+        ]
+    }
+}
+
 # All templates dictionary
 GST_INVOICE_TEMPLATES = {
     "GST_TABULAR_A4A5_V1": {
@@ -561,6 +592,16 @@ GST_INVOICE_TEMPLATES = {
         "title": "Invoice",
         "paper_sizes": "A4,A5",
         "sort_order": 5
+    },
+    "GST_LOGISTICS_A4_V1": {
+        "name": "Logistics Transporter Invoice (A4)",
+        "description": "GST tax invoice tailored for logistics/transporters with transport details section. A4 only.",
+        "template_config": json.dumps(GST_LOGISTICS_TEMPLATE),
+        "requires_gst": True,
+        "requires_hsn": True,
+        "title": "Tax Invoice",
+        "paper_sizes": "A4",
+        "sort_order": 6
     }
 }
 
