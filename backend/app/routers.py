@@ -795,7 +795,13 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
 
 
 @api.get('/invoices/{invoice_id}/pdf')
-def invoice_pdf(invoice_id: int, template_id: int | None = None, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def invoice_pdf(
+    invoice_id: int,
+    template_id: int | None = None,
+    paper_size: str | None = None,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not inv:
         raise HTTPException(status_code=404, detail='Invoice not found')
@@ -999,16 +1005,20 @@ def invoice_pdf(invoice_id: int, template_id: int | None = None, _: User = Depen
     
     pdf_generator = PDFGenerator()
     
-    # Determine paper size from template
-    paper_sizes = template.paper_sizes.split(',')
-    paper_size = paper_sizes[0].strip() if paper_sizes else "A4"
+    # Determine paper size from template and optional query param
+    allowed_sizes = [s.strip().upper() for s in (template.paper_sizes or "A4").split(',') if s.strip()]
+    requested_size = (paper_size or "").strip().upper() if paper_size else None
+    if requested_size and requested_size in allowed_sizes:
+        selected_paper_size = requested_size
+    else:
+        selected_paper_size = allowed_sizes[0] if allowed_sizes else "A4"
     
     # Generate HTML
-    html_content = pdf_generator.generate_invoice_pdf(invoice_data, template.template_id, paper_size)
+    html_content = pdf_generator.generate_invoice_pdf(invoice_data, template.template_id, selected_paper_size)
     
     try:
         # Convert HTML to PDF
-        pdf_bytes = convert_html_to_pdf(html_content, paper_size)
+        pdf_bytes = convert_html_to_pdf(html_content, selected_paper_size)
         return Response(content=pdf_bytes, media_type='application/pdf')
     except Exception as e:
         # Fallback to HTML if PDF conversion fails
@@ -7787,6 +7797,86 @@ def get_gst_template_config(template_id: str, _: User = Depends(get_current_user
         return config
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+class TemplateValidationResult(BaseModel):
+    valid: bool
+    errors: list[str] = []
+    warnings: list[str] = []
+
+
+class GstTemplateUpload(BaseModel):
+    template: dict
+
+
+@api.post('/gst-invoice-templates/validate', response_model=TemplateValidationResult)
+def validate_gst_template(
+    payload: GstTemplateUpload,
+    _: User = Depends(get_current_user)
+):
+    """Validate uploaded GST template JSON structure and inheritance references.
+    This performs lightweight checks to support client-side upload UX.
+    """
+    from .template_configs import get_all_templates
+
+    tpl = payload.template or {}
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    # Basic schema checks
+    required_top = ['template_id', 'layout']
+    for key in required_top:
+        if key not in tpl:
+            errors.append(f"Missing required top-level key: '{key}'")
+
+    if 'template_id' in tpl:
+        if not isinstance(tpl['template_id'], str) or not tpl['template_id']:
+            errors.append("'template_id' must be a non-empty string")
+
+    # Layout basic structure
+    layout = tpl.get('layout')
+    if layout is not None and not isinstance(layout, dict):
+        errors.append("'layout' must be an object")
+    sections = []
+    if isinstance(layout, dict):
+        sections = layout.get('sections') or []
+        if sections is not None and not isinstance(sections, list):
+            errors.append("'layout.sections' must be an array if provided")
+
+    # Validate inheritance references against known templates
+    try:
+        known_templates = set(get_all_templates().keys())
+    except Exception:
+        known_templates = set()
+
+    def check_inherit_ref(ref: str, where: str):
+        # Accept patterns like TEMPLATE_ID.section or full key; validate template id existence
+        if not isinstance(ref, str) or not ref:
+            errors.append(f"Invalid inherit reference at {where}: must be non-empty string")
+            return
+        template_id = ref.split('.', 1)[0]
+        if template_id not in known_templates:
+            warnings.append(f"Unknown template reference '{template_id}' at {where}")
+
+    # Top-level validation/tax_logic inherit
+    for top_key in ['validation', 'tax_logic']:
+        top_val = tpl.get(top_key)
+        if isinstance(top_val, dict) and 'inherit' in top_val:
+            check_inherit_ref(top_val.get('inherit'), f"{top_key}.inherit")
+
+    # Section-level inherit entries
+    if isinstance(sections, list):
+        for idx, sec in enumerate(sections):
+            if isinstance(sec, dict) and sec.get('type') == 'inherit':
+                ref = sec.get('from_template') or sec.get('inherit')
+                check_inherit_ref(ref, f"layout.sections[{idx}]")
+
+    # Paper sizes hint
+    paper = (layout or {}).get('paper') if isinstance(layout, dict) else None
+    if paper is None:
+        warnings.append("'layout.paper' not specified; default sizing will be applied by renderer")
+
+    return TemplateValidationResult(valid=len(errors) == 0, errors=errors, warnings=warnings)
 
 
 @api.post('/upload-logo')

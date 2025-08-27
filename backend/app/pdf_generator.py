@@ -24,7 +24,9 @@ class PDFGenerator:
         css = get_css_for_template(template_id, paper_size)
         
         # Generate HTML based on template
-        if template_id.startswith("GST_TABULAR"):
+        if template_id == "GST_TABULAR_A4A5_V1":
+            html = self._generate_gst_tabular_a4a5_v1_html(invoice_data, table_columns, paper_size)
+        elif template_id.startswith("GST_TABULAR"):
             html = self._generate_gst_tabular_html(invoice_data, table_columns, paper_size)
         elif template_id.startswith("GST_SIMPLE"):
             html = self._generate_gst_simple_html(invoice_data, table_columns, paper_size)
@@ -47,6 +49,107 @@ class PDFGenerator:
         full_html = self._wrap_html_document(html, css, invoice_data.get("invoice", {}).get("title", "Invoice"))
         
         return full_html
+
+    def _generate_gst_tabular_a4a5_v1_html(self, data: Dict[str, Any], columns: List[Dict], paper_size: str) -> str:
+        """Generate GST Tabular A4/A5 V1 HTML (enhanced layout per updated template)
+        - Adds ORIGINAL FOR RECIPIENT badge
+        - Shows supplier Website and PAN if available
+        - Adds HSN-wise GST summary table
+        - Adds balances section when provided in data
+        """
+        base_html = self._generate_gst_tabular_html(data, columns, paper_size)
+
+        supplier = data.get("supplier", {})
+        invoice = data.get("invoice", {})
+        items = data.get("items", [])
+        balances = data.get("balances") or {}
+
+        # Insert ORIGINAL FOR RECIPIENT badge next to title
+        badge_html = "<div class=\"u-mt-xs alert-badge\">ORIGINAL FOR RECIPIENT</div>"
+        base_html = base_html.replace(
+            '<div class="pdf-invmeta">',
+            f'<div class="pdf-invmeta">{badge_html}'
+        )
+
+        # Insert Website and PAN under supplier contact if present
+        website = supplier.get("website") or ""
+        pan = supplier.get("pan") or ""
+        extras = ""
+        if website:
+            extras += f'<div class="line u-muted">Website: {website}</div>'
+        if pan:
+            extras += f'<div class="line u-muted">PAN: {pan}</div>'
+        if extras:
+            base_html = base_html.replace(
+                '</div>\n            </div>\n        </div>',
+                extras + '\n                </div>\n            </div>\n        </div>'
+            )
+
+        # Build HSN-wise GST summary table from items
+        try:
+            hsn_summary_rows = []
+            # Aggregate per HSN
+            agg: Dict[str, Dict[str, float]] = {}
+            # Determine intra vs inter based on supplier PoS
+            supplier_state_code = (data.get("supplier", {}).get("address", {}) or {}).get("state_code")
+            inv_pos_code = (invoice.get("place_of_supply", {}) or {}).get("state_code")
+            intra = supplier_state_code and inv_pos_code and supplier_state_code == inv_pos_code
+            for it in items:
+                hsn = it.get("hsn_sac", "") or "-"
+                qty = float(it.get("quantity", 0) or 0)
+                rate = float(it.get("unit_price", 0) or 0)
+                discount = self._calculate_discount(it.get("discount", {}), qty * rate)
+                taxable = max(0.0, (qty * rate) - discount)
+                tax_rate = float((it.get("tax", {}) or {}).get("rate", 0) or 0)
+                if hsn not in agg:
+                    agg[hsn] = {"taxable": 0.0, "cgst": 0.0, "sgst": 0.0, "igst": 0.0}
+                agg[hsn]["taxable"] += taxable
+                if intra:
+                    cg = taxable * (tax_rate/2) / 100.0
+                    sg = taxable * (tax_rate/2) / 100.0
+                    agg[hsn]["cgst"] += cg
+                    agg[hsn]["sgst"] += sg
+                else:
+                    ig = taxable * tax_rate / 100.0
+                    agg[hsn]["igst"] += ig
+            if agg:
+                hsn_html = [
+                    '<div class="pdf-box gst">',
+                    '  <div class="box-title">GST Tax Summary (HSN-wise)</div>',
+                    '  <table class="pdf-table">',
+                    '    <thead><tr><th>HSN/SAC</th><th class="num">Taxable</th><th class="num">CGST</th><th class="num">SGST</th><th class="num">IGST</th></tr></thead>',
+                    '    <tbody>'
+                ]
+                for hsn, v in agg.items():
+                    hsn_html.append(
+                        f'      <tr><td>{hsn}</td><td class="num">{v["taxable"]:.2f}</td><td class="num">{v["cgst"]:.2f}</td><td class="num">{v["sgst"]:.2f}</td><td class="num">{v["igst"]:.2f}</td></tr>'
+                    )
+                hsn_html.extend(['    </tbody>', '  </table>', '</div>'])
+                hsn_block = "\n".join(hsn_html)
+                # Place summary before totals
+                base_html = base_html.replace('<div class="pdf-totals">', hsn_block + '\n    <div class="pdf-totals">')
+        except Exception:
+            # Safe ignore if items structure not as expected
+            pass
+
+        # Insert balances section if provided
+        if balances and any(v for v in balances.values()):
+            rec = float(balances.get("received", 0) or 0)
+            bal = float(balances.get("balance", 0) or 0)
+            prev = float(balances.get("previous_balance", 0) or 0)
+            curr = float(balances.get("current_balance", 0) or 0)
+            bal_html = (
+                '\n    <div class="pdf-box gst">\n'
+                '      <div class="box-title">Balances</div>\n'
+                '      <div class="row"><div class="key">Received</div><div class="val">₹{:.2f}</div></div>\n'
+                '      <div class="row"><div class="key">Balance</div><div class="val">₹{:.2f}</div></div>\n'
+                '      <div class="row"><div class="key">Previous Balance</div><div class="val">₹{:.2f}</div></div>\n'
+                '      <div class="row"><div class="key">Current Balance</div><div class="val">₹{:.2f}</div></div>\n'
+                '    </div>\n'
+            ).format(rec, bal, prev, curr)
+            base_html = base_html.replace('<div class="pdf-totals">', bal_html + '    <div class="pdf-totals">')
+
+        return base_html
 
     def _resolve_columns_key(self, template_id: str, paper_size: str) -> str:
         """Resolve the table column configuration key for a given template and paper size"""
