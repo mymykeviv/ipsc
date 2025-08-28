@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from pydantic import BaseModel, validator
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_
+from sqlalchemy.sql import case
 import re
 import logging
 from datetime import datetime, timedelta, date
@@ -1791,19 +1792,76 @@ def list_invoices(
         query
         .filter(Invoice.currency == 'INR', Invoice.invoice_type == 'Invoice')
         .with_entities(
+            # count
             func.count(Invoice.id),
+            # money aggregates
             func.coalesce(func.sum(Invoice.taxable_value), 0),
             func.coalesce(func.sum(Invoice.total_discount), 0),
             func.coalesce(func.sum(Invoice.cgst + Invoice.sgst + Invoice.igst + Invoice.utgst + Invoice.cess), 0),
             func.coalesce(func.sum(Invoice.grand_total), 0),
             func.coalesce(func.sum(Invoice.paid_amount), 0),
             func.coalesce(func.sum(Invoice.balance_amount), 0),
+            # counts - Using explicit CASE statements with proper conditions
+            func.coalesce(
+                func.sum(
+                    case(
+                        [(Invoice.paid_amount > 0, 1)],
+                        else_=0
+                    )
+                ),
+                0
+            ),  # paid_count (counts invoices with any payment)
+            func.coalesce(
+                func.sum(
+                    case(
+                        [(Invoice.balance_amount > 0, 1)],
+                        else_=0
+                    )
+                ),
+                0
+            ),  # outstanding_count (counts invoices with any outstanding balance)
+            func.coalesce(
+                func.sum(
+                    case(
+                        [(
+                            and_(
+                                Invoice.due_date < func.date(func.now()),
+                                Invoice.balance_amount > 0
+                            ),
+                            1
+                        )],
+                        else_=0
+                    )
+                ),
+                0
+            ),  # overdue_count
         )
         .first()
     )
     totals_meta = None
     if totals_row is not None and totals_row[0] and int(totals_row[0]) > 0:
-        count, subtotal, discount, tax, total, amount_paid, outstanding = totals_row
+        (
+            count,
+            subtotal,
+            discount,
+            tax,
+            total,
+            amount_paid,
+            outstanding,
+            paid_count,
+            outstanding_count,
+            overdue_count,
+        ) = totals_row
+
+        # Debug logs to diagnose counts
+        print(f"[DEBUG] Invoice counts - Total: {count}, Paid: {paid_count}, Outstanding: {outstanding_count}, Overdue: {overdue_count}")
+        print(f"[DEBUG] Amounts - Total: {total}, Paid: {amount_paid}, Outstanding: {outstanding}")
+
+        # Ensure counts are integers and non-negative
+        paid_count = max(0, int(paid_count or 0))
+        outstanding_count = max(0, int(outstanding_count or 0))
+        overdue_count = max(0, int(overdue_count or 0))
+
         totals_meta = {
             "count": int(count),
             "subtotal": float(subtotal or 0),
@@ -1812,7 +1870,59 @@ def list_invoices(
             "total": float(total or 0),
             "amount_paid": float(amount_paid or 0),
             "outstanding": float(outstanding or 0),
+            "paid_count": paid_count,
+            "outstanding_count": outstanding_count,
+            "overdue_count": overdue_count,
+            "overdue_avg_days": 0,
             "currency": "INR",
+        }
+    
+        # Compute overdue_avg_days in a DB-agnostic way with a lightweight query
+        overdue_avg_days = 0
+        total_overdue_days = 0
+        
+        if overdue_count and int(overdue_count) > 0:
+            # Get all overdue invoices
+            overdue_invoices = (
+                query
+                .filter(
+                    Invoice.currency == 'INR',
+                    Invoice.invoice_type == 'Invoice',
+                    Invoice.due_date < func.date(func.now()),
+                    Invoice.balance_amount > 0  # Only count if there's an outstanding balance
+                )
+                .with_entities(Invoice.due_date)
+                .all()
+            )
+            
+            # Calculate total overdue days
+            today = datetime.utcnow().date()
+            for inv in overdue_invoices:
+                due_date = inv[0]
+                if due_date:
+                    due_date = due_date.date() if hasattr(due_date, 'date') else due_date
+                    days_overdue = (today - due_date).days
+                    if days_overdue > 0:
+                        total_overdue_days += days_overdue
+            
+            # Calculate average if we have overdue invoices
+            if overdue_count > 0 and total_overdue_days > 0:
+                overdue_avg_days = int(round(total_overdue_days / overdue_count))
+        
+        # Update totals_meta with all calculated values
+        totals_meta = {
+            "count": int(count),
+            "subtotal": float(subtotal or 0),
+            "discount": float(discount or 0),
+            "tax": float(tax or 0),
+            "total": float(total or 0),
+            "amount_paid": float(amount_paid or 0),
+            "outstanding": float(outstanding or 0),
+            "paid_count": int(paid_count or 0),
+            "outstanding_count": int(outstanding_count or 0),
+            "overdue_count": int(overdue_count or 0),
+            "overdue_avg_days": int(overdue_avg_days or 0),
+            "currency": "INR"
         }
     
     # Apply sorting
@@ -1857,6 +1967,7 @@ def list_invoices(
     has_next = page < total_pages
     has_prev = page > 1
     
+    # Prepare the response with all count fields
     response_payload = {
         "invoices": result,
         "pagination": {
@@ -1864,13 +1975,13 @@ def list_invoices(
             "limit": limit,
             "total_count": total_count,
             "total_pages": total_pages,
-            "has_next": has_next,
-            "has_prev": has_prev
+            "has_next": page < total_pages,
+            "has_prev": page > 1,
+        },
+        "meta": {
+            "totals": totals_meta
         }
     }
-    # Backward compatible: only add meta.totals when available
-    if totals_meta is not None:
-        response_payload["meta"] = {"totals": totals_meta}
     return response_payload
 
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request, UploadFile, File
 from pydantic import BaseModel, validator
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_
+from sqlalchemy import func, and_, or_, case
 import re
 import logging
 from datetime import datetime, timedelta, date
@@ -1475,9 +1475,12 @@ def list_invoices(
     # Compute INR-only totals (exclude non-standard invoice types) before pagination
     totals_meta = None
     try:
+        # Base filtered query for totals and counts
+        base_q = query.filter(Invoice.currency == 'INR', Invoice.invoice_type == 'Invoice')
+
+        # Monetary aggregates
         totals_row = (
-            query
-            .filter(Invoice.currency == 'INR', Invoice.invoice_type == 'Invoice')
+            base_q
             .with_entities(
                 func.count(Invoice.id),
                 func.coalesce(func.sum(Invoice.taxable_value), 0),
@@ -1489,6 +1492,19 @@ def list_invoices(
             )
             .first()
         )
+
+        # Counts
+        paid_count = base_q.filter(Invoice.paid_amount >= Invoice.grand_total).count()
+        outstanding_count = base_q.filter(Invoice.balance_amount > 0).count()
+        overdue_q = base_q.filter(
+            Invoice.due_date < func.date(func.now()),
+            Invoice.balance_amount > 0,
+        )
+        overdue_count = overdue_q.count()
+        overdue_avg_days_val = overdue_q.with_entities(
+            func.coalesce(func.avg(func.date(func.now()) - func.date(Invoice.due_date)), 0)
+        ).scalar()
+
         if totals_row is not None and totals_row[0] and int(totals_row[0]) > 0:
             count, subtotal, discount, tax, total, amount_paid, outstanding = totals_row
             totals_meta = {
@@ -1499,6 +1515,10 @@ def list_invoices(
                 "total": float(total or 0),
                 "amount_paid": float(amount_paid or 0),
                 "outstanding": float(outstanding or 0),
+                "paid_count": int(paid_count or 0),
+                "outstanding_count": int(outstanding_count or 0),
+                "overdue_count": int(overdue_count or 0),
+                "overdue_avg_days": int(overdue_avg_days_val or 0),
                 "currency": "INR",
             }
     except Exception:
@@ -4533,6 +4553,94 @@ def list_all_invoice_payments(
         for p in pays
     ]
 
+
+@api.get('/invoice-payments/summary', response_model=dict)
+def invoice_payments_summary(
+    search: str | None = None,
+    payment_method: str | None = None,
+    customer_id: int | None = None,
+    amount_min: float | None = None,
+    amount_max: float | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Aggregate invoice payments totals for summary cards.
+
+    Returns INR-only aggregates based on filters:
+      - total_paid and total payment_count
+      - cash_amount and cash_count
+      - bank_transfer_amount and bank_transfer_count
+      - upi_amount and upi_count
+    """
+
+    # Base query: Payments joined to Invoice (for currency, customer, search)
+    q = db.query(Payment).join(Invoice, Payment.invoice_id == Invoice.id).join(Party, Invoice.customer_id == Party.id)
+
+    # Limit to INR invoices and standard invoices only (defensive)
+    q = q.filter(Invoice.currency == 'INR')
+
+    # Apply filters
+    if search:
+        q = q.filter(
+            Party.name.ilike(f"%{search}%") |
+            Payment.reference_number.ilike(f"%{search}%") |
+            Payment.notes.ilike(f"%{search}%")
+        )
+    if payment_method:
+        q = q.filter(Payment.payment_method == payment_method)
+    if customer_id:
+        q = q.filter(Invoice.customer_id == customer_id)
+    if amount_min is not None:
+        q = q.filter(Payment.amount >= amount_min)
+    if amount_max is not None:
+        q = q.filter(Payment.amount <= amount_max)
+    if date_from:
+        try:
+            q = q.filter(Payment.payment_date >= datetime.fromisoformat(date_from))
+        except ValueError:
+            raise HTTPException(status_code=422, detail="Invalid date_from format. Use ISO format (YYYY-MM-DD)")
+    if date_to:
+        try:
+            q = q.filter(Payment.payment_date <= datetime.fromisoformat(date_to))
+        except ValueError:
+            raise HTTPException(status_code=422, detail="Invalid date_to format. Use ISO format (YYYY-MM-DD)")
+
+    # Conditional sums and counts by method
+    cash_cond = case((Payment.payment_method.ilike('%cash%'), 1), else_=0)
+    bank_cond = case((Payment.payment_method.ilike('%bank%'), 1), else_=0)
+    upi_cond = case((Payment.payment_method.ilike('%upi%'), 1), else_=0)
+
+    cash_amount = func.coalesce(func.sum(case((Payment.payment_method.ilike('%cash%'), Payment.amount), else_=0)), 0)
+    bank_amount = func.coalesce(func.sum(case((Payment.payment_method.ilike('%bank%'), Payment.amount), else_=0)), 0)
+    upi_amount = func.coalesce(func.sum(case((Payment.payment_method.ilike('%upi%'), Payment.amount), else_=0)), 0)
+
+    rows = q.with_entities(
+        func.coalesce(func.sum(Payment.amount), 0),            # total_paid
+        func.count(Payment.id),                                 # payment_count
+        cash_amount, func.sum(cash_cond),                       # cash_amount, cash_count
+        bank_amount, func.sum(bank_cond),                       # bank_transfer_amount, bank_transfer_count
+        upi_amount, func.sum(upi_cond),                         # upi_amount, upi_count
+    ).first()
+
+    total_paid, payment_count, cash_amt, cash_cnt, bank_amt, bank_cnt, upi_amt, upi_cnt = rows or (0, 0, 0, 0, 0, 0, 0, 0)
+
+    return {
+        "meta": {
+            "totals": {
+                "total_paid": float(total_paid or 0),
+                "payment_count": int(payment_count or 0),
+                "cash_amount": float(cash_amt or 0),
+                "cash_count": int(cash_cnt or 0),
+                "bank_transfer_amount": float(bank_amt or 0),
+                "bank_transfer_count": int(bank_cnt or 0),
+                "upi_amount": float(upi_amt or 0),
+                "upi_count": int(upi_cnt or 0),
+                "currency": "INR",
+            }
+        }
+    }
 
 @api.post('/purchases/{purchase_id}/payments', status_code=201)
 def add_purchase_payment(purchase_id: int, payload: PurchasePaymentIn, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
