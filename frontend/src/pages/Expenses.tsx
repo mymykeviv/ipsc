@@ -303,7 +303,16 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
       return expenseYear === startYear
     })()
     
-    return matchesSearch && matchesCategory && matchesType && matchesPaymentMethod && matchesAmountRange && matchesFinancialYear
+    // Date range filter (inclusive) if provided
+    const matchesDate = (() => {
+      if (!dateFilter?.startDate || !dateFilter?.endDate) return true
+      const d = new Date(expense.expense_date)
+      const start = new Date(dateFilter.startDate)
+      const end = new Date(dateFilter.endDate)
+      return d >= start && d <= end
+    })()
+    
+    return matchesSearch && matchesCategory && matchesType && matchesPaymentMethod && matchesAmountRange && matchesFinancialYear && matchesDate
   })
 
   const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage)
@@ -332,17 +341,23 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
   }, 0)
 
   const summaryItems: SummaryCardItem[] = [
-    { label: 'Total Expenses', primary: formatCurrency(totalAmount), accentColor: '#2c3e50' },
-    { label: 'Expenses', primary: expenseCount },
+    {
+      label: 'Total Expense',
+      primary: formatCurrency(totalAmount),
+      secondary: `${expenseCount.toLocaleString('en-IN')} expenses`,
+      accentColor: '#0d6efd', // blue
+    },
     {
       label: 'Direct/COGS',
       primary: formatCurrency(directCOGS),
       secondary: totalAmount > 0 ? `${((directCOGS / totalAmount) * 100).toFixed(1)}% of total` : undefined,
+      accentColor: '#6f42c1', // purple
     },
     {
       label: 'Indirect/Operating',
       primary: formatCurrency(indirectOperating),
       secondary: totalAmount > 0 ? `${((indirectOperating / totalAmount) * 100).toFixed(1)}% of total` : undefined,
+      accentColor: '#fd7e14', // orange
     },
   ]
 
@@ -411,9 +426,6 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
           icon: '💰'
         }}
       />
-
-      {/* Summary Totals */}
-      <SummaryCardGrid items={summaryItems} />
 
       {/* Enhanced Filter Options */}
       <EnhancedFilterBar 
@@ -571,6 +583,11 @@ export function Expenses({ mode = 'manage' }: ExpensesProps) {
           />
         </div>
       </EnhancedFilterBar>
+
+      {/* Summary Totals - below filters for consistency with other screens */}
+      <div style={{ margin: '16px 0 20px 0' }}>
+        <SummaryCardGrid items={summaryItems} columnsMin={220} gapPx={12} />
+      </div>
 
       {error && (
         <div style={{ 
