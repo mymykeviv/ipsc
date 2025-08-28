@@ -1,0 +1,83 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-profitpath_prod}
+    ports:
+      - "5432:5432"
+    volumes:
+      - prod_local_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - profitpath-prod-local-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+      target: production
+    environment:
+      ENVIRONMENT: production
+      # Local "prod-like" run with maximum debugging enabled
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-profitpath_prod}
+      SECRET_KEY: ${SECRET_KEY:-local-secret-key}
+      DEBUG: "true"
+      LOG_LEVEL: DEBUG
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost,http://127.0.0.1}
+      # Multitenancy ON for full-feature verification
+      MULTI_TENANT_ENABLED: "true"
+      TENANT_DATABASE_PREFIX: "tenant_"
+      DEFAULT_TENANT_SLUG: "default"
+    env_file:
+      - ../../backend/env.example
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend_prod_local_logs:/app/logs
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2 --log-level debug"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - profitpath-prod-local-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile.optimized
+    environment:
+      VITE_API_URL: ${API_URL:-http://localhost:8000}
+      VITE_APP_ENV: production
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - profitpath-prod-local-network
+    restart: unless-stopped
+
+volumes:
+  prod_local_db_data:
+  backend_prod_local_logs:
+
+networks:
+  profitpath-prod-local-network:
+    driver: bridge
