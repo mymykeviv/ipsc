@@ -26,15 +26,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
   const [expiresAt, setExpiresAt] = useState<number | null>(null)
   const logoutTimer = useRef<number | null>(null)
+  // Throttle session extension to avoid re-rendering the app tree on every mouse move
+  const lastExtendRef = useRef<number>(0)
 
-  // Reset session timer on user activity
+  // Reset session timer on user activity (throttled)
   const resetSessionTimer = useCallback(() => {
-    if (token && expiresAt) {
-      const newExpiry = Date.now() + 30 * 60 * 1000 // 30 minutes
-      setExpiresAt(newExpiry)
-      localStorage.setItem('auth_exp', String(newExpiry))
-    }
-  }, [token, expiresAt])
+    if (!token) return
+    const now = Date.now()
+    // Only extend once every 5 seconds to prevent frequent context updates on mousemove
+    if (now - lastExtendRef.current < 5000) return
+    lastExtendRef.current = now
+    const newExpiry = now + 30 * 60 * 1000 // 30 minutes
+    setExpiresAt(newExpiry)
+    localStorage.setItem('auth_exp', String(newExpiry))
+  }, [token])
 
   // Add event listeners for user activity
   useEffect(() => {

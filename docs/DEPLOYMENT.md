@@ -2,11 +2,14 @@
 
 ## Overview
 
-This document describes the consolidated deployment system for ProfitPath (IPSC), which supports four modes/environments:
-- **Development (dev)**: Docker Compose with hot reloading
-- **UAT**: Docker Compose with production-like settings
-- **Production (prod)**: Kubernetes with high availability
-- **Standalone (local)**: Simple local run via Docker Compose
+This document describes the consolidated deployment system for ProfitPath (IPSC). We support five build types and two primary execution targets (local via Docker Compose and production via Kubernetes):
+- **docker-dev**: Docker Compose with hot reloading (local development)
+- **docker-prod**: Local, prod-like verification with maximum debugging
+- **docker-prod-lite**: Local, prod-lite (single-tenant) verification with maximum debugging
+- **production**: Distributable production build (full features)
+- **prod-lite**: Distributable production build for low-resource/single-tenant deployments
+
+See `docs/DEPLOYMENT_BUILDS.md` for the complete mapping between build types and compose files.
 
 ## Quick Start
 
@@ -17,25 +20,31 @@ This document describes the consolidated deployment system for ProfitPath (IPSC)
 - kubectl (for production deployments)
 - Kubernetes cluster (for production)
 
-### Basic Deployment Commands
+### Basic Deployment Commands (Docker Compose)
 
 ```bash
-# Development (Docker Compose with hot reload)
-./scripts/dev-up.sh              # or: docker compose -f deployment/docker/docker-compose.dev.yml up -d
+# Development (hot reload)
+docker compose -f deployment/docker/docker-compose.dev.yml up -d
 
-# UAT (Compose, prod-like settings)
-docker compose -f deployment/docker/docker-compose.uat.yml up -d
+# Local prod-like (debug enabled)
+docker compose -f deployment/docker/docker-compose.prod.local.yml up -d
 
-# Production (Compose, optimized images)
+# Local prod-lite (debug enabled, single-tenant)
+docker compose -f deployment/docker/docker-compose.prod-lite.local.yml up -d
+
+# Distributable production (full features)
 docker compose -f deployment/docker/docker-compose.prod.yml up -d
+
+# Distributable prod-lite (single-tenant)
+docker compose -f deployment/docker/docker-compose.prod-lite.yml up -d
 ```
 
 ## Environment Configurations
 
 ## Environment Behavior and Ports
 
-- **Frontend in Dev/Local (standalone)**: runs Vite on port 5173.
-- **Frontend in UAT/Prod**: served by Nginx on port 80 using `frontend/Dockerfile.optimized`.
+- **Frontend in docker-dev**: runs Vite on port 5173.
+- **Frontend in production/prod-lite**: served by Nginx on port 80 using `frontend/Dockerfile.optimized`.
 - **Backend**: FastAPI on port 8000 across all modes.
 
 ### Development Environment
@@ -56,24 +65,7 @@ docker compose -f deployment/docker/docker-compose.prod.yml up -d
 
 **Configuration**: `deployment/docker/docker-compose.dev.yml`
 
-### UAT Environment
-
-**Purpose**: User Acceptance Testing with production-like settings
-
-**Features**:
-- Production-like configuration
-- Separate database instance
-- Health checks enabled
-- Optimized for testing
-
-Frontend is built using the optimized Dockerfile (Nginx, port 80 in container).
-
-**Access Points**:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8001
-- Database: localhost:5433
-
-**Configuration**: `deployment/docker/docker-compose.uat.yml`
+> Note: The previous UAT stack is being phased out. Prefer `docker-prod` for local prod-like runs. The legacy `deployment/docker/docker-compose.uat.yml` may be removed in a future release.
 
 ### Production Environment
 
@@ -90,23 +82,19 @@ Frontend is built using the optimized Dockerfile (Nginx, port 80 in container).
 
 **Configuration**: `deployment/kubernetes/prod/`
 
-## Build and Push Images to Docker Hub
+## Build and Package Releases
 
-Use the provided script which builds multi-arch images and generates a deployment package by default. The frontend uses the optimized Dockerfile (Nginx on port 80).
+Use the unified release and packager scripts. The frontend uses the optimized Dockerfile (Nginx on port 80) for production builds.
 
 ```bash
-# Preflight only (checks Docker, login)
-./scripts/build-and-push-docker.sh --preflight
+# Create a versioned release (runs preflight checks)
+./scripts/create-release.sh --build-type production 1.50.7
 
-# Quick single-arch build and push (no packaging)
-./scripts/build-and-push-docker.sh --quick 1.5.0 <your-dockerhub-username>
+# Build images and generate deployment packages
+./scripts/release-packager.sh --build-type production 1.50.7 <your-dockerhub-username>
 
-# Full multi-arch build, push, and package
-./scripts/build-and-push-docker.sh 1.5.0 <your-dockerhub-username>
-
-# Images produced and pushed:
-# <your-dockerhub-username>/profitpath-backend:1.5.0, latest
-# <your-dockerhub-username>/profitpath-frontend:1.5.0, latest (Dockerfile.optimized)
+# For prod-lite
+./scripts/release-packager.sh --build-type prod-lite 1.50.7 <your-dockerhub-username>
 ```
 
 ## Create a Release using GitHub Actions
@@ -122,25 +110,9 @@ Steps:
    - `prod` (compose prod; frontend 80 via Nginx, creates a Release)
 3. Monitor logs. For prod, the job also creates a GitHub Release with tag `v<run_number>`.
 
-## Build and Deploy Locally on Docker (Standalone)
+## Local Runs (Recommended)
 
-Standalone is intended for quick local runs. Frontend runs on Vite (5173) and is proxied by Nginx on port 80.
-
-```bash
-# Start
-docker compose -f deployment/standalone/docker-compose.yml up -d --build
-
-# Verify
-curl -f http://localhost/health      # 200 from Nginx
-curl -f http://localhost             # SPA proxied to frontend:5173
-curl -f http://localhost/api/health || curl -f http://localhost:8000/health
-
-# Logs
-docker compose -f deployment/standalone/docker-compose.yml logs -f
-
-# Stop
-docker compose -f deployment/standalone/docker-compose.yml down
-```
+Use the Docker Compose files under `deployment/docker/` as shown above. The `deployment/standalone/` stack is deprecated and will be removed.
 
 ## Local Development without Docker
 
@@ -357,9 +329,9 @@ curl http://localhost:5173
 
 1. **Docker Compose rollback**:
    ```bash
-   ./scripts/stop-stack.sh uat   # or prod
+   ./scripts/stop-stack.sh prod
    # Pin previous image tags in compose, then
-   docker compose -f deployment/docker/docker-compose.uat.yml up -d
+   docker compose -f deployment/docker/docker-compose.prod.yml up -d
    ```
 
 2. **Kubernetes rollback**:

@@ -228,17 +228,37 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   }), [getActiveFilterCount, searchTerm, statusFilter, categoryFilter, itemTypeFilter, gstRateFilter, stockLevelFilter, supplierFilter, priceRangeFilter, dateFilter])
 
   const handleClearAllFilters = useCallback(() => {
-    resetAllFilters()
+    const currentState = {
+      searchTerm,
+      statusFilter,
+      categoryFilter,
+      itemTypeFilter,
+      gstRateFilter,
+      stockLevelFilter,
+      supplierFilter,
+      priceRangeFilter,
+      dateFilter,
+    }
+    const newState = resetAllFilters(currentState) as typeof defaultState
+    setSearchTerm(newState.searchTerm)
+    setStatusFilter(newState.statusFilter)
+    setCategoryFilter(newState.categoryFilter)
+    setItemTypeFilter(newState.itemTypeFilter)
+    setGstRateFilter(newState.gstRateFilter)
+    setStockLevelFilter(newState.stockLevelFilter)
+    setSupplierFilter(newState.supplierFilter)
+    setPriceRangeFilter(newState.priceRangeFilter)
+    setDateFilter(newState.dateFilter)
     clearURLFilters()
-  }, [resetAllFilters, clearURLFilters])
+  }, [resetAllFilters, clearURLFilters, searchTerm, statusFilter, categoryFilter, itemTypeFilter, gstRateFilter, stockLevelFilter, supplierFilter, priceRangeFilter, dateFilter])
 
   // Render different content based on mode
   if (mode === 'add' || mode === 'edit') {
   }
 
-  const [summaryItems, setSummaryItems] = useState<SummaryCardItem[]>([])
+  
 
-  // Load products and compute KPIs
+  // Load products
   const loadProducts = useCallback(async () => {
     try {
       setLoading(true)
@@ -262,22 +282,6 @@ export function Products({ mode = 'manage' }: ProductsProps) {
 
       const data = await apiGetProducts(apiFilters)
       setProducts(data)
-
-      // KPIs computed client-side to keep in sync with current view filters
-      const total = data.length
-      const inStock = data.filter(p => p.stock > 0).length
-      const outOfStock = data.filter(p => p.stock === 0).length
-      const lowStock = data.filter(p => p.stock > 0 && p.stock < 10).length
-      const totalStockValueNumber = data.reduce((acc, p) => acc + (p.purchase_price ?? p.sales_price) * p.stock, 0)
-      const totalStockValue = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(totalStockValueNumber)
-
-      setSummaryItems([
-        { label: 'Total Products', value: total, icon: 'fa-boxes', color: 'primary' },
-        { label: 'In Stock', value: inStock, icon: 'fa-check-circle', color: 'success' },
-        { label: 'Out of Stock', value: outOfStock, icon: 'fa-times-circle', color: 'danger' },
-        { label: 'Low Stock', value: lowStock, icon: 'fa-exclamation-triangle', color: 'warning' },
-        { label: 'Total Stock Value', value: totalStockValue, icon: 'fa-rupee-sign', color: 'info' },
-      ])
     } catch (err: any) {
       const errorMessage = handleApiError(err)
       setError(errorMessage)
@@ -304,9 +308,45 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     } finally {
       setLoading(false)
     }
-  }, [loadProducts, handleApiError])
+  }, [searchTerm, categoryFilter, itemTypeFilter, gstRateFilter, supplierFilter, stockLevelFilter, priceRangeFilter, handleApiError])
 
   // Note: Do not early-return here. Mode-specific renders are handled below.
+
+  // Filter and sort products (filtering portion used by summary and table)
+  const filteredProducts = products.filter((product: Product) => {
+    const searchLower = searchTerm.toLowerCase()
+    const matchesSearch = (
+      product.name.toLowerCase().includes(searchLower) ||
+      (product.sku && product.sku.toLowerCase().includes(searchLower)) ||
+      (product.category && product.category.toLowerCase().includes(searchLower)) ||
+      (product.description && product.description.toLowerCase().includes(searchLower)) ||
+      (product.supplier && product.supplier.toLowerCase().includes(searchLower))
+    )
+    
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'active' && product.is_active) ||
+      (statusFilter === 'inactive' && !product.is_active)
+    
+    return matchesSearch && matchesStatus
+  })
+
+  // Summary totals computed from filtered products (ensures reactivity to all filters)
+  const productSummaryItems: SummaryCardItem[] = useMemo(() => {
+    const total = filteredProducts.length
+    const inStock = filteredProducts.filter(p => p.stock > 0).length
+    const outOfStock = filteredProducts.filter(p => p.stock === 0).length
+    const totalStockValueNumber = filteredProducts.reduce((acc, p) => acc + (p.purchase_price ?? p.sales_price) * p.stock, 0)
+    const totalStockValue = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(totalStockValueNumber)
+
+    return [
+      {
+        label: 'Total Stock Value',
+        primary: totalStockValue,
+        secondary: `${total.toLocaleString('en-IN')} products | ${inStock.toLocaleString('en-IN')} in stock | ${outOfStock.toLocaleString('en-IN')} out of stock`,
+        accentColor: '#0d6efd',
+      }
+    ]
+  }, [filteredProducts])
 
   // Stock Adjustment Mode
   if (mode === 'stock-adjustment') {
@@ -320,7 +360,6 @@ export function Products({ mode = 'manage' }: ProductsProps) {
 
   // Manage Products Mode
   if (loading) {
-    console.log('Rendering loading state')
     return (
       <div style={{ padding: '20px' }}>
         <div style={{ 
@@ -337,7 +376,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     )
   }
 
-  console.log('Rendering manage mode:', { products: products.length, error })
+  
 
   // Show error state if there's an error
   if (error) {
@@ -370,23 +409,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     )
   }
 
-  // Filter and sort products
-  const filteredProducts = products.filter((product: Product) => {
-    const searchLower = searchTerm.toLowerCase()
-    const matchesSearch = (
-      product.name.toLowerCase().includes(searchLower) ||
-      (product.sku && product.sku.toLowerCase().includes(searchLower)) ||
-      (product.category && product.category.toLowerCase().includes(searchLower)) ||
-      (product.description && product.description.toLowerCase().includes(searchLower)) ||
-      (product.supplier && product.supplier.toLowerCase().includes(searchLower))
-    )
-    
-    const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'active' && product.is_active) ||
-      (statusFilter === 'inactive' && !product.is_active)
-    
-    return matchesSearch && matchesStatus
-  })
+  // (removed duplicate filteredProducts and productSummaryItems defined earlier to maintain consistent hook order)
 
   const sortedProducts = [...filteredProducts].sort((a: Product, b: Product) => {
     const field = sortField as keyof Product
@@ -479,10 +502,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           </div>
         </div>
 
-      {/* KPIs */}
-      <div style={{ marginBottom: '16px' }}>
-        <SummaryCardGrid items={summaryItems} />
-      </div>
+      {/* Summary Totals below filter section as per spec: width/colors consistent */}
 
       {/* Enhanced Filter Options */}
       <EnhancedFilterBar 
@@ -646,6 +666,10 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           />
         </div>
       </EnhancedFilterBar>
+
+      <div style={{ margin: '16px 0 20px 0' }}>
+        <SummaryCardGrid items={productSummaryItems} columnsMin={220} gapPx={12} />
+      </div>
 
       <div style={{ 
         border: '1px solid #e9ecef', 

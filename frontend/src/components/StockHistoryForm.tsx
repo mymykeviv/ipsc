@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect, useMemo, useState } from 'react'
+import React, { useReducer, useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { SummaryCardGrid, type SummaryCardItem } from './common/SummaryCardGrid'
 import { useSearchParams } from 'react-router-dom'
 import { apiGetStockMovementHistory, apiDownloadStockMovementHistoryPDF, apiGetProducts, Product } from '../lib/api'
@@ -247,17 +247,8 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
   // Memoized loadStockHistory function with proper error handling
   const loadStockHistory = useCallback(async (): Promise<void> => {
     try {
-      console.log('Loading stock history with filters:', {
-        financialYearFilter,
-        productId,
-        forceReload,
-        productFilter,
-        categoryFilter,
-        supplierFilter,
-        stockLevelFilter,
-        entryTypeFilter,
-        dateRangeFilter
-      })
+      // Intentionally concise log to avoid spam
+      console.log('Loading stock history', { fy: financialYearFilter, productId, forceReload })
       
       dispatch({ type: 'SET_LOADING', payload: true })
       dispatch({ type: 'CLEAR_ERROR' })
@@ -269,7 +260,7 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
       const productIdNum = (productId && forceReload === 0) ? parseInt(productId) : undefined
       
       const history = await apiGetStockMovementHistory(fy, productIdNum)
-      console.log('Stock history loaded:', history)
+      console.log('Stock history loaded:', { count: Array.isArray(history) ? history.length : 0 })
       dispatch({ type: 'SET_STOCK_HISTORY', payload: history })
     } catch (err) {
       console.error('Failed to load stock history:', err)
@@ -278,7 +269,7 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false })
     }
-  }, [financialYearFilter, productId, forceReload, handleApiError])
+  }, [productId, forceReload, handleApiError])
 
   // Memoized filtered stock history with proper types
   const filteredStockHistory = useMemo((): StockMovement[] => {
@@ -461,57 +452,72 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
   }, [debounceTimer])
 
   // Real-time filter update handler with debouncing - simplified to prevent infinite loops
-  const handleFilterChange = useCallback((filters: Record<string, any>) => {
-    console.log('Filter change detected:', filters)
-    
+  const firstFilterEventRef = useRef(true)
+  const handleFilterChange = useCallback((incoming: Record<string, any>) => {
+    // Skip the first spurious event from filter UI on mount
+    if (firstFilterEventRef.current) {
+      firstFilterEventRef.current = false
+      return
+    }
+
     // Clear existing debounce timer
-    if (debounceTimer) {
-      clearTimeout(debounceTimer)
+    if (debounceTimer) clearTimeout(debounceTimer)
+
+    // Build current filter snapshot
+    const current = {
+      financialYear: financialYearFilter,
+      product: productFilter,
+      category: categoryFilter,
+      supplier: supplierFilter,
+      stockLevel: stockLevelFilter,
+      entryType: entryTypeFilter,
+      dateRange: dateRangeFilter,
     }
-    
-    // Update individual filter states based on unified filter values
-    let hasChanges = false
-    
-    if (filters.financialYear !== undefined) {
-      dispatch({ type: 'SET_FILTER', payload: { key: 'financialYearFilter', value: filters.financialYear } })
-      hasChanges = true
+
+    // If incoming is empty or equals current, do nothing
+    const isEmpty = !incoming || Object.keys(incoming).length === 0
+    const equalsCurrent = !isEmpty &&
+      (incoming.financialYear ?? current.financialYear) === current.financialYear &&
+      (incoming.product ?? current.product) === current.product &&
+      (incoming.category ?? current.category) === current.category &&
+      (incoming.supplier ?? current.supplier) === current.supplier &&
+      (incoming.stockLevel ?? current.stockLevel) === current.stockLevel &&
+      (incoming.entryType ?? current.entryType) === current.entryType &&
+      JSON.stringify(incoming.dateRange ?? current.dateRange) === JSON.stringify(current.dateRange)
+
+    if (isEmpty || equalsCurrent) {
+      return
     }
-    if (filters.product !== undefined) {
-      dispatch({ type: 'SET_FILTER', payload: { key: 'productFilter', value: filters.product } })
-      hasChanges = true
+
+    // Apply only fields that are present and different
+    if (incoming.financialYear !== undefined && incoming.financialYear !== current.financialYear) {
+      dispatch({ type: 'SET_FILTER', payload: { key: 'financialYearFilter', value: incoming.financialYear } })
     }
-    if (filters.category !== undefined) {
-      dispatch({ type: 'SET_FILTER', payload: { key: 'categoryFilter', value: filters.category } })
-      hasChanges = true
+    if (incoming.product !== undefined && incoming.product !== current.product) {
+      dispatch({ type: 'SET_FILTER', payload: { key: 'productFilter', value: incoming.product } })
     }
-    if (filters.supplier !== undefined) {
-      dispatch({ type: 'SET_FILTER', payload: { key: 'supplierFilter', value: filters.supplier } })
-      hasChanges = true
+    if (incoming.category !== undefined && incoming.category !== current.category) {
+      dispatch({ type: 'SET_FILTER', payload: { key: 'categoryFilter', value: incoming.category } })
     }
-    if (filters.stockLevel !== undefined) {
-      dispatch({ type: 'SET_FILTER', payload: { key: 'stockLevelFilter', value: filters.stockLevel } })
-      hasChanges = true
+    if (incoming.supplier !== undefined && incoming.supplier !== current.supplier) {
+      dispatch({ type: 'SET_FILTER', payload: { key: 'supplierFilter', value: incoming.supplier } })
     }
-    if (filters.entryType !== undefined) {
-      dispatch({ type: 'SET_FILTER', payload: { key: 'entryTypeFilter', value: filters.entryType } })
-      hasChanges = true
+    if (incoming.stockLevel !== undefined && incoming.stockLevel !== current.stockLevel) {
+      dispatch({ type: 'SET_FILTER', payload: { key: 'stockLevelFilter', value: incoming.stockLevel } })
     }
-    if (filters.dateRange !== undefined) {
-      dispatch({ type: 'SET_FILTER', payload: { key: 'dateRangeFilter', value: filters.dateRange } })
-      hasChanges = true
+    if (incoming.entryType !== undefined && incoming.entryType !== current.entryType) {
+      dispatch({ type: 'SET_FILTER', payload: { key: 'entryTypeFilter', value: incoming.entryType } })
     }
-    
-    // Only trigger reload if there are actual changes
-    if (hasChanges) {
-      // Debounce the reload to prevent rapid API calls
-      const timer = setTimeout(() => {
-        console.log('Triggering data reload due to filter changes:', filters)
-        dispatch({ type: 'SET_FORCE_RELOAD', payload: forceReload + 1 })
-      }, 500) // 500ms delay
-      
-      dispatch({ type: 'SET_DEBOUNCE_TIMER', payload: timer })
+    if (incoming.dateRange !== undefined && JSON.stringify(incoming.dateRange) !== JSON.stringify(current.dateRange)) {
+      dispatch({ type: 'SET_FILTER', payload: { key: 'dateRangeFilter', value: incoming.dateRange } })
     }
-  }, [debounceTimer, forceReload])
+
+    // Debounce reload via forceReload bump
+    const timer = setTimeout(() => {
+      dispatch({ type: 'SET_FORCE_RELOAD', payload: forceReload + 1 })
+    }, 500)
+    dispatch({ type: 'SET_DEBOUNCE_TIMER', payload: timer })
+  }, [debounceTimer, forceReload, financialYearFilter, productFilter, categoryFilter, supplierFilter, stockLevelFilter, entryTypeFilter, dateRangeFilter])
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -850,11 +856,33 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
           {/* Grand Totals Summary - using shared SummaryCardGrid */}
           <SummaryCardGrid
             items={([
-              { label: 'Opening Stock', primary: `${grandTotals.opening_stock.toFixed(2)} units`, secondary: `Value: ${formatCurrency(grandTotals.opening_value)}` },
-              { label: 'Total Incoming', primary: `${grandTotals.total_incoming.toFixed(2)} units`, secondary: `Value: ${formatCurrency(grandTotals.total_incoming_value)}` },
-              { label: 'Total Outgoing', primary: `${grandTotals.total_outgoing.toFixed(2)} units`, secondary: `Value: ${formatCurrency(grandTotals.total_outgoing_value)}` },
-              { label: 'Closing Stock', primary: `${grandTotals.closing_stock.toFixed(2)} units`, secondary: `Value: ${formatCurrency(grandTotals.closing_value)}` },
+              { 
+                label: 'Opening Stock', 
+                primary: `${grandTotals.opening_stock.toFixed(2)} units`, 
+                secondary: `Value: ${formatCurrency(grandTotals.opening_value)}`,
+                accentColor: '#0d6efd' // brand blue, consistent with Payments summary
+              },
+              { 
+                label: 'Total Incoming', 
+                primary: `${grandTotals.total_incoming.toFixed(2)} units`, 
+                secondary: `Value: ${formatCurrency(grandTotals.total_incoming_value)}`,
+                accentColor: '#198754' // green for incoming
+              },
+              { 
+                label: 'Total Outgoing', 
+                primary: `${grandTotals.total_outgoing.toFixed(2)} units`, 
+                secondary: `Value: ${formatCurrency(grandTotals.total_outgoing_value)}`,
+                accentColor: '#dc3545' // red for outgoing
+              },
+              { 
+                label: 'Closing Stock', 
+                primary: `${grandTotals.closing_stock.toFixed(2)} units`, 
+                secondary: `Value: ${formatCurrency(grandTotals.closing_value)}`,
+                accentColor: '#6f42c1' // purple accent similar to Payments
+              },
             ] as SummaryCardItem[])}
+            columnsMin={220}
+            gapPx={12}
           />
 
           {/* Stock Movement Table */}

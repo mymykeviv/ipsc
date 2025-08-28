@@ -31,15 +31,6 @@ function Shell() {
   const { token, isAuthenticated, logout, expiresAt } = useAuth()
   const location = useLocation()
   
-  // If not authenticated, show login routes
-  if (!isAuthenticated) {
-    return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    )
-  }
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     products: true,
     invoices: false, // Keep invoices section open by default
@@ -155,22 +146,8 @@ function Shell() {
     return location.pathname.startsWith(path)
   }
   
-  // If not authenticated, show only login page
-  if (!isAuthenticated) {
-    return (
-      <div className="app-shell">
-        <main className="content">
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </main>
-      </div>
-    )
-  }
-  
-  // If authenticated, show full app with sidebar
-  return (
+  // Conditional render based on authentication, keeping hooks order stable
+  return isAuthenticated ? (
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
@@ -485,6 +462,15 @@ function Shell() {
           <Route path="/parties" element={<Parties />} />
           
           <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+    </div>
+  ) : (
+    <div className="app-shell">
+      <main className="content">
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </main>
     </div>

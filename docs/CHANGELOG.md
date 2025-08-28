@@ -1,3 +1,27 @@
+## [1.50.7] - 2025-08-28
+
+### Changed
+- Stock Movement History summary styling consistency
+  - Frontend (`frontend/src/components/StockHistoryForm.tsx`): Applied `SummaryCardGrid` accent colors to match Payments/Purchases screens.
+    - Opening: brand blue `#0d6efd`
+    - Incoming: green `#198754`
+    - Outgoing: red `#dc3545`
+    - Closing: purple `#6f42c1`
+  - Set `columnsMin={220}` and `gapPx={12}` for consistent card layout.
+  - Currency formatting remains INR with existing `formatCurrency()`.
+
+### Performance
+- Reduced redundant reloads and noisy logs on filter changes
+  - Frontend (`frontend/src/components/StockHistoryForm.tsx`):
+    - Debounced reloads via a single `forceReload` bump (500ms).
+    - Skipped initial spurious filter event using a ref.
+    - Compared incoming filters against current state to avoid no-op reloads.
+    - Simplified logs: show FY/productId/count only.
+
+### Notes
+- No API contract changes. UI-only styling and client-side behavior improvements.
+
+---
 ## [1.50.6] - 2025-08-27
 
 ### Added

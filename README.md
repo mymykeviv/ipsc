@@ -127,16 +127,23 @@ The project includes a streamlined set of scripts under `scripts/` for common de
     ./scripts/seed.sh test
     ```
 
-- **`scripts/build-and-push-docker.sh`**
-  - Build and push backend/frontend images. Creates deployment packages by default.
-  - Flags:
-    - `--preflight`: run checks (Docker running, login) and exit.
-    - `--quick`: single-arch build; push images; skip packaging archives.
+- **`scripts/create-release.sh`**
+  - Creates a versioned release by updating `VERSION`, committing, tagging, and pushing.
+  - Supports build-type selection. See `docs/DEPLOYMENT_BUILDS.md`.
   - Usage:
     ```bash
-    ./scripts/build-and-push-docker.sh --preflight
-    ./scripts/build-and-push-docker.sh --quick 1.4.5 my-dockerhub
-    ./scripts/build-and-push-docker.sh 1.4.5 my-dockerhub
+    ./scripts/create-release.sh --build-type production 1.50.7
+    ./scripts/create-release.sh --build-type prod-lite 1.50.7
+    ```
+
+- **`scripts/release-packager.sh`**
+  - Builds backend/frontend Docker images and generates deployment packages.
+  - Enforces compose file presence (fail-fast). Optional `--allow-embedded-compose` for explicit fallback.
+  - Usage:
+    ```bash
+    ./scripts/release-packager.sh --build-type production 1.50.7 my-dockerhub
+    ./scripts/release-packager.sh --build-type prod-lite 1.50.7 my-dockerhub
+    ./scripts/release-packager.sh --build-type docker-prod 1.50.7 my-dockerhub
     ```
 
 - **`scripts/clean.sh`**
@@ -222,6 +229,7 @@ Our documentation is now organized in a dedicated `docs/` folder for better stru
 - **[Development Guide](./docs/DEV_PLAN.md)** - Development workflow
 - **[Testing Guide](./docs/TEST_RUNNING_GUIDE.md)** - How to run tests
 - **[Deployment](./docs/DEPLOYMENT.md)** - Deployment instructions
+- **[Deployment Builds](./docs/DEPLOYMENT_BUILDS.md)** - Build types and compose mappings
 - **[Changelog](./docs/CHANGELOG.md)** - Version history and changes
 
 ### Documentation Categories
@@ -286,23 +294,31 @@ profitpath/
 
 ## 🚀 Deployment
 
-### Docker Compose (UAT/Prod)
+### Docker Compose (Local & Production)
 ```bash
-# UAT
-docker compose -f deployment/docker/docker-compose.uat.yml up -d
-docker compose -f deployment/docker/docker-compose.uat.yml ps
-docker compose -f deployment/docker/docker-compose.uat.yml logs -f
+# Development (hot reload)
+docker compose -f deployment/docker/docker-compose.dev.yml up -d
+docker compose -f deployment/docker/docker-compose.dev.yml logs -f
 
-# Prod
+# Local prod-like (debug enabled)
+docker compose -f deployment/docker/docker-compose.prod.local.yml up -d
+
+# Local prod-lite (debug enabled, single-tenant)
+docker compose -f deployment/docker/docker-compose.prod-lite.local.yml up -d
+
+# Production (distributable)
 docker compose -f deployment/docker/docker-compose.prod.yml up -d
 docker compose -f deployment/docker/docker-compose.prod.yml ps
 docker compose -f deployment/docker/docker-compose.prod.yml logs -f
+
+# Prod-lite (distributable single-tenant)
+docker compose -f deployment/docker/docker-compose.prod-lite.yml up -d
 ```
 
 Notes:
-- UAT/Prod frontend images use `frontend/Dockerfile.optimized` and are served by Nginx on container port 80 (UAT host: 3000; Prod host: 80/443).
+- Production/prod-lite frontend images use `frontend/Dockerfile.optimized` and are served by Nginx on container port 80.
 - Dev uses Vite on port 5173; backend on 8000. See: `deployment/docker/docker-compose.dev.yml`.
-- To stop stacks safely, prefer: `./scripts/stop-stack.sh uat|prod` (prod performs a backup).
+- To stop stacks safely, prefer: `./scripts/stop-stack.sh prod` (performs a backup for prod).
 
 ### Version Management
 - Backend version: Check `/api/version` endpoint
