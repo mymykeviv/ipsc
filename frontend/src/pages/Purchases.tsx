@@ -382,15 +382,58 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2 }).format(amount)
 
+  const purchasesCount = filteredPurchases.length
   const totalPurchasesAmount = filteredPurchases.reduce((sum: number, p: Purchase) => sum + (p.grand_total || 0), 0)
   const totalOutstanding = filteredPurchases.reduce((sum: number, p: Purchase) => sum + (p.balance_amount || 0), 0)
-  const totalPaid = totalPurchasesAmount - totalOutstanding
+  const totalPaid = filteredPurchases.reduce((sum: number, p: Purchase) => sum + Math.max((p.grand_total || 0) - (p.balance_amount || 0), 0), 0)
+
+  const paidCount = filteredPurchases.filter((p: Purchase) => (p.grand_total || 0) > (p.balance_amount || 0)).length
+  const outstandingCount = filteredPurchases.filter((p: Purchase) => (p.balance_amount || 0) > 0).length
+
+  // Overdue purchases: due_date < today and outstanding > 0
+  const today = new Date()
+  const overduePurchases = filteredPurchases.filter((p: Purchase) => {
+    if (!p.due_date) return false
+    const due = new Date(p.due_date)
+    return due < today && (p.balance_amount || 0) > 0
+  })
+  const overdueCount = overduePurchases.length
+  const avgOverdueDays = overdueCount > 0
+    ? Math.round(
+        overduePurchases.reduce((sum: number, p: Purchase) => {
+          const due = new Date(p.due_date as string)
+          const diffMs = today.getTime() - due.getTime()
+          const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+          return sum + days
+        }, 0) / overdueCount
+      )
+    : 0
 
   const summaryItems: SummaryCardItem[] = [
-    { label: 'Total Purchases', primary: formatCurrency(totalPurchasesAmount), accentColor: '#0d6efd' },
-    { label: 'Paid', primary: formatCurrency(totalPaid), accentColor: '#198754' },
-    { label: 'Outstanding', primary: formatCurrency(totalOutstanding), accentColor: '#dc3545' },
-    { label: 'Purchases', primary: filteredPurchases.length.toLocaleString('en-IN'), accentColor: '#0d6efd' }
+    {
+      label: 'Total Purchases',
+      primary: formatCurrency(totalPurchasesAmount),
+      secondary: `${purchasesCount.toLocaleString('en-IN')} purchases`,
+      accentColor: '#0d6efd', // blue
+    },
+    {
+      label: 'Amount Paid',
+      primary: formatCurrency(totalPaid),
+      secondary: `${paidCount.toLocaleString('en-IN')} purchases (incl. partial payments)`,
+      accentColor: '#198754', // green
+    },
+    {
+      label: 'Outstanding Amount',
+      primary: formatCurrency(totalOutstanding),
+      secondary: `${outstandingCount.toLocaleString('en-IN')} purchases (incl. partial payments)`,
+      accentColor: '#fd7e14', // orange
+    },
+    {
+      label: 'Overdue Purchases',
+      primary: overdueCount.toLocaleString('en-IN'),
+      secondary: `Avg ${avgOverdueDays} days`,
+      accentColor: '#dc3545', // red
+    },
   ]
 
   return (
@@ -566,7 +609,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
 
       {/* Summary Totals - moved below filters */}
       <div style={{ margin: '16px 0 20px 0' }}>
-        <SummaryCardGrid items={summaryItems} columnsMin={240} gapPx={12} />
+        <SummaryCardGrid items={summaryItems} columnsMin={220} gapPx={12} />
       </div>
 
       <div style={{ 

@@ -253,40 +253,83 @@ export function CashflowTransactions() {
 
   // Summary totals derived from currently filtered dataset (not paginated)
   const summaryItems: SummaryCardItem[] = useMemo(() => {
+    // Base inflow/outflow
     const inflow = filteredTransactions
       .filter((t: CashflowTransaction) => t.type === 'inflow')
-      .reduce((acc: number, t: CashflowTransaction) => acc + t.amount, 0)
+      .reduce((acc: number, t: CashflowTransaction) => acc + (t.amount || 0), 0)
     const outflow = filteredTransactions
       .filter((t: CashflowTransaction) => t.type === 'outflow')
-      .reduce((acc: number, t: CashflowTransaction) => acc + t.amount, 0)
-    const net = inflow - outflow
+      .reduce((acc: number, t: CashflowTransaction) => acc + (t.amount || 0), 0)
 
-    const inflowCount = filteredTransactions.filter((t: CashflowTransaction) => t.type === 'inflow').length
-    const outflowCount = filteredTransactions.filter((t: CashflowTransaction) => t.type === 'outflow').length
+    // Distinct counts based on source types
+    const invoiceIds = new Set<number>()
+    const purchaseIds = new Set<number>()
+    const expenseIds = new Set<number>()
 
-    // Payment method breakdown (core methods commonly used in app)
-    const byMethod = filteredTransactions.reduce<Record<string, number>>((acc: Record<string, number>, t: CashflowTransaction) => {
-      acc[t.payment_method] = (acc[t.payment_method] || 0) + t.amount * (t.type === 'inflow' ? 1 : -1)
-      return acc
-    }, {})
+    filteredTransactions.forEach((t: CashflowTransaction) => {
+      const src = (t.source_type || '').toLowerCase()
+      const id = t.source_id
+      if (id != null) {
+        if (src === 'invoice' || src === 'invoice_payment') invoiceIds.add(id)
+        if (src === 'purchase' || src === 'purchase_payment') purchaseIds.add(id)
+        if (src === 'expense' || src === 'expense_payment') expenseIds.add(id)
+      }
+    })
+
+    // Net Cashflow (inflow - outflow)
+    const netCashflow = inflow - outflow
+
+    // Net Cash = invoice payments received - (purchase payments + expense payments)
+    const invoicePayments = filteredTransactions
+      .filter((t: CashflowTransaction) => t.type === 'inflow' && ((t as any).source_type === 'invoice_payment' || (t as any).source_type === 'invoice'))
+      .reduce((acc: number, t: CashflowTransaction) => acc + (t.amount || 0), 0)
+    const purchasePayments = filteredTransactions
+      .filter((t: CashflowTransaction) => t.type === 'outflow' && ((t as any).source_type === 'purchase_payment' || (t as any).source_type === 'purchase'))
+      .reduce((acc: number, t: CashflowTransaction) => acc + (t.amount || 0), 0)
+    const expensePayments = filteredTransactions
+      .filter((t: CashflowTransaction) => t.type === 'outflow' && ((t as any).source_type === 'expense' || (t as any).source_type === 'expense_payment'))
+      .reduce((acc: number, t: CashflowTransaction) => acc + (t.amount || 0), 0)
+    const netCash = invoicePayments - (purchasePayments + expensePayments)
+
+    // Cash and Bank balances by account head
+    let cashBalance = 0
+    let bankBalance = 0
+    filteredTransactions.forEach((t: CashflowTransaction) => {
+      const head = (t.account_head || '').toLowerCase()
+      const signed = (t.type === 'inflow' ? 1 : -1) * (t.amount || 0)
+      if (head === 'cash') cashBalance += signed
+      if (head === 'bank') bankBalance += signed
+    })
 
     const items: SummaryCardItem[] = [
-      { label: 'Total Inflow', primary: formatCurrency(inflow), secondary: `${inflowCount} inflow txns`, accentColor: '#198754' },
-      { label: 'Total Outflow', primary: formatCurrency(outflow), secondary: `${outflowCount} outflow txns`, accentColor: '#dc3545' },
-      { label: 'Net Cashflow', primary: formatCurrency(net), secondary: net >= 0 ? 'Surplus' : 'Deficit', accentColor: net >= 0 ? '#0d6efd' : '#dc3545' },
-      { label: 'Transactions', primary: filteredTransactions.length.toString(), secondary: `${startIndex + 1}-${Math.min(endIndex, filteredTransactions.length)} shown` },
+      {
+        label: 'Total Inflow',
+        primary: formatCurrency(inflow),
+        secondary: `${invoiceIds.size.toLocaleString('en-IN')} invoices`,
+        accentColor: '#198754', // green
+      },
+      {
+        label: 'Total Outflow',
+        primary: formatCurrency(outflow),
+        secondary: `${purchaseIds.size.toLocaleString('en-IN')} purchases | ${expenseIds.size.toLocaleString('en-IN')} expenses`,
+        accentColor: '#dc3545', // red
+      },
+      {
+        label: 'Net Cashflow',
+        primary: formatCurrency(netCashflow),
+        secondary: `${purchaseIds.size.toLocaleString('en-IN')} purchases (incl. partial payments)`,
+        accentColor: netCashflow >= 0 ? '#0d6efd' : '#dc3545',
+      },
+      {
+        label: 'Net Cash',
+        primary: formatCurrency(netCash),
+        secondary: `${formatCurrency(cashBalance)} Cash On Hand | ${formatCurrency(bankBalance)} Bank Balance`,
+        accentColor: '#6f42c1', // purple
+      },
     ]
 
-    // Add a couple of common method breakdown cards if present
-    const commonMethods = ['Cash', 'Bank Transfer', 'UPI']
-    for (const m of commonMethods) {
-      if (byMethod[m] !== undefined) {
-        items.push({ label: `${m} Net`, primary: formatCurrency(byMethod[m]), accentColor: byMethod[m] >= 0 ? '#198754' : '#dc3545' })
-      }
-    }
-
     return items
-  }, [filteredTransactions, startIndex, endIndex])
+  }, [filteredTransactions])
 
   if (loading && transactions.length === 0) {
     return (
@@ -491,7 +534,7 @@ export function CashflowTransactions() {
       </EnhancedFilterBar>
 
       {/* Summary totals based on filtered transactions */}
-      <SummaryCardGrid items={summaryItems} />
+      <SummaryCardGrid items={summaryItems} columnsMin={220} gapPx={12} />
 
       {error && (
         <div style={{ 

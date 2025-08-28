@@ -7,6 +7,34 @@ export interface ErrorHandlerConfig {
   onNetworkError?: () => void
 }
 
+// Invoice Payments Summary API
+export async function apiGetInvoicePaymentsSummary(
+  filters?: InvoicePaymentFilters
+): Promise<{ meta: { totals: InvoicePaymentSummaryTotals } }> {
+  const params = new URLSearchParams()
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, String(value))
+      }
+    })
+  }
+
+  const url = `/api/invoice-payments/summary${params.toString() ? `?${params.toString()}` : ''}`
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
+
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+
+  return r.json()
+}
+
 export function createApiErrorHandler(config: ErrorHandlerConfig = {}) {
   return (error: any): string => {
     console.error('API Error:', error)
@@ -193,6 +221,18 @@ export interface InvoicePaymentFilters {
   amount_max?: number
   date_from?: string
   date_to?: string
+}
+
+export type InvoicePaymentSummaryTotals = {
+  total_paid: number
+  payment_count: number
+  cash_amount: number
+  cash_count: number
+  bank_transfer_amount: number
+  bank_transfer_count: number
+  upi_amount: number
+  upi_count: number
+  currency: 'INR'
 }
 
 export interface InvoiceFilters {
@@ -935,6 +975,14 @@ export type InvoiceSummaryTotals = {
   amount_paid: number
   // outstanding balance (total - amount_paid)
   outstanding: number
+  // number of invoices with any payment (includes partial payments)
+  paid_count: number
+  // number of invoices with outstanding balance > 0 (includes partial payments)
+  outstanding_count: number
+  // number of overdue invoices (due_date < today and not fully paid)
+  overdue_count: number
+  // average days overdue across overdue invoices (integer)
+  overdue_avg_days: number
   // currency code for totals
   currency: 'INR'
 }

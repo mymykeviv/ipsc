@@ -446,11 +446,6 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
         </div>
       )}
 
-      {/* Feature-flagged INR Summary Totals */}
-      {featureFlags.invoicesSummaryTotals && summaryTotals && (
-        <SummaryTotals totals={summaryTotals} />
-      )}
-
       {/* Enhanced Filter Options */}
       <EnhancedFilterBar 
         title="Invoice Filters"
@@ -613,7 +608,14 @@ export function Invoices({ mode = 'manage' }: InvoicesProps) {
         </div>
       </EnhancedFilterBar>
 
-        {/* Invoices Table */}
+      {/* INR Summary Totals */}
+      {featureFlags.invoicesSummaryTotals && summaryTotals && (
+        <div style={{ margin: '20px 0' }}>
+          <SummaryTotals totals={summaryTotals} />
+        </div>
+      )}
+
+      {/* Invoices Table */}
       <div style={{ 
         border: '1px solid #e9ecef', 
         borderRadius: '8px', 

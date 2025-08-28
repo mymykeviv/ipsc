@@ -5,7 +5,7 @@ import { createApiErrorHandler } from '../lib/apiUtils'
 import { Button } from '../components/Button'
 import { PaymentForm } from '../components/PaymentForm'
 import { Modal } from '../components/Modal'
-import { Payment, apiGetAllInvoicePayments } from '../lib/api'
+import { Payment, apiGetAllInvoicePayments, apiGetInvoicePaymentsSummary, type InvoicePaymentSummaryTotals, type InvoicePaymentFilters } from '../lib/api'
 import { SummaryCardGrid, type SummaryCardItem } from '../components/common/SummaryCardGrid'
 import { EnhancedFilterBar } from '../components/EnhancedFilterBar'
 import { FilterDropdown } from '../components/FilterDropdown'
@@ -28,6 +28,10 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
   const [payments, setPayments] = useState<Payment[]>([])
   const [filteredPayments, setFilteredPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(false)
+  // Backend summary state (INR-only)
+  const [summaryTotals, setSummaryTotals] = useState<InvoicePaymentSummaryTotals | null>(null)
+  const [summaryLoading, setSummaryLoading] = useState(false)
+  const [summaryError, setSummaryError] = useState<string | null>(null)
   const [invoices, setInvoices] = useState<any[]>([])
   const [isViewOpen, setIsViewOpen] = useState(false)
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
@@ -161,6 +165,64 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
     }
   }, [mode, type, token, navigate])
 
+  // Fetch backend summary when filters change for invoice payments list
+  useEffect(() => {
+    if (!token) return
+    if (!(mode === 'list' && type === 'invoice')) return
+
+    const fetchSummary = async () => {
+      try {
+        setSummaryLoading(true)
+        setSummaryError(null)
+
+        // Build filters for summary API
+        const filters: Partial<InvoicePaymentFilters> = {}
+
+        // Invoice number search (exact match acceptable for backend generic search)
+        if (invoiceNumberFilter && invoiceNumberFilter !== 'all') {
+          filters.search = invoiceNumberFilter
+        }
+
+        // Payment method
+        if (paymentMethodFilter && paymentMethodFilter !== 'all') {
+          filters.payment_method = paymentMethodFilter
+        }
+
+        // Amount range
+        if (paymentAmountFilter && paymentAmountFilter !== 'all') {
+          const [minStr, maxStr] = paymentAmountFilter.split('-')
+          if (minStr) filters.amount_min = Number(minStr)
+          if (maxStr) filters.amount_max = Number(maxStr)
+        }
+
+        // Date range: prefer explicit date filter when active
+        if (isDateFilterActive && dateFilter?.startDate && dateFilter?.endDate) {
+          filters.date_from = dateFilter.startDate
+          filters.date_to = dateFilter.endDate
+        } else if (financialYearFilter && financialYearFilter !== 'all') {
+          // Map FY like "2024-2025" -> 2024-04-01 to 2025-03-31
+          const [startYearStr, endYearStr] = financialYearFilter.split('-')
+          const startYear = Number(startYearStr)
+          const endYear = Number(endYearStr)
+          if (!Number.isNaN(startYear) && !Number.isNaN(endYear)) {
+            filters.date_from = `${startYear}-04-01`
+            filters.date_to = `${endYear}-03-31`
+          }
+        }
+
+        const resp = await apiGetInvoicePaymentsSummary(filters)
+        setSummaryTotals(resp?.meta?.totals ?? null)
+      } catch (e: any) {
+        setSummaryError(e?.message || 'Failed to load payment summary')
+        setSummaryTotals(null)
+      } finally {
+        setSummaryLoading(false)
+      }
+    }
+
+    fetchSummary()
+  }, [mode, type, token, invoiceNumberFilter, paymentAmountFilter, paymentMethodFilter, financialYearFilter, dateFilter, isDateFilterActive])
+
   const loadInvoicePayments = async () => {
     try {
       setLoading(true)
@@ -234,28 +296,36 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
     setFilteredPayments(filtered)
   }, [payments, invoices, invoiceNumberFilter, paymentAmountFilter, paymentMethodFilter, financialYearFilter, dateFilter, isDateFilterActive])
 
-  // Summary totals for Invoice Payments (computed from filteredPayments)
+  // Summary totals for Invoice Payments (from backend API - INR only)
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2 }).format(amount)
 
-  const totalPaid = filteredPayments.reduce((sum: number, p: Payment) => sum + (p.payment_amount || 0), 0)
-  const totalCash = filteredPayments
-    .filter(p => (p.payment_method || '').toLowerCase() === 'cash')
-    .reduce((sum: number, p: Payment) => sum + (p.payment_amount || 0), 0)
-  const totalBank = filteredPayments
-    .filter(p => (p.payment_method || '').toLowerCase() === 'bank transfer')
-    .reduce((sum: number, p: Payment) => sum + (p.payment_amount || 0), 0)
-  const totalUpi = filteredPayments
-    .filter(p => (p.payment_method || '').toLowerCase() === 'upi')
-    .reduce((sum: number, p: Payment) => sum + (p.payment_amount || 0), 0)
-
-  const summaryItems: SummaryCardItem[] = [
-    { label: 'Total Paid', primary: formatCurrency(totalPaid) },
-    { label: 'Payments', primary: filteredPayments.length.toLocaleString('en-IN') },
-    { label: 'Cash Paid', primary: formatCurrency(totalCash) },
-    { label: 'Bank Transfer Paid', primary: formatCurrency(totalBank) },
-    { label: 'UPI Paid', primary: formatCurrency(totalUpi) },
-  ]
+  const summaryItems: SummaryCardItem[] = summaryTotals ? [
+    {
+      label: 'Total Paid',
+      primary: formatCurrency(summaryTotals.total_paid || 0),
+      secondary: `${(summaryTotals.payment_count || 0).toLocaleString('en-IN')} Payments`,
+      accentColor: '#198754',
+    },
+    {
+      label: 'Cash',
+      primary: formatCurrency(summaryTotals.cash_amount || 0),
+      secondary: `${(summaryTotals.cash_count || 0).toLocaleString('en-IN')} Payments`,
+      accentColor: '#0d6efd',
+    },
+    {
+      label: 'Bank Transfer',
+      primary: formatCurrency(summaryTotals.bank_transfer_amount || 0),
+      secondary: `${(summaryTotals.bank_transfer_count || 0).toLocaleString('en-IN')} Payments`,
+      accentColor: '#6f42c1',
+    },
+    {
+      label: 'UPI',
+      primary: formatCurrency(summaryTotals.upi_amount || 0),
+      secondary: `${(summaryTotals.upi_count || 0).toLocaleString('en-IN')} Payments`,
+      accentColor: '#fd7e14',
+    },
+  ] : []
 
   const getInvoiceNumber = (invoiceId: number) => {
     const invoice = invoices.find(inv => inv.id === invoiceId)
@@ -446,9 +516,19 @@ export function Payments({ mode = 'add', type = 'purchase' }: PaymentsProps) {
           </div>
         </EnhancedFilterBar>
 
-        {/* Summary Totals */}
+        {/* Summary Totals (Backend, INR-only) */}
         <div style={{ margin: '16px 0 20px 0' }}>
-          <SummaryCardGrid items={summaryItems} columnsMin={220} gapPx={12} />
+          {summaryLoading && (
+            <div style={{ fontSize: '14px', color: '#6c757d' }}>Loading summary…</div>
+          )}
+          {summaryError && (
+            <div style={{ padding: '8px 12px', background: '#fff3cd', border: '1px solid #ffe69c', borderRadius: 6, color: '#664d03', fontSize: 13 }}>
+              {summaryError}
+            </div>
+          )}
+          {!summaryLoading && !summaryError && summaryItems.length > 0 && (
+            <SummaryCardGrid items={summaryItems} columnsMin={220} gapPx={12} />
+          )}
         </div>
 
         {loading ? (

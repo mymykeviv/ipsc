@@ -13,31 +13,40 @@ export function SummaryTotals({ totals }: Props) {
     minimumFractionDigits: 2,
   }).format(amount)
 
-  const items: Array<{ label: string; value: string }> = [
-    { label: 'Invoices', value: totals.count.toLocaleString('en-IN') },
-    { label: 'Subtotal', value: formatCurrency(totals.subtotal) },
-    { label: 'Discount', value: formatCurrency(totals.discount) },
-    { label: 'Tax', value: formatCurrency(totals.tax) },
-    { label: 'Total', value: formatCurrency(totals.total) },
-    { label: 'Amount Paid', value: formatCurrency(totals.amount_paid) },
-    { label: 'Outstanding', value: formatCurrency(totals.outstanding) },
+  // Graceful fallbacks if any new fields are absent
+  const paidCount = (totals as any).paid_count ?? 0
+  const outstandingCount = (totals as any).outstanding_count ?? 0
+  const overdueCount = (totals as any).overdue_count ?? 0
+  const overdueAvgDays = (totals as any).overdue_avg_days ?? 0
+
+  const items: SummaryCardItem[] = [
+    {
+      label: 'Total Amount',
+      primary: formatCurrency(totals.total || 0),
+      secondary: `${(totals.count || 0).toLocaleString('en-IN')} Invoices`,
+      accentColor: '#0d6efd', // blue - consistent with existing summary accents
+    },
+    {
+      label: 'Amount Paid',
+      primary: formatCurrency(totals.amount_paid || 0),
+      secondary: `${paidCount.toLocaleString('en-IN')} Invoices Paid (incl. partial payments)`,
+      accentColor: '#198754', // green
+    },
+    {
+      label: 'Outstanding Amount',
+      primary: formatCurrency(totals.outstanding || 0),
+      secondary: `${outstandingCount.toLocaleString('en-IN')} Invoices Outstanding (incl. partial payments)`,
+      accentColor: '#fd7e14', // orange
+    },
+    {
+      label: 'Overdue Invoices',
+      primary: overdueCount.toLocaleString('en-IN'),
+      secondary: `Avg. ${overdueAvgDays} days`,
+      accentColor: '#dc3545', // red
+    },
   ]
 
-  return (
-    <SummaryCardGrid
-      items={(
-        [
-          { label: 'Invoices', primary: totals.count.toLocaleString('en-IN') },
-          { label: 'Subtotal', primary: formatCurrency(totals.subtotal) },
-          { label: 'Discount', primary: formatCurrency(totals.discount) },
-          { label: 'Tax', primary: formatCurrency(totals.tax) },
-          { label: 'Total', primary: formatCurrency(totals.total) },
-          { label: 'Amount Paid', primary: formatCurrency(totals.amount_paid) },
-          { label: 'Outstanding', primary: formatCurrency(totals.outstanding) },
-        ] as SummaryCardItem[]
-      )}
-    />
-  )
+  return <SummaryCardGrid items={items} columnsMin={220} gapPx={12} />
 }
 
 export default SummaryTotals

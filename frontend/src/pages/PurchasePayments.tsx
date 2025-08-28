@@ -156,12 +156,37 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
     .filter(p => (p.method || '').toLowerCase() === 'upi')
     .reduce((sum: number, p: PurchasePayment) => sum + (p.amount || 0), 0)
 
+  // Counts per method for secondary text
+  const totalPaymentsCount = filteredPayments.length
+  const cashCount = filteredPayments.filter(p => (p.method || '').toLowerCase() === 'cash').length
+  const bankCount = filteredPayments.filter(p => (p.method || '').toLowerCase() === 'bank transfer').length
+  const upiCount = filteredPayments.filter(p => (p.method || '').toLowerCase() === 'upi').length
+
   const summaryItems: SummaryCardItem[] = [
-    { label: 'Total Paid', primary: formatCurrency(totalPaid) },
-    { label: 'Payments', primary: filteredPayments.length.toLocaleString('en-IN') },
-    { label: 'Cash Paid', primary: formatCurrency(totalCash) },
-    { label: 'Bank Transfer Paid', primary: formatCurrency(totalBank) },
-    { label: 'UPI Paid', primary: formatCurrency(totalUpi) },
+    {
+      label: 'Total Paid',
+      primary: formatCurrency(totalPaid),
+      secondary: `${totalPaymentsCount.toLocaleString('en-IN')} payments`,
+      accentColor: '#198754', // green
+    },
+    {
+      label: 'Cash Amount',
+      primary: formatCurrency(totalCash),
+      secondary: `${cashCount.toLocaleString('en-IN')} payments`,
+      accentColor: '#0d6efd', // blue
+    },
+    {
+      label: 'Bank Transfers Amount',
+      primary: formatCurrency(totalBank),
+      secondary: `${bankCount.toLocaleString('en-IN')} payments`,
+      accentColor: '#6f42c1', // purple
+    },
+    {
+      label: 'UPI Amount',
+      primary: formatCurrency(totalUpi),
+      secondary: `${upiCount.toLocaleString('en-IN')} payments`,
+      accentColor: '#fd7e14', // orange
+    },
   ]
 
   return (
@@ -323,17 +348,17 @@ export function PurchasePayments({ mode = 'list' }: PurchasePaymentsProps) {
         </div>
       </EnhancedFilterBar>
 
+      {/* Summary Totals - below filters, consistent width/colors with other screens */}
+      <div style={{ margin: '16px 0 20px 0' }}>
+        <SummaryCardGrid items={summaryItems} columnsMin={220} gapPx={12} />
+      </div>
+
       <div style={{ 
         border: '1px solid #e9ecef', 
         borderRadius: '8px', 
         overflow: 'visible',
         backgroundColor: 'white'
       }}>
-        {/* Summary Totals */}
-        <div style={{ margin: '16px 0 20px 0' }}>
-          <SummaryCardGrid items={summaryItems} columnsMin={220} gapPx={12} />
-        </div>
-
         {loading ? (
           <div style={{
             textAlign: 'center', 
