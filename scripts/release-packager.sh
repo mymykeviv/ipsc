@@ -4,7 +4,7 @@
 # a user-friendly deployment package that runs on any OS with Docker installed.
 #
 # Usage:
-#   scripts/release-packager.sh [--quick] [--platform <linux/amd64|linux/arm64|linux/amd64,linux/arm64>] <version> <dockerhub_username>
+#   scripts/release-packager.sh [--quick] [--platform <linux/amd64|linux/arm64|linux/amd64,linux/arm64>] [--build-type <docker-dev|docker-prod|docker-prod-lite|production|prod-lite>] <version> <dockerhub_username>
 #
 # Examples:
 #   scripts/release-packager.sh --quick 1.0.1 myuser
@@ -46,13 +46,21 @@ retry() {
 # ------------------------- Args ---------------------------------------------
 QUICK=0
 PLATFORM="linux/amd64,linux/arm64"
+BUILD_TYPE="production"
+PUSH_IMAGES=1
+COMPOSE_SRC=""
+ALLOW_EMBEDDED_COMPOSE=0
 POSITIONALS=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --quick) QUICK=1; shift ;;
     --platform) PLATFORM="$2"; shift 2 ;;
+    --build-type)
+      BUILD_TYPE="$2"; shift 2 ;;
+    --allow-embedded-compose)
+      ALLOW_EMBEDDED_COMPOSE=1; shift ;;
     -h|--help)
-      echo "Usage: scripts/release-packager.sh [--quick] [--platform <p>] <version> <dockerhub_username>"; exit 0 ;;
+      echo "Usage: scripts/release-packager.sh [--quick] [--platform <p>] [--build-type <docker-dev|docker-prod|docker-prod-lite|production|prod-lite>] [--allow-embedded-compose] <version> <dockerhub_username>"; exit 0 ;;
     *) POSITIONALS+=("$1"); shift ;;
   esac
 done
@@ -69,6 +77,42 @@ status info "Release Version: $VERSION"
 status info "Docker Hub: $DOCKERHUB_USERNAME"
 status info "Mode: $([[ $QUICK -eq 1 ]] && echo Quick || echo Full)"
 status info "Platform(s): $PLATFORM"
+status info "Build Type: $BUILD_TYPE"
+
+# Normalize to repo root to make relative paths for compose reliable
+if ROOT_DIR=$(git rev-parse --show-toplevel 2>/dev/null); then
+  cd "$ROOT_DIR"
+else
+  # Fallback: assume script is in repo/scripts and go one level up
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  cd "${SCRIPT_DIR}/.."
+fi
+
+# ------------------------- Build Type Mapping -------------------------------
+case "$BUILD_TYPE" in
+  # Local developer builds (debugging enabled, no push)
+  docker-dev)
+    COMPOSE_SRC="deployment/docker/docker-compose.dev.yml"
+    PUSH_IMAGES=0 ;;
+  docker-prod)
+    COMPOSE_SRC="deployment/docker/docker-compose.prod.local.yml"
+    PUSH_IMAGES=0 ;;
+  docker-prod-lite)
+    COMPOSE_SRC="deployment/docker/docker-compose.prod-lite.local.yml"
+    PUSH_IMAGES=0 ;;
+  # Distributable builds (debugging disabled, push)
+  production)
+    COMPOSE_SRC="deployment/docker/docker-compose.prod.yml"
+    PUSH_IMAGES=1 ;;
+  prod-lite)
+    COMPOSE_SRC="deployment/docker/docker-compose.prod-lite.yml"
+    PUSH_IMAGES=1 ;;
+  *)
+    status warn "Unknown build type '$BUILD_TYPE'. Defaulting to 'production'"
+    BUILD_TYPE="production"
+    COMPOSE_SRC="deployment/docker/docker-compose.prod.yml"
+    PUSH_IMAGES=1 ;;
+esac
 
 # ------------------------- Preflight ----------------------------------------
 if ! command -v docker >/dev/null 2>&1; then
@@ -200,6 +244,11 @@ build_frontend() {
 }
 
 push_images_if_needed() {
+  if [[ $PUSH_IMAGES -eq 0 ]]; then
+    status info "Build type '$BUILD_TYPE' is local-only. Skipping push to Docker Hub."
+    return 0
+  fi
+
   if [[ $QUICK -eq 1 || -z "$PLATFORM" ]]; then
     status info "Pushing images to Docker Hub..."
     retry 5 docker push "$DOCKERHUB_USERNAME/profitpath-backend:$VERSION"
@@ -222,8 +271,18 @@ status info "Generating deployment package..."
 rm -rf deployment-package
 mkdir -p deployment-package
 
-# Compose file (no version key)
-cat > deployment-package/docker-compose.yml <<EOF
+# Compose file selection
+if [[ -n "$COMPOSE_SRC" && -f "$COMPOSE_SRC" ]]; then
+  status info "Using compose file: $COMPOSE_SRC"
+  cp "$COMPOSE_SRC" deployment-package/docker-compose.yml
+  # Best-effort substitution of image tags if placeholders exist
+  sed -i.bak "s|\${DOCKERHUB_USERNAME}|$DOCKERHUB_USERNAME|g; s|\${VERSION}|$VERSION|g" deployment-package/docker-compose.yml || true
+  rm -f deployment-package/docker-compose.yml.bak || true
+else
+  if [[ $ALLOW_EMBEDDED_COMPOSE -eq 1 ]]; then
+    status warn "Compose file '$COMPOSE_SRC' not found. Falling back to embedded compose due to --allow-embedded-compose."
+    # Compose file (no version key)
+    cat > deployment-package/docker-compose.yml <<EOF
 services:
   database:
     image: postgres:16-alpine
@@ -301,6 +360,11 @@ networks:
   profitpath-network:
     driver: bridge
 EOF
+  else
+    status fail "Compose file '$COMPOSE_SRC' not found and inline fallback is disabled. Re-run with --allow-embedded-comPOSE or fix the path/build-type."
+    exit 1
+  fi
+fi
 
 # NGINX config: upstreams and proxy
 cat > deployment-package/nginx.conf <<'EOF'
@@ -521,3 +585,26 @@ tar -czf "profitpath-v$VERSION-linux-mac.tar.gz" -C deployment-package .
 status ok "Artifacts created: profitpath-v$VERSION-windows.zip, profitpath-v$VERSION-linux-mac.tar.gz"
 
 status ok "Release complete. Share the archives or the deployment-package/ folder with users."
+
+# ------------------------- Post-package validations -------------------------
+# Basic sanity checks to catch mismatches between build type and compose semantics
+errors=0
+if [[ -f deployment-package/docker-compose.yml ]]; then
+  case "$BUILD_TYPE" in
+    docker-prod|production)
+      if ! grep -q "DEBUG: \"false\"" deployment-package/docker-compose.yml; then
+        status warn "Expected DEBUG=\"false\" for $BUILD_TYPE; verify backend settings."
+      fi
+      ;;
+    docker-prod-lite|prod-lite)
+      if ! grep -q "MULTI_TENANT_ENABLED: \"false\"" deployment-package/docker-compose.yml; then
+        status warn "Expected MULTI_TENANT_ENABLED=\"false\" for $BUILD_TYPE."
+      fi
+      ;;
+    docker-dev)
+      if ! grep -q "LOG_LEVEL: DEBUG" deployment-package/docker-compose.yml; then
+        status warn "Expected LOG_LEVEL DEBUG in docker-dev compose."
+      fi
+      ;;
+  esac
+fi

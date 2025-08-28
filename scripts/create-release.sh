@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # ProfitPath Release Creation Script
-# Usage: ./scripts/create-release.sh [--skip-preflight] <version>
+# Usage: ./scripts/create-release.sh [--skip-preflight] [--build-type <docker-dev|docker-prod|docker-prod-lite|production|prod-lite>] <version>
 # Example: ./scripts/create-release.sh 1.42.0
 #          ./scripts/create-release.sh --skip-preflight 1.42.0
+#          ./scripts/create-release.sh --build-type production 1.42.0
 
 set -euo pipefail
 
@@ -27,12 +28,15 @@ status() {
 retry() { local attempts=${1:-5}; shift; local delay=2; local n=0; until "$@"; do n=$((n+1)); [[ $n -ge $attempts ]] && return 1; sleep $(( delay ** n )); done; }
 
 SKIP_PREFLIGHT=0
+BUILD_TYPE="production"
 POSITIONALS=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --skip-preflight) SKIP_PREFLIGHT=1; shift ;;
+    --build-type)
+      BUILD_TYPE="$2"; shift 2 ;;
     -h|--help)
-      echo "Usage: $0 [--skip-preflight] <version>"; exit 0 ;;
+      echo "Usage: $0 [--skip-preflight] [--build-type <docker-dev|docker-prod|docker-prod-lite|production|prod-lite>] <version>"; exit 0 ;;
     *) POSITIONALS+=("$1"); shift ;;
   esac
 done
@@ -43,7 +47,7 @@ VERSION=${1:-}
 if [[ -z "$VERSION" ]]; then
   echo "❌ Error: Version number is required"
   echo ""
-  echo "Usage: $0 [--skip-preflight] <version>"
+  echo "Usage: $0 [--skip-preflight] [--build-type <docker-dev|docker-prod|docker-prod-lite|production|prod-lite>] <version>"
   echo "Example: $0 1.42.0"
   echo "This script will:"
   echo "1. Optionally run preflight checks (frontend typecheck/lint/build, backend migrations)"
@@ -55,6 +59,28 @@ fi
 
 echo "🚀 Creating ProfitPath release v$VERSION"
 echo "========================================"
+echo "Build Type: $BUILD_TYPE"
+
+# Validate build type and map to compose files (for CI or packager parity)
+# Note: docker-* variants are intended for local verification with maximum debugging enabled
+#       production/prod-lite are intended for distributable artifacts with debugging disabled
+case "$BUILD_TYPE" in
+  docker-dev)
+    COMPOSE_SRC="deployment/docker/docker-compose.dev.yml" ;;
+  docker-prod)
+    COMPOSE_SRC="deployment/docker/docker-compose.prod.local.yml" ;;
+  docker-prod-lite)
+    COMPOSE_SRC="deployment/docker/docker-compose.prod-lite.local.yml" ;;
+  production)
+    COMPOSE_SRC="deployment/docker/docker-compose.prod.yml" ;;
+  prod-lite)
+    COMPOSE_SRC="deployment/docker/docker-compose.prod-lite.yml" ;;
+  *)
+    echo "⚠️  Warning: Unknown build type '$BUILD_TYPE'. Defaulting to 'production'" >&2
+    BUILD_TYPE="production"
+    COMPOSE_SRC="deployment/docker/docker-compose.prod.yml" ;;
+esac
+echo "Compose file (expected): $COMPOSE_SRC"
 
 preflight_checks() {
   if [[ $SKIP_PREFLIGHT -eq 1 ]]; then
@@ -123,8 +149,12 @@ echo "$VERSION" > VERSION
 # Commit and tag
 echo "🏷️  Creating git tag..."
 git add VERSION
-git commit -m "Bump version to $VERSION"
-git tag -a "v$VERSION" -m "Release version $VERSION"
+git commit -m "Bump version to $VERSION (build-type: $BUILD_TYPE)"
+git tag -a "v$VERSION" -m "Release version $VERSION
+
+build_type=$BUILD_TYPE
+compose=$COMPOSE_SRC
+"
 
 # Push to GitHub
 echo "📤 Pushing to GitHub..."
