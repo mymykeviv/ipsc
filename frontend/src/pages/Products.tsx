@@ -252,12 +252,6 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     clearURLFilters()
   }, [resetAllFilters, clearURLFilters, searchTerm, statusFilter, categoryFilter, itemTypeFilter, gstRateFilter, stockLevelFilter, supplierFilter, priceRangeFilter, dateFilter])
 
-  // Render different content based on mode
-  if (mode === 'add' || mode === 'edit') {
-  }
-
-  
-
   // Load products
   const loadProducts = useCallback(async () => {
     try {
