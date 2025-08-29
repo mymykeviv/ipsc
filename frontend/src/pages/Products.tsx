@@ -374,8 +374,8 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     setProductFormData(prev => ({ ...prev, [field]: value }))
   }, [])
 
-  const submitCreate = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault()
+  const submitCreate = useCallback(async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
     try {
       setFormError(null)
       setFormLoading(true)
@@ -394,6 +394,11 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         hsn: productFormData.hsn_code.trim() || null,
         gst_rate: productFormData.gst_rate ? parseFloat(productFormData.gst_rate) : null,
       }
+      // Basic validation
+      if (!payload.name) {
+        throw new Error('Product name is required')
+      }
+
       await apiCreateProduct(payload as Omit<Product, 'id' | 'is_active'>)
       navigate('/products')
     } catch (err: any) {
@@ -404,8 +409,8 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     }
   }, [productFormData, navigate, handleApiError])
 
-  const submitUpdate = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault()
+  const submitUpdate = useCallback(async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
     if (!currentProduct) return
     try {
       setFormError(null)
@@ -425,6 +430,11 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         hsn: productFormData.hsn_code.trim() || currentProduct.hsn,
         gst_rate: productFormData.gst_rate ? parseFloat(productFormData.gst_rate) : currentProduct.gst_rate,
       }
+      // Basic validation
+      if (!payload.name) {
+        throw new Error('Product name is required')
+      }
+
       await apiUpdateProduct(currentProduct.id, payload as Partial<Omit<Product, 'id' | 'is_active'>>)
       navigate('/products')
     } catch (err: any) {
@@ -501,6 +511,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     return (
       <div style={{ padding: '20px', maxWidth: '100%' }}>
         <form onSubmit={submitUpdate}>
+          {formError && <ErrorMessage message={formError} />}
           <div style={formStyles.grid2Col as React.CSSProperties}>
             <div style={formStyles.section}>
               <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('product') }}>Product Details</h3>
@@ -577,7 +588,9 @@ export function Products({ mode = 'manage' }: ProductsProps) {
             </div>
           </div>
           <Button type="button" variant="secondary" onClick={() => navigate('/products')}>Cancel</Button>
-          <Button type="submit" variant="primary">Update Product</Button>
+          <Button type="button" variant="primary" onClick={() => submitUpdate()} disabled={formLoading}>
+            {formLoading ? 'Updating...' : 'Update Product'}
+          </Button>
         </form>
       </div>
     )
@@ -595,6 +608,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     return (
       <div style={{ padding: '20px', maxWidth: '100%' }}>
         <form onSubmit={submitCreate}>
+          {formError && <ErrorMessage message={formError} />}
         <div style={formStyles.grid2Col as React.CSSProperties}>
           <div style={formStyles.section}>
             <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('product') }}>Product Details</h3>
@@ -671,7 +685,9 @@ export function Products({ mode = 'manage' }: ProductsProps) {
             </div>
           </div>
           <Button type="button" variant="secondary" onClick={() => navigate('/products')}>Cancel</Button>
-          <Button type="submit" variant="primary">Create Product</Button>
+          <Button type="button" variant="primary" onClick={() => submitCreate()} disabled={formLoading}>
+            {formLoading ? 'Creating...' : 'Create Product'}
+          </Button>
         </form>
       </div>
     )

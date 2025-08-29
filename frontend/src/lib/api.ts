@@ -454,7 +454,14 @@ export async function apiUpdateProduct(id: number, payload: Partial<Omit<Product
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
     body: JSON.stringify(payload)
   })
-  if (!r.ok) throw new Error('failed')
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
   return r.json()
 }
 
