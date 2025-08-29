@@ -22,6 +22,7 @@ from .logging_config import setup_logging, get_logger
 import logging
 from datetime import datetime
 import os
+from app.seed import run_seed
 
 # Configure structured logging
 setup_logging(
@@ -245,12 +246,16 @@ def create_app(database_engine=None) -> FastAPI:
                 
                 # Initialize database
                 if database_engine:
+                    logger.info("Initializing database...")
                     Base.metadata.create_all(bind=database_engine)
                 else:
+                    logger.info("Initializing legacy database...")
                     Base.metadata.create_all(bind=legacy_engine)
                 
-                # Seed data removed - use separate development script if needed
-                
+                # Run seed data
+                logger.info("Running database seed...")
+                run_seed()
+
                 logger.info("Application initialization completed successfully")
                 
             except Exception as e:

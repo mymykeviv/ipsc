@@ -4,10 +4,10 @@
 # a user-friendly deployment package that runs on any OS with Docker installed.
 #
 # Usage:
-#   scripts/release-packager.sh [--quick] [--platform <linux/amd64|linux/arm64|linux/amd64,linux/arm64>] [--build-type <docker-dev|docker-prod|docker-prod-lite|production|prod-lite>] <version> <dockerhub_username>
+#   scripts/release-packager.sh [--precheck] [--platform <linux/amd64|linux/arm64|linux/amd64,linux/arm64>] [--build-type <docker-dev|docker-prod|docker-prod-lite|production|prod-lite>] <version> <dockerhub_username>
 #
 # Examples:
-#   scripts/release-packager.sh --quick 1.0.1 myuser
+#   scripts/release-packager.sh --precheck 1.0.1 myuser
 #   scripts/release-packager.sh --platform linux/amd64,linux/arm64 1.0.1 myuser
 
 set -euo pipefail
@@ -44,7 +44,7 @@ retry() {
 }
 
 # ------------------------- Args ---------------------------------------------
-QUICK=0
+QUICK=1
 PLATFORM="linux/amd64,linux/arm64"
 BUILD_TYPE="production"
 PUSH_IMAGES=1
@@ -53,14 +53,14 @@ ALLOW_EMBEDDED_COMPOSE=0
 POSITIONALS=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --quick) QUICK=1; shift ;;
+    --precheck) QUICK=0; shift ;;
     --platform) PLATFORM="$2"; shift 2 ;;
     --build-type)
       BUILD_TYPE="$2"; shift 2 ;;
     --allow-embedded-compose)
       ALLOW_EMBEDDED_COMPOSE=1; shift ;;
     -h|--help)
-      echo "Usage: scripts/release-packager.sh [--quick] [--platform <p>] [--build-type <docker-dev|docker-prod|docker-prod-lite|production|prod-lite>] [--allow-embedded-compose] <version> <dockerhub_username>"; exit 0 ;;
+      echo "Usage: scripts/release-packager.sh [--precheck] [--platform <p>] [--build-type <docker-dev|docker-prod|docker-prod-lite|production|prod-lite>] [--allow-embedded-compose] <version> <dockerhub_username>"; exit 0 ;;
     *) POSITIONALS+=("$1"); shift ;;
   esac
 done
@@ -137,7 +137,7 @@ fi
 # Cache-busting arg to avoid stale frontend assets
 CACHE_BUST="BUILD_TS=$(date +%s)"
 
-# ------------------------- Extended Checks (skip with --quick) ---------------
+# ------------------------- Extended Checks (do with --precheck) ---------------
 preflight_checks() {
   if [[ $QUICK -eq 1 ]]; then
     status warn "Quick mode: skipping preflight checks (typecheck/lint/migrations)"

@@ -27,6 +27,7 @@ services:
     environment:
       ENVIRONMENT: uat
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/profitpath_uat
+      POSTGRES_DB: profitpath_uat
       SECRET_KEY: ${SECRET_KEY:-uat-secret-key-change-in-production}
       DEBUG: "false"
       LOG_LEVEL: INFO
@@ -40,7 +41,7 @@ services:
       - "8001:8000"  # Different port to avoid conflicts
     volumes:
       - backend_uat_logs:/app/logs
-    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
+    command: sh -c "python -u scripts/ensure_database.py && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s

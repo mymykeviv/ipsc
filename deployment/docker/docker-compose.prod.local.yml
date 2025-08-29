@@ -27,6 +27,7 @@ services:
       ENVIRONMENT: production
       # Local "prod-like" run with maximum debugging enabled
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-profitpath_prod}
+      POSTGRES_DB: ${POSTGRES_DB:-profitpath_prod}
       SECRET_KEY: ${SECRET_KEY:-local-secret-key}
       DEBUG: "true"
       LOG_LEVEL: DEBUG
@@ -44,7 +45,7 @@ services:
       - "8000:8000"
     volumes:
       - backend_prod_local_logs:/app/logs
-    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2 --log-level debug"
+    command: sh -c "python -u scripts/ensure_database.py && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2 --log-level debug"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
