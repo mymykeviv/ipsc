@@ -41,7 +41,6 @@ interface Product {
 interface ProductFormData {
   // Product Details
   name: string
-  product_code: string
   sku: string
   unit: string
   supplier: string
@@ -101,7 +100,6 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   const [formError, setFormError] = useState<string | null>(null)
   const [productFormData, setProductFormData] = useState<ProductFormData>({
     name: '',
-    product_code: '',
     sku: '',
     unit: '',
     supplier: '',
@@ -346,7 +344,6 @@ export function Products({ mode = 'manage' }: ProductsProps) {
           if (found) {
             setProductFormData({
               name: found.name || '',
-              product_code: found.sku || '',
               sku: found.sku || '',
               unit: found.unit || '',
               supplier: found.supplier || '',
@@ -484,6 +481,108 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     return <StockHistoryForm onSuccess={() => navigate('/products')} onCancel={() => navigate('/products')} />
   }
 
+  // Edit Product Mode
+  if (mode === 'edit') {
+    if (formLoading) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <div>Loading form...</div>
+        </div>
+      )
+    }
+    if (!currentProduct) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <div style={{ marginBottom: 12 }}>Product not found.</div>
+          <Button variant="secondary" onClick={() => navigate('/products')}>Back to Products</Button>
+        </div>
+      )
+    }
+    return (
+      <div style={{ padding: '20px', maxWidth: '100%' }}>
+        <form onSubmit={submitUpdate}>
+          <div style={formStyles.grid2Col as React.CSSProperties}>
+            <div style={formStyles.section}>
+              <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('product') }}>Product Details</h3>
+              <div style={formStyles.grid2Col as React.CSSProperties}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Product Name *</label>
+                  <input style={formStyles.input} value={productFormData.name} onChange={e => handleFormInput('name', e.target.value)} required />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>SKU</label>
+                  <input style={formStyles.input} value={productFormData.sku} onChange={e => handleFormInput('sku', e.target.value)} />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Unit of Measure</label>
+                  <select
+                    style={formStyles.select}
+                    value={productFormData.unit || 'Pcs'}
+                    onChange={e => handleFormInput('unit', e.target.value)}
+                  >
+                    <option value="Pcs">Pcs</option>
+                    <option value="Kg">Kg</option>
+                    <option value="Gms">Gms</option>
+                    <option value="Ml">Ml</option>
+                    <option value="Ltr">Ltr</option>
+                  </select>
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Description</label>
+                  <textarea style={formStyles.textarea} value={productFormData.description} onChange={e => handleFormInput('description', e.target.value)} />
+                </div>
+              </div>
+            </div>
+            <div style={formStyles.section}>
+              <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('price') }}>Price Details</h3>
+              <div style={formStyles.grid2Col as React.CSSProperties}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Sales Price</label>
+                  <input type="number" step="0.01" style={formStyles.input} value={productFormData.sales_price} onChange={e => handleFormInput('sales_price', e.target.value)} />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Purchase Price</label>
+                  <input type="number" step="0.01" style={formStyles.input} value={productFormData.purchase_price} onChange={e => handleFormInput('purchase_price', e.target.value)} />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>GST Rate</label>
+                  <input type="number" step="0.01" style={formStyles.input} value={productFormData.gst_rate} onChange={e => handleFormInput('gst_rate', e.target.value)} />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>HSN Code</label>
+                  <input style={formStyles.input} value={productFormData.hsn_code} onChange={e => handleFormInput('hsn_code', e.target.value)} />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style={formStyles.grid2Col as React.CSSProperties}>
+            <div style={formStyles.section}>
+              <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('stock') }}>Stock Details</h3>
+              <div style={formStyles.grid2Col as React.CSSProperties}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Opening Stock</label>
+                  <input type="number" step="0.01" style={formStyles.input} value={productFormData.opening_stock} onChange={e => handleFormInput('opening_stock', e.target.value)} />
+                </div>
+              </div>
+            </div>
+            <div style={formStyles.section}>
+              <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('notes') }}>Additional Details</h3>
+              <div style={formStyles.grid2Col as React.CSSProperties}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Notes</label>
+                  <textarea style={formStyles.textarea} value={productFormData.notes} onChange={e => handleFormInput('notes', e.target.value)} />
+                </div>
+                <div />
+              </div>
+            </div>
+          </div>
+          <Button type="button" variant="secondary" onClick={() => navigate('/products')}>Cancel</Button>
+          <Button type="submit" variant="primary">Update Product</Button>
+        </form>
+      </div>
+    )
+  }
+
   // Add Product Mode
   if (mode === 'add') {
     if (formLoading) {
@@ -494,155 +593,85 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       )
     }
     return (
-      <div style={{ padding: '20px', maxWidth: '900px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h1 style={{ margin: 0 }}>Add New Product</h1>
-          <Button variant="secondary" onClick={() => navigate('/products')}>← Back to Products</Button>
-        </div>
-        {formError && <ErrorMessage message={formError} />}
+      <div style={{ padding: '20px', maxWidth: '100%' }}>
         <form onSubmit={submitCreate}>
+        <div style={formStyles.grid2Col as React.CSSProperties}>
           <div style={formStyles.section}>
             <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('product') }}>Product Details</h3>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Product Name *</label>
-              <input style={formStyles.input} value={productFormData.name} onChange={e => handleFormInput('name', e.target.value)} required />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Product Code *</label>
-              <input style={formStyles.input} value={productFormData.product_code} onChange={e => handleFormInput('product_code', e.target.value)} required />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>SKU</label>
-              <input style={formStyles.input} value={productFormData.sku} onChange={e => handleFormInput('sku', e.target.value)} />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Unit of Measure</label>
-              <input style={formStyles.input} value={productFormData.unit} onChange={e => handleFormInput('unit', e.target.value)} />
+            <div style={formStyles.grid2Col as React.CSSProperties}>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Product Name *</label>
+                <input style={formStyles.input} value={productFormData.name} onChange={e => handleFormInput('name', e.target.value)} required />
+              </div>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>SKU</label>
+                <input style={formStyles.input} value={productFormData.sku} onChange={e => handleFormInput('sku', e.target.value)} />
+              </div>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Unit of Measure</label>
+                <select
+                  style={formStyles.select}
+                  value={productFormData.unit || 'Pcs'}
+                  onChange={e => handleFormInput('unit', e.target.value)}
+                >
+                  <option value="Pcs">Pcs</option>
+                  <option value="Kg">Kg</option>
+                  <option value="Gms">Gms</option>
+                  <option value="Ml">Ml</option>
+                  <option value="Ltr">Ltr</option>
+                </select>
+              </div>
+              <div />
             </div>
           </div>
           <div style={formStyles.section}>
             <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('price') }}>Price Details</h3>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Sales Price</label>
-              <input type="number" step="0.01" style={formStyles.input} value={productFormData.sales_price} onChange={e => handleFormInput('sales_price', e.target.value)} />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Purchase Price</label>
-              <input type="number" step="0.01" style={formStyles.input} value={productFormData.purchase_price} onChange={e => handleFormInput('purchase_price', e.target.value)} />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>GST Rate</label>
-              <input type="number" step="0.01" style={formStyles.input} value={productFormData.gst_rate} onChange={e => handleFormInput('gst_rate', e.target.value)} />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>HSN Code</label>
-              <input style={formStyles.input} value={productFormData.hsn_code} onChange={e => handleFormInput('hsn_code', e.target.value)} />
-            </div>
-          </div>
-          <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('stock') }}>Stock Details</h3>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Opening Stock</label>
-              <input type="number" step="0.01" style={formStyles.input} value={productFormData.opening_stock} onChange={e => handleFormInput('opening_stock', e.target.value)} />
+            <div style={formStyles.grid2Col as React.CSSProperties}>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Sales Price</label>
+                <input type="number" step="0.01" style={formStyles.input} value={productFormData.sales_price} onChange={e => handleFormInput('sales_price', e.target.value)} />
+              </div>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>Purchase Price</label>
+                <input type="number" step="0.01" style={formStyles.input} value={productFormData.purchase_price} onChange={e => handleFormInput('purchase_price', e.target.value)} />
+              </div>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>GST Rate</label>
+                <input type="number" step="0.01" style={formStyles.input} value={productFormData.gst_rate} onChange={e => handleFormInput('gst_rate', e.target.value)} />
+              </div>
+              <div style={formStyles.formGroup}>
+                <label style={formStyles.label}>HSN Code</label>
+                <input style={formStyles.input} value={productFormData.hsn_code} onChange={e => handleFormInput('hsn_code', e.target.value)} />
+              </div>
             </div>
           </div>
-          <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('notes') }}>Additional Details</h3>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Description</label>
-              <textarea style={formStyles.textarea} value={productFormData.description} onChange={e => handleFormInput('description', e.target.value)} />
+          </div>
+          <div style={formStyles.grid2Col as React.CSSProperties}>
+            <div style={formStyles.section}>
+              <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('stock') }}>Stock Details</h3>
+              <div style={formStyles.grid2Col as React.CSSProperties}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Opening Stock</label>
+                  <input type="number" step="0.01" style={formStyles.input} value={productFormData.opening_stock} onChange={e => handleFormInput('opening_stock', e.target.value)} />
+                </div>
+              </div>
             </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Notes</label>
-              <textarea style={formStyles.textarea} value={productFormData.notes} onChange={e => handleFormInput('notes', e.target.value)} />
+            <div style={formStyles.section}>
+              <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('notes') }}>Additional Details</h3>
+              <div style={formStyles.grid2Col as React.CSSProperties}>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Description</label>
+                  <textarea style={formStyles.textarea} value={productFormData.description} onChange={e => handleFormInput('description', e.target.value)} />
+                </div>
+                <div style={formStyles.formGroup}>
+                  <label style={formStyles.label}>Notes</label>
+                  <textarea style={formStyles.textarea} value={productFormData.notes} onChange={e => handleFormInput('notes', e.target.value)} />
+                </div>
+              </div>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-            <Button type="button" variant="secondary" onClick={() => navigate('/products')}>Cancel</Button>
-            <Button type="submit" variant="primary">Add Product</Button>
-          </div>
-        </form>
-      </div>
-    )
-  }
-
-  // Edit Product Mode
-  if (mode === 'edit') {
-    if (formLoading) {
-      return (
-        <div style={{ padding: '20px' }}>
-          <div>Loading form...</div>
-        </div>
-      )
-    }
-    return (
-      <div style={{ padding: '20px', maxWidth: '900px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h1 style={{ margin: 0 }}>Edit Product</h1>
-          <Button variant="secondary" onClick={() => navigate('/products')}>← Back to Products</Button>
-        </div>
-        {formError && <ErrorMessage message={formError} />}
-        <form onSubmit={submitUpdate}>
-          <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('product') }}>Product Details</h3>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Product Name *</label>
-              <input style={formStyles.input} value={productFormData.name} onChange={e => handleFormInput('name', e.target.value)} required />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Product Code *</label>
-              <input style={formStyles.input} value={productFormData.product_code} onChange={e => handleFormInput('product_code', e.target.value)} required />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>SKU</label>
-              <input style={formStyles.input} value={productFormData.sku} onChange={e => handleFormInput('sku', e.target.value)} />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Unit of Measure</label>
-              <input style={formStyles.input} value={productFormData.unit} onChange={e => handleFormInput('unit', e.target.value)} />
-            </div>
-          </div>
-          <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('price') }}>Price Details</h3>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Sales Price</label>
-              <input type="number" step="0.01" style={formStyles.input} value={productFormData.sales_price} onChange={e => handleFormInput('sales_price', e.target.value)} />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Purchase Price</label>
-              <input type="number" step="0.01" style={formStyles.input} value={productFormData.purchase_price} onChange={e => handleFormInput('purchase_price', e.target.value)} />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>GST Rate</label>
-              <input type="number" step="0.01" style={formStyles.input} value={productFormData.gst_rate} onChange={e => handleFormInput('gst_rate', e.target.value)} />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>HSN Code</label>
-              <input style={formStyles.input} value={productFormData.hsn_code} onChange={e => handleFormInput('hsn_code', e.target.value)} />
-            </div>
-          </div>
-          <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('stock') }}>Stock Details</h3>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Opening Stock</label>
-              <input type="number" step="0.01" style={formStyles.input} value={productFormData.opening_stock} onChange={e => handleFormInput('opening_stock', e.target.value)} />
-            </div>
-          </div>
-          <div style={formStyles.section}>
-            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('notes') }}>Additional Details</h3>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Description</label>
-              <textarea style={formStyles.textarea} value={productFormData.description} onChange={e => handleFormInput('description', e.target.value)} />
-            </div>
-            <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Notes</label>
-              <textarea style={formStyles.textarea} value={productFormData.notes} onChange={e => handleFormInput('notes', e.target.value)} />
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-            <Button type="button" variant="secondary" onClick={() => navigate('/products')}>Cancel</Button>
-            <Button type="submit" variant="primary">Update Product</Button>
-          </div>
+          <Button type="button" variant="secondary" onClick={() => navigate('/products')}>Cancel</Button>
+          <Button type="submit" variant="primary">Create Product</Button>
         </form>
       </div>
     )
