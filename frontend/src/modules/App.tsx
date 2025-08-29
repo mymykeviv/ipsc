@@ -171,16 +171,16 @@ function Shell() {
             {!collapsedSections.products && (
               <>
                 <Link className={`nav-link sub-link ${isActive('/products') ? 'active' : ''}`} to="/products">
-                  Manage Products
+                  View Products
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/products/add') ? 'active' : ''}`} to="/products/add">
-                  Add/Edit Product
+                  Add New Product
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/products/stock-adjustment') ? 'active' : ''}`} to="/products/stock-adjustment">
                   Stock Adjustment
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/products/stock-history') ? 'active' : ''}`} to="/products/stock-history">
-                  Stock History
+                  View Stock Movement History
                 </Link>
               </>
             )}
@@ -198,16 +198,16 @@ function Shell() {
             {!collapsedSections.invoices && (
               <>
                 <Link className={`nav-link sub-link ${isActive('/invoices') ? 'active' : ''}`} to="/invoices">
-                  Manage Invoices
+                  View Invoices
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/invoices/add') ? 'active' : ''}`} to="/invoices/add">
-                  Add/Edit Invoice
+                  Create Invoice
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/payments/invoice/list') ? 'active' : ''}`} to="/payments/invoice/list">
-                  Invoice Payments
+                  View Invoice Payments
                 </Link>
                 <Link className={`nav-link sub-link ${isActive('/payments/invoice/add') ? 'active' : ''}`} to="/payments/invoice/add">
-                  Add/Edit Invoice Payment
+                  Record Invoice Payment
                 </Link>
               </>
             )}

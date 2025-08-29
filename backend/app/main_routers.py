@@ -4907,6 +4907,11 @@ class PartyOut(BaseModel):
     notes: str | None
     is_active: bool
 
+    # Ensure API responses never fail validation due to nulls in DB
+    @validator('gst_enabled', pre=True, always=True)
+    def default_gst_enabled(cls, v):
+        return True if v is None else bool(v)
+
     class Config:
         from_attributes = True
 

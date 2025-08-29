@@ -96,6 +96,27 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   const [movementLoading, setMovementLoading] = useState(false)
   const [movements, setMovements] = useState<StockMovement[]>([])
 
+  // Add/Edit form state
+  const [formLoading, setFormLoading] = useState<boolean>(mode === 'add' || mode === 'edit')
+  const [formError, setFormError] = useState<string | null>(null)
+  const [productFormData, setProductFormData] = useState<ProductFormData>({
+    name: '',
+    product_code: '',
+    sku: '',
+    unit: '',
+    supplier: '',
+    description: '',
+    product_type: 'tradable',
+    category: '',
+    purchase_price: '',
+    sales_price: '',
+    gst_rate: '',
+    hsn_code: '',
+    opening_stock: '',
+    closing_stock: '',
+    notes: ''
+  })
+
   // Enhanced Filter System - Unified State Management
   const defaultState = getDefaultFilterState('products') as {
     searchTerm: string
@@ -306,6 +327,117 @@ export function Products({ mode = 'manage' }: ProductsProps) {
 
   // Note: Do not early-return here. Mode-specific renders are handled below.
 
+  // Load data for Add/Edit modes
+  useEffect(() => {
+    const loadForForm = async () => {
+      if (!(mode === 'add' || mode === 'edit')) return
+      try {
+        setFormLoading(true)
+        setFormError(null)
+        // Load vendors for supplier dropdowns (future use)
+        const parties = await apiListParties()
+        setVendors(parties.filter(p => p.type === 'vendor'))
+
+        if (mode === 'edit' && id) {
+          // Fetch products and set current product
+          const list = await apiGetProducts()
+          const found = list.find(p => p.id === parseInt(id)) || null
+          setCurrentProduct(found)
+          if (found) {
+            setProductFormData({
+              name: found.name || '',
+              product_code: found.sku || '',
+              sku: found.sku || '',
+              unit: found.unit || '',
+              supplier: found.supplier || '',
+              description: found.description || '',
+              product_type: found.item_type || 'tradable',
+              category: found.category || '',
+              purchase_price: found.purchase_price != null ? String(found.purchase_price) : '',
+              sales_price: found.sales_price != null ? String(found.sales_price) : '',
+              gst_rate: found.gst_rate != null ? String(found.gst_rate) : '',
+              hsn_code: found.hsn || '',
+              opening_stock: String(found.stock ?? ''),
+              closing_stock: '',
+              notes: found.notes || ''
+            })
+          }
+        }
+      } catch (err: any) {
+        const msg = handleApiError(err)
+        setFormError(msg)
+      } finally {
+        setFormLoading(false)
+      }
+    }
+    loadForForm()
+  }, [mode, id, handleApiError])
+
+  const handleFormInput = useCallback((field: keyof ProductFormData, value: string) => {
+    setProductFormData(prev => ({ ...prev, [field]: value }))
+  }, [])
+
+  const submitCreate = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      setFormError(null)
+      setFormLoading(true)
+      const payload = {
+        name: productFormData.name.trim(),
+        description: productFormData.description.trim() || null,
+        item_type: (productFormData.product_type || 'tradable') as Product['item_type'],
+        sales_price: productFormData.sales_price ? parseFloat(productFormData.sales_price) : 0,
+        purchase_price: productFormData.purchase_price ? parseFloat(productFormData.purchase_price) : null,
+        stock: productFormData.opening_stock ? parseFloat(productFormData.opening_stock) : 0,
+        sku: productFormData.sku.trim() || null,
+        unit: productFormData.unit.trim() || 'Pcs',
+        supplier: productFormData.supplier.trim() || null,
+        category: productFormData.category.trim() || null,
+        notes: productFormData.notes.trim() || null,
+        hsn: productFormData.hsn_code.trim() || null,
+        gst_rate: productFormData.gst_rate ? parseFloat(productFormData.gst_rate) : null,
+      }
+      await apiCreateProduct(payload as Omit<Product, 'id' | 'is_active'>)
+      navigate('/products')
+    } catch (err: any) {
+      const msg = handleApiError(err)
+      setFormError(msg)
+    } finally {
+      setFormLoading(false)
+    }
+  }, [productFormData, navigate, handleApiError])
+
+  const submitUpdate = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!currentProduct) return
+    try {
+      setFormError(null)
+      setFormLoading(true)
+      const payload = {
+        name: productFormData.name.trim() || currentProduct.name,
+        description: productFormData.description.trim() || null,
+        item_type: (productFormData.product_type || currentProduct.item_type) as Product['item_type'],
+        sales_price: productFormData.sales_price ? parseFloat(productFormData.sales_price) : currentProduct.sales_price,
+        purchase_price: productFormData.purchase_price ? parseFloat(productFormData.purchase_price) : currentProduct.purchase_price,
+        stock: productFormData.opening_stock ? parseFloat(productFormData.opening_stock) : currentProduct.stock,
+        sku: productFormData.sku.trim() || currentProduct.sku,
+        unit: productFormData.unit.trim() || currentProduct.unit,
+        supplier: productFormData.supplier.trim() || currentProduct.supplier,
+        category: productFormData.category.trim() || currentProduct.category,
+        notes: productFormData.notes.trim() || currentProduct.notes,
+        hsn: productFormData.hsn_code.trim() || currentProduct.hsn,
+        gst_rate: productFormData.gst_rate ? parseFloat(productFormData.gst_rate) : currentProduct.gst_rate,
+      }
+      await apiUpdateProduct(currentProduct.id, payload as Partial<Omit<Product, 'id' | 'is_active'>>)
+      navigate('/products')
+    } catch (err: any) {
+      const msg = handleApiError(err)
+      setFormError(msg)
+    } finally {
+      setFormLoading(false)
+    }
+  }, [currentProduct, productFormData, navigate, handleApiError])
+
   // Filter and sort products (filtering portion used by summary and table)
   const filteredProducts = products.filter((product: Product) => {
     const searchLower = searchTerm.toLowerCase()
@@ -350,6 +482,170 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   // Stock History Mode
   if (mode === 'stock-history') {
     return <StockHistoryForm onSuccess={() => navigate('/products')} onCancel={() => navigate('/products')} />
+  }
+
+  // Add Product Mode
+  if (mode === 'add') {
+    if (formLoading) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <div>Loading form...</div>
+        </div>
+      )
+    }
+    return (
+      <div style={{ padding: '20px', maxWidth: '900px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h1 style={{ margin: 0 }}>Add New Product</h1>
+          <Button variant="secondary" onClick={() => navigate('/products')}>← Back to Products</Button>
+        </div>
+        {formError && <ErrorMessage message={formError} />}
+        <form onSubmit={submitCreate}>
+          <div style={formStyles.section}>
+            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('product') }}>Product Details</h3>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Product Name *</label>
+              <input style={formStyles.input} value={productFormData.name} onChange={e => handleFormInput('name', e.target.value)} required />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Product Code *</label>
+              <input style={formStyles.input} value={productFormData.product_code} onChange={e => handleFormInput('product_code', e.target.value)} required />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>SKU</label>
+              <input style={formStyles.input} value={productFormData.sku} onChange={e => handleFormInput('sku', e.target.value)} />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Unit of Measure</label>
+              <input style={formStyles.input} value={productFormData.unit} onChange={e => handleFormInput('unit', e.target.value)} />
+            </div>
+          </div>
+          <div style={formStyles.section}>
+            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('price') }}>Price Details</h3>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Sales Price</label>
+              <input type="number" step="0.01" style={formStyles.input} value={productFormData.sales_price} onChange={e => handleFormInput('sales_price', e.target.value)} />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Purchase Price</label>
+              <input type="number" step="0.01" style={formStyles.input} value={productFormData.purchase_price} onChange={e => handleFormInput('purchase_price', e.target.value)} />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>GST Rate</label>
+              <input type="number" step="0.01" style={formStyles.input} value={productFormData.gst_rate} onChange={e => handleFormInput('gst_rate', e.target.value)} />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>HSN Code</label>
+              <input style={formStyles.input} value={productFormData.hsn_code} onChange={e => handleFormInput('hsn_code', e.target.value)} />
+            </div>
+          </div>
+          <div style={formStyles.section}>
+            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('stock') }}>Stock Details</h3>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Opening Stock</label>
+              <input type="number" step="0.01" style={formStyles.input} value={productFormData.opening_stock} onChange={e => handleFormInput('opening_stock', e.target.value)} />
+            </div>
+          </div>
+          <div style={formStyles.section}>
+            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('notes') }}>Additional Details</h3>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Description</label>
+              <textarea style={formStyles.textarea} value={productFormData.description} onChange={e => handleFormInput('description', e.target.value)} />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Notes</label>
+              <textarea style={formStyles.textarea} value={productFormData.notes} onChange={e => handleFormInput('notes', e.target.value)} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+            <Button type="button" variant="secondary" onClick={() => navigate('/products')}>Cancel</Button>
+            <Button type="submit" variant="primary">Add Product</Button>
+          </div>
+        </form>
+      </div>
+    )
+  }
+
+  // Edit Product Mode
+  if (mode === 'edit') {
+    if (formLoading) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <div>Loading form...</div>
+        </div>
+      )
+    }
+    return (
+      <div style={{ padding: '20px', maxWidth: '900px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h1 style={{ margin: 0 }}>Edit Product</h1>
+          <Button variant="secondary" onClick={() => navigate('/products')}>← Back to Products</Button>
+        </div>
+        {formError && <ErrorMessage message={formError} />}
+        <form onSubmit={submitUpdate}>
+          <div style={formStyles.section}>
+            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('product') }}>Product Details</h3>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Product Name *</label>
+              <input style={formStyles.input} value={productFormData.name} onChange={e => handleFormInput('name', e.target.value)} required />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Product Code *</label>
+              <input style={formStyles.input} value={productFormData.product_code} onChange={e => handleFormInput('product_code', e.target.value)} required />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>SKU</label>
+              <input style={formStyles.input} value={productFormData.sku} onChange={e => handleFormInput('sku', e.target.value)} />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Unit of Measure</label>
+              <input style={formStyles.input} value={productFormData.unit} onChange={e => handleFormInput('unit', e.target.value)} />
+            </div>
+          </div>
+          <div style={formStyles.section}>
+            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('price') }}>Price Details</h3>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Sales Price</label>
+              <input type="number" step="0.01" style={formStyles.input} value={productFormData.sales_price} onChange={e => handleFormInput('sales_price', e.target.value)} />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Purchase Price</label>
+              <input type="number" step="0.01" style={formStyles.input} value={productFormData.purchase_price} onChange={e => handleFormInput('purchase_price', e.target.value)} />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>GST Rate</label>
+              <input type="number" step="0.01" style={formStyles.input} value={productFormData.gst_rate} onChange={e => handleFormInput('gst_rate', e.target.value)} />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>HSN Code</label>
+              <input style={formStyles.input} value={productFormData.hsn_code} onChange={e => handleFormInput('hsn_code', e.target.value)} />
+            </div>
+          </div>
+          <div style={formStyles.section}>
+            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('stock') }}>Stock Details</h3>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Opening Stock</label>
+              <input type="number" step="0.01" style={formStyles.input} value={productFormData.opening_stock} onChange={e => handleFormInput('opening_stock', e.target.value)} />
+            </div>
+          </div>
+          <div style={formStyles.section}>
+            <h3 style={{ ...formStyles.sectionHeader, color: getSectionHeaderColor('notes') }}>Additional Details</h3>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Description</label>
+              <textarea style={formStyles.textarea} value={productFormData.description} onChange={e => handleFormInput('description', e.target.value)} />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Notes</label>
+              <textarea style={formStyles.textarea} value={productFormData.notes} onChange={e => handleFormInput('notes', e.target.value)} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+            <Button type="button" variant="secondary" onClick={() => navigate('/products')}>Cancel</Button>
+            <Button type="submit" variant="primary">Update Product</Button>
+          </div>
+        </form>
+      </div>
+    )
   }
 
   // Manage Products Mode

@@ -687,6 +687,11 @@ def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), 
 
     # Check if GST is enabled for the customer
     gst_enabled = customer.gst_enabled if hasattr(customer, 'gst_enabled') else True
+    # Normalize possible nulls to a proper boolean, defaulting to True
+    if gst_enabled is None:
+        gst_enabled = True
+    else:
+        gst_enabled = bool(gst_enabled)
 
     taxable_total = money(0)
     discount_total = money(0)
@@ -5153,6 +5158,11 @@ class PartyOut(BaseModel):
     shipping_pincode: str | None
     notes: str | None
     is_active: bool
+
+    # Ensure API responses never fail validation due to nulls in DB
+    @validator('gst_enabled', pre=True, always=True)
+    def default_gst_enabled(cls, v):
+        return True if v is None else bool(v)
 
     class Config:
         from_attributes = True
