@@ -24,9 +24,12 @@ COPY package*.json ./
 # Allow optional deps so Rollup's native package is available when required
 RUN rm -f package-lock.json && npm install --no-audit --no-fund \
     && arch=$(uname -m) \
-    && if [ "$arch" = "aarch64" ]; then \
+    && echo "Detected architecture: $arch" \
+    && if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
+         echo "Installing ARM64 rollup bindings" && \
          npm install --no-audit --no-fund @rollup/rollup-linux-arm64-gnu; \
-       elif [ "$arch" = "x86_64" ]; then \
+       elif [ "$arch" = "x86_64" ] || [ "$arch" = "amd64" ]; then \
+         echo "Installing x64 rollup bindings" && \
          npm install --no-audit --no-fund @rollup/rollup-linux-x64-gnu; \
        else \
          echo "Unknown arch $arch; proceeding without explicit rollup native install"; \
