@@ -229,6 +229,7 @@ Our documentation is now organized in a dedicated `docs/` folder for better stru
 - **[Development Guide](./docs/DEV_PLAN.md)** - Development workflow
 - **[Testing Guide](./docs/TEST_RUNNING_GUIDE.md)** - How to run tests
 - **[Deployment](./docs/DEPLOYMENT.md)** - Deployment instructions
+- **[Production Deployment (Native)](./docs/PRODUCTION_DEPLOYMENT.md)** - Native production deployment without Docker
 - **[Deployment Builds](./docs/DEPLOYMENT_BUILDS.md)** - Build types and compose mappings
 - **[Changelog](./docs/CHANGELOG.md)** - Version history and changes
 
