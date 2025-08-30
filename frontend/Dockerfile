@@ -2,19 +2,27 @@ FROM node:20-bookworm AS base
 
 WORKDIR /app
 
-# Avoid npm optional native deps and skip Rollup native bindings (use JS/wasm fallback)
-ENV npm_config_optional=false \
-    ROLLUP_SKIP_NODEJS_NATIVE=true
-
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies deterministically (keep lockfile, avoid --force)
+# Install dependencies with proper rollup native bindings handling
 RUN npm config set registry https://registry.npmjs.org/ && \
     npm config set fetch-retries 5 && \
     npm config set fetch-retry-mintimeout 20000 && \
     npm config set fetch-retry-maxtimeout 120000 && \
-    if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+    # Remove lockfile to avoid architecture-specific native binding issues \
+    rm -f package-lock.json && \
+    # Install dependencies without optional to avoid native binding conflicts \
+    npm install --no-audit --no-fund --no-optional && \
+    # Explicitly install the correct rollup native binding for current architecture \
+    arch=$(uname -m) && \
+    if [ "$arch" = "aarch64" ]; then \
+        npm install --no-audit --no-fund @rollup/rollup-linux-arm64-gnu; \
+    elif [ "$arch" = "x86_64" ]; then \
+        npm install --no-audit --no-fund @rollup/rollup-linux-x64-gnu; \
+    else \
+        echo "Unknown arch $arch; using JS fallback" && export ROLLUP_SKIP_NODEJS_NATIVE=true; \
+    fi
 
 # Development stage
 FROM base AS development
@@ -22,11 +30,14 @@ FROM base AS development
 # Copy source code
 COPY . .
 
+# Set fallback environment for rollup if native bindings fail
+ENV ROLLUP_SKIP_NODEJS_NATIVE=false
+
 # Expose port
 EXPOSE 5173
 
-# Start development server
-CMD ["npm", "run", "dev", "--", "--config", "vite.config.docker.ts", "--host"]
+# Start development server with fallback handling
+CMD ["sh", "-c", "npm run dev -- --host 0.0.0.0 --port 5173 || (echo 'Falling back to JS rollup' && ROLLUP_SKIP_NODEJS_NATIVE=true npm run dev -- --host 0.0.0.0 --port 5173)"]
 
 # Production stage (for future use)
 FROM base AS production

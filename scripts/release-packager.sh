@@ -149,10 +149,19 @@ preflight_checks() {
     status info "Running frontend typecheck/lint/build..."
     pushd frontend >/dev/null
     if [[ -f package.json ]]; then
-      npm ci --no-optional
+      # Clean cache to avoid npm/rollup issues
+      rm -rf node_modules package-lock.json || true
+      # Install with proper rollup handling
+      npm install --no-audit --no-fund --no-optional
+      arch=$(uname -m)
+      if [ "$arch" = "aarch64" ]; then
+        npm install --no-audit --no-fund @rollup/rollup-linux-arm64-gnu || true
+      elif [ "$arch" = "x86_64" ]; then
+        npm install --no-audit --no-fund @rollup/rollup-linux-x64-gnu || true
+      fi
       npm run typecheck
       npm run lint
-      npm run build
+      ROLLUP_SKIP_NODEJS_NATIVE=false npm run build || ROLLUP_SKIP_NODEJS_NATIVE=true npm run build
       status ok "Frontend checks passed"
     else
       status warn "frontend/package.json not found; skipping frontend checks"

@@ -76,9 +76,6 @@ jobs:
   frontend-tests:
     name: Frontend Tests
     runs-on: ubuntu-latest
-    env:
-      ROLLUP_SKIP_NODEJS_NATIVE: 'true'
-      npm_config_optional: 'false'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -93,7 +90,17 @@ jobs:
       - name: Install frontend dependencies
         run: |
           cd frontend
-          npm ci --no-optional
+          # Clean any existing lock file to prevent conflicts
+          rm -f package-lock.json
+          # Install dependencies with audit and fund disabled for faster CI
+          npm install --no-optional --no-audit --no-fund
+          # Install architecture-specific Rollup native bindings
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+            npm install @rollup/rollup-linux-arm64-gnu --save-dev
+          else
+            npm install @rollup/rollup-linux-x64-gnu --save-dev
+          fi
           npm install -g vitest
 
       - name: Frontend typecheck
@@ -109,7 +116,11 @@ jobs:
       - name: Frontend build
         run: |
           cd frontend
-          npm run build
+          # Try build with native bindings first, fallback if needed
+          npm run build || {
+            echo "Build failed with native bindings, retrying with ROLLUP_SKIP_NODEJS_NATIVE=true"
+            ROLLUP_SKIP_NODEJS_NATIVE=true npm run build
+          }
 
       - name: Run frontend tests
         run: |
@@ -127,9 +138,6 @@ jobs:
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
-    env:
-      ROLLUP_SKIP_NODEJS_NATIVE: 'true'
-      npm_config_optional: 'false'
     services:
       postgres:
         image: postgres:13
@@ -158,7 +166,17 @@ jobs:
       - name: Install dependencies
         run: |
           cd frontend
-          npm ci --no-optional
+          # Clean any existing lock file to prevent conflicts
+          rm -f package-lock.json
+          # Install dependencies with audit and fund disabled for faster CI
+          npm install --no-optional --no-audit --no-fund
+          # Install architecture-specific Rollup native bindings
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+            npm install @rollup/rollup-linux-arm64-gnu --save-dev
+          else
+            npm install @rollup/rollup-linux-x64-gnu --save-dev
+          fi
 
       - name: Install Playwright browsers
         run: |
@@ -178,7 +196,11 @@ jobs:
       - name: Start frontend server
         run: |
           cd frontend
-          npm run build
+          # Try build with native bindings first, fallback if needed
+          npm run build || {
+            echo "Build failed with native bindings, retrying with ROLLUP_SKIP_NODEJS_NATIVE=true"
+            ROLLUP_SKIP_NODEJS_NATIVE=true npm run build
+          }
           npm run preview &
           sleep 10
 

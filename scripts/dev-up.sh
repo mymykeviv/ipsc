@@ -39,6 +39,15 @@ if [[ "$SETUP_FIRST" == "1" ]]; then
   docker compose -f "$COMPOSE_FILE" pull || true
 fi
 
+# Clean up frontend cache to prevent npm/rollup issues
+echo "[dev] Cleaning frontend cache to prevent npm issues..."
+FRONTEND_DIR="$ROOT_DIR/frontend"
+if [[ -d "$FRONTEND_DIR" ]]; then
+  # Remove node_modules and package-lock.json to avoid architecture conflicts
+  rm -rf "$FRONTEND_DIR/node_modules" "$FRONTEND_DIR/package-lock.json" || true
+  echo "[dev] Frontend cache cleaned"
+fi
+
 # Bring up the dev stack
 echo "[dev] Starting Docker dev stack..."
 docker compose -f "$COMPOSE_FILE" up -d --build
@@ -82,7 +91,18 @@ if [[ -d "$FRONTEND_DIR" ]]; then
   docker run --rm \
     -v "$FRONTEND_DIR":/app \
     -w /app \
-    node:20-bookworm bash -lc "npm ci --no-audit --no-fund || npm install --no-audit --no-fund; npm run test:minimal" || EXIT_CODE=1
+    node:20-bookworm bash -lc "
+      # Clean and install with proper rollup handling
+      rm -f package-lock.json
+      npm install --no-audit --no-fund --no-optional
+      arch=\$(uname -m)
+      if [ \"\$arch\" = \"aarch64\" ]; then
+        npm install --no-audit --no-fund @rollup/rollup-linux-arm64-gnu || true
+      elif [ \"\$arch\" = \"x86_64\" ]; then
+        npm install --no-audit --no-fund @rollup/rollup-linux-x64-gnu || true
+      fi
+      npm run test:minimal
+    " || EXIT_CODE=1
 else
   echo "[dev] Frontend directory not found; skipping frontend tests."
 fi

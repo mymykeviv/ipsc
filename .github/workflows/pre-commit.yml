@@ -55,10 +55,20 @@ jobs:
           mypy app/ --ignore-missing-imports
 
       # Frontend Code Quality
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm ci
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        # Clean any existing lock file to prevent conflicts
+        rm -f package-lock.json
+        # Install dependencies with audit and fund disabled for faster CI
+        npm install --no-optional --no-audit --no-fund
+        # Install architecture-specific Rollup native bindings
+        ARCH=$(uname -m)
+        if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+          npm install @rollup/rollup-linux-arm64-gnu --save-dev
+        else
+          npm install @rollup/rollup-linux-x64-gnu --save-dev
+        fi
 
       - name: Run ESLint
         run: |
@@ -155,7 +165,17 @@ jobs:
       - name: Install frontend dependencies
         run: |
           cd frontend
-          npm ci
+          # Clean any existing lock file to prevent conflicts
+          rm -f package-lock.json
+          # Install dependencies with audit and fund disabled for faster CI
+          npm install --no-optional --no-audit --no-fund
+          # Install architecture-specific Rollup native bindings
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+            npm install @rollup/rollup-linux-arm64-gnu --save-dev
+          else
+            npm install @rollup/rollup-linux-x64-gnu --save-dev
+          fi
 
       - name: Run frontend tests with coverage
         run: |
