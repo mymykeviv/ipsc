@@ -97,8 +97,7 @@ fi
 
 # --- Backend Setup ---
 log "Setting up backend..."
-(
-  cd "$BACKEND_DIR"
+cd "$BACKEND_DIR"
   
   # Check for virtual environment
   if [[ ! -d "venv" ]] && [[ ! -d ".venv" ]] && [[ -z "${VIRTUAL_ENV:-}" ]]; then
@@ -172,12 +171,10 @@ log "Setting up backend..."
   BACKEND_PID=$!
   echo "$BACKEND_PID" >> "$PIDFILE"
   ok "Backend started with PID $BACKEND_PID ($MODE mode)"
-)
 
 # --- Frontend Setup ---
 log "Setting up frontend..."
-(
-  cd "$FRONTEND_DIR"
+cd "$FRONTEND_DIR"
   
   # Install dependencies
   if [[ ! -d "node_modules" ]] || [[ ! -f "node_modules/.package-lock.json" ]]; then
@@ -209,7 +206,6 @@ log "Setting up frontend..."
   FRONTEND_PID=$!
   echo "$FRONTEND_PID" >> "$PIDFILE"
   ok "Frontend started with PID $FRONTEND_PID ($MODE mode)"
-)
 
 # Wait a moment for services to start
 sleep 2
@@ -227,4 +223,5 @@ log "To stop the services, run: ./scripts/stop-local.sh $MODE"
 log "Press Ctrl+C to stop all services"
 
 # Keep script running to maintain processes
+# Wait for any background process
 wait
