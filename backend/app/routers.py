@@ -5144,11 +5144,11 @@ class PartyOut(BaseModel):
     gstin: str | None
     gst_registration_status: str
     gst_enabled: bool  # New field for GST toggle
-    billing_address_line1: str
+    billing_address_line1: str | None
     billing_address_line2: str | None
-    billing_city: str
-    billing_state: str
-    billing_country: str
+    billing_city: str | None
+    billing_state: str | None
+    billing_country: str | None
     billing_pincode: str | None
     shipping_address_line1: str | None
     shipping_address_line2: str | None
@@ -5242,7 +5242,10 @@ def list_parties(
     query = db.query(Party)
     
     if type:
-        query = query.filter(Party.type == type)
+        if type == "customer":
+            query = query.filter(Party.is_customer == True)
+        elif type == "vendor":
+            query = query.filter(Party.is_vendor == True)
     
     if search:
         search_filter = (
@@ -5272,7 +5275,7 @@ def list_customers(
     _: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
-    query = db.query(Party).filter(Party.type == "customer")
+    query = db.query(Party).filter(Party.is_customer == True)
     
     if search:
         search_filter = (
@@ -5302,7 +5305,7 @@ def list_vendors(
     _: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
-    query = db.query(Party).filter(Party.type == "vendor")
+    query = db.query(Party).filter(Party.is_vendor == True)
     
     if search:
         search_filter = (

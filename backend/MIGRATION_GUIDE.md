@@ -183,6 +183,305 @@ curl http://localhost:8000/api/reports/gst-summary
 - Implemented automatic backup creation
 - Added comprehensive error handling
 
+## PostgreSQL to SQLite Migration Guide
+
+This guide provides comprehensive instructions for migrating from PostgreSQL to SQLite, including backup procedures, rollback strategies, and troubleshooting.
+
+> **📖 For a complete overview of the migration implementation, see [README_MIGRATION.md](./README_MIGRATION.md)**
+
+### Overview
+
+This migration involves:
+- Converting from PostgreSQL to SQLite database
+- Adding `is_active` column for soft delete functionality
+- Updating API endpoints to support soft delete filtering
+- Maintaining data integrity throughout the process
+
+### Pre-Migration Checklist
+
+#### 1. Environment Preparation
+- [ ] Backup current PostgreSQL database
+- [ ] Ensure SQLite is installed and accessible
+- [ ] Stop all running application services
+- [ ] Verify disk space for backup files
+- [ ] Test database connectivity
+
+#### 2. Code Preparation
+- [ ] Review all database configuration files
+- [ ] Update connection strings in `config.py`
+- [ ] Verify Alembic migration scripts
+- [ ] Test API endpoints with new filtering
+
+### Migration Process
+
+#### Step 1: Create PostgreSQL Backup
+
+```bash
+# Create PostgreSQL dump
+pg_dump -h localhost -U your_username -d your_database > backup_postgresql_$(date +%Y%m%d_%H%M%S).sql
+
+# Verify backup
+psql -h localhost -U your_username -d test_restore_db < backup_postgresql_*.sql
+```
+
+#### Step 2: Export Data from PostgreSQL
+
+```bash
+# Export data in CSV format for each table
+psql -h localhost -U your_username -d your_database -c "\copy parties TO 'parties_export.csv' CSV HEADER"
+psql -h localhost -U your_username -d your_database -c "\copy users TO 'users_export.csv' CSV HEADER"
+# Add other tables as needed
+```
+
+#### Step 3: Initialize SQLite Database
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Run Alembic migrations to create SQLite schema
+alembic upgrade head
+
+# Verify database creation
+sqlite3 app.db ".schema"
+```
+
+#### Step 4: Import Data to SQLite
+
+```python
+# Use the data import script
+python scripts/import_postgresql_data.py --csv-dir ./exported_data
+```
+
+#### Step 5: Verify Migration
+
+```bash
+# Run comprehensive tests
+pytest tests/test_party_soft_delete.py -v
+
+# Check data integrity
+python scripts/verify_migration.py
+
+# Test API endpoints
+curl http://localhost:8000/api/parties
+curl http://localhost:8000/api/parties?type=customer
+curl http://localhost:8000/api/parties?include_inactive=true
+```
+
+### Rollback Procedures
+
+#### Automatic Rollback Script
+
+Use the provided rollback manager for safe operations:
+
+```bash
+# Create backup before migration
+python scripts/migration_rollback.py backup --db-path ./app.db
+
+# List available backups
+python scripts/migration_rollback.py list
+
+# Restore from backup if needed
+python scripts/migration_rollback.py restore --backup-path ./migration_backups/backup_20240101_120000_app.db --db-path ./app.db
+
+# Verify restored database
+python scripts/migration_rollback.py verify --backup-path ./app.db
+```
+
+#### Manual Rollback Steps
+
+1. **Stop Application Services**
+   ```bash
+   # Stop FastAPI server
+   pkill -f "uvicorn"
+   
+   # Stop any background processes
+   pkill -f "python.*app"
+   ```
+
+2. **Restore PostgreSQL Configuration**
+   ```bash
+   # Revert config.py changes
+   git checkout HEAD -- app/config.py
+   
+   # Restore original database URL
+   export DATABASE_URL="postgresql://user:password@localhost/dbname"
+   ```
+
+3. **Restore PostgreSQL Database**
+   ```bash
+   # Drop and recreate database
+   dropdb your_database
+   createdb your_database
+   
+   # Restore from backup
+   psql -h localhost -U your_username -d your_database < backup_postgresql_*.sql
+   ```
+
+4. **Verify Rollback**
+   ```bash
+   # Test database connectivity
+   psql -h localhost -U your_username -d your_database -c "SELECT COUNT(*) FROM parties;"
+   
+   # Start application
+   uvicorn app.main:app --reload
+   
+   # Test API endpoints
+   curl http://localhost:8000/api/parties
+   ```
+
+### Configuration Changes
+
+#### Database Configuration (`app/config.py`)
+
+```python
+# Before (PostgreSQL)
+DATABASE_URL = "postgresql://user:password@localhost/dbname"
+
+# After (SQLite)
+DATABASE_URL = "sqlite:///./app.db"
+```
+
+#### Alembic Configuration (`alembic.ini`)
+
+```ini
+# Update SQLite URL
+sqlalchemy.url = sqlite:///./app.db
+```
+
+### New Features
+
+#### Soft Delete Functionality
+
+The migration adds soft delete capabilities:
+
+- **is_active column**: Boolean field added to parties table
+- **Default filtering**: API endpoints filter out inactive records by default
+- **Include inactive**: Use `?include_inactive=true` to show all records
+- **Type filtering**: Use `?type=customer` or `?type=vendor` for specific types
+
+#### API Endpoint Changes
+
+```bash
+# List active parties only (default)
+GET /api/parties
+
+# List all parties including inactive
+GET /api/parties?include_inactive=true
+
+# List active customers only
+GET /api/parties?type=customer
+
+# List all customers including inactive
+GET /api/parties?type=customer&include_inactive=true
+
+# Search with soft delete support
+GET /api/parties?search=company&include_inactive=false
+```
+
+### Migration Troubleshooting
+
+#### Common Migration Issues
+
+1. **Database Lock Errors**
+   ```bash
+   # Solution: Ensure no processes are using the database
+   lsof app.db
+   pkill -f "python.*app"
+   ```
+
+2. **Migration Script Failures**
+   ```bash
+   # Check Alembic status
+   alembic current
+   alembic history
+   
+   # Reset to specific revision if needed
+   alembic downgrade <revision_id>
+   alembic upgrade head
+   ```
+
+3. **Data Import Errors**
+   ```bash
+   # Check CSV file format
+   head -5 parties_export.csv
+   
+   # Verify column mappings
+   sqlite3 app.db ".schema parties"
+   ```
+
+4. **API Endpoint Issues**
+   ```bash
+   # Check application logs
+   tail -f app.log
+   
+   # Test database queries directly
+   sqlite3 app.db "SELECT COUNT(*) FROM parties WHERE is_active = 1;"
+   ```
+
+#### Performance Considerations
+
+1. **SQLite Optimizations**
+   ```sql
+   -- Enable WAL mode for better concurrency
+   PRAGMA journal_mode=WAL;
+   
+   -- Optimize for performance
+   PRAGMA synchronous=NORMAL;
+   PRAGMA cache_size=10000;
+   PRAGMA temp_store=memory;
+   ```
+
+2. **Index Creation**
+   ```sql
+   -- Add indexes for common queries
+   CREATE INDEX idx_parties_is_active ON parties(is_active);
+   CREATE INDEX idx_parties_type ON parties(type);
+   CREATE INDEX idx_parties_name ON parties(name);
+   ```
+
+### Verification Checklist
+
+After migration, verify:
+
+- [ ] All tables exist with correct schema
+- [ ] Data counts match between PostgreSQL and SQLite
+- [ ] API endpoints return expected results
+- [ ] Soft delete filtering works correctly
+- [ ] Type filtering (customer/vendor) works
+- [ ] Search functionality operates properly
+- [ ] Application starts without errors
+- [ ] Database backups are created and verified
+
+### Maintenance
+
+#### Regular Backup Schedule
+
+```bash
+# Add to crontab for daily backups
+0 2 * * * /path/to/scripts/migration_rollback.py backup --db-path /path/to/app.db
+
+# Weekly cleanup of old backups
+0 3 * * 0 /path/to/scripts/migration_rollback.py cleanup --keep-count 7
+```
+
+#### Monitoring
+
+- Monitor database file size growth
+- Check for locked database issues
+- Verify backup integrity regularly
+- Monitor API response times
+
+### Migration Timeline
+
+Estimated time for migration:
+
+- Small database (<1GB): 30-60 minutes
+- Medium database (1-10GB): 1-3 hours
+- Large database (>10GB): 3+ hours
+
+Plan for additional time for testing and verification.
+
 ## Support
 
 For issues with migrations:

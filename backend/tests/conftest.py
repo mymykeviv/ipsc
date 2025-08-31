@@ -23,12 +23,13 @@ from app.config import TestingSettings
 import os
 
 
-# Test database configuration - Using PostgreSQL for tests
-SQLALCHEMY_DATABASE_URL = "postgresql+psycopg://postgres:postgres@localhost:5432/profitpath_test"
+# Test database configuration - Using SQLite for tests
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     poolclass=StaticPool,
+    connect_args={"check_same_thread": False},
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -59,11 +60,8 @@ def db_session():
         yield session
     finally:
         session.close()
-        # Drop tables after test with CASCADE
-        with engine.connect() as conn:
-            conn.execute(text("DROP SCHEMA public CASCADE"))
-            conn.execute(text("CREATE SCHEMA public"))
-            conn.commit()
+        # Drop all tables after test
+        Base.metadata.drop_all(bind=engine)
 
 @pytest.fixture(scope="function")
 def db():
@@ -77,11 +75,8 @@ def db():
         yield session
     finally:
         session.close()
-        # Drop tables after test with CASCADE
-        with engine.connect() as conn:
-            conn.execute(text("DROP SCHEMA public CASCADE"))
-            conn.execute(text("CREATE SCHEMA public"))
-            conn.commit()
+        # Drop all tables after test
+        Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture(scope="function")

@@ -264,8 +264,9 @@ class Settings(BaseSettings):
     tenant_isolation_level: str = "row_level"
     tenant_routing_method: str = "subdomain"
     
-    # Database Settings - PostgreSQL Only
-    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/profitpath"
+    # Database Settings - SQLite first, PostgreSQL as deployment option
+    database_type: str = "sqlite"  # sqlite or postgresql
+    database_url: str = "sqlite:///./profitpath.db"
     database_pool_size: int = 10
     database_max_overflow: int = 20
     database_pool_timeout: int = 30
@@ -344,7 +345,8 @@ class DevelopmentSettings(Settings):
     environment: str = "development"
     log_level: str = "DEBUG"
     reload: bool = True
-    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/profitpath"
+    database_type: str = "sqlite"
+    database_url: str = "sqlite:///./profitpath_dev.db"
 
 
 class ProductionSettings(Settings):
@@ -352,6 +354,8 @@ class ProductionSettings(Settings):
     environment: str = "production"
     log_level: str = "WARNING"
     reload: bool = False
+    database_type: str = "postgresql"  # Use PostgreSQL in production
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/profitpath"
     allowed_origins: List[str] = [
         "https://yourdomain.com",
         "https://www.yourdomain.com"
@@ -362,7 +366,8 @@ class TestingSettings(Settings):
     debug: bool = True
     environment: str = "testing"
     log_level: str = "DEBUG"
-    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/profitpath_test"
+    database_type: str = "sqlite"
+    database_url: str = "sqlite:///./profitpath_test.db"
 
 
 # Global settings instance

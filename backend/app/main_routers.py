@@ -4892,11 +4892,11 @@ class PartyOut(BaseModel):
     gstin: str | None
     gst_registration_status: str
     gst_enabled: bool  # New field for GST toggle
-    billing_address_line1: str
+    billing_address_line1: str | None
     billing_address_line2: str | None
-    billing_city: str
-    billing_state: str
-    billing_country: str
+    billing_city: str | None
+    billing_state: str | None
+    billing_country: str | None
     billing_pincode: str | None
     shipping_address_line1: str | None
     shipping_address_line2: str | None
@@ -4989,6 +4989,10 @@ def list_parties(
 ):
     query = db.query(Party)
     
+    # Implement soft delete with default filtering
+    if not include_inactive:
+        query = query.filter(Party.is_active == True)
+    
     if type:
         query = query.filter(Party.type == type)
     
@@ -5005,9 +5009,6 @@ def list_parties(
         )
         query = query.filter(search_filter)
     
-    # Note: Party model doesn't have is_active field, so we can't filter by it
-    # TODO: Add is_active field to Party model if needed
-    
     return query.order_by(Party.name).all()
 
 
@@ -5019,6 +5020,10 @@ def list_customers(
     db: Session = Depends(get_db)
 ):
     query = db.query(Party).filter(Party.is_customer == True)
+    
+    # Implement soft delete with default filtering
+    if not include_inactive:
+        query = query.filter(Party.is_active == True)
     
     if search:
         search_filter = (
@@ -5032,9 +5037,6 @@ def list_customers(
             Party.billing_state.ilike(f"%{search}%")
         )
         query = query.filter(search_filter)
-    
-    # Note: Party model doesn't have is_active field, so we can't filter by it
-    # TODO: Add is_active field to Party model if needed
     
     return query.order_by(Party.name).all()
 
@@ -5048,6 +5050,10 @@ def list_vendors(
 ):
     query = db.query(Party).filter(Party.is_vendor == True)
     
+    # Implement soft delete with default filtering
+    if not include_inactive:
+        query = query.filter(Party.is_active == True)
+    
     if search:
         search_filter = (
             Party.name.ilike(f"%{search}%") |
@@ -5060,9 +5066,6 @@ def list_vendors(
             Party.billing_state.ilike(f"%{search}%")
         )
         query = query.filter(search_filter)
-    
-    # Note: Party model doesn't have is_active field, so we can't filter by it
-    # TODO: Add is_active field to Party model if needed
     
     return query.order_by(Party.name).all()
 
