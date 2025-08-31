@@ -7,6 +7,7 @@ import time
 import logging
 from datetime import datetime
 from typing import Dict, Any, Optional
+from sqlalchemy import text
 from prometheus_client import (
     Counter, Histogram, Gauge, Summary, 
     generate_latest, CONTENT_TYPE_LATEST,
@@ -238,7 +239,7 @@ class HealthChecker:
         try:
             if self.db_session:
                 # Simple query to check database connectivity
-                result = self.db_session.execute("SELECT 1")
+                result = self.db_session.execute(text("SELECT 1"))
                 result.fetchone()
                 
                 return {

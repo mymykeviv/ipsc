@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from .config import settings
@@ -105,7 +105,7 @@ def get_db():
     try:
         # Test connection for SQLite
         if settings.database_type == "sqlite":
-            db.execute("SELECT 1")
+            db.execute(text("SELECT 1"))
         yield db
     except Exception as e:
         logger.error(f"Database session error: {e}")
