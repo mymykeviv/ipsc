@@ -1,230 +1,205 @@
-# 🚀 ProfitPath Local Development Guide
+# Local Development Setup
 
-This guide will help you set up and run ProfitPath locally using Docker with PostgreSQL.
+This guide explains how to run the ProfitPath application locally without Docker on Windows, Linux, and macOS.
 
-## 📋 Prerequisites
+## Prerequisites
 
-- **Docker Desktop** installed and running
-- **Git** for version control
-- **Node.js** (optional, for local frontend development)
+Before running the application locally, you need to install the following dependencies:
 
-## 🐳 Quick Start
+### Required Software
 
-### Option 1: Automated Setup (Recommended)
+1. **Python 3.10+**
+   - **Windows**: Download from [python.org](https://www.python.org/downloads/) or install via Microsoft Store
+   - **macOS**: Install via Homebrew: `brew install python@3.10` or download from python.org
+   - **Linux**: Install via package manager:
+     - Ubuntu/Debian: `sudo apt update && sudo apt install python3.10 python3.10-venv python3-pip`
+     - CentOS/RHEL: `sudo yum install python310 python310-pip`
+     - Arch: `sudo pacman -S python python-pip`
+
+2. **Node.js 18+**
+   - **Windows**: Download from [nodejs.org](https://nodejs.org/) or install via Chocolatey: `choco install nodejs`
+   - **macOS**: Install via Homebrew: `brew install node@18`
+   - **Linux**: Install via package manager or NodeSource:
+     - Ubuntu/Debian: `curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - && sudo apt-get install -y nodejs`
+     - CentOS/RHEL: `curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash - && sudo yum install -y nodejs`
+
+3. **PostgreSQL (Optional)**
+   - **Windows**: Download from [postgresql.org](https://www.postgresql.org/download/windows/)
+   - **macOS**: Install via Homebrew: `brew install postgresql@15`
+   - **Linux**: Install via package manager:
+     - Ubuntu/Debian: `sudo apt install postgresql postgresql-contrib`
+     - CentOS/RHEL: `sudo yum install postgresql-server postgresql-contrib`
+   
+   *Note: If PostgreSQL is not available, the application will automatically fallback to SQLite.*
+
+## Quick Start
+
+### Windows
+
+1. **Using PowerShell (Recommended)**:
+   ```powershell
+   # Start the application
+   powershell -ExecutionPolicy Bypass -File .\scripts\start-local.ps1
+   
+   # Stop the application (in another terminal)
+   powershell -ExecutionPolicy Bypass -File .\scripts\stop-local.ps1
+   ```
+
+2. **Using Git Bash or WSL**:
+   ```bash
+   # Start the application
+   bash scripts/start-local.sh
+   
+   # Stop the application (Ctrl+C or in another terminal)
+   bash scripts/stop-local.sh
+   ```
+
+### Linux/macOS
 
 ```bash
-# Clone the repository (if not already done)
-git clone <repository-url>
-cd ipsc
+# Make scripts executable (first time only)
+chmod +x scripts/start-local.sh scripts/stop-local.sh
 
-# Run the automated setup script
-./scripts/dev-setup.sh
+# Start the application
+./scripts/start-local.sh
+
+# Stop the application (Ctrl+C or in another terminal)
+./scripts/stop-local.sh
 ```
 
-This script will:
-- ✅ Check Docker is running
-- ✅ Clean up existing containers
-- ✅ Build and start all services
-- ✅ Migrate data from SQLite to PostgreSQL (if exists)
-- ✅ Wait for all services to be ready
-- ✅ Show you the access URLs
+## What the Scripts Do
 
-### Option 2: Manual Setup
+### Start Script (`start-local.sh` / `start-local.ps1`)
 
-```bash
-# 1. Start the services
-docker-compose -f docker-compose.local.yml up -d --build
+1. **Environment Check**: Verifies Python 3.10+ and Node.js 18+ are installed
+2. **Backend Setup**:
+   - Creates/activates Python virtual environment
+   - Installs backend dependencies from `requirements.txt`
+   - Sets up database (PostgreSQL or SQLite fallback)
+   - Runs database migrations with Alembic
+   - Starts FastAPI server on `http://localhost:8000`
+3. **Frontend Setup**:
+   - Installs Node.js dependencies
+   - Configures Rollup to avoid native binding issues
+   - Starts Vite dev server on `http://localhost:5173`
+4. **Process Management**: Tracks process IDs for clean shutdown
 
-# 2. Wait for PostgreSQL to be ready
-docker exec profitpath-postgres-local pg_isready -U postgres
+### Stop Script (`stop-local.sh` / `stop-local.ps1`)
 
-# 3. Run migration (if you have existing SQLite data)
-cd backend
-python3 migrate_to_postgresql.py
-cd ..
+1. **Graceful Shutdown**: Stops tracked processes cleanly
+2. **Port Cleanup**: Frees up ports 8000 and 5173
+3. **Process Cleanup**: Kills any remaining uvicorn/vite processes
 
-# 4. Check services are running
-docker-compose -f docker-compose.local.yml ps
-```
+## Application URLs
 
-## 🌐 Access URLs
+Once started, the application will be available at:
 
-Once everything is running, you can access:
-
-- **Frontend Application**: http://localhost:5173
+- **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:8000
-- **API Documentation**: http://localhost:8000/docs
-- **Email Testing (MailHog)**: http://localhost:8025
+- **API Documentation**: http://localhost:8000/docs (Swagger UI)
+- **Alternative API Docs**: http://localhost:8000/redoc
 
-## 🗄️ Database Information
+## Database Configuration
 
-- **Host**: localhost
-- **Port**: 5432
-- **Database**: profitpath
-- **Username**: postgres
-- **Password**: postgres
+### PostgreSQL (Recommended)
 
-## 🔧 Useful Commands
+If PostgreSQL is installed and running:
 
-### View Logs
+1. Create a database:
+   ```sql
+   CREATE DATABASE profitpath;
+   CREATE USER profitpath WITH PASSWORD 'profitpath';
+   GRANT ALL PRIVILEGES ON DATABASE profitpath TO profitpath;
+   ```
+
+2. The application will automatically use:
+   ```
+   DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/profitpath
+   ```
+
+### SQLite (Fallback)
+
+If PostgreSQL is not available, the application automatically uses SQLite:
+```
+DATAbase_URL=sqlite:///./profitpath.db
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **"Python not found"**
+   - Ensure Python 3.10+ is installed and in your PATH
+   - On Windows, try `py --version` instead of `python --version`
+   - Restart your terminal after installation
+
+2. **"Node.js not found"**
+   - Ensure Node.js 18+ is installed and in your PATH
+   - Restart your terminal after installation
+
+3. **"Permission denied" (Linux/macOS)**
+   - Make scripts executable: `chmod +x scripts/*.sh`
+
+4. **"Execution policy" error (Windows PowerShell)**
+   - Use the bypass flag: `powershell -ExecutionPolicy Bypass -File .\scripts\start-local.ps1`
+   - Or temporarily change policy: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
+
+5. **Port already in use**
+   - Stop any existing instances: run the stop script
+   - Check for other applications using ports 8000 or 5173
+   - Kill processes manually if needed:
+     - Windows: `netstat -ano | findstr :8000` then `taskkill /PID <pid> /F`
+     - Linux/macOS: `lsof -ti:8000 | xargs kill -9`
+
+6. **Rollup native binding errors**
+   - The scripts automatically set `ROLLUP_SKIP_NODEJS_NATIVE=true`
+   - If issues persist, try: `npm install --force` in the frontend directory
+
+7. **Database connection errors**
+   - Check if PostgreSQL is running: `pg_isready` (if installed)
+   - The application will fallback to SQLite if PostgreSQL is unavailable
+   - For custom database URLs, set the `DATABASE_URL` environment variable
+
+### Manual Setup
+
+If the scripts don't work, you can start the services manually:
+
+#### Backend
 ```bash
-# All services
-docker-compose -f docker-compose.local.yml logs -f
-
-# Specific service
-docker-compose -f docker-compose.local.yml logs -f backend
-docker-compose -f docker-compose.local.yml logs -f frontend
-docker-compose -f docker-compose.local.yml logs -f postgres
-```
-
-### Stop Services
-```bash
-docker-compose -f docker-compose.local.yml down
-```
-
-### Restart Services
-```bash
-docker-compose -f docker-compose.local.yml restart
-```
-
-### Rebuild Services
-```bash
-docker-compose -f docker-compose.local.yml up -d --build
-```
-
-### Access Database
-```bash
-# Connect to PostgreSQL container
-docker exec -it profitpath-postgres-local psql -U postgres -d profitpath
-
-# Or use a local PostgreSQL client
-psql -h localhost -p 5432 -U postgres -d profitpath
-```
-
-## 🐛 Troubleshooting
-
-### PostgreSQL Connection Issues
-```bash
-# Check if PostgreSQL is running
-docker exec profitpath-postgres-local pg_isready -U postgres
-
-# Check PostgreSQL logs
-docker-compose -f docker-compose.local.yml logs postgres
-```
-
-### Backend Issues
-```bash
-# Check backend logs
-docker-compose -f docker-compose.local.yml logs backend
-
-# Restart backend only
-docker-compose -f docker-compose.local.yml restart backend
-```
-
-### Frontend Issues
-```bash
-# Check frontend logs
-docker-compose -f docker-compose.local.yml logs frontend
-
-# Rebuild frontend
-docker-compose -f docker-compose.local.yml up -d --build frontend
-```
-
-### Port Conflicts
-If you get port conflicts, you can modify the ports in `docker-compose.local.yml`:
-
-```yaml
-ports:
-  - "5433:5432"  # Change PostgreSQL port
-  - "8001:8000"  # Change backend port
-  - "5174:5173"  # Change frontend port
-```
-
-## 🔄 Migration from SQLite
-
-If you have existing SQLite data, the migration script will automatically:
-
-1. **Read** all tables from your SQLite database
-2. **Create** corresponding tables in PostgreSQL
-3. **Migrate** all data with proper type conversion
-4. **Create** indexes for better performance
-
-The migration script is located at `backend/migrate_to_postgresql.py` and runs automatically during setup.
-
-## 📁 Project Structure
-
-```
-ipsc/
-├── backend/                 # FastAPI backend
-│   ├── app/                # Application code
-│   ├── migrate_to_postgresql.py  # Migration script
-│   └── Dockerfile          # Backend Docker image
-├── frontend/               # React frontend
-│   ├── src/               # Source code
-│   └── Dockerfile         # Frontend Docker image
-├── db/                    # Database initialization
-│   └── init/              # PostgreSQL init scripts
-├── scripts/               # Development scripts
-│   └── dev-setup.sh       # Setup script
-├── docker-compose.local.yml  # Local development compose
-└── LOCAL_DEVELOPMENT.md   # This file
-```
-
-## 🧪 Testing
-
-### Run Backend Tests
-```bash
-# Inside backend container
-docker exec -it profitpath-backend-local bash
-python -m pytest
-
-# Or locally (if you have the environment set up)
 cd backend
-source ../.venv/bin/activate
-python -m pytest
+python -m venv venv
+
+# Activate virtual environment
+# Windows: venv\Scripts\activate
+# Linux/macOS: source venv/bin/activate
+
+pip install -r requirements.txt
+export DATABASE_URL="sqlite:///./profitpath.db"  # or PostgreSQL URL
+alembic upgrade head  # Run migrations
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### Run Frontend Tests
+#### Frontend
 ```bash
-# Inside frontend container
-docker exec -it profitpath-frontend-local bash
-npm test
-
-# Or locally
 cd frontend
-npm test
+npm install
+export ROLLUP_SKIP_NODEJS_NATIVE=true
+npm run dev -- --host 0.0.0.0 --port 5173
 ```
 
-## 🚀 Production Deployment
+## Development Tips
 
-For production deployment, use the production Docker Compose file:
+1. **Hot Reload**: Both backend and frontend support hot reload during development
+2. **API Testing**: Use the Swagger UI at http://localhost:8000/docs for API testing
+3. **Database Inspection**: 
+   - PostgreSQL: Use pgAdmin or command line tools
+   - SQLite: Use DB Browser for SQLite or command line: `sqlite3 profitpath.db`
+4. **Logs**: Check terminal output for application logs and errors
+5. **Environment Variables**: Create a `.env` file in the backend directory for custom configuration
 
-```bash
-docker-compose -f docker-compose.prod.yml up -d
-```
+## Next Steps
 
-## 📞 Support
-
-If you encounter any issues:
-
-1. Check the troubleshooting section above
-2. Review the logs using the commands provided
-3. Ensure Docker has enough resources allocated
-4. Check that all required ports are available
-
-## 🔄 Updates
-
-To update your local environment:
-
-```bash
-# Pull latest changes
-git pull
-
-# Rebuild and restart services
-docker-compose -f docker-compose.local.yml down
-docker-compose -f docker-compose.local.yml up -d --build
-```
-
----
-
-**Happy Coding! 🎉**
+- Review the main README.md for application-specific documentation
+- Check the API documentation at http://localhost:8000/docs
+- Explore the frontend at http://localhost:5173
+- Set up your development environment with your preferred IDE/editor

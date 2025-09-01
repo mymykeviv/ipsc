@@ -300,3 +300,6 @@ scripts/builds/
 *.push.log
 frontend/node_modules/.package-lock.json
 frontend/node_modules/esbuild/
+backend/profitpath.db-shm
+backend/profitpath.db-wal
+.DS_Store
