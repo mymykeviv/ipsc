@@ -187,10 +187,35 @@ echo echo ========================================
 echo echo.
 echo.
 echo REM Check if running as administrator
+echo REM Try multiple methods for better compatibility
+echo set ADMIN_CHECK=0
+echo.
+echo REM Method 1: Try net session
 echo net session ^^>nul 2^^>^^&1
-echo if %%errorlevel%% neq 0 ^^^(
+echo if %%errorlevel%% equ 0 set ADMIN_CHECK=1
+echo.
+echo REM Method 2: Try fsutil (fallback)
+echo if %%ADMIN_CHECK%% equ 0 ^^^(
+echo     fsutil dirty query %%systemdrive%% ^^>nul 2^^>^^&1
+echo     if %%errorlevel%% equ 0 set ADMIN_CHECK=1
+echo ^^^)
+echo.
+echo REM Method 3: Try whoami (fallback)
+echo if %%ADMIN_CHECK%% equ 0 ^^^(
+echo     whoami /groups ^^| find "S-1-16-12288" ^^>nul 2^^>^^&1
+echo     if %%errorlevel%% equ 0 set ADMIN_CHECK=1
+echo ^^^)
+echo.
+echo REM Check if any method succeeded
+echo if %%ADMIN_CHECK%% equ 0 ^^^(
 echo     echo ERROR: This installer must be run as Administrator
-echo     echo Right-click and select "Run as administrator"
+echo     echo.
+echo     echo Troubleshooting:
+echo     echo 1. Right-click on the installer and select "Run as administrator"
+echo     echo 2. If using PowerShell, run: Start-Process cmd -Verb RunAs
+echo     echo 3. If using Command Prompt, run as administrator
+echo     echo 4. Check Windows UAC settings if issues persist
+echo     echo.
 echo     pause
 echo     exit /b 1
 echo ^^^)

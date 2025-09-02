@@ -349,7 +349,18 @@ kubectl top nodes
 ### Common Issues
 
 #### Offline Installer Issues
-1. **Administrator privileges required (Windows)**: Run `install.bat` as Administrator
+1. **Administrator privileges required (Windows)**: 
+   - **Primary Solution**: Right-click `install.bat` and select "Run as administrator"
+   - **PowerShell Method**: Run `Start-Process cmd -Verb RunAs` then navigate to installer
+   - **Command Prompt Method**: Open Command Prompt as administrator, then run installer
+   - **UAC Issues**: Check Windows UAC settings in Control Panel
+   - **Corporate Networks**: Contact IT admin if group policies block elevation
+   - **Alternative**: Use portable installation method (manual setup)
+   - **Technical Details**: The installer uses multiple detection methods:
+     - `net session` command (primary)
+     - `fsutil dirty query` (fallback)
+     - `whoami /groups` with SID check (fallback)
+   - **Enhanced Error Messages**: The installer includes specific troubleshooting steps if all methods fail
 2. **Port conflicts**: 
    - Check `config/ports.json` for current port configuration
    - Use different ports if defaults are in use

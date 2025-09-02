@@ -1,3 +1,11 @@
+## [1.5.1-hotfix] - 2025-01-24
+
+### Fixed
+- **Administrator Privilege Detection**: Enhanced Windows installer with multiple detection methods for better compatibility
+  - Added fallback methods: `fsutil dirty query` and `whoami /groups` with SID check
+  - Improved error messages with detailed troubleshooting steps
+  - Better support for corporate networks and different Windows environments
+
 ## [1.5.1] - 2025-01-20
 
 ### Added
