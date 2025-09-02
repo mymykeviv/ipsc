@@ -99,6 +99,7 @@ echo [INFO] Copying scripts...
 mkdir "%INSTALLER_DIR%\scripts"
 copy "scripts\start-prod.bat" "%INSTALLER_DIR%\scripts\"
 copy "scripts\stop-prod.bat" "%INSTALLER_DIR%\scripts\"
+copy "scripts\build-prod.bat" "%INSTALLER_DIR%\scripts\"
 echo [OK] Scripts copied
 echo.
 

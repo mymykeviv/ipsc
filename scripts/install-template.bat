@@ -118,46 +118,51 @@ REM Install Python dependencies
 echo [INFO] Installing Python dependencies...
 cd "%INSTALL_DIR%\backend"
 
-REM Try virtual environment first, fallback to system Python if it fails
-echo [INFO] Attempting to create Python virtual environment...
-%PYTHON_CMD% -m venv venv --clear >nul 2>&1
-if %errorlevel% equ 0 (
-    echo [INFO] Virtual environment created successfully
-    call venv\Scripts\activate.bat
-    if %errorlevel% equ 0 (
-        echo [INFO] Virtual environment activated
-        pip install --no-index --find-links "%~dp0python-packages" -r requirements.txt
-        if %errorlevel% equ 0 (
-            cd ..\..
-            echo [OK] Python dependencies installed in virtual environment
-            goto :dependencies_done
-        )
-    )
-)
-
-REM Fallback: Install to system Python with --user flag
-echo [WARNING] Virtual environment failed, using system Python installation
-echo [INFO] Installing packages to user directory...
-%PYTHON_CMD% -m pip install --user --no-index --find-links "%~dp0python-packages" -r requirements.txt
+REM Create virtual environment (required for production)
+echo [INFO] Creating Python virtual environment for production...
+%PYTHON_CMD% -m venv venv --clear
 if %errorlevel% neq 0 (
-    echo ERROR: Failed to install Python dependencies
+    echo ERROR: Failed to create virtual environment
     echo.
     echo This may be due to:
-    echo 1. Incomplete Python installation
-    echo 2. Missing or corrupted offline package cache
-    echo 3. Incompatible Python version (requires 3.8+)
-    echo 4. Architecture mismatch (32-bit vs 64-bit)
+    echo 1. Insufficient permissions (try running as administrator)
+    echo 2. Python venv module not available
+    echo 3. Disk space issues
+    echo 4. Antivirus software blocking file creation
     echo.
-    echo Please try:
-    echo 1. Reinstalling Python from https://python.org/downloads/
-    echo 2. Ensuring Python was installed for all users
-    echo 3. Restarting your computer after installation
+    pause
+    exit /b 1
+)
+echo [INFO] Virtual environment created successfully
+
+echo [INFO] Activating virtual environment...
+call venv\Scripts\activate.bat
+if %errorlevel% neq 0 (
+    echo ERROR: Failed to activate virtual environment
+    pause
+    exit /b 1
+)
+echo [INFO] Virtual environment activated
+
+echo [INFO] Upgrading pip in virtual environment...
+python -m pip install --upgrade pip --no-index --find-links "..\python-packages"
+
+echo [INFO] Installing Python dependencies in virtual environment...
+pip install --no-index --find-links "..\python-packages" -r requirements.txt
+if %errorlevel% neq 0 (
+    echo ERROR: Failed to install Python dependencies in virtual environment
+    echo.
+    echo This may be due to:
+    echo 1. Missing or corrupted offline package cache
+    echo 2. Incompatible Python version (requires 3.8+)
+    echo 3. Architecture mismatch (32-bit vs 64-bit)
+    echo 4. Insufficient disk space
+    echo.
     pause
     exit /b 1
 )
 cd ..\..
-echo [OK] Python dependencies installed to user directory
-echo [WARNING] Dependencies installed system-wide, not in virtual environment
+echo [OK] Python dependencies installed in virtual environment
 
 :dependencies_done
 echo.
