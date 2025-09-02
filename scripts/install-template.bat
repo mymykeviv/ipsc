@@ -58,8 +58,9 @@ echo.
 REM Create installation directory
 if exist "%INSTALL_DIR%" (
     echo [WARNING] Installation directory already exists
-    set /p OVERWRITE="Overwrite existing installation? [y/N]: "
-    if /i "%OVERWRITE%" neq "y" (
+    echo [INFO] This will upgrade/overwrite the existing installation
+    set /p OVERWRITE="Continue with upgrade? [Y/n]: "
+    if /i "%OVERWRITE%"=="n" (
         echo Installation cancelled
         pause
         exit /b 1
