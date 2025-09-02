@@ -1,0 +1,14 @@
+{
+  "backend": {
+    "port": 8000,
+    "description": "FastAPI backend server port"
+  },
+  "frontend": {
+    "port": 4173,
+    "description": "Vite preview server port"
+  },
+  "_instructions": {
+    "note": "Modify the port numbers above if you encounter port conflicts",
+    "restart_required": "After changing ports, restart the application using scripts/start-prod.bat"
+  }
+}

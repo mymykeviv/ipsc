@@ -1,5 +1,5 @@
-Build Date: 01-09-2025 21:49:20.60 
-Version: 1.5.0 
+Build Date: 02-09-2025  2:33:12.29 
+Version: 1.5.1 
 Build Type: Native (No Docker) 
 Frontend: Built to frontend/dist/ 
 Backend: Virtual environment in backend/venv/ 

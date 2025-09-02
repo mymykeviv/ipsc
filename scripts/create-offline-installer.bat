@@ -88,6 +88,11 @@ echo [INFO] Copying configuration files...
 copy "VERSION" "%INSTALLER_DIR%\"
 copy "*.json" "%INSTALLER_DIR%\" 2>nul
 copy "*.md" "%INSTALLER_DIR%\" 2>nul
+if exist "config" (
+    mkdir "%INSTALLER_DIR%\config"
+    xcopy "config" "%INSTALLER_DIR%\config\" /E /I /H /Y
+    echo [OK] Config directory copied
+)
 echo [OK] Configuration files copied
 
 echo [INFO] Copying scripts...

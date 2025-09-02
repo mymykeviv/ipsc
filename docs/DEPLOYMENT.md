@@ -2,18 +2,46 @@
 
 ## Overview
 
-This document describes the consolidated deployment system for ProfitPath (IPSC). We support five build types and two primary execution targets (local via Docker Compose and production via Kubernetes):
+This document describes the consolidated deployment system for ProfitPath (IPSC). We support multiple deployment options:
+
+### Docker-based Deployments
 - **docker-dev**: Docker Compose with hot reloading (local development)
 - **docker-prod**: Local, prod-like verification with maximum debugging
 - **docker-prod-lite**: Local, prod-lite (single-tenant) verification with maximum debugging
 - **production**: Distributable production build (full features)
 - **prod-lite**: Distributable production build for low-resource/single-tenant deployments
 
+### Offline Installer Packages
+- **Windows Offline Installer**: Self-contained package with automatic dependency management
+- **Linux/Mac Offline Installer**: Cross-platform package for native deployment
+
 See `docs/DEPLOYMENT_BUILDS.md` for the complete mapping between build types and compose files.
 
 ## Quick Start
 
-### Prerequisites
+### Offline Installer Deployment (Recommended for Production)
+
+**For Windows:**
+1. Download `ProfitPath-vX.X.X-Windows-Offline-Installer.zip`
+2. Extract to desired location
+3. Run `install.bat` as Administrator
+4. Start application with `start-prod.bat`
+5. Access at `http://localhost:3000` (or configured port)
+
+**For Linux/Mac:**
+1. Download `ProfitPath-vX.X.X-Linux-Offline-Installer.tar.gz`
+2. Extract: `tar -xzf ProfitPath-vX.X.X-Linux-Offline-Installer.tar.gz`
+3. Run: `./install.sh`
+4. Start: `./start-prod.sh`
+5. Access at `http://localhost:3000` (or configured port)
+
+**Key Features:**
+- ✅ Configurable port system with automatic conflict detection
+- ✅ Automatic dependency installation (Python 3.8+, Node.js 16+)
+- ✅ Database initialization with legacy engine support
+- ✅ Production-ready configuration out of the box
+
+### Docker Prerequisites
 
 - Docker and Docker Compose
 - Node.js 18+ (for local development)
@@ -41,7 +69,25 @@ docker compose -f deployment/docker/docker-compose.prod-lite.yml up -d
 
 ## Environment Configurations
 
-## Environment Behavior and Ports
+## Port Configuration
+
+### Offline Installer Packages
+The offline installer packages use a configurable port system:
+
+- **Configuration File**: `config/ports.json`
+- **Default Ports**: Backend (8000), Frontend (3000)
+- **Automatic Port Checking**: Start scripts check port availability
+- **Conflict Resolution**: Clear error messages if ports are in use
+- **Easy Customization**: Edit `config/ports.json` to change ports
+
+```json
+{
+  "backend_port": 8000,
+  "frontend_port": 3000
+}
+```
+
+### Docker Environment Ports
 
 - **Frontend in docker-dev**: runs Vite on port 5173.
 - **Frontend in production/prod-lite**: served by Nginx on port 80 using `frontend/Dockerfile.optimized`.
@@ -302,6 +348,17 @@ kubectl top nodes
 
 ### Common Issues
 
+#### Offline Installer Issues
+1. **Administrator privileges required (Windows)**: Run `install.bat` as Administrator
+2. **Port conflicts**: 
+   - Check `config/ports.json` for current port configuration
+   - Use different ports if defaults are in use
+   - Start script will show which ports are occupied
+3. **Python version**: Ensure Python 3.8+ is installed and in PATH
+4. **Node.js version**: Ensure Node.js 16+ is installed for frontend build
+5. **Database initialization**: Uses legacy engine for compatibility
+
+#### Docker Issues
 1. **Port conflicts**: Ensure ports are not in use by other services
 2. **Database connection**: Check database credentials and connectivity
 3. **Cache issues**: Run manual cache cleaning if needed

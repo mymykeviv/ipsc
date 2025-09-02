@@ -1,3 +1,39 @@
+## [1.5.1] - 2025-01-20
+
+### Added
+- Configurable port system for offline installer packages
+  - Configuration (`config/ports.json`): Added centralized port configuration with backend_port (8000) and frontend_port (3000) defaults.
+  - Scripts (`start-prod.bat`, `start-prod.sh`): Implemented automatic port availability checking with clear error messages when ports are in use.
+  - Scripts (`create-offline-installer.bat`): Enhanced to copy `config` directory and port configuration into offline packages.
+
+### Fixed
+- Database initialization compatibility issues
+  - Backend (`backend/create_db.py`): Added `legacy_engine` parameter to SQLAlchemy table creation for compatibility with older database systems.
+  - Resolves table creation failures in environments with legacy database configurations.
+- Offline installer package persistence
+  - Scripts (`create-offline-installer.bat`): Fixed issue where previous fixes were lost during package rebuilding by updating source files instead of generated package files.
+  - Ensures all fixes (port configuration, database compatibility, script updates) persist in future offline package builds.
+
+### Enhanced
+- Windows offline installer robustness
+  - Scripts (`start-prod.bat`): Added comprehensive Python version checking (tries both `python` and `py` commands) with clear error messages.
+  - Scripts (`install.bat`): Maintained administrator privilege requirements for proper system-level installation.
+  - Improved error handling and user feedback throughout the installation process.
+
+### Deployment
+- Offline installer packages now include:
+  - ✅ Configurable port system with automatic conflict detection
+  - ✅ Database initialization with legacy engine support
+  - ✅ Enhanced error handling and user feedback
+  - ✅ Persistent fixes that survive package rebuilds
+  - ✅ Cross-platform compatibility (Windows, Linux, Mac)
+
+### Notes
+- All fixes are embedded in source files and persist across offline package rebuilds
+- Port configuration system provides better user experience and reduces deployment conflicts
+- Database compatibility improvements ensure broader system support
+
+---
 ## [1.50.7] - 2025-08-28
 
 ### Changed

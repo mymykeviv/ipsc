@@ -54,6 +54,36 @@ https://github.com/user-attachments/assets/b677dcaf-356e-4bdd-babf-ddcaa20760f0
 
 ## 📋 Quick Start
 
+### For End Users (Windows/Mac/Linux)
+
+1. **Download** the latest release package for your platform
+2. **Extract** the downloaded file to your desired location
+3. **Run** the application:
+   - **Windows**: Double-click `start-prod.bat`
+   - **Mac/Linux**: Run `./start-prod.sh` in terminal
+4. **Access** the application at `http://localhost:3000`
+5. **Login** with default credentials:
+   - Username: `admin`
+   - Password: `admin123`
+
+> 💡 **First-time setup**: The application will automatically create the database and install dependencies on first run.
+
+### Port Configuration
+
+The application uses a configurable port system to avoid conflicts:
+
+- **Default Ports**: Backend (8000), Frontend (3000)
+- **Configuration File**: `config/ports.json`
+- **Automatic Port Checking**: The start script checks for port availability and provides clear error messages if ports are in use
+- **Easy Customization**: Edit `config/ports.json` to change default ports
+
+```json
+{
+  "backend_port": 8000,
+  "frontend_port": 3000
+}
+```
+
 ### Prerequisites
 - Docker and Docker Compose
 - Node.js 18+ (for local development)
@@ -294,6 +324,25 @@ profitpath/
 - **Error Handling**: Robust error handling and user feedback
 
 ## 🚀 Deployment
+
+### Offline Installer Packages
+
+For production deployment without Docker, use our offline installer packages:
+
+- **Windows**: `ProfitPath-vX.X.X-Windows-Offline-Installer.zip`
+- **Linux/Mac**: `ProfitPath-vX.X.X-Linux-Offline-Installer.tar.gz`
+
+**Installation Requirements:**
+- **Windows**: Administrator privileges required for installation
+- **Python**: 3.8 or higher (automatically checked during installation)
+- **Node.js**: 16 or higher (for frontend build)
+
+**Key Features:**
+- ✅ Configurable port system with automatic conflict detection
+- ✅ Automatic dependency installation
+- ✅ Database initialization with legacy engine support
+- ✅ Production-ready configuration
+- ✅ Easy start/stop scripts
 
 ### Docker Compose (Local & Production)
 ```bash

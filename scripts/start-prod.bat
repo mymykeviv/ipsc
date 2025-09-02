@@ -37,39 +37,81 @@ if %errorlevel% neq 0 (
 )
 echo [OK] Node.js found
 
-REM Check Python
+REM Check Python (try python first, then py)
+set PYTHON_CMD=
 python --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ERROR: Python is not installed or not in PATH
-    echo Please install Python 3.10+ from: https://python.org/
-    pause
-    exit /b 1
+if !errorlevel! equ 0 (
+    set PYTHON_CMD=python
+) else (
+    py --version >nul 2>&1
+    if !errorlevel! equ 0 (
+        set PYTHON_CMD=py
+    ) else (
+        echo ERROR: Python is not installed or not in PATH
+        echo Please install Python 3.10+ from: https://python.org/
+        pause
+        exit /b 1
+    )
 )
-echo [OK] Python found
+echo [OK] Python found (!PYTHON_CMD!)
 echo.
 
 REM Create logs directory
 if not exist "logs" mkdir logs
 
-REM Check if services are already running
-echo [INFO] Checking for existing services...
-netstat -an | findstr ":8000" >nul 2>&1
-if %errorlevel% equ 0 (
-    echo WARNING: Port 8000 is already in use (Backend API)
-    echo Please stop existing services or use scripts\stop-prod.bat
+REM Load port configuration
+echo [INFO] Loading port configuration...
+if not exist "config\ports.json" (
+    echo ERROR: Port configuration file not found: config\ports.json
+    echo Please ensure the configuration file exists.
     pause
     exit /b 1
 )
 
-netstat -an | findstr ":4173" >nul 2>&1
+REM Parse JSON config using PowerShell (simple approach)
+for /f "tokens=*" %%i in ('powershell -Command "(Get-Content 'config\ports.json' | ConvertFrom-Json).backend.port"') do set BACKEND_PORT=%%i
+for /f "tokens=*" %%i in ('powershell -Command "(Get-Content 'config\ports.json' | ConvertFrom-Json).frontend.port"') do set FRONTEND_PORT=%%i
+
+echo [INFO] Backend port: !BACKEND_PORT!
+echo [INFO] Frontend port: !FRONTEND_PORT!
+
+REM Simple port availability check
+echo [INFO] Checking port availability...
+netstat -an | findstr ":!BACKEND_PORT!" | findstr "LISTENING" >nul 2>&1
 if %errorlevel% equ 0 (
-    echo WARNING: Port 4173 is already in use (Frontend Preview)
-    echo Please stop existing services or use scripts\stop-prod.bat
+    echo.
+    echo ========================================
+    echo   PORT CONFLICT DETECTED
+    echo ========================================
+    echo Backend port !BACKEND_PORT! is already in use.
+    echo.
+    echo To resolve this:
+    echo 1. Edit config\ports.json to change the backend port
+    echo 2. Or stop the service using that port
+    echo 3. Then run this script again
+    echo.
     pause
     exit /b 1
 )
 
-echo [OK] Ports are available
+netstat -an | findstr ":!FRONTEND_PORT!" | findstr "LISTENING" >nul 2>&1
+if %errorlevel% equ 0 (
+    echo.
+    echo ========================================
+    echo   PORT CONFLICT DETECTED
+    echo ========================================
+    echo Frontend port !FRONTEND_PORT! is already in use.
+    echo.
+    echo To resolve this:
+    echo 1. Edit config\ports.json to change the frontend port
+    echo 2. Or stop the service using that port
+    echo 3. Then run this script again
+    echo.
+    pause
+    exit /b 1
+)
+
+echo [OK] Ports !BACKEND_PORT! and !FRONTEND_PORT! are available
 echo.
 
 REM Start backend service
@@ -84,8 +126,8 @@ echo [INFO] Setting production environment...
 set ENVIRONMENT=production
 set PYTHONPATH=%cd%
 
-echo [INFO] Starting FastAPI server on port 8000...
-start "ProfitPath Backend" cmd /k "title ProfitPath Backend ^& python -m uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1 --log-level info"
+echo [INFO] Starting FastAPI server on port !BACKEND_PORT!...
+start "ProfitPath Backend" cmd /k "title ProfitPath Backend ^& !PYTHON_CMD! -m uvicorn app.main:app --host 0.0.0.0 --port !BACKEND_PORT! --workers 1 --log-level info"
 
 cd ..
 echo [OK] Backend service started
@@ -97,7 +139,7 @@ timeout /t 5 /nobreak >nul
 
 REM Test backend health
 echo [INFO] Testing backend health...
-curl -s http://localhost:8000/health >nul 2>&1
+curl -s http://localhost:!BACKEND_PORT!/health >nul 2>&1
 if %errorlevel% equ 0 (
     echo [OK] Backend is responding
 ) else (
@@ -110,8 +152,8 @@ echo [INFO] Starting frontend service...
 echo ========================================
 
 cd frontend
-echo [INFO] Starting production preview server on port 4173...
-start "ProfitPath Frontend" cmd /k "title ProfitPath Frontend ^& npx vite preview --host 0.0.0.0 --port 4173"
+echo [INFO] Starting production preview server on port !FRONTEND_PORT!...
+start "ProfitPath Frontend" cmd /k "title ProfitPath Frontend ^& npx vite preview --host 0.0.0.0 --port !FRONTEND_PORT!"
 
 cd ..
 echo [OK] Frontend service started
@@ -126,9 +168,9 @@ echo    Production Services Started!
 echo ========================================
 echo.
 echo Services:
-echo - Backend API: http://localhost:8000
-echo - Frontend App: http://localhost:4173
-echo - API Documentation: http://localhost:8000/docs
+echo - Backend API: http://localhost:!BACKEND_PORT!
+echo - Frontend App: http://localhost:!FRONTEND_PORT!
+echo - API Documentation: http://localhost:!BACKEND_PORT!/docs
 echo.
 echo Logs:
 echo - Backend: Check "ProfitPath Backend" window
@@ -140,7 +182,7 @@ echo Press any key to open the application in your browser...
 pause >nul
 
 REM Open application in browser
-start http://localhost:4173
+start http://localhost:!FRONTEND_PORT!
 
 echo Application opened in browser.
 echo Services are running in separate windows.

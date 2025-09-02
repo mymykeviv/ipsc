@@ -5,7 +5,7 @@ Simple script to create the database and tables directly
 import os
 import sys
 from sqlalchemy import create_engine, text
-from app.db import engine
+from app.db import legacy_engine
 from app.models import Base
 
 def create_database():
@@ -13,13 +13,13 @@ def create_database():
     print("Creating database tables...")
     
     # Create all tables
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=legacy_engine)
     
     print("Database tables created successfully!")
     
     # Verify tables were created
-    with engine.connect() as conn:
-        result = conn.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"))
+    with legacy_engine.connect() as conn:
+        result = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
         tables = [row[0] for row in result]
         print(f"Created tables: {tables}")
 

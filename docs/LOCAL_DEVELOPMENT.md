@@ -99,6 +99,26 @@ Once started, the application will be available at:
 - **API Documentation**: http://localhost:8000/docs (Swagger UI)
 - **Alternative API Docs**: http://localhost:8000/redoc
 
+## Port Configuration
+
+### Configurable Port System
+
+For production deployments using offline installer packages, the application includes a configurable port system:
+
+- **Configuration File**: `config/ports.json`
+- **Default Ports**: Backend (8000), Frontend (3000)
+- **Automatic Port Checking**: Production scripts check port availability
+- **Conflict Resolution**: Clear error messages if ports are in use
+
+```json
+{
+  "backend_port": 8000,
+  "frontend_port": 3000
+}
+```
+
+**Note**: Local development uses fixed ports (5173 for frontend, 8000 for backend) for consistency with Vite dev server.
+
 ## Database Configuration
 
 ### PostgreSQL (Recommended)
@@ -123,6 +143,13 @@ If PostgreSQL is not available, the application automatically uses SQLite:
 ```
 DATAbase_URL=sqlite:///./profitpath.db
 ```
+
+### Database Compatibility
+
+The application includes enhanced database compatibility:
+- **Legacy Engine Support**: Uses `legacy_engine` parameter for older database systems
+- **Automatic Migration**: Database schema is automatically updated on startup
+- **Cross-Platform**: Works with both PostgreSQL and SQLite across different operating systems
 
 ## Troubleshooting
 
@@ -150,6 +177,7 @@ DATAbase_URL=sqlite:///./profitpath.db
    - Kill processes manually if needed:
      - Windows: `netstat -ano | findstr :8000` then `taskkill /PID <pid> /F`
      - Linux/macOS: `lsof -ti:8000 | xargs kill -9`
+   - **Note**: Production deployments use configurable ports via `config/ports.json`
 
 6. **Rollup native binding errors**
    - The scripts automatically set `ROLLUP_SKIP_NODEJS_NATIVE=true`
@@ -196,6 +224,9 @@ npm run dev -- --host 0.0.0.0 --port 5173
    - SQLite: Use DB Browser for SQLite or command line: `sqlite3 profitpath.db`
 4. **Logs**: Check terminal output for application logs and errors
 5. **Environment Variables**: Create a `.env` file in the backend directory for custom configuration
+6. **Production Testing**: Use offline installer packages to test production-like deployments
+7. **Port Configuration**: For production testing, modify `config/ports.json` to avoid conflicts
+8. **Cross-Platform**: Test on different operating systems using the appropriate offline installers
 
 ## Next Steps
 
