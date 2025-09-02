@@ -173,12 +173,12 @@ echo ========================================
 
 REM Create main installer script
 echo [INFO] Creating main installer script...
-if not exist "scripts\install-template.bat" (
-    echo ERROR: Install template not found: scripts\install-template.bat
+if not exist "scripts\install-template-simple.bat" (
+    echo ERROR: Install template not found: scripts\install-template-simple.bat
     pause
     exit /b 1
 )
-copy "scripts\install-template.bat" "%INSTALLER_DIR%\install.bat"
+copy "scripts\install-template-simple.bat" "%INSTALLER_DIR%\install.bat"
 if %errorlevel% neq 0 (
     echo ERROR: Failed to copy install template
     pause
