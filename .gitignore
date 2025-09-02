@@ -303,3 +303,9 @@ frontend/node_modules/esbuild/
 backend/profitpath.db-shm
 backend/profitpath.db-wal
 .DS_Store
+scripts/pip3.exe
+scripts/Scripts/pip.exe
+scripts/Scripts/pip3.exe
+scripts/Scripts/pip3.13.exe
+scripts/pip3.13.exe
+ProfitPath-v*-Windows-Offline/*

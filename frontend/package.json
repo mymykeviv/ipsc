@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "typecheck": "tsc --noEmit",
+    "build": "npx tsc --noEmit && vite build",
+    "typecheck": "npx tsc --noEmit",
     "preview": "vite preview",
     "test": "NODE_OPTIONS='--max-old-space-size=8192' vitest run",
     "test:critical": "NODE_OPTIONS='--max-old-space-size=8192' vitest run --run --reporter=basic --no-coverage --pool=forks --poolOptions.forks.singleFork=true --poolOptions.forks.maxForks=1",
@@ -20,7 +20,7 @@
     "test:e2e:all": "playwright test tests/e2e/",
     "test:report": "playwright show-report",
     "test:install": "playwright install --with-deps chromium firefox",
-    "clean": "find src -name '*.js' -type f -delete && echo '✅ Cleaned compiled JavaScript files'",
+    "clean": "del /s /q src\\*.js 2>nul & echo ✅ Cleaned compiled JavaScript files",
     "prebuild": "npm run clean"
   },
   "dependencies": {
