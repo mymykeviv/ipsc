@@ -121,18 +121,41 @@ cd "%INSTALL_DIR%\backend"
 
 REM Create virtual environment (required for production)
 echo [INFO] Creating Python virtual environment for production...
-%PYTHON_CMD% -m venv venv --clear
+
+REM Skip venv testing - just try to create it directly
+echo [INFO] Creating virtual environment...
+
+REM Try creating virtual environment with different methods
+echo [INFO] Attempting to create virtual environment...
+REM Redirect stderr to avoid confusion from "Could not find platform independent libraries" warning
+%PYTHON_CMD% -m venv venv --clear 2>nul
 if %errorlevel% neq 0 (
-    echo ERROR: Failed to create virtual environment
-    echo.
-    echo This may be due to:
-    echo 1. Insufficient permissions (try running as administrator)
-    echo 2. Python venv module not available
-    echo 3. Disk space issues
-    echo 4. Antivirus software blocking file creation
-    echo.
-    pause
-    exit /b 1
+    echo [WARNING] Standard venv creation failed, trying alternative method...
+    rmdir /s /q venv 2>nul
+    %PYTHON_CMD% -m venv venv 2>nul
+    if %errorlevel% neq 0 (
+        echo [WARNING] Alternative venv creation failed, trying Python API method...
+        rmdir /s /q venv 2>nul
+        %PYTHON_CMD% -c "import venv; venv.create('venv', with_pip=True)" 2>nul
+        if %errorlevel% neq 0 (
+            echo ERROR: All virtual environment creation methods failed
+            echo.
+            echo This may be due to:
+            echo 1. Insufficient permissions (try running as administrator)
+            echo 2. Corrupted Python installation
+            echo 3. Disk space issues
+            echo 4. Antivirus software blocking file creation
+            echo 5. Python installed from Microsoft Store (use python.org version)
+            echo.
+            echo Please try:
+            echo 1. Run as administrator
+            echo 2. Reinstall Python from https://python.org/downloads/
+            echo 3. Temporarily disable antivirus during installation
+            echo.
+            pause
+            exit /b 1
+        )
+    )
 )
 echo [INFO] Virtual environment created successfully
 
@@ -146,10 +169,10 @@ if %errorlevel% neq 0 (
 echo [INFO] Virtual environment activated
 
 echo [INFO] Upgrading pip in virtual environment...
-python -m pip install --upgrade pip --no-index --find-links "..\python-packages"
+python -m pip install --upgrade pip
 
 echo [INFO] Installing Python dependencies in virtual environment...
-pip install --no-index --find-links "..\python-packages" -r requirements.txt
+pip install -r requirements.txt
 if %errorlevel% neq 0 (
     echo ERROR: Failed to install Python dependencies in virtual environment
     echo.
