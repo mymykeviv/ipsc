@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional, List, Dict, Set
 import os
 from functools import lru_cache
@@ -250,6 +250,14 @@ def add_feature_paths(feature: str, paths: List[str]) -> None:
 
 
 class Settings(BaseSettings):
+    # Use Pydantic v2 settings config
+    model_config = SettingsConfigDict(
+        env_file=[".env", ".env.local"],
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
     # Application Settings
     app_name: str = "ProfitPath Backend"
     version: str = "1.4.4"
@@ -263,7 +271,11 @@ class Settings(BaseSettings):
     max_tenants_per_instance: int = 100
     tenant_isolation_level: str = "row_level"
     tenant_routing_method: str = "subdomain"
-    
+
+    # Feature Flags
+    security_enabled: bool = True
+    database_optimization_enabled: bool = True
+
     # Database Settings - SQLite first, PostgreSQL as deployment option
     database_type: str = "sqlite"  # sqlite or postgresql
     database_url: str = "sqlite:///./profitpath.db"
@@ -320,15 +332,14 @@ class Settings(BaseSettings):
     docker_buildkit: Optional[str] = None
     docker_default_platform: Optional[str] = None
     
-    class Config:
-        env_file = [".env", ".env.local"]
-        env_file_encoding = "utf-8"
-        case_sensitive = False
-        
+    # Keep pydantic v1-style parser for allowed_origins fallback
     @classmethod
     def parse_env_var(cls, field_name: str, raw_val: str):
         """Parse environment variables"""
         if field_name == "allowed_origins" and raw_val:
+            # Accept both JSON array and simple comma-separated string
+            if raw_val.strip().startswith("["):
+                return raw_val  # let default JSON parsing handle it
             return [origin.strip() for origin in raw_val.split(",")]
         return raw_val
 

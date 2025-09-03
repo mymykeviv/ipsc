@@ -4,7 +4,7 @@
     "description": "FastAPI backend server port"
   },
   "frontend": {
-    "port": 4173,
+    "port": 5173,
     "description": "Vite preview server port"
   },
   "_instructions": {

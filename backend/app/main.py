@@ -1,27 +1,34 @@
+# Bootstrap to allow running as a script (PyInstaller) while using package-relative imports
+import os
+import sys
+if __package__ in (None, ""):
+    # Ensure the parent directory (containing the 'app' package) is on sys.path
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    __package__ = "app"
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from .db import Base, legacy_engine, init_db, init_tenant_db
+from app.db import Base, legacy_engine, init_db, init_tenant_db
 # Seed data removed from main application - use separate scripts for development and testing
-from . import main_routers
-from .config import settings
-from .middleware.tenant_routing import (
+from app import main_routers
+from app.config import settings
+from app.middleware.tenant_routing import (
     tenant_routing_middleware, 
     tenant_feature_access_middleware
 )
-from .middleware.security import security_middleware, audit_middleware
-from .tenant_config import tenant_config_manager
-from .database_optimizer import database_optimizer
-from .security_manager import security_manager
-from .branding_manager import branding_manager
-from .monitoring import (
+from app.middleware.security import security_middleware, audit_middleware
+from app.tenant_config import tenant_config_manager
+from app.database_optimizer import database_optimizer
+from app.security_manager import security_manager
+from app.branding_manager import branding_manager
+from app.monitoring import (
     MonitoringMiddleware, SystemMonitor, HealthChecker,
     get_metrics_response, record_invoice_created, record_payment_processed,
     record_product_created, record_stock_adjustment
 )
-from .logging_config import setup_logging, get_logger
+from app.logging_config import setup_logging, get_logger
 import logging
 from datetime import datetime
-import os
 from app.seed import run_seed
 
 # Configure structured logging
@@ -279,4 +286,14 @@ if os.getenv("ENVIRONMENT") != "testing":
     Base.metadata.create_all(bind=legacy_engine)
     
     # Seed data removed - use separate development script if needed
+
+
+if __name__ == "__main__":
+    # Allow running the backend directly (useful for packaged/pyinstaller builds)
+    import uvicorn
+    try:
+        uvicorn.run(app, host=settings.host, port=settings.port, reload=False, log_level=settings.log_level.lower())
+    except Exception as e:
+        logger.error(f"Failed to start Uvicorn server: {e}")
+        raise
 

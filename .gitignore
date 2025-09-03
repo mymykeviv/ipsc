@@ -309,3 +309,4 @@ scripts/Scripts/pip3.exe
 scripts/Scripts/pip3.13.exe
 scripts/pip3.13.exe
 ProfitPath-v*-Windows-Offline/*
+artifacts/*
