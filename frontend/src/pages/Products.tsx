@@ -127,7 +127,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     priceRangeFilter: string
     dateFilter: DateRange
   }
-  const { getFiltersFromURL, updateURLWithFilters, clearURLFilters } = useFilterNavigation(defaultState)
+  const { getFiltersFromURL, updateURLWithFilters, clearURLFilters, searchParams } = useFilterNavigation(defaultState)
   const { resetAllFilters, getActiveFilterCount } = useFilterReset({
     pageName: 'products',
     onReset: (newState: Record<string, any>) => {
@@ -166,17 +166,22 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       const urlFilters = getFiltersFromURL()
       
       // Apply URL filters to state
-      if (urlFilters.searchTerm) setSearchTerm(urlFilters.searchTerm)
-      if (urlFilters.statusFilter) setStatusFilter(urlFilters.statusFilter)
-      if (urlFilters.categoryFilter) setCategoryFilter(urlFilters.categoryFilter)
-      if (urlFilters.itemTypeFilter) setItemTypeFilter(urlFilters.itemTypeFilter)
-      if (urlFilters.gstRateFilter) setGstRateFilter(urlFilters.gstRateFilter)
-      if (urlFilters.stockLevelFilter) setStockLevelFilter(urlFilters.stockLevelFilter)
-      if (urlFilters.supplierFilter) setSupplierFilter(urlFilters.supplierFilter)
-      if (urlFilters.priceRangeFilter) setPriceRangeFilter(urlFilters.priceRangeFilter)
-      if (urlFilters.dateFilter) setDateFilter(urlFilters.dateFilter)
+      if (urlFilters.searchTerm && urlFilters.searchTerm !== searchTerm) setSearchTerm(urlFilters.searchTerm)
+      if (urlFilters.statusFilter && urlFilters.statusFilter !== statusFilter) setStatusFilter(urlFilters.statusFilter)
+      if (urlFilters.categoryFilter && urlFilters.categoryFilter !== categoryFilter) setCategoryFilter(urlFilters.categoryFilter)
+      if (urlFilters.itemTypeFilter && urlFilters.itemTypeFilter !== itemTypeFilter) setItemTypeFilter(urlFilters.itemTypeFilter)
+      if (urlFilters.gstRateFilter && urlFilters.gstRateFilter !== gstRateFilter) setGstRateFilter(urlFilters.gstRateFilter)
+      if (urlFilters.stockLevelFilter && urlFilters.stockLevelFilter !== stockLevelFilter) setStockLevelFilter(urlFilters.stockLevelFilter)
+      if (urlFilters.supplierFilter && urlFilters.supplierFilter !== supplierFilter) setSupplierFilter(urlFilters.supplierFilter)
+      if (urlFilters.priceRangeFilter && urlFilters.priceRangeFilter !== priceRangeFilter) setPriceRangeFilter(urlFilters.priceRangeFilter)
+      if (
+        urlFilters.dateFilter &&
+        (urlFilters.dateFilter.startDate !== dateFilter.startDate || urlFilters.dateFilter.endDate !== dateFilter.endDate)
+      ) {
+        setDateFilter(urlFilters.dateFilter)
+      }
     }
-  }, [mode, getFiltersFromURL])
+  }, [mode, searchParams])
 
   // Update URL when filters change
   const updateFiltersAndURL = useCallback((newFilters: Partial<typeof defaultState>) => {
@@ -473,9 +478,9 @@ export function Products({ mode = 'manage' }: ProductsProps) {
 
     return [
       {
-        label: 'Total Stock Value',
+        label: 'Total Stock Value (Snapshot)',
         primary: totalStockValue,
-        secondary: `${total.toLocaleString('en-IN')} products | ${inStock.toLocaleString('en-IN')} in stock | ${outOfStock.toLocaleString('en-IN')} out of stock`,
+        secondary: `| ${total.toLocaleString('en-IN')} products | ${inStock.toLocaleString('en-IN')} in stock | ${outOfStock.toLocaleString('en-IN')} out of stock • Snapshot = stock × (purchase price or, if missing, sales price). Valuation reports may differ.`,
         accentColor: '#0d6efd',
       }
     ]

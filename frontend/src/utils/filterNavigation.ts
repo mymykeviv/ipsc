@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 export interface FilterNavigationParams {
@@ -41,6 +42,15 @@ export class FilterNavigationService {
         filters[filterKey] = value
       }
     }
+
+    // Normalize date range params into a single dateFilter object if present
+    if (!filters['dateFilter']) {
+      const dateFrom = searchParams.get('dateFrom')
+      const dateTo = searchParams.get('dateTo')
+      if (dateFrom && dateTo) {
+        filters['dateFilter'] = { startDate: dateFrom, endDate: dateTo }
+      }
+    }
     
     return filters
   }
@@ -60,6 +70,18 @@ export class FilterNavigationService {
     for (const [key, value] of Object.entries(filters)) {
       if (value && value !== 'all' && value !== '') {
         const urlKey = filterMapping[key] || key
+
+        // Special handling for dateFilter objects
+        if (
+          urlKey === 'dateFilter' &&
+          typeof value === 'object' &&
+          (value as any).startDate &&
+          (value as any).endDate
+        ) {
+          params.set('dateFrom', String((value as any).startDate))
+          params.set('dateTo', String((value as any).endDate))
+          continue
+        }
         
         if (Array.isArray(value)) {
           value.forEach(v => params.append(urlKey, v))
@@ -155,40 +177,40 @@ export function useFilterNavigation(
    * Apply filters from URL parameters
    * @returns Filter state from URL
    */
-  const getFiltersFromURL = (): Record<string, any> => {
+  const getFiltersFromURL = useCallback((): Record<string, any> => {
     return FilterNavigationService.parseURLParams(searchParams, filterMapping)
-  }
+  }, [searchParams, filterMapping])
 
   /**
    * Update URL with current filter state
    * @param filters - Current filter state
    */
-  const updateURLWithFilters = (filters: Record<string, any>) => {
+  const updateURLWithFilters = useCallback((filters: Record<string, any>) => {
     const params = FilterNavigationService.toURLParams(filters, filterMapping)
     setSearchParams(params, { replace: true })
-  }
+  }, [filterMapping, setSearchParams])
 
   /**
    * Clear all filter parameters from URL
    */
-  const clearURLFilters = () => {
+  const clearURLFilters = useCallback(() => {
     const newParams = FilterNavigationService.clearURLParams(searchParams)
     setSearchParams(newParams, { replace: true })
-  }
+  }, [searchParams, setSearchParams])
 
   /**
    * Reset filters to default state and clear URL
    */
-  const resetToDefault = () => {
+  const resetToDefault = useCallback(() => {
     clearURLFilters()
     return defaultState
-  }
+  }, [clearURLFilters, defaultState])
 
-  return {
+  return useMemo(() => ({
     getFiltersFromURL,
     updateURLWithFilters,
     clearURLFilters,
     resetToDefault,
     searchParams
-  }
+  }), [getFiltersFromURL, updateURLWithFilters, clearURLFilters, resetToDefault, searchParams])
 }

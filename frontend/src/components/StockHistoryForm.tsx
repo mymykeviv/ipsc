@@ -885,6 +885,11 @@ export const StockHistoryForm: React.FC<{ onSuccess?: () => void; onCancel: () =
             gapPx={12}
           />
 
+          {/* Valuation method note for clarity */}
+          <div style={{ color: '#6c757d', fontSize: '12px', margin: '8px 0 12px 0' }}>
+            Note on valuation: Values above are computed as quantity × unit price per product. Unit price uses purchase price or, if missing, sales price. These are snapshot values and may differ from Inventory Valuation reports.
+          </div>
+
           {/* Stock Movement Table */}
           <div style={{ 
             backgroundColor: 'white', 
