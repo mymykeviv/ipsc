@@ -480,7 +480,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       {
         label: 'Total Stock Value (Snapshot)',
         primary: totalStockValue,
-        secondary: `| ${total.toLocaleString('en-IN')} products | ${inStock.toLocaleString('en-IN')} in stock | ${outOfStock.toLocaleString('en-IN')} out of stock • Snapshot = stock × (purchase price or, if missing, sales price). Valuation reports may differ.`,
+        secondary: `${total.toLocaleString('en-IN')} products | ${inStock.toLocaleString('en-IN')} in stock | ${outOfStock.toLocaleString('en-IN')} out of stock • Snapshot = stock × (purchase price or, if missing, sales price). Valuation reports may differ.`,
         accentColor: '#0d6efd',
       }
     ]
