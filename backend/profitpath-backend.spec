@@ -1,4 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import collect_submodules
+
+hiddenimports = ['passlib.handlers.bcrypt', 'passlib.hash', 'passlib.context']
+hiddenimports += collect_submodules('passlib.handlers')
+hiddenimports += collect_submodules('passlib')
+hiddenimports += collect_submodules('bcrypt')
 
 
 a = Analysis(
@@ -6,7 +12,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[],
-    hiddenimports=[],
+    hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
