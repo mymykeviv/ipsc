@@ -160,7 +160,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(25)
 
-  // URL Parameter Integration - Apply filters from URL on component mount
+  // URL Parameter Integration - Apply filters from URL on component mount (only for manage mode)
   useEffect(() => {
     if (mode === 'manage') {
       const urlFilters = getFiltersFromURL()
@@ -181,7 +181,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         setDateFilter(urlFilters.dateFilter)
       }
     }
-  }, [mode, searchParams])
+  }, [mode]) // Removed searchParams dependency to prevent refresh in edit mode
 
   // Update URL when filters change
   const updateFiltersAndURL = useCallback((newFilters: Partial<typeof defaultState>) => {
@@ -319,7 +319,24 @@ export function Products({ mode = 'manage' }: ProductsProps) {
     try {
       setLoading(true)
       await apiToggleProduct(id)
-      await loadProducts()
+      
+      // Reload products with current filters
+      const apiFilters: ProductFilters = {}
+      if (searchTerm) apiFilters.search = searchTerm
+      if (categoryFilter && categoryFilter !== 'all') apiFilters.category = categoryFilter
+      if (itemTypeFilter && itemTypeFilter !== 'all') apiFilters.item_type = itemTypeFilter
+      if (gstRateFilter && gstRateFilter !== 'all') apiFilters.gst_rate = parseInt(gstRateFilter)
+      if (supplierFilter && supplierFilter !== 'all') apiFilters.supplier = supplierFilter
+      if (stockLevelFilter && stockLevelFilter !== 'all') apiFilters.stock_level = stockLevelFilter
+      if (priceRangeFilter && priceRangeFilter !== 'all') {
+        const [minStr, maxStr] = priceRangeFilter.split('-')
+        const min = minStr ? parseInt(minStr) : undefined
+        const max = maxStr === '' ? undefined : (maxStr ? parseInt(maxStr) : undefined)
+        if (min !== undefined) apiFilters.price_min = min
+        if (max !== undefined) apiFilters.price_max = max
+      }
+      const data = await apiGetProducts(apiFilters)
+      setProducts(data)
     } catch (err: any) {
       const errorMessage = handleApiError(err)
       setError(errorMessage)
@@ -337,32 +354,60 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       try {
         setFormLoading(true)
         setFormError(null)
-        // Load vendors for supplier dropdowns (future use)
-        const parties = await apiListParties()
-        setVendors(parties.filter(p => p.type === 'vendor'))
+        
+        // Only fetch vendors if we haven't loaded them yet
+        if (vendors.length === 0) {
+          const parties = await apiListParties()
+          setVendors(parties.filter(p => p.type === 'vendor'))
+        }
+
+        // Initialize form data when first entering add mode
+        if (mode === 'add') {
+          // Only initialize if the form is empty (first load)
+          if (!productFormData.name && !productFormData.sku) {
+            setProductFormData({
+              name: '',
+              sku: '',
+              unit: '',
+              supplier: '',
+              description: '',
+              product_type: 'tradable',
+              category: '',
+              purchase_price: '',
+              sales_price: '',
+              gst_rate: '',
+              hsn_code: '',
+              opening_stock: '',
+              closing_stock: '',
+              notes: ''
+            })
+          }
+        }
 
         if (mode === 'edit' && id) {
-          // Fetch products and set current product
-          const list = await apiGetProducts()
-          const found = list.find(p => p.id === parseInt(id)) || null
-          setCurrentProduct(found)
-          if (found) {
-            setProductFormData({
-              name: found.name || '',
-              sku: found.sku || '',
-              unit: found.unit || '',
-              supplier: found.supplier || '',
-              description: found.description || '',
-              product_type: found.item_type || 'tradable',
-              category: found.category || '',
-              purchase_price: found.purchase_price != null ? String(found.purchase_price) : '',
-              sales_price: found.sales_price != null ? String(found.sales_price) : '',
-              gst_rate: found.gst_rate != null ? String(found.gst_rate) : '',
-              hsn_code: found.hsn || '',
-              opening_stock: String(found.stock ?? ''),
-              closing_stock: '',
-              notes: found.notes || ''
-            })
+          // Only fetch product data if we don't already have it or if the ID changed
+          if (!currentProduct || currentProduct.id !== parseInt(id)) {
+            const list = await apiGetProducts()
+            const found = list.find(p => p.id === parseInt(id)) || null
+            setCurrentProduct(found)
+            if (found) {
+              setProductFormData({
+                name: found.name || '',
+                sku: found.sku || '',
+                unit: found.unit || '',
+                supplier: found.supplier || '',
+                description: found.description || '',
+                product_type: found.item_type || 'tradable',
+                category: found.category || '',
+                purchase_price: found.purchase_price != null ? String(found.purchase_price) : '',
+                sales_price: found.sales_price != null ? String(found.sales_price) : '',
+                gst_rate: found.gst_rate != null ? String(found.gst_rate) : '',
+                hsn_code: found.hsn || '',
+                opening_stock: String(found.stock ?? ''),
+                closing_stock: '',
+                notes: found.notes || ''
+              })
+            }
           }
         }
       } catch (err: any) {
@@ -373,7 +418,7 @@ export function Products({ mode = 'manage' }: ProductsProps) {
       }
     }
     loadForForm()
-  }, [mode, id, handleApiError])
+  }, [mode, id, currentProduct, vendors.length, handleApiError]) // Added dependencies to prevent unnecessary API calls
 
   const handleFormInput = useCallback((field: keyof ProductFormData, value: string) => {
     setProductFormData(prev => ({ ...prev, [field]: value }))
@@ -404,9 +449,44 @@ export function Products({ mode = 'manage' }: ProductsProps) {
         throw new Error('Product name is required')
       }
 
-      await apiCreateProduct(payload as Omit<Product, 'id' | 'is_active'>)
-      navigate('/products')
+      // Ensure name is not empty after trimming
+      if (!payload.name || payload.name.length === 0) {
+        throw new Error('Product name is required')
+      }
+
+      try {
+        // Make the API call and wait for it to complete successfully
+        await apiCreateProduct(payload as Omit<Product, 'id' | 'is_active'>)
+        
+        // Only reset form data after successful creation (API call succeeded)
+        setProductFormData({
+          name: '',
+          sku: '',
+          unit: '',
+          supplier: '',
+          description: '',
+          product_type: 'tradable',
+          category: '',
+          purchase_price: '',
+          sales_price: '',
+          gst_rate: '',
+          hsn_code: '',
+          opening_stock: '',
+          closing_stock: '',
+          notes: ''
+        })
+        
+        // Navigate away only after successful creation
+        navigate('/products')
+      } catch (apiError: any) {
+        // Handle specific API errors
+        if (apiError.message && apiError.message.includes('already exists')) {
+          throw new Error('A product with this name already exists. Please use a different name.')
+        }
+        throw apiError // Re-throw for the outer catch block to handle
+      }
     } catch (err: any) {
+      // On error, don't reset the form - just show the error
       const msg = handleApiError(err)
       setFormError(msg)
     } finally {
@@ -1255,10 +1335,16 @@ function StockAdjustmentForm({ onSuccess, onCancel }: StockAdjustmentFormProps) 
   const [stockLoading, setStockLoading] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
 
+  // Use a ref to track if data has been loaded to prevent duplicate API calls
+  const dataLoaded = React.useRef(false)
+  
   useEffect(() => {
-    loadData()
+    if (!dataLoaded.current) {
+      loadData()
+      dataLoaded.current = true
+    }
   }, [])
-
+  
   const loadData = async () => {
     try {
       setLoading(true)
