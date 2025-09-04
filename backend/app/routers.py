@@ -289,8 +289,8 @@ def create_product(payload: ProductCreate, _: User = Depends(require_any_role(["
             raise HTTPException(status_code=400, detail="Name is required")
         if len(payload.name) > 100:
             raise HTTPException(status_code=400, detail="Name must be 100 characters or less")
-        if not re.match(r'^[a-zA-Z0-9\s]+$', payload.name):
-            raise HTTPException(status_code=400, detail="Name must be alphanumeric with spaces only")
+        if not re.match(r'^[a-zA-Z0-9\s\-_/]+$', payload.name):
+            raise HTTPException(status_code=400, detail="Name can contain letters, numbers, spaces, hyphens, underscores, and forward slashes")
         
         if payload.description and len(payload.description) > 200:
             raise HTTPException(status_code=400, detail="Description must be 200 characters or less")
@@ -307,8 +307,8 @@ def create_product(payload: ProductCreate, _: User = Depends(require_any_role(["
         
         if payload.sku and len(payload.sku) > 50:
             raise HTTPException(status_code=400, detail="SKU must be 50 characters or less")
-        if payload.sku and not re.match(r'^[a-zA-Z0-9\s]+$', payload.sku):
-            raise HTTPException(status_code=400, detail="SKU must be alphanumeric with spaces only")
+        if payload.sku and not re.match(r'^[a-zA-Z0-9\s\-_/]+$', payload.sku):
+            raise HTTPException(status_code=400, detail="SKU can contain letters, numbers, spaces, hyphens, underscores, and forward slashes")
         
         if payload.supplier and len(payload.supplier) > 100:
             raise HTTPException(status_code=400, detail="Supplier must be 100 characters or less")
@@ -365,7 +365,30 @@ def update_product(product_id: int, payload: ProductUpdate, _: User = Depends(re
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Not found")
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    
+    # Validation for updated fields
+    update_data = payload.model_dump(exclude_unset=True)
+    
+    if 'name' in update_data:
+        if not update_data['name'] or len(update_data['name'].strip()) == 0:
+            raise HTTPException(status_code=400, detail="Name is required")
+        if len(update_data['name']) > 100:
+            raise HTTPException(status_code=400, detail="Name must be 100 characters or less")
+        if not re.match(r'^[a-zA-Z0-9\s\-_/]+$', update_data['name']):
+            raise HTTPException(status_code=400, detail="Name can contain letters, numbers, spaces, hyphens, underscores, and forward slashes")
+    
+    if 'sku' in update_data and update_data['sku']:
+        if len(update_data['sku']) > 50:
+            raise HTTPException(status_code=400, detail="SKU must be 50 characters or less")
+        if not re.match(r'^[a-zA-Z0-9\s\-_/]+$', update_data['sku']):
+            raise HTTPException(status_code=400, detail="SKU can contain letters, numbers, spaces, hyphens, underscores, and forward slashes")
+        # Check if SKU already exists (only if SKU is being updated and is different from current)
+        if update_data['sku'] != product.sku:
+            exists = db.query(Product).filter(Product.sku == update_data['sku']).first()
+            if exists:
+                raise HTTPException(status_code=400, detail="SKU already exists")
+    
+    for field, value in update_data.items():
         setattr(product, field, value)
     db.commit()
     db.refresh(product)
