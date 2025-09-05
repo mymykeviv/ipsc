@@ -310,3 +310,5 @@ scripts/Scripts/pip3.13.exe
 scripts/pip3.13.exe
 ProfitPath-v*-Windows-Offline/*
 artifacts/*
+frontend/.DS_Store
+.DS_Store

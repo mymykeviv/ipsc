@@ -301,6 +301,7 @@ export type PurchasePaymentCreate = {
 export type Purchase = {
   id: number
   purchase_no: string
+  reference_bill_number?: string
   vendor_id: number
   vendor_name: string
   date: string
@@ -657,6 +658,7 @@ export type InvoiceCreate = {
 
 export type PurchaseCreate = {
   vendor_id: number
+  reference_bill_number?: string
   date: string
   due_date: string
   terms: string
@@ -782,6 +784,34 @@ export async function apiListPurchases(search?: string, status?: string): Promis
 
 export async function apiGetPurchase(id: number): Promise<Purchase> {
   const r = await fetch(`/api/purchases/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
+export async function apiGetPurchaseItems(purchaseId: number): Promise<Array<{
+  id: number
+  purchase_id: number
+  product_id: number
+  description: string
+  hsn_code: string | null
+  qty: number
+  expected_rate: number
+  discount: number
+  discount_type: string
+  gst_rate: number
+  amount: number
+  created_at: string
+}>> {
+  const r = await fetch(`/api/purchases/${purchaseId}/items`, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } })
   
   if (!r.ok) {
     try {

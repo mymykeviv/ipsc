@@ -342,9 +342,9 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
     const matchesVendor = vendorFilter === 'all' || purchase.vendor_name === vendorFilter
     
     const matchesPaymentStatus = paymentStatusFilter === 'all' || 
-      (paymentStatusFilter === 'paid' && purchase.balance_amount === 0) ||
-      (paymentStatusFilter === 'partially_paid' && purchase.balance_amount > 0 && purchase.balance_amount < purchase.grand_total) ||
-      (paymentStatusFilter === 'unpaid' && purchase.balance_amount === purchase.grand_total)
+      (paymentStatusFilter === 'paid' && purchase.balance_amount === 0 && purchase.status !== 'cancelled') ||
+      (paymentStatusFilter === 'partially_paid' && purchase.balance_amount > 0 && purchase.balance_amount < purchase.grand_total && purchase.status !== 'cancelled') ||
+      (paymentStatusFilter === 'unpaid' && purchase.balance_amount === purchase.grand_total && purchase.status !== 'cancelled')
     
     const matchesAmountRange = amountRangeFilter === 'all' || (() => {
       const [min, max] = amountRangeFilter.split('-').map(Number)
@@ -622,6 +622,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
           <thead>
             <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #e9ecef' }}>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Purchase No</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Reference Bill No</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Vendor</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Date</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#495057' }}>Due Date</th>
@@ -638,10 +639,11 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
                 backgroundColor: 'white'
               }}>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{purchase.purchase_no}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{purchase.reference_bill_number || 'N/A'}</td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{purchase.vendor_name}</td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{new Date(purchase.date).toLocaleDateString()}</td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{purchase.due_date ? new Date(purchase.due_date).toLocaleDateString() : 'N/A'}</td>
-                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>₹{purchase.grand_total.toFixed(2)}</td>
+                <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>{formatCurrency(purchase.grand_total)}</td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>
                   <span style={{
                     padding: '4px 8px', 
@@ -651,7 +653,7 @@ export function Purchases({ mode = 'manage' }: PurchasesProps) {
                     backgroundColor: purchase.balance_amount > 0 ? '#fff3cd' : '#d4edda',
                     color: purchase.balance_amount > 0 ? '#856404' : '#155724'
                   }}>
-                    ₹{purchase.balance_amount.toFixed(2)}
+                    {formatCurrency(purchase.balance_amount)}
                   </span>
                 </td>
                 <td style={{ padding: '12px', borderRight: '1px solid #e9ecef' }}>

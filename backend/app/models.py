@@ -213,6 +213,7 @@ class Purchase(Base):
     tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     vendor_id: Mapped[int] = mapped_column(ForeignKey("parties.id"), nullable=False)
     purchase_no: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)  # max length 16 as per GST law
+    reference_bill_number: Mapped[str | None] = mapped_column(String(50), nullable=True)  # Vendor's bill/invoice number
     date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     due_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     terms: Mapped[str] = mapped_column(String(20), nullable=False, default="Due on Receipt")

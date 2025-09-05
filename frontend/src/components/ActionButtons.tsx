@@ -249,7 +249,9 @@ export const ActionButtonSets = {
       ...(item.status === 'Cancelled' ? [
         { label: 'Delete', onClick: actions.onDelete, icon: '🗑️', variant: 'secondary' as const }
       ] : [
-        { label: 'Cancel Purchase', onClick: actions.onCancel, icon: '❌', variant: 'secondary' as const }
+        ...(item.balance_amount > 0 ? [
+          { label: 'Cancel Purchase', onClick: actions.onCancel, icon: '❌', variant: 'secondary' as const }
+        ] : [])
       ])
     ]
   }),

@@ -4294,6 +4294,7 @@ class PurchaseItemIn(BaseModel):
 
 class PurchaseCreate(BaseModel):
     vendor_id: int
+    reference_bill_number: str | None = None
     date: str  # ISO date string
     due_date: str  # ISO date string
     terms: str = "Due on Receipt"
@@ -4312,6 +4313,7 @@ class PurchaseCreate(BaseModel):
 class PurchaseOut(BaseModel):
     id: int
     purchase_no: str
+    reference_bill_number: str | None
     vendor_id: int
     vendor_name: str
     date: str
@@ -4399,6 +4401,7 @@ def create_purchase(payload: PurchaseCreate, _: User = Depends(get_current_user)
     pur = Purchase(
         vendor_id=vendor.id,
         purchase_no=purchase_no,
+        reference_bill_number=payload.reference_bill_number,
         date=datetime.fromisoformat(payload.date),
         due_date=datetime.fromisoformat(payload.due_date),
         terms=payload.terms,
@@ -4555,6 +4558,7 @@ def list_purchases(
         result.append(PurchaseOut(
             id=pur.id,
             purchase_no=pur.purchase_no,
+            reference_bill_number=pur.reference_bill_number,
             vendor_id=pur.vendor_id,
             vendor_name=vendor.name if vendor else "Unknown",
             date=pur.date.isoformat(),
@@ -4594,6 +4598,7 @@ def get_purchase(purchase_id: int, _: User = Depends(get_current_user), db: Sess
     return PurchaseOut(
         id=purchase.id,
         purchase_no=purchase.purchase_no,
+        reference_bill_number=purchase.reference_bill_number,
         vendor_id=purchase.vendor_id,
         vendor_name=vendor.name if vendor else "Unknown",
         date=purchase.date.isoformat(),
@@ -4619,6 +4624,34 @@ def get_purchase(purchase_id: int, _: User = Depends(get_current_user), db: Sess
         created_at=purchase.created_at.isoformat(),
         updated_at=purchase.updated_at.isoformat()
     )
+
+
+@api.get('/purchases/{purchase_id}/items', response_model=list[PurchaseItemOut])
+def get_purchase_items(purchase_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    purchase = db.query(Purchase).filter(Purchase.id == purchase_id).first()
+    if not purchase:
+        raise HTTPException(status_code=404, detail='Purchase not found')
+    
+    items = db.query(PurchaseItem).filter(PurchaseItem.purchase_id == purchase_id).all()
+    
+    result = []
+    for item in items:
+        result.append(PurchaseItemOut(
+            id=item.id,
+            purchase_id=item.purchase_id,
+            product_id=item.product_id,
+            description=item.description,
+            hsn_code=item.hsn_code,
+            qty=item.qty,
+            expected_rate=item.expected_rate,
+            discount=item.discount,
+            discount_type=item.discount_type,
+            gst_rate=item.gst_rate,
+            amount=item.amount,
+            created_at=item.created_at
+        ))
+    
+    return result
 
 
 @api.delete('/purchases/{purchase_id}')
@@ -6176,6 +6209,24 @@ class PurchaseOrderCreate(BaseModel):
         if v.upper() not in supported_currencies:
             raise ValueError(f'Currency {v} is not supported')
         return v.upper()
+
+
+class PurchaseItemOut(BaseModel):
+    id: int
+    purchase_id: int
+    product_id: int
+    description: str
+    hsn_code: str | None
+    qty: float
+    expected_rate: Decimal
+    discount: Decimal
+    discount_type: str
+    gst_rate: float
+    amount: Decimal
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 class PurchaseOrderItemOut(BaseModel):

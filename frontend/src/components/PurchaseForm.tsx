@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { apiCreatePurchase, apiListParties, apiGetProducts, Party, Product } from '../lib/api'
+import { apiCreatePurchase, apiListParties, apiGetProducts, apiGetPurchaseItems, Party, Product } from '../lib/api'
 import { Button } from './Button'
 import { ErrorMessage } from './ErrorMessage'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
@@ -68,8 +68,36 @@ export function PurchaseForm({ onSuccess, onCancel, purchaseId, initialData }: P
         export_supply: initialData.export_supply || false,
         items: initialData.items || []
       })
+      
+      // Load purchase items separately
+      loadPurchaseItems()
     }
   }, [purchaseId, initialData])
+
+  const loadPurchaseItems = async () => {
+    if (!purchaseId) return
+    
+    try {
+      const items = await apiGetPurchaseItems(purchaseId)
+      const formattedItems = items.map(item => ({
+        product_id: item.product_id,
+        qty: item.qty,
+        rate: item.expected_rate,
+        description: item.description,
+        hsn_code: item.hsn_code || '',
+        discount: item.discount,
+        discount_type: item.discount_type as 'Percentage' | 'Fixed',
+        gst_rate: item.gst_rate
+      }))
+      
+      setFormData(prev => ({
+        ...prev,
+        items: formattedItems
+      }))
+    } catch (err) {
+      console.error('Failed to load purchase items:', err)
+    }
+  }
 
   const loadData = async () => {
     try {
