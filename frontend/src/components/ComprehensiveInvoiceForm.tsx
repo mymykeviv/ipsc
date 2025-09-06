@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { apiCreateInvoice, apiListCustomers, apiListVendors, apiGetProducts, apiGetCompanySettings, apiGetGSTInvoiceTemplates, Party, Product, CompanySettings, GSTInvoiceTemplate } from '../lib/api'
+import { apiCreateInvoice, apiListCustomers, apiListVendors, apiGetProducts, apiGetCompanySettings, apiGetGSTInvoiceTemplates, apiGetNextInvoiceNumber, Party, Product, CompanySettings, GSTInvoiceTemplate } from '../lib/api'
 import { Button } from './Button'
 import { ErrorMessage } from './ErrorMessage'
 import { formStyles, getSectionHeaderColor } from '../utils/formStyles'
@@ -122,11 +122,7 @@ function numberToWords(num: number): string {
 }
 
 // Generate invoice number
-function generateInvoiceNumber(): string {
-  const year = new Date().getFullYear()
-  const randomNum = Math.floor(1000 + Math.random() * 9000)
-  return `FY${year}/INV-${randomNum}`
-}
+// Removed generateInvoiceNumber function - now using backend API
 
 export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveInvoiceFormProps) {
   console.log('🔄 ComprehensiveInvoiceForm rendered - Searchable inputs enabled - VERSION 2.0')
@@ -144,7 +140,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
   
   const [formData, setFormData] = useState<InvoiceFormData>({
     // Invoice Details
-    invoice_no: generateInvoiceNumber(),
+    invoice_no: '', // Will be set by API call
     date: new Date().toISOString().split('T')[0],
     due_date: new Date().toISOString().split('T')[0],
     status: 'Draft',
@@ -202,24 +198,32 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
     try {
       console.log('🚀 Starting to load data...')
       console.log('🔍 Debug: About to call API endpoints')
-      const [customersData, suppliersData, productsData, companySettingsData, templatesData] = await Promise.all([
+      const [customersData, suppliersData, productsData, companySettingsData, templatesData, nextInvoiceData] = await Promise.all([
         apiListCustomers('', true), // Include inactive customers
         apiListVendors('', true),   // Include inactive vendors
         apiGetProducts(),
         apiGetCompanySettings(),
-        apiGetGSTInvoiceTemplates()
+        apiGetGSTInvoiceTemplates(),
+        apiGetNextInvoiceNumber()
       ])
       console.log('Loaded customers:', customersData)
       console.log('Loaded suppliers:', suppliersData)
       console.log('Loaded products:', productsData)
       console.log('Loaded company settings:', companySettingsData)
       console.log('Loaded templates:', templatesData)
+      console.log('Loaded next invoice number:', nextInvoiceData)
       console.log('Suppliers length:', suppliersData?.length || 0)
       setCustomers(customersData)
       setSuppliers(suppliersData)
       setProducts(productsData)
       setCompanySettings(companySettingsData)
       setTemplates(templatesData)
+      
+      // Set the invoice number from API
+      setFormData(prev => ({
+        ...prev,
+        invoice_no: nextInvoiceData.invoice_number
+      }))
     } catch (err: any) {
       console.error('❌ Error loading data:', err)
       console.error('❌ Error details:', {

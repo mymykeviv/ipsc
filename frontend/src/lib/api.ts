@@ -742,6 +742,23 @@ export async function apiCreateInvoice(payload: InvoiceCreate): Promise<Invoice>
   return r.json()
 }
 
+export async function apiGetNextInvoiceNumber(): Promise<{ invoice_number: string }> {
+  const r = await fetch('/api/invoices/next-number', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+  })
+  
+  if (!r.ok) {
+    try {
+      const errorData = await r.json()
+      throw new Error(errorData.detail || `HTTP ${r.status}: ${r.statusText}`)
+    } catch (parseError) {
+      throw new Error(`HTTP ${r.status}: ${r.statusText}`)
+    }
+  }
+  
+  return r.json()
+}
+
 // Purchase Management APIs
 export async function apiCreatePurchase(payload: PurchaseCreate): Promise<{id: number, purchase_no: string}> {
   const r = await fetch('/api/purchases', {

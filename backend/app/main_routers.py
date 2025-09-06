@@ -633,6 +633,15 @@ def _next_invoice_no(db: Session) -> str:
     return result
 
 
+@api.get('/invoices/next-number')
+def get_next_invoice_number(_: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get the next invoice number for preview"""
+    try:
+        next_number = _next_invoice_no(db)
+        return {"invoice_number": next_number}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate invoice number: {str(e)}")
+
 @api.post('/invoices', response_model=InvoiceOut, status_code=status.HTTP_201_CREATED)
 def create_invoice(payload: InvoiceCreate, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
     # Validation
