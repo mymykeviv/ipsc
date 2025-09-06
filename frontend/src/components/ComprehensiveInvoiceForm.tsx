@@ -102,7 +102,7 @@ const INDIAN_STATES = {
 
 const INVOICE_TYPES = ['Invoice', 'Credit Note', 'Debit Note']
 const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP']
-const INVOICE_TERMS = ['15 days', '30 days', '45 days', '60 days', '90 days', 'Due on Receipt', 'Immediate']
+const INVOICE_TERMS = [ 'Immediate','Due on Receipt','15 days', '30 days', '45 days', '60 days', '90 days']
 const DISCOUNT_TYPES = ['Percentage', 'Fixed']
 
 // Helper function to convert number to words
@@ -464,7 +464,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
         
         {/* Invoice Details Section */}
         <div>
-          <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '2px', fontSize: '1.5rem' }}>
+          <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #007bff', paddingBottom: '2px', fontSize: '1.2rem' }}>
             📄 Invoice Details
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -481,18 +481,6 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
               />
             </div>
             <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Invoice Date *</label>
-              <input
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData({...formData, date: e.target.value})}
-                required
-                style={formStyles.input}
-              />
-            </div>
-            
-            {/* Row 2: Invoice Terms * | Invoice Due Date * */}
-            <div style={formStyles.formGroup}>
               <label style={formStyles.label}>Invoice Terms *</label>
               <select
                 value={formData.terms}
@@ -505,8 +493,20 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
                 ))}
               </select>
             </div>
+            
+            {/* Row 2: Invoice Terms * | Invoice Due Date * */}
             <div style={formStyles.formGroup}>
-              <label style={formStyles.label}>Invoice Due Date *</label>
+              <label style={formStyles.label}>Invoice Date *</label>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({...formData, date: e.target.value})}
+                required
+                style={formStyles.input}
+              />
+            </div>
+            <div style={formStyles.formGroup}>
+              <label style={formStyles.label}>Due Date *</label>
               <input
                 type="date"
                 value={formData.due_date}
@@ -572,7 +572,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
 
         {/* GST Compliance Section */}
         <div>
-          <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '2px', fontSize: '1.5rem' }}>
+          <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #ffc107', paddingBottom: '2px', fontSize: '1.2rem' }}>
             🏛️ GST Compliance
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -600,7 +600,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
                 ))}
               </select>
             </div>
-            <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
+            <div style={formStyles.formGroup}>
               <label style={formStyles.label}>E-way Bill Number</label>
               <input
                 type="text"
@@ -643,8 +643,8 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
         
         {/* Supplier Details Section */}
         <div>
-          <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '2px', fontSize: '1.5rem' }}>
-            🏢 Company Details (Auto-filled)
+          <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #28a745', paddingBottom: '2px', fontSize: '1.2rem' }}>
+            🏢 Company Details
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             {/* Row 1: Company Name * | Company GSTIN * */}
@@ -702,8 +702,8 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
 
         {/* Customer Details Section */}
         <div>
-          <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '2px', fontSize: '1.5rem' }}>
-            👤 Customer Details (Searchable)
+          <h3 style={{ marginBottom: '4px', color: '#333', borderBottom: '2px solid #6c757d', paddingBottom: '2px', fontSize: '1.2rem' }}>
+            👤 Customer Details 
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             {/* Row 1: Customer Name * | Customer GSTIN (optional) */}
@@ -735,7 +735,7 @@ export function ComprehensiveInvoiceForm({ onSuccess, onCancel }: ComprehensiveI
             </div>
             
             {/* Row 2: Customer Email */}
-            <div style={formStyles.formGroup}>
+            <div style={{ ...formStyles.formGroup, gridColumn: 'span 2' }}>
               <label style={formStyles.label}>Customer Email</label>
               <input
                 type="email"
