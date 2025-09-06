@@ -286,7 +286,7 @@ class Settings(BaseSettings):
     # Security Settings
     secret_key: str = "your-secret-key-change-in-production"
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 30
+    access_token_expire_minutes: int = 1440
     
     # CORS Settings
     allowed_origins: List[str] = [

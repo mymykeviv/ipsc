@@ -8,6 +8,8 @@ if __package__ in (None, ""):
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from app.db import Base, legacy_engine, init_db, init_tenant_db
 # Seed data removed from main application - use separate scripts for development and testing
 from app import main_routers
@@ -242,6 +244,26 @@ def create_app(database_engine=None) -> FastAPI:
 
     # Include main routers
     app.include_router(main_routers.api, prefix="/api")
+
+    # Serve SPA (frontend) in production with HTML5 history fallback
+    try:
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+        frontend_dist = os.path.join(project_root, 'frontend', 'dist')
+        if os.path.isdir(frontend_dist):
+            # Mount at root. API routes remain available since they are registered explicitly above
+            app.mount('/', StaticFiles(directory=frontend_dist, html=True), name='spa')
+            logger.info(f"Mounted frontend static files from: {frontend_dist}")
+
+            # HTML5 history fallback: serve index.html for unknown non-API routes
+            index_file = os.path.join(frontend_dist, 'index.html')
+            if os.path.exists(index_file):
+                @app.get("/{full_path:path}")
+                async def spa_catch_all(full_path: str):
+                    return FileResponse(index_file)
+        else:
+            logger.warning(f"Frontend build directory not found: {frontend_dist}. SPA serving disabled.")
+    except Exception as e:
+        logger.error(f"Failed to mount SPA static files: {e}")
 
     # Database initialization
     if os.getenv("ENVIRONMENT") != "testing":

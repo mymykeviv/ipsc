@@ -322,13 +322,14 @@ class SecurityManager:
             return text
     
     async def generate_secure_token(self, tenant_id: str, user_id: str, 
-                                   expires_in: int = 3600) -> str:
+                                   expires_in: int | None = None) -> str:
         """Generate secure JWT token for user"""
         try:
+            exp_seconds = expires_in if expires_in is not None else settings.access_token_expire_minutes * 60
             payload = {
                 'tenant_id': tenant_id,
                 'user_id': user_id,
-                'exp': datetime.utcnow() + timedelta(seconds=expires_in),
+                'exp': datetime.utcnow() + timedelta(seconds=exp_seconds),
                 'iat': datetime.utcnow(),
                 'jti': secrets.token_urlsafe(32)  # JWT ID for uniqueness
             }
@@ -341,7 +342,7 @@ class SecurityManager:
             
             await self.log_security_event(
                 'TOKEN_GENERATED', tenant_id, user_id,
-                {'expires_in': expires_in}, 'INFO'
+                {'expires_in': exp_seconds}, 'INFO'
             )
             
             return token

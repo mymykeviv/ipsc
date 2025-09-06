@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Only extend once every 5 seconds to prevent frequent context updates on mousemove
     if (now - lastExtendRef.current < 5000) return
     lastExtendRef.current = now
-    const newExpiry = now + 30 * 60 * 1000 // 30 minutes
+    const newExpiry = now + 24 * 60 * 60 * 1000 // 24 hours
     setExpiresAt(newExpiry)
     localStorage.setItem('auth_exp', String(newExpiry))
   }, [token])
@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async login(u, p) {
       const res = await apiLogin(u, p)
       const t = res.access_token
-      const exp = parseJwtExp(t) ?? (Date.now() + 30 * 60 * 1000) // 30 minutes
+      const exp = parseJwtExp(t) ?? (Date.now() + 24 * 60 * 60 * 1000) // 24 hours fallback if exp missing
       setToken(t)
       setExpiresAt(exp)
       localStorage.setItem('auth_token', t)
