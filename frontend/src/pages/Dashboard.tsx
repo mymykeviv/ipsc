@@ -351,10 +351,10 @@ export function Dashboard() {
         backgroundColor: 'white',
         borderRadius: '12px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        marginBottom: '24px'
+        marginBottom: '20px'
       }}>
         <h3 style={{ 
-          margin: '0 0 20px 0', 
+          margin: '0 0 10px 0', 
           fontSize: '20px', 
           fontWeight: '600', 
           color: '#2c3e50',
@@ -367,7 +367,7 @@ export function Dashboard() {
         <div style={{ 
           display: 'grid', 
           gridTemplateColumns: 'repeat(auto-fit, minmax(128px, 1fr))', 
-          gap: '8px'
+          gap: '24px'
         }}>
           <Button 
             onClick={() => navigate('/invoices/add')}
@@ -454,7 +454,7 @@ export function Dashboard() {
               gap: '8px'
             }}
           >
-            📊 Adjust Stock
+            📊 Manage Products
           </Button>
         </div>
       </div>
@@ -511,7 +511,7 @@ export function Dashboard() {
               </div>
             </div>
             <div style={{ 
-              fontSize: '32px', 
+              fontSize: '24px', 
               fontWeight: 'bold',
               color: getNetCashflowColor(cashflowData.cashflow.net_cashflow),
               marginBottom: '8px'
@@ -519,7 +519,9 @@ export function Dashboard() {
               {formatCurrency(cashflowData.cashflow.net_cashflow)}
             </div>
             <div style={{ fontSize: '14px', color: '#6c757d' }}>
-              Inflow: {formatCurrency(cashflowData.cashflow.cash_inflow)} | 
+              Inflow: {formatCurrency(cashflowData.cashflow.cash_inflow)} 
+            </div>
+            <div style={{ fontSize: '14px', color: '#6c757d' }}>
               Outflow: {formatCurrency(cashflowData.cashflow.cash_outflow)}
             </div>
           </div>
@@ -550,12 +552,12 @@ export function Dashboard() {
                   Income
                 </h3>
                 <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6c757d' }}>
-                  Total revenue
+                  Total Revenue
                 </p>
               </div>
             </div>
             <div style={{ 
-              fontSize: '32px', 
+              fontSize: '24px', 
               fontWeight: 'bold',
               color: '#28a745',
               marginBottom: '8px'
@@ -563,7 +565,7 @@ export function Dashboard() {
               {formatCurrency(cashflowData.income.total_invoice_amount)}
             </div>
             <div style={{ fontSize: '14px', color: '#6c757d' }}>
-              Received: {formatCurrency(cashflowData.income.total_payments_received)}
+              Payment Received: {formatCurrency(cashflowData.income.total_payments_received)}
             </div>
           </div>
 
@@ -593,20 +595,23 @@ export function Dashboard() {
                   Expenses
                 </h3>
                 <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6c757d' }}>
-                  Total costs
+                  Total Costs
                 </p>
               </div>
             </div>
             <div style={{ 
-              fontSize: '32px', 
+              fontSize: '24px', 
               fontWeight: 'bold',
               color: '#dc3545',
               marginBottom: '8px'
             }}>
-              {formatCurrency(cashflowData.expenses.total_expenses)}
+              {formatCurrency(cashflowData.expenses.total_outflow)}
             </div>
             <div style={{ fontSize: '14px', color: '#6c757d' }}>
-              Purchases: {formatCurrency(cashflowData.expenses.total_purchase_payments)}
+              Payments: {formatCurrency(cashflowData.expenses.total_purchase_payments)} 
+            </div>
+            <div style={{ fontSize: '14px', color: '#6c757d' }}>
+              Expenses: {formatCurrency(cashflowData.expenses.total_expenses)}
             </div>
           </div>
 
@@ -641,7 +646,7 @@ export function Dashboard() {
               </div>
             </div>
             <div style={{ 
-              fontSize: '32px', 
+              fontSize: '24px', 
               fontWeight: 'bold',
               color: getNetCashflowColor(cashflowData.income.total_invoice_amount - cashflowData.expenses.total_expenses),
               marginBottom: '8px'
@@ -649,7 +654,7 @@ export function Dashboard() {
               {formatCurrency(cashflowData.income.total_invoice_amount - cashflowData.expenses.total_expenses)}
             </div>
             <div style={{ fontSize: '14px', color: '#6c757d' }}>
-              Profit margin: {((cashflowData.income.total_invoice_amount - cashflowData.expenses.total_expenses) / cashflowData.income.total_invoice_amount * 100).toFixed(1)}%
+              Profit margin: {((cashflowData.income.total_invoice_amount - cashflowData.expenses.total_expenses) / (cashflowData.income.total_invoice_amount||1) * 100).toFixed(1)}%
             </div>
           </div>
         </div>
@@ -717,7 +722,7 @@ export function Dashboard() {
               <div style={{ fontSize: '14px', color: '#2e7d32', fontWeight: '500', marginBottom: '4px' }}>
                 Taxable Value
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2e7d32' }}>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2e7d32' }}>
                 {formatCurrency(gstData.taxable_value)}
               </div>
             </div>
@@ -732,7 +737,7 @@ export function Dashboard() {
               <div style={{ fontSize: '14px', color: '#1976d2', fontWeight: '500', marginBottom: '4px' }}>
                 CGST
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1976d2' }}>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#1976d2' }}>
                 {formatCurrency(gstData.cgst)}
               </div>
             </div>
@@ -747,7 +752,7 @@ export function Dashboard() {
               <div style={{ fontSize: '14px', color: '#f57c00', fontWeight: '500', marginBottom: '4px' }}>
                 SGST
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f57c00' }}>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#f57c00' }}>
                 {formatCurrency(gstData.sgst)}
               </div>
             </div>
@@ -762,7 +767,7 @@ export function Dashboard() {
               <div style={{ fontSize: '14px', color: '#7b1fa2', fontWeight: '500', marginBottom: '4px' }}>
                 IGST
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#7b1fa2' }}>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#7b1fa2' }}>
                 {formatCurrency(gstData.igst)}
               </div>
             </div>
@@ -777,7 +782,7 @@ export function Dashboard() {
               <div style={{ fontSize: '14px', color: '#0066cc', fontWeight: '500', marginBottom: '4px' }}>
                 Grand Total
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#0066cc' }}>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#0066cc' }}>
                 {formatCurrency(gstData.grand_total)}
               </div>
             </div>
@@ -896,7 +901,7 @@ export function Dashboard() {
                 fontWeight: 'bold',
                 color: '#721c24'
               }}>
-                ₹{(cashflowData?.expenses?.total_purchase_payments || 0) * 0.3}
+                {formatCurrency(cashflowData?.expenses.total_outflow ?? 0)}
               </div>
             </div>
             
@@ -1010,169 +1015,6 @@ export function Dashboard() {
         </div>
       </div>
 
-
-
-
-
-
-      {cashflowData ? (
-        <>
-          {/* Recent Activity & Quick Insights */}
-          <div style={{ 
-            padding: '24px',
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            marginBottom: '24px'
-          }}>
-            <h3 style={{ 
-              margin: '0 0 20px 0', 
-              fontSize: '18px', 
-              fontWeight: '600', 
-              color: '#2c3e50',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              📊 Recent Activity & Quick Insights
-            </h3>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-              gap: '20px'
-            }}>
-              {/* Recent Transactions */}
-              <div style={{ 
-                padding: '20px',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '8px',
-                border: '1px solid #e9ecef'
-              }}>
-                <h4 style={{ 
-                  margin: '0 0 16px 0', 
-                  fontSize: '16px', 
-                  fontWeight: '600', 
-                  color: '#495057'
-                }}>
-                  💰 Recent Transactions
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    padding: '12px',
-                    backgroundColor: 'white',
-                    borderRadius: '6px',
-                    border: '1px solid #e9ecef'
-                  }}>
-                    <div>
-                      <div style={{ fontWeight: '500', color: '#495057', marginBottom: '4px' }}>
-                        Invoice #INV-001
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                        Customer Payment
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#28a745' }}>
-                        ₹15,000
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                        2 hours ago
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    padding: '12px',
-                    backgroundColor: 'white',
-                    borderRadius: '6px',
-                    border: '1px solid #e9ecef'
-                  }}>
-                    <div>
-                      <div style={{ fontWeight: '500', color: '#495057', marginBottom: '4px' }}>
-                        Purchase #PUR-002
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                        Vendor Payment
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#dc3545' }}>
-                        ₹8,500
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                        1 day ago
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Insights */}
-              <div style={{ 
-                padding: '20px',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '8px',
-                border: '1px solid #e9ecef'
-              }}>
-                <h4 style={{ 
-                  margin: '0 0 16px 0', 
-                  fontSize: '16px', 
-                  fontWeight: '600', 
-                  color: '#495057'
-                }}>
-                  📈 Quick Insights
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ 
-                    padding: '12px',
-                    backgroundColor: 'white',
-                    borderRadius: '6px',
-                    border: '1px solid #e9ecef'
-                  }}>
-                    <div style={{ fontWeight: '500', color: '#495057', marginBottom: '4px' }}>
-                      Cash Flow Trend
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                      Net cashflow improved by 12% this month
-                    </div>
-                  </div>
-                  
-                  <div style={{ 
-                    padding: '12px',
-                    backgroundColor: 'white',
-                    borderRadius: '6px',
-                    border: '1px solid #e9ecef'
-                  }}>
-                    <div style={{ fontWeight: '500', color: '#495057', marginBottom: '4px' }}>
-                      Inventory Alert
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                      {inventoryData?.low_stock_items || 0} items need restocking
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      ) : (
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          minHeight: '200px',
-          fontSize: '16px',
-          color: '#6c757d'
-        }}>
-          {loading ? 'Loading dashboard data...' : 'No data available'}
-        </div>
-      )}
     </div>
   )
 }
