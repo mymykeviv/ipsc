@@ -3932,6 +3932,21 @@ class PurchaseOut(BaseModel):
     updated_at: str
 
 
+class PurchaseItemOut(BaseModel):
+    id: int
+    purchase_id: int
+    product_id: int
+    description: str | None
+    hsn_code: str | None
+    qty: float
+    expected_rate: float
+    discount: float
+    discount_type: str
+    gst_rate: float
+    amount: float
+    created_at: str
+
+
 def _next_purchase_no(db: Session) -> str:
     """Generate next purchase number"""
     settings = db.query(CompanySettings).first()
@@ -4209,6 +4224,34 @@ def get_purchase(purchase_id: int, _: User = Depends(get_current_user), db: Sess
         created_at=purchase.created_at.isoformat(),
         updated_at=purchase.updated_at.isoformat()
     )
+
+
+@api.get('/purchases/{purchase_id}/items', response_model=list[PurchaseItemOut])
+def get_purchase_items(purchase_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    purchase = db.query(Purchase).filter(Purchase.id == purchase_id).first()
+    if not purchase:
+        raise HTTPException(status_code=404, detail='Purchase not found')
+
+    items = db.query(PurchaseItem).filter(PurchaseItem.purchase_id == purchase_id).all()
+
+    result: list[PurchaseItemOut] = []
+    for item in items:
+        result.append(PurchaseItemOut(
+            id=item.id,
+            purchase_id=item.purchase_id,
+            product_id=item.product_id,
+            description=item.description,
+            hsn_code=item.hsn_code,
+            qty=float(item.qty),
+            expected_rate=float(item.expected_rate),
+            discount=float(item.discount),
+            discount_type=item.discount_type,
+            gst_rate=float(item.gst_rate),
+            amount=float(item.amount),
+            created_at=item.created_at.isoformat()
+        ))
+
+    return result
 
 
 @api.delete('/purchases/{purchase_id}')

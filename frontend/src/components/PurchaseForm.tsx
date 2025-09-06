@@ -161,26 +161,28 @@ export function PurchaseForm({ onSuccess, onCancel, purchaseId, initialData }: P
 
   useEffect(() => {
     loadData()
-    if (purchaseId && initialData) {
-      // Load existing purchase data for editing
-      setFormData({
-        vendor_id: initialData.vendor_id || 0,
-        date: initialData.date?.split('T')[0] || new Date().toISOString().split('T')[0],
-        due_date: initialData.due_date?.split('T')[0] || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        terms: initialData.terms || 'Due on Receipt',
-        reference_bill_number: initialData.reference_bill_number || '',
-        place_of_supply: initialData.place_of_supply || 'Karnataka',
-        place_of_supply_state_code: initialData.place_of_supply_state_code || '29',
-        eway_bill_number: initialData.eway_bill_number || '',
-        bill_from_address: initialData.bill_from_address || '',
-        ship_from_address: initialData.ship_from_address || '',
-        notes: initialData.notes || '',
-        reverse_charge: initialData.reverse_charge || false,
-        export_supply: initialData.export_supply || false,
-        items: initialData.items || []
-      })
-      
-      // Load purchase items separately
+    if (purchaseId) {
+      // If we have initialData, prefill the form fields
+      if (initialData) {
+        setFormData({
+          vendor_id: initialData.vendor_id || 0,
+          date: initialData.date?.split('T')[0] || new Date().toISOString().split('T')[0],
+          due_date: initialData.due_date?.split('T')[0] || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          terms: initialData.terms || 'Due on Receipt',
+          reference_bill_number: initialData.reference_bill_number || '',
+          place_of_supply: initialData.place_of_supply || 'Karnataka',
+          place_of_supply_state_code: initialData.place_of_supply_state_code || '29',
+          eway_bill_number: initialData.eway_bill_number || '',
+          bill_from_address: initialData.bill_from_address || '',
+          ship_from_address: initialData.ship_from_address || '',
+          notes: initialData.notes || '',
+          reverse_charge: initialData.reverse_charge || false,
+          export_supply: initialData.export_supply || false,
+          items: initialData.items || []
+        })
+      }
+
+      // Always fetch purchase items separately in edit mode
       loadPurchaseItems()
     }
   }, [purchaseId, initialData])
@@ -208,7 +210,7 @@ export function PurchaseForm({ onSuccess, onCancel, purchaseId, initialData }: P
         description: item.description,
         hsn_code: item.hsn_code || '',
         discount: item.discount,
-        discount_type: item.discount_type as 'Percentage' | 'Fixed',
+        discount_type: (item.discount_type?.toLowerCase() === 'fixed' ? 'Fixed' : 'Percentage'),
         gst_rate: item.gst_rate
       }))
       
